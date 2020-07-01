@@ -1,0 +1,82 @@
+package io.qimia.uhrwerk.models.store;
+
+import javax.persistence.*;
+import java.time.Duration;
+
+@Entity
+@Table( name = "stepconfigs" )
+public class StepConfig {
+
+    private int id;
+    private String name;
+    private Duration batchSize;
+    private int parallelism;
+    private int maxBatches;
+    private String stepType;
+
+    public StepConfig() {}
+
+    public StepConfig(String name, Duration batchSize, int parallelism, int maxBatches, String stepType) {
+        this.name = name;
+        this.batchSize = batchSize;
+        this.parallelism = parallelism;
+        this.maxBatches = maxBatches;
+        this.stepType = stepType;
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id", updatable = false, nullable = false)
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    @Column
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Column
+    public Duration getBatchSize() {
+        return batchSize;
+    }
+
+    public void setBatchSize(Duration batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    @Column
+    public int getParallelism() {
+        return parallelism;
+    }
+
+    public void setParallelism(int parallelism) {
+        this.parallelism = parallelism;
+    }
+
+    @Column
+    public int getMaxBatches() {
+        return maxBatches;
+    }
+
+    public void setMaxBatches(int maxBatches) {
+        this.maxBatches = maxBatches;
+    }
+
+    @Column
+    public String getStepType() {
+        return stepType;
+    }
+
+    public void setStepType(String stepType) {
+        this.stepType = stepType;
+    }
+}

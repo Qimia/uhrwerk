@@ -1,0 +1,34 @@
+name: load_a_table
+batchSize: 1h
+parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
+maxBatches: 12
+stepType: "oneOnone"
+
+dependencies:
+  - connectionName: connection_name
+    path: schema.table  # On DB
+    area: staging
+    vertical: sourcedb_1
+    version: 1
+    external: true
+    type: "oneOnone"
+    partitionSize: "6h"
+    partitionCount: 1
+  - connectionName: connection_name2
+    path: someplace/other_table  # On DB
+    area: staging
+    vertical: sourcedb_1
+    version: 1
+    external: false
+    type: "oneOnone"
+    partitionSize: "6h"
+    partitionCount: 1
+
+targets:
+  - connectionName: connection_name2
+    path: someplace/new_table
+    area: processing
+    vertical: sourcedb_1
+    version: 1
+    external: false
+    partitionSize: "6h"

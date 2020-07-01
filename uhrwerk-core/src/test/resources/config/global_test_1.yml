@@ -1,0 +1,14 @@
+connections:
+  - name: mysql_test
+    type: mysql
+    jdbcUri: 'jdbc:mysql://localhost:3306'
+    user: root
+    pass: mysql
+  - name: s3_test
+    type: s3
+    cloudId: blabla
+    cloudPass: yaya
+    startpath: "s3://bucketname/somesuffix/"
+  - name: local_filesystem_test
+    type: localfile
+    startpath: '/path/to/local/datalake'
