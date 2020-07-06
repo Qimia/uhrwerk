@@ -9,6 +9,7 @@ public class Step {
     private String stepType = "oneOnone";
     private Dependency[] dependencies;
     private Target[] targets;
+    private int version = 1;
 
     public Step() {}
 
@@ -66,5 +67,13 @@ public class Step {
 
     public void setTargets(Target[] targets) {
         this.targets = targets;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
     }
 }

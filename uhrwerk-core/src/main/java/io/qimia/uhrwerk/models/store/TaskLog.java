@@ -3,6 +3,7 @@ package io.qimia.uhrwerk.models.store;
 import javax.persistence.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 // Task logs for persistance
 @Entity
@@ -11,7 +12,9 @@ public class TaskLog {
 
     private int id;
     private String stepName;
-    private int stepId;
+    // Either a stepConfig is given and there is a foreign-key. Or in devmode the configs are not persisted and
+    // it will stay empty
+    private StepConfig stepConfig;
     private int runNumber;
     private int version;
     private LocalDateTime runTs;
@@ -22,7 +25,7 @@ public class TaskLog {
 
     public TaskLog(
             String stepName,
-            int stepId,
+            StepConfig stepConfig,
             int runNumber,
             int version,
             LocalDateTime runTs,
@@ -30,7 +33,24 @@ public class TaskLog {
             int logType
     ) {
         this.stepName = stepName;
-        this.stepId = stepId;
+        this.stepConfig = stepConfig;
+        this.runNumber = runNumber;
+        this.version = version;
+        this.runTs = runTs;
+        this.runDuration = runDuration;
+        this.logType = logType;
+    }
+
+    public TaskLog(
+            String stepName,
+            int runNumber,
+            int version,
+            LocalDateTime runTs,
+            Duration runDuration,
+            int logType
+    ) {
+        this.stepName = stepName;
+        this.stepConfig = null;
         this.runNumber = runNumber;
         this.version = version;
         this.runTs = runTs;
@@ -58,13 +78,13 @@ public class TaskLog {
         this.stepName = stepName;
     }
 
-    @Column
-    public int getStepId() {
-        return stepId;
+    @ManyToOne
+    @JoinColumn(name="stepConfigId")
+    public StepConfig getStep() {
+        return stepConfig;
     }
-
-    public void setStepId(int stepId) {
-        this.stepId = stepId;
+    public void setStep(StepConfig stepConfig) {
+        this.stepConfig = stepConfig;
     }
 
     @Column

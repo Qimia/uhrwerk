@@ -20,7 +20,7 @@ public class PartitionLog {
     private LocalDateTime partitionTs;
     private Duration partitionDuration;
     private int version;
-    private int taskId;
+    private TaskLog task;
     private int changeFlag;
 
     public PartitionLog() {}
@@ -33,7 +33,7 @@ public class PartitionLog {
             LocalDateTime partitionTs,
             Duration partitionDuration,
             int version,
-            int taskId,
+            TaskLog task,
             int changeFlag
     ) {
         this.area = area;
@@ -43,7 +43,7 @@ public class PartitionLog {
         this.partitionTs = partitionTs;
         this.partitionDuration = partitionDuration;
         this.version = version;
-        this.taskId = taskId;
+        this.task = task;
         this.changeFlag = changeFlag;
     }
 
@@ -122,13 +122,14 @@ public class PartitionLog {
         this.version = version;
     }
 
-    @Column
-    public int getTaskId() {
-        return taskId;
+    @ManyToOne
+    @JoinColumn(name="taskLogId")
+    public TaskLog getTask() {
+        return task;
     }
 
-    public void setTaskId(int taskId) {
-        this.taskId = taskId;
+    public void setTask(TaskLog task) {
+        this.task = task;
     }
 
     @Column

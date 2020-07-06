@@ -24,11 +24,12 @@ class ConfigReaderTest extends AnyFlatSpec {
     assert(stepConf.getName === "load_a_table")
     assert(stepConf.getBatchSize === "1h")
     assert(stepConf.getParallelism === 10)
+    assert(stepConf.getVersion == 1)  // Check default init
     val deps = stepConf.getDependencies
     val predictedPaths = "schema.table" :: "someplace/other_table" :: Nil
     deps.zip(predictedPaths).foreach((tup) => {
-      tup._1.getPath === tup._2
-      tup._1.getArea === "staging"
+      assert(tup._1.getPath === tup._2)
+      assert(tup._1.getArea === "staging")
     })
   }
 }

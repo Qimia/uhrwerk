@@ -50,7 +50,8 @@ public class TargetConfig {
         this.partitionSize = partitionSize;
     }
 
-    @Column
+    @ManyToOne(fetch=FetchType.LAZY)
+    @JoinColumn(name="stepConfigId")
     public StepConfig getStepConfig() {
         return stepConfig;
     }
