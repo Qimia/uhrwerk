@@ -84,19 +84,19 @@ object TimeTools {
   // See for a list of larger batches if a list of smaller batches (with a given big-batch-duration and divideBy)
   // which of those large batches have all the smaller batches present
   def filterBySmallerBatchList(
-                                largeBatchList: List[LocalDateTime],
-                                runBatchSize: Duration,
-                                divideBy: Int,
-                                smallBatches: Set[LocalDateTime]): List[LocalDateTime] = {
+      largeBatchList: List[LocalDateTime],
+      runBatchSize: Duration,
+      divideBy: Int,
+      smallBatches: Set[LocalDateTime]): List[LocalDateTime] = {
     val smallerDuration = runBatchSize.dividedBy(divideBy)
     val durationAdditions = (0 until divideBy).toList
       .map(x => smallerDuration.multipliedBy(x.toLong))
 
     largeBatchList
-      .map(ts => durationAdditions.map(dur => ts.plus(dur)))  // List of list of smaller subbatches
+      .map(ts => durationAdditions.map(dur => ts.plus(dur))) // List of list of smaller subbatches
       .filter(smallTimeList => {
         if (smallTimeList.forall(smallTS => smallBatches.contains(smallTS))) {
-          true  // if subbatches are all present continue
+          true // if subbatches are all present continue
         } else {
           false
         }

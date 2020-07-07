@@ -26,21 +26,24 @@
 
         <properties>
             <!-- configure store properties here -->
-
-            <!--
             <property name="javax.persistence.jdbc.driver" value="org.h2.Driver" />
-            <property name="javax.persistence.jdbc.url" value="jdbc:h2:mem:db1;DB_CLOSE_DELAY=-1;MVCC=TRUE" />
+            <property name="javax.persistence.jdbc.url" value="jdbc:h2:./sample_h2.db;DB_CLOSE_DELAY=-1;MVCC=TRUE" />
             <property name="javax.persistence.jdbc.user" value="sa" />
             <property name="javax.persistence.jdbc.password" value="" />
-            -->
-            <property name="javax.persistence.jdbc.driver" value="org.sqlite.JDBC" />
-            <property name="javax.persistence.jdbc.url" value="jdbc:sqlite:sample.db" />
-            <property name="javax.persistence.jdbc.user" value="" />
-            <property name="javax.persistence.jdbc.password" value="" />
+
+<!--            <property name="javax.persistence.jdbc.driver" value="org.sqlite.JDBC" />-->
+<!--            <property name="javax.persistence.jdbc.url" value="jdbc:sqlite:sample.db" />-->
+<!--            <property name="javax.persistence.jdbc.user" value="" />-->
+<!--            <property name="javax.persistence.jdbc.password" value="" />-->
+<!--            <property name="hibernate.dialect" value="org.hibernate.dialect.SQLiteDialect" />-->
+<!--            <property name="hibernate.connection.release_mode" value="auto" />-->
+<!--            <property name="hibernate.transaction.auto_close_session" value="true" />-->
+<!--            <property name="org.hibernate.flushMode" value="COMMIT" />-->
+
 
             <property name="hibernate.show_sql" value="true" />
             <property name="hibernate.hbm2ddl.auto" value="create" />
-            <property name="hibernate.dialect" value="org.hibernate.dialect.SQLiteDialect" />
+
         </properties>
 
     </persistence-unit>

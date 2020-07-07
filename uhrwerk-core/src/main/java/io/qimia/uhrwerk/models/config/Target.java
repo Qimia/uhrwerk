@@ -8,7 +8,7 @@ public class Target {
     private String vertical = "";
     private int version = 1;
     private boolean external = false;
-    private String partitionSize = "1h";
+    private String partitionSize = "";
 
     public Target() {}
 
