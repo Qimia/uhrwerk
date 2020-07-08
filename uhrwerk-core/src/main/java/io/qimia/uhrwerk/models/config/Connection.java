@@ -11,6 +11,7 @@ public class Connection {
     private String cloudPass = "";
     private String cloudRegion = "";
     private String startPath = "";
+    private int version = 1;
 
     public Connection() {}
 
@@ -84,5 +85,13 @@ public class Connection {
 
     public void setStartPath(String startPath) {
         this.startPath = startPath;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
     }
 }

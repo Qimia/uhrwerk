@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.models.config;
 
-public class Target {
+public class Target implements Table {
 
     private String connectionName = "";
     private String path = "";
@@ -9,6 +9,7 @@ public class Target {
     private int version = 1;
     private boolean external = false;
     private String partitionSize = "";
+    private String type = "oneonone";
 
     public Target() {}
 
@@ -66,5 +67,13 @@ public class Target {
 
     public void setPartitionSize(String partitionSize) {
         this.partitionSize = partitionSize;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

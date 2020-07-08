@@ -11,13 +11,15 @@ public class TargetConfig {
     private TableInfo table;
     private Duration partitionSize;
     private StepConfig stepConfig;
+    private String type;
 
     public TargetConfig() {}
 
-    public TargetConfig(TableInfo table, Duration partitionSize, StepConfig stepConfig) {
+    public TargetConfig(TableInfo table, Duration partitionSize, StepConfig stepConfig, String type) {
         this.table = table;
         this.partitionSize = partitionSize;
         this.stepConfig = stepConfig;
+        this.type = type;
     }
 
     @Id
@@ -58,5 +60,14 @@ public class TargetConfig {
 
     public void setStepConfig(StepConfig stepConfig) {
         this.stepConfig = stepConfig;
+    }
+
+    @Column
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

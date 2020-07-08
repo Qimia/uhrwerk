@@ -19,7 +19,6 @@ class JPALogTest extends AnyFlatSpec {
     val testObj = new PartitionLog(
       "area_a",
       "vert_v",
-      1,
       "/some/path/on/disk",
       LocalDateTime.now(),
       Duration.ofHours(1),

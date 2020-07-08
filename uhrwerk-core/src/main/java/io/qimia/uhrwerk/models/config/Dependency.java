@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.models.config;
 
-public class Dependency {
+public class Dependency implements Table {
 
     private String connectionName = "";
     private String path = "";

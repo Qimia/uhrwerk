@@ -14,9 +14,8 @@ public class TableInfo {
     private String connectionName;
     private ConnectionConfig connection;
     private boolean external;
-    private int type;
 
-    public TableInfo() {}
+//    public TableInfo() {}
 
     public TableInfo(
             String path,
@@ -25,8 +24,7 @@ public class TableInfo {
             int version,
             String connectionName,
             ConnectionConfig connection,
-            boolean external,
-            int type
+            boolean external
     ) {
         this.path = path;
         this.area = area;
@@ -35,7 +33,6 @@ public class TableInfo {
         this.connectionName = connectionName;
         this.connection = connection;
         this.external = external;
-        this.type = type;
     }
 
     @Id
@@ -111,14 +108,5 @@ public class TableInfo {
 
     public void setExternal(boolean external) {
         this.external = external;
-    }
-
-    @Column
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
     }
 }

@@ -15,7 +15,7 @@ public class PartitionLog {
     private int id;
     private String area;
     private String vertical;
-    private int connectionId;
+    private ConnectionConfig connectionConfig;
     private String path;
     private LocalDateTime partitionTs;
     private Duration partitionDuration;
@@ -28,7 +28,7 @@ public class PartitionLog {
     public PartitionLog(
             String area,
             String vertical,
-            int connectionId,
+            ConnectionConfig connectionConfig,
             String path,
             LocalDateTime partitionTs,
             Duration partitionDuration,
@@ -38,13 +38,35 @@ public class PartitionLog {
     ) {
         this.area = area;
         this.vertical = vertical;
-        this.connectionId = connectionId;
+        this.connectionConfig = connectionConfig;
         this.path = path;
         this.partitionTs = partitionTs;
         this.partitionDuration = partitionDuration;
         this.version = version;
         this.task = task;
         this.changeFlag = changeFlag;
+    }
+
+    public PartitionLog(
+            String area,
+            String vertical,
+            String path,
+            LocalDateTime partitionTs,
+            Duration partitionDuration,
+            int version,
+            TaskLog task,
+            int changeFlag
+    ) {
+        this.area = area;
+        this.vertical = vertical;
+        this.connectionConfig = null;  // Optional reference to the configuration
+        this.path = path;
+        this.partitionTs = partitionTs;
+        this.partitionDuration = partitionDuration;
+        this.version = version;
+        this.task = task;
+        this.changeFlag = changeFlag;
+        // TODO: Technically no room for testing which connection is used now
     }
 
 
@@ -77,13 +99,14 @@ public class PartitionLog {
         this.vertical = vertical;
     }
 
-    @Column
-    public int getConnectionId() {
-        return connectionId;
+    @ManyToOne
+    @JoinColumn(name="connectionConfigId")
+    public ConnectionConfig getConnectionConfig() {
+        return connectionConfig;
     }
 
-    public void setConnectionId(int connectionId) {
-        this.connectionId = connectionId;
+    public void setConnectionConfig(ConnectionConfig connectionConfig) {
+        this.connectionConfig = connectionConfig;
     }
 
     @Column

@@ -50,7 +50,7 @@ public class TaskLog {
             int logType
     ) {
         this.stepName = stepName;
-        this.stepConfig = null;
+        this.stepConfig = null;  // Optional step reference
         this.runNumber = runNumber;
         this.version = version;
         this.runTs = runTs;

@@ -74,7 +74,6 @@ class MetaStoreUnitTest extends AnyFlatSpec {
       new PartitionLog(
         "area_a",
         "vertical_v",
-        -1, // TODO: Optional ConnectionId
         "table_1",
         LocalDateTime.of(2000, 1, 1, 0, 0, 0),
         Duration.ofHours(1),
@@ -86,7 +85,6 @@ class MetaStoreUnitTest extends AnyFlatSpec {
       new PartitionLog(
         "area_a",
         "vertical_v",
-        -1, // TODO: Optional ConnectionId
         "table_1",
         LocalDateTime.of(2000, 1, 1, 1, 0, 0),
         Duration.ofHours(1),
@@ -98,7 +96,6 @@ class MetaStoreUnitTest extends AnyFlatSpec {
       new PartitionLog(
         "area_a",
         "vertical_v",
-        -1, // TODO: Optional ConnectionId
         "table_2",
         LocalDateTime.of(2000, 1, 1, 0, 0, 0),
         Duration.ofHours(1),
@@ -123,7 +120,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     dependencies(1).setPath("table_2")
     val res1 = MetaStore.getBatchedDependencies(
       entityManager,
-      dependencies.toList,
+      dependencies,
       List(LocalDateTime.of(2000, 1, 1, 0, 0, 0)))
     entityManager.getTransaction.commit()
     assert(res1.head === Right(LocalDateTime.of(2000, 1, 1, 0, 0, 0)))
@@ -131,7 +128,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     entityManager.getTransaction().begin()
     val res2 = MetaStore.getBatchedDependencies(
       entityManager,
-      dependencies.toList,
+      dependencies,
       List(LocalDateTime.of(2000, 1, 1, 1, 0, 0)))
     entityManager.getTransaction().commit()
     res2.head match {
@@ -142,7 +139,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     entityManager.getTransaction().begin()
     val res3 = MetaStore.getBatchedDependencies(
       entityManager,
-      dependencies.toList,
+      dependencies,
       List(LocalDateTime.of(2020, 1, 1, 1, 0, 0)))
     entityManager.getTransaction().commit()
     res3.head match {

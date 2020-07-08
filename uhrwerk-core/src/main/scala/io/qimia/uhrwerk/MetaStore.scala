@@ -35,8 +35,8 @@ object MetaStore {
 
   // Starttime and endtime inclusive
   def getBatchedDependencies(store: EntityManager,
-                             batchedDependencies: List[Dependency],
-                             startTimes: List[LocalDateTime])
+                             batchedDependencies: Array[Dependency],
+                             startTimes: Seq[LocalDateTime])
     : List[Either[DependencyFailed, DependencySuccess]] = {
     // TODO: Create groupBy version when figured out howto filter each dependency with its version number
 
@@ -84,7 +84,7 @@ object MetaStore {
           Left(startTime -> missingPart)
         }
       }
-    })
+    }).toList
   }
 }
 
@@ -98,8 +98,8 @@ class MetaStore(globalConf: Path, stepConf: Path) {
 
   // For each LocalDateTime check if all dependencies are there or tell which ones are not
   // !! Assumes the startTimes are ordered and continuous (no gaps) !!
-  def checkDependencies(batchedDependencies: List[Dependency],
-                        startTimes: List[LocalDateTime])
+  def checkDependencies(batchedDependencies: Array[Dependency],
+                        startTimes: Seq[LocalDateTime])
     : List[Either[DependencyFailed, DependencySuccess]] = {
     // Should be simple one on one check
     val store = storeFactory.createEntityManager
@@ -194,7 +194,6 @@ class MetaStore(globalConf: Path, stepConf: Path) {
     val newPartition = new PartitionLog(
       target.getArea,
       target.getVertical,
-      -1, // TODO: Optional connection id
       target.getPath,
       partitionTS,
       TimeTools.convertDurationToObj(target.getPartitionSize),
