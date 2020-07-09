@@ -39,6 +39,7 @@ object MetaStore {
                              startTimes: Seq[LocalDateTime])
     : List[Either[DependencyFailed, DependencySuccess]] = {
     // TODO: Create groupBy version when figured out howto filter each dependency with its version number
+    // (Could be done with a very big WHERE (a-specs OR b-specs OR c-specs) clause, not sure if there is a performance gain)
 
     val startTime = startTimes.head
     val endTime = startTimes.last
@@ -72,25 +73,29 @@ object MetaStore {
     )
 
     val requiredDependencies = batchedDependencies.map(_.getPath).toSet
-    startTimes.map(startTime => {
-      val partitionsAvailable = storedPartitions.get(startTime)
-      if (partitionsAvailable.isEmpty) {
-        Left(startTime -> requiredDependencies)
-      } else {
-        val missingPart = requiredDependencies diff partitionsAvailable.get
-        if (missingPart.isEmpty) {
-          Right(startTime)
+    startTimes
+      .map(startTime => {
+        val partitionsAvailable = storedPartitions.get(startTime)
+        if (partitionsAvailable.isEmpty) {
+          Left(startTime -> requiredDependencies)
         } else {
-          Left(startTime -> missingPart)
+          val missingPart = requiredDependencies diff partitionsAvailable.get
+          if (missingPart.isEmpty) {
+            Right(startTime)
+          } else {
+            Left(startTime -> missingPart)
+          }
         }
-      }
-    }).toList
+      })
+      .toList
   }
 }
 
 class MetaStore(globalConf: Path, stepConf: Path) {
   val globalConfig: Global = ConfigReader.readGlobalConfig(globalConf)
   val stepConfig: Step = ConfigReader.readStepConfig(stepConf)
+
+  // TODO: After loading the config we should check if it is correct (if it's in a valid state)
 
   val stepBatchSize = TimeTools.convertDurationToObj(stepConfig.getBatchSize)
   val storeFactory =
@@ -112,6 +117,7 @@ class MetaStore(globalConf: Path, stepConf: Path) {
     res
   }
 
+  // Write a TaskLog that a task has been started and return the log object for writing the matching finish object
   def writeStartTask(): TaskLog = {
     // Make sure that getting the latest runNr and incrementing it is done
     // in 1 transaction
@@ -147,6 +153,8 @@ class MetaStore(globalConf: Path, stepConf: Path) {
     startLog
   }
 
+  // write that a Task is finished, could be successful or not (this also in turn will write the target's partition-logs
+  // if it were successful
   def writeFinishTask(startLog: TaskLog,
                       partitionTS: LocalDateTime,
                       success: Boolean) = {
@@ -180,12 +188,15 @@ class MetaStore(globalConf: Path, stepConf: Path) {
     // if success then also call writePartitionLog next
     if (success) {
       stepConfig.getTargets.foreach(t =>
-        this.writePartitionLog(store, finishLog, t, partitionTS))
+        if (!t.isExternal) {
+          this.writePartitionLog(store, finishLog, t, partitionTS)
+      })
     }
     ta.commit()
     store.close()
   }
 
+  // Write that a partition has been written for a single Target and a single Timestamp
   def writePartitionLog(store: EntityManager,
                         finishLog: TaskLog,
                         target: Target,

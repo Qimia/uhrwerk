@@ -1,12 +1,17 @@
 package io.qimia.uhrwerk
 
 import java.time.LocalDateTime
+import java.util.concurrent.Executors
 
 import io.qimia.uhrwerk.ManagedIO.FrameManager
 import io.qimia.uhrwerk.StepWrapper.TaskInput
 import io.qimia.uhrwerk.models.config.{Connection, Dependency}
 import io.qimia.uhrwerk.utils.TimeTools
 import org.apache.spark.sql.DataFrame
+
+import scala.collection.mutable
+import scala.concurrent.duration
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 object StepWrapper {
 
@@ -22,7 +27,7 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
 
   // Smallest execution step in our DAG (gets most parameters from configuration given by store)
   def runTasks(stepFunction: TaskInput => Option[DataFrame],
-               startTimes: Seq[LocalDateTime]): Unit = {
+               startTimes: Seq[LocalDateTime])(implicit ex: ExecutionContext): List[Future[LocalDateTime]] = {
 
     def runSingleTask(time: LocalDateTime): Unit = {
       // Use metastore to denote start of the run
@@ -32,7 +37,8 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
       // TODO: Read the proper DF here and get the right connection/time params for it
       val inputDFs: List[DataFrame] = store.stepConfig.getDependencies
         .filter(dep => {
-          true // TODO: Filter only the ones internal and which can be read using FrameLoader (is df from managed datalake)
+          !dep.isExternal
+          // TODO: Filter only the ones internal and which can be read using FrameLoader (is df from managed datalake)
         })
         .map(dep => frameManager.loadDFFromLake(null, dep, Option(time)))
         .toList
@@ -46,7 +52,8 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
         if (frame.isDefined) {
           store.stepConfig.getTargets
             .filter(tar => {
-              true // TODO: Only when it should be written to a file
+              !tar.isExternal
+              // TODO: Only when it should be written to a file
             })
             .foreach(tar =>
               frameManager.writeDFToLake(frame.get, null, tar, Option(time)))
@@ -71,14 +78,37 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
       store.checkDependencies(store.stepConfig.getDependencies, startTimes)
     // TODO need to add filtering and logic for Virtual Steps and other kinds of steps
 
+    val tasks: mutable.ListBuffer[Future[LocalDateTime]] = new mutable.ListBuffer
+
     checkResult
       .foreach({
-        case Right(time) => runSingleTask(time)
+        case Right(time) => {
+          val runningTask = Future {
+            runSingleTask(time)
+            time
+          }
+          tasks.append(runningTask)
+        }
         case Left(err) =>
           System.err.println(
             s"Couldn't run ${TimeTools.convertTSToString(err._1)}" +
               s"because of dependencies ${err._2.mkString(",")}")
       })
+    tasks.toList
+  }
+
+  // If you want to execute this step for a given list of startTimes without thinking about the execution context
+  // or the futures
+  def runTasksAndWait(stepFunction: TaskInput => Option[DataFrame],
+                      startTimes: Seq[LocalDateTime], threads: Option[Int] = Option.empty): Unit = {
+
+    implicit val executionContext = if (threads.isEmpty) {
+      ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor())
+    } else {
+      ExecutionContext.fromExecutor(Executors.newFixedThreadPool(threads.get))
+    }
+    val futures = runTasks(stepFunction, startTimes)
+    Await.result(Future.sequence(futures), duration.Duration(24, duration.HOURS))
   }
 
   def checkVirtualStep(

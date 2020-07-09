@@ -15,7 +15,7 @@ dependencies:
     partitionSize: "6h"
     partitionCount: 1
   - connectionName: connection_name2
-    path: someplace/other_table  # On DB
+    path: someplace/other_table  # On FS
     area: staging
     vertical: sourcedb_1
     version: 1
