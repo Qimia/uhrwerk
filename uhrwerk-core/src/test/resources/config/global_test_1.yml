@@ -10,5 +10,5 @@ connections:
     cloudPass: yaya
     startpath: "s3://bucketname/somesuffix/"
   - name: local_filesystem_test
-    type: localfile
+    type: filesystem
     startpath: '/path/to/local/datalake'

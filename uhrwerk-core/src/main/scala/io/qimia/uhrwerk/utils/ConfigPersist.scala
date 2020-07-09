@@ -169,28 +169,33 @@ object ConfigPersist {
     depConf
   }
 
+  // Different configuration parts which are connected to the Log storage
+  type PersistStruc = (StepConfig, Map[String, ConnectionConfig])
+
   def persistStep(store: EntityManager,
                   step: Step,
-                  global: Global): StepConfig = {
+                  global: Global): PersistStruc = {
 
     val connectionSearch =
       global.getConnections.map(conn => conn.getName -> conn).toMap
 
     val stepStored = getOrCreateStepRef(store, step)
-    step.getDependencies.foreach(dep => {
+    val depConnections = step.getDependencies.map(dep => {
       val conn = connectionSearch(dep.getConnectionName)
       val connStored = getOrCreateConnectionRef(store, conn)
       val tableStored = getOrCreateTableRef(store, dep, connStored)
       getOrCreateDependencyConfig(store, dep, tableStored, stepStored)
+      dep.getPath -> connStored
     })
-    step.getTargets.foreach(tar => {
+    val tarConnections = step.getTargets.map(tar => {
       val conn = connectionSearch(tar.getConnectionName)
       val connStored = getOrCreateConnectionRef(store, conn)
       val tableStored = getOrCreateTableRef(store, tar, connStored)
       getOrCreateTargetConfig(store, tar, tableStored, stepStored)
+      tar.getPath -> connStored
     })
 
-    stepStored
+    (stepStored, Array.concat(depConnections, tarConnections).toMap)
   }
 
 }

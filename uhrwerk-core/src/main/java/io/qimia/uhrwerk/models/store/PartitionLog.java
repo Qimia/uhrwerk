@@ -22,6 +22,7 @@ public class PartitionLog {
     private int version;
     private TaskLog task;
     private int changeFlag;
+    // Suggestion: We could connect the partitions directly to the TableInfo stores.
 
     public PartitionLog() {}
 

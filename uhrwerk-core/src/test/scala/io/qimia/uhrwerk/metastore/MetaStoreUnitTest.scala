@@ -152,7 +152,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     val globalConfig = Paths.get("src/test/resources/config/global_test_1.yml")
     val stepConfig = Paths.get("src/test/resources/config/step_test_1.yml")
 
-    val metaStore = new MetaStore(globalConfig, stepConfig)
+    val metaStore = MetaStore(globalConfig, stepConfig)
     val startTask = metaStore.writeStartTask()
     val partitionDate = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
 

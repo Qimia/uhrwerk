@@ -6,7 +6,7 @@ import java.time.{Duration, LocalDateTime}
 import io.qimia.uhrwerk.MetaStore.{DependencyFailed, DependencySuccess}
 import io.qimia.uhrwerk.models.config.{Dependency, Global, Step, Target}
 import io.qimia.uhrwerk.models.store.{PartitionLog, TaskLog}
-import io.qimia.uhrwerk.utils.{ConfigReader, TimeTools}
+import io.qimia.uhrwerk.utils.{ConfigPersist, ConfigReader, TimeTools}
 
 import collection.JavaConverters._
 import javax.persistence.{EntityManager, Persistence}
@@ -89,17 +89,35 @@ object MetaStore {
       })
       .toList
   }
+
+  def apply(globalConf: Path, stepConf: Path): MetaStore = {
+    val globalConfig: Global = ConfigReader.readGlobalConfig(globalConf)
+    val stepConfig: Step = ConfigReader.readStepConfig(stepConf)
+    new MetaStore(globalConfig, stepConfig)
+  }
 }
 
-class MetaStore(globalConf: Path, stepConf: Path) {
-  val globalConfig: Global = ConfigReader.readGlobalConfig(globalConf)
-  val stepConfig: Step = ConfigReader.readStepConfig(stepConf)
-
+class MetaStore(globalConf: Global,
+                stepConf: Step,
+                persist: Boolean = false) {
   // TODO: After loading the config we should check if it is correct (if it's in a valid state)
-
+  val globalConfig = globalConf
+  val stepConfig = stepConf
   val stepBatchSize = TimeTools.convertDurationToObj(stepConfig.getBatchSize)
+  val connections = globalConfig.getConnections.map(conn => conn.getName -> conn).toMap
   val storeFactory =
     Persistence.createEntityManagerFactory("io.qimia.uhrwerk.models")
+
+  // TODO: Optional persistence of the configurations
+  val persistedConf: Option[ConfigPersist.PersistStruc] = if (persist) {
+    val store = storeFactory.createEntityManager
+    store.getTransaction.begin()
+    val res = ConfigPersist.persistStep(store, stepConfig, globalConfig)
+    store.getTransaction.commit()
+    Option(res)
+  } else {
+    Option.empty
+  }
 
   // For each LocalDateTime check if all dependencies are there or tell which ones are not
   // !! Assumes the startTimes are ordered and continuous (no gaps) !!
@@ -127,10 +145,16 @@ class MetaStore(globalConf: Path, stepConf: Path) {
     ta.begin
     val previousRun = MetaStore.getLastTaskLog(store, stepConfig.getName)
     // TODO: For now version without storing the config (but should be configurable / devmode)
-    val startLog = if (previousRun.isDefined) {
+    val previousRunNr = if (previousRun.isDefined) {
+      previousRun.get.getRunNumber + 1
+    } else {
+      1
+    }
+    val startLog = if (persistedConf.isDefined) {
       new TaskLog(
         stepConfig.getName,
-        previousRun.get.getRunNumber + 1, // How often did this step run
+        persistedConf.get._1,
+        previousRunNr, // How often did this step run
         stepConfig.getVersion,
         LocalDateTime.now(),
         Duration.ZERO,
@@ -139,7 +163,7 @@ class MetaStore(globalConf: Path, stepConf: Path) {
     } else {
       new TaskLog(
         stepConfig.getName,
-        1,
+        previousRunNr, // How often did this step run
         stepConfig.getVersion,
         LocalDateTime.now(),
         Duration.ZERO,
@@ -164,14 +188,20 @@ class MetaStore(globalConf: Path, stepConf: Path) {
     val ta = store.getTransaction
     ta.begin
     val timeNow = LocalDateTime.now()
-    val finishLog = if (success) {
+    val logType = if (success) {
+      1
+    } else {
+      2
+    }
+    val finishLog = if (persistedConf.isDefined) {
       new TaskLog(
         stepConfig.getName,
+        persistedConf.get._1,
         startLog.getRunNumber(), // How often did this step run
         stepConfig.getVersion,
         timeNow,
         Duration.between(startLog.getRunTs, timeNow),
-        1 // meaning task started running
+        logType
       )
     } else {
       new TaskLog(
@@ -180,7 +210,7 @@ class MetaStore(globalConf: Path, stepConf: Path) {
         stepConfig.getVersion,
         timeNow,
         Duration.between(startLog.getRunTs, timeNow),
-        2 // meaning task started running
+        logType
       )
     }
     store.persist(finishLog)
@@ -202,16 +232,33 @@ class MetaStore(globalConf: Path, stepConf: Path) {
                         target: Target,
                         partitionTS: LocalDateTime) = {
     // TODO: Check that partition-size and batch-size are correctly set (when loading the config)
-    val newPartition = new PartitionLog(
-      target.getArea,
-      target.getVertical,
-      target.getPath,
-      partitionTS,
-      TimeTools.convertDurationToObj(target.getPartitionSize),
-      target.getVersion,
-      finishLog,
-      0
-    )
+    val tablePath = target.getPath
+    val connectionConf = persistedConf.flatMap(_._2.get(tablePath))
+    val newPartition = if (connectionConf.isDefined) {
+      // TODO: Can easily fail if connection hasn't been stored properly
+      new PartitionLog(
+        target.getArea,
+        target.getVertical,
+        connectionConf.get, // Insert reference to already stored connection config
+        tablePath,
+        partitionTS,
+        TimeTools.convertDurationToObj(target.getPartitionSize),
+        target.getVersion,
+        finishLog,
+        0
+      )
+    } else {
+      new PartitionLog(
+        target.getArea,
+        target.getVertical,
+        target.getPath,
+        partitionTS,
+        TimeTools.convertDurationToObj(target.getPartitionSize),
+        target.getVersion,
+        finishLog,
+        0
+      )
+    }
     store.persist(newPartition)
   }
 

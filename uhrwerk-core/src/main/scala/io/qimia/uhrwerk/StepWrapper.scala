@@ -15,7 +15,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 object StepWrapper {
 
-  case class TaskInput(connections: Array[Connection],
+  case class TaskInput(connections: Map[String, Connection],
                        startTS: LocalDateTime,
                        frameIn: List[DataFrame])
 
@@ -40,10 +40,10 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
           !dep.isExternal
           // TODO: Filter only the ones internal and which can be read using FrameLoader (is df from managed datalake)
         })
-        .map(dep => frameManager.loadDFFromLake(null, dep, Option(time)))
+        .map(dep => frameManager.loadDFFromLake(store.connections(dep.getConnectionName), dep, Option(time)))
         .toList
       val taskInput =
-        new TaskInput(store.globalConfig.getConnections, time, inputDFs)
+        new TaskInput(store.connections, time, inputDFs)
 
       // map dataframe using usercode
       val success = try {
@@ -56,7 +56,7 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
               // TODO: Only when it should be written to a file
             })
             .foreach(tar =>
-              frameManager.writeDFToLake(frame.get, null, tar, Option(time)))
+              frameManager.writeDFToLake(frame.get, store.connections(tar.getConnectionName), tar, Option(time)))
               // TODO: add right connection info
         }
         true
