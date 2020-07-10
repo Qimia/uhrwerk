@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.models.config;
 
+import java.time.Duration;
+
 public interface Table {
 
     public String getConnectionName();
@@ -9,5 +11,6 @@ public interface Table {
     public int getVersion();
     public boolean isExternal();
     public String getPartitionSize();
+    public Duration getPartitionSizeDuration();
 
 }

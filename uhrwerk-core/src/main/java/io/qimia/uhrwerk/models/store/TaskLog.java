@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.models.store;
 
+import io.qimia.uhrwerk.models.TaskLogType;
+
 import javax.persistence.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -19,7 +21,7 @@ public class TaskLog {
     private int version;
     private LocalDateTime runTs;
     private Duration runDuration;
-    private int logType;
+    private TaskLogType logType;
 
     public TaskLog() {}
 
@@ -30,7 +32,7 @@ public class TaskLog {
             int version,
             LocalDateTime runTs,
             Duration runDuration,
-            int logType
+            TaskLogType logType
     ) {
         this.stepName = stepName;
         this.stepConfig = stepConfig;
@@ -47,7 +49,7 @@ public class TaskLog {
             int version,
             LocalDateTime runTs,
             Duration runDuration,
-            int logType
+            TaskLogType logType
     ) {
         this.stepName = stepName;
         this.stepConfig = null;  // Optional step reference
@@ -124,11 +126,12 @@ public class TaskLog {
     }
 
     @Column
-    public int getLogType() {
+    @Enumerated(EnumType.ORDINAL)
+    public TaskLogType getLogType() {
         return logType;
     }
 
-    public void setLogType(int logType) {
+    public void setLogType(TaskLogType logType) {
         this.logType = logType;
     }
 }

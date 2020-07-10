@@ -3,6 +3,7 @@ package io.qimia.uhrwerk.models.store
 import java.time.{Duration, LocalDateTime}
 import java.util.Date
 
+import io.qimia.uhrwerk.models.TaskLogType
 import javax.persistence.{EntityManagerFactory, Persistence}
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -57,7 +58,7 @@ class JPALogTest extends AnyFlatSpec {
       1,
       LocalDateTime.now(),
       Duration.ofHours(2),
-      1
+      TaskLogType.SUCCESS
     )
     entityManager.persist(testObjWithoutRef)
     entityManager.getTransaction().commit()
@@ -87,7 +88,7 @@ class JPALogTest extends AnyFlatSpec {
       10,
       LocalDateTime.now(),
       Duration.ofHours(2),
-      1
+      TaskLogType.SUCCESS
     )
     entityManager.getTransaction().begin()
     entityManager.persist(refStep)

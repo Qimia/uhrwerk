@@ -1,5 +1,9 @@
 package io.qimia.uhrwerk.models.config;
 
+import io.qimia.uhrwerk.utils.TimeTools;
+
+import java.time.Duration;
+
 public class Step {
 
     private String name;
@@ -23,6 +27,10 @@ public class Step {
 
     public String getBatchSize() {
         return batchSize;
+    }
+
+    public Duration getBatchSizeDuration() {
+        return TimeTools.convertDurationToObj(batchSize);
     }
 
     public void setBatchSize(String batchSize) {

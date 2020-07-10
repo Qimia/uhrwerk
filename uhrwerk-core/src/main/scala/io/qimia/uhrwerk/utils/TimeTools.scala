@@ -15,6 +15,8 @@ object TimeTools {
   def convertTSToString(date: LocalDateTime): String =
     date.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 
+  // TODO: Durations now have to be exact minutes or hours or days (what if it isn't??)
+
   // Go from a string representation of a duration to a duration object
   def convertDurationToObj(duration: String): Duration = {
     duration.toCharArray.last match {

@@ -4,6 +4,7 @@ import java.nio.file.Path
 import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.MetaStore.{DependencyFailed, DependencySuccess}
+import io.qimia.uhrwerk.models.TaskLogType
 import io.qimia.uhrwerk.models.config.{Dependency, Global, Step, Target}
 import io.qimia.uhrwerk.models.store.{PartitionLog, TaskLog}
 import io.qimia.uhrwerk.utils.{ConfigPersist, ConfigReader, TimeTools}
@@ -17,6 +18,7 @@ object MetaStore {
   type DependencyFailed = (LocalDateTime, Set[String])
   type DependencySuccess = LocalDateTime
 
+  // Get latest Tasklog (could be any type: success failure or start)
   def getLastTaskLog(store: EntityManager,
                      stepName: String): Option[TaskLog] = {
     val results = store
@@ -45,32 +47,30 @@ object MetaStore {
     val endTime = startTimes.last
     val storedPartitions: mutable.Map[LocalDateTime, Set[String]] =
       new mutable.HashMap().withDefaultValue(Set())
-    batchedDependencies.foreach(
-      dep => {
-        val depName = dep.getPath
-        val results = store
-          .createQuery(
-            s"FROM PartitionLog WHERE area = '${dep.getArea}' " +
-              s"AND vertical = '${dep.getVertical}' " +
-              s"AND path = '${depName}' " +
-              s"AND version = ${dep.getVersion} " +
-              s"AND partitionDuration = :partDur " +
-              s"AND partitionTs BETWEEN :partstart AND :partfinish",
-            // TODO: Need to check connection
-            classOf[PartitionLog]
-          )
-          .setParameter("partDur",
-                        TimeTools.convertDurationToObj(dep.getPartitionSize))
-          .setParameter("partstart", startTime)
-          .setParameter("partfinish", endTime)
-          .getResultList
-          .asScala
-        results
-          .map(_.getPartitionTs)
-          .foreach(ldt => storedPartitions(ldt) += depName)
-        // Want to track exactly which dependencies are not met
-      }
-    )
+
+    def updateStoredPartitions(dep: Dependency): Unit = {
+      val depName = dep.getPath  // TODO: If Dependencies gets a proper name / key field use that instead
+      val results = store
+        .createQuery(
+          s"FROM PartitionLog WHERE area = '${dep.getArea}' " +
+            s"AND vertical = '${dep.getVertical}' " +
+            s"AND path = '${depName}' " +
+            s"AND version = ${dep.getVersion} " +
+            s"AND partitionDuration = :partDur " +
+            s"AND partitionTs BETWEEN :partstart AND :partfinish",
+          // TODO: Need to check connection
+          classOf[PartitionLog]
+        )
+        .setParameter("partDur",dep.getPartitionSizeDuration)
+        .setParameter("partstart", startTime)
+        .setParameter("partfinish", endTime)
+        .getResultList
+        .asScala
+      results
+        .map(_.getPartitionTs)
+        .foreach(ldt => storedPartitions(ldt) += depName)
+    }
+    batchedDependencies.foreach(updateStoredPartitions)
 
     val requiredDependencies = batchedDependencies.map(_.getPath).toSet
     startTimes
@@ -103,7 +103,6 @@ class MetaStore(globalConf: Global,
   // TODO: After loading the config we should check if it is correct (if it's in a valid state)
   val globalConfig = globalConf
   val stepConfig = stepConf
-  val stepBatchSize = TimeTools.convertDurationToObj(stepConfig.getBatchSize)
   val connections = globalConfig.getConnections.map(conn => conn.getName -> conn).toMap
   val storeFactory =
     Persistence.createEntityManagerFactory("io.qimia.uhrwerk.models")
@@ -136,7 +135,7 @@ class MetaStore(globalConf: Global,
   }
 
   // Write a TaskLog that a task has been started and return the log object for writing the matching finish object
-  def writeStartTask(): TaskLog = {
+  def logStartTask(): TaskLog = {
     // Make sure that getting the latest runNr and incrementing it is done
     // in 1 transaction
     val store = storeFactory.createEntityManager
@@ -158,7 +157,7 @@ class MetaStore(globalConf: Global,
         stepConfig.getVersion,
         LocalDateTime.now(),
         Duration.ZERO,
-        0 // meaning task started running
+        TaskLogType.START
       )
     } else {
       new TaskLog(
@@ -167,7 +166,7 @@ class MetaStore(globalConf: Global,
         stepConfig.getVersion,
         LocalDateTime.now(),
         Duration.ZERO,
-        0 // meaning task started running
+        TaskLogType.START
       )
     }
     store.persist(startLog)
@@ -179,9 +178,9 @@ class MetaStore(globalConf: Global,
 
   // write that a Task is finished, could be successful or not (this also in turn will write the target's partition-logs
   // if it were successful
-  def writeFinishTask(startLog: TaskLog,
-                      partitionTS: LocalDateTime,
-                      success: Boolean) = {
+  def logFinishTask(startLog: TaskLog,
+                    partitionTS: LocalDateTime,
+                    success: Boolean) = {
     val store = storeFactory.createEntityManager
 
     // First write finish log based on success or failure
@@ -189,9 +188,9 @@ class MetaStore(globalConf: Global,
     ta.begin
     val timeNow = LocalDateTime.now()
     val logType = if (success) {
-      1
+      TaskLogType.SUCCESS
     } else {
-      2
+      TaskLogType.FAILURE
     }
     val finishLog = if (persistedConf.isDefined) {
       new TaskLog(
@@ -216,6 +215,7 @@ class MetaStore(globalConf: Global,
     store.persist(finishLog)
 
     // if success then also call writePartitionLog next
+    // Either fails completely or writes all tasklogs (no partial completion)
     if (success) {
       stepConfig.getTargets.foreach(t =>
         if (!t.isExternal) {
@@ -242,7 +242,7 @@ class MetaStore(globalConf: Global,
         connectionConf.get, // Insert reference to already stored connection config
         tablePath,
         partitionTS,
-        TimeTools.convertDurationToObj(target.getPartitionSize),
+        target.getPartitionSizeDuration,
         target.getVersion,
         finishLog,
         0
@@ -253,7 +253,7 @@ class MetaStore(globalConf: Global,
         target.getVertical,
         target.getPath,
         partitionTS,
-        TimeTools.convertDurationToObj(target.getPartitionSize),
+        target.getPartitionSizeDuration,
         target.getVersion,
         finishLog,
         0

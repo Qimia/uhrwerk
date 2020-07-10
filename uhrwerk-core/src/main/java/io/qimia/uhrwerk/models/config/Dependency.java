@@ -1,5 +1,10 @@
 package io.qimia.uhrwerk.models.config;
 
+import io.qimia.uhrwerk.models.DependencyType;
+import io.qimia.uhrwerk.utils.TimeTools;
+
+import java.time.Duration;
+
 public class Dependency implements Table {
 
     private String connectionName = "";
@@ -8,7 +13,7 @@ public class Dependency implements Table {
     private String vertical = "";
     private int version = 1;
     private boolean external = false;
-    private String type = "oneOnone";
+    private String type = "oneonone";
     private String partitionSize = "1h";
     private int partitionCount = 1;
 
@@ -66,12 +71,20 @@ public class Dependency implements Table {
         return type;
     }
 
+    public DependencyType getTypeEnum() {
+        return DependencyType.getDependencyType(type);
+    }
+
     public void setType(String type) {
         this.type = type;
     }
 
     public String getPartitionSize() {
         return partitionSize;
+    }
+
+    public Duration getPartitionSizeDuration() {
+        return TimeTools.convertDurationToObj(partitionSize);
     }
 
     public void setPartitionSize(String partitionSize) {

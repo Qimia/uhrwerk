@@ -1,5 +1,9 @@
 package io.qimia.uhrwerk.models.config;
 
+import io.qimia.uhrwerk.utils.TimeTools;
+
+import java.time.Duration;
+
 public class Target implements Table {
 
     private String connectionName = "";
@@ -63,6 +67,10 @@ public class Target implements Table {
 
     public String getPartitionSize() {
         return partitionSize;
+    }
+
+    public Duration getPartitionSizeDuration() {
+        return TimeTools.convertDurationToObj(partitionSize);
     }
 
     public void setPartitionSize(String partitionSize) {

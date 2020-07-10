@@ -25,8 +25,7 @@ object ConfigPersist {
           s"AND stepType = '${step.getStepType}'",
         classOf[StepConfig]
       )
-      .setParameter("batchsize",
-                    TimeTools.convertDurationToObj(step.getBatchSize))
+      .setParameter("batchsize",step.getBatchSizeDuration)
       .getResultList
       .asScala
     if (stored.nonEmpty) {
@@ -35,7 +34,7 @@ object ConfigPersist {
 
     val stepConf = new StepConfig(
       step.getName,
-      TimeTools.convertDurationToObj(step.getBatchSize),
+      step.getBatchSizeDuration,
       step.getParallelism,
       step.getMaxBatches,
       step.getStepType
@@ -118,7 +117,7 @@ object ConfigPersist {
         classOf[TargetConfig]
       )
       .setParameter("tab", tableUsed)
-      .setParameter("dur", TimeTools.convertDurationToObj(target.getPartitionSize))
+      .setParameter("dur", target.getPartitionSizeDuration)
       .setParameter("step", step)
       .getResultList
       .asScala
@@ -128,7 +127,7 @@ object ConfigPersist {
 
     val tarConf = new TargetConfig(
       tableUsed,
-      TimeTools.convertDurationToObj(target.getPartitionSize),
+      target.getPartitionSizeDuration,
       step,
       target.getType
     )
@@ -150,7 +149,7 @@ object ConfigPersist {
         classOf[DependencyConfig]
       )
       .setParameter("tab", tableUsed)
-      .setParameter("dur", TimeTools.convertDurationToObj(dependency.getPartitionSize))
+      .setParameter("dur", dependency.getPartitionSizeDuration)
       .setParameter("step", step)
       .getResultList
       .asScala
@@ -160,7 +159,7 @@ object ConfigPersist {
 
     val depConf = new DependencyConfig(
       tableUsed,
-      TimeTools.convertDurationToObj(dependency.getPartitionSize),
+      dependency.getPartitionSizeDuration,
       dependency.getPartitionCount,
       step,
       dependency.getType

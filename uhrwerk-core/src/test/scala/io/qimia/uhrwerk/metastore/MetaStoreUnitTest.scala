@@ -4,6 +4,7 @@ import java.nio.file.Paths
 import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.MetaStore
+import io.qimia.uhrwerk.models.TaskLogType
 import io.qimia.uhrwerk.models.store.{PartitionLog, TaskLog}
 import io.qimia.uhrwerk.models.config.Dependency
 import javax.persistence.{EntityManagerFactory, Persistence}
@@ -32,7 +33,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
       1,
       LocalDateTime.of(2000, 1, 1, 0, 0, 0),
       Duration.ZERO,
-      1
+      TaskLogType.SUCCESS
     )
     entityManager.persist(testObj1)
     val testObj2 = new TaskLog(
@@ -41,7 +42,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
       1,
       LocalDateTime.of(2000, 1, 2, 0, 0, 0),
       Duration.ZERO,
-      1
+      TaskLogType.SUCCESS
     )
     entityManager.persist(testObj2)
     val lastDate = LocalDateTime.of(2000, 1, 3, 0, 0, 0)
@@ -51,7 +52,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
       1,
       lastDate,
       Duration.ZERO,
-      1
+      TaskLogType.SUCCESS
     )
     entityManager.persist(testObj3)
     entityManager.getTransaction().commit()
@@ -153,30 +154,30 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     val stepConfig = Paths.get("src/test/resources/config/step_test_1.yml")
 
     val metaStore = MetaStore(globalConfig, stepConfig)
-    val startTask = metaStore.writeStartTask()
+    val startTask = metaStore.logStartTask()
     val partitionDate = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
 
     val entityManager = metaStore.storeFactory.createEntityManager()
     entityManager.getTransaction.begin()
     var latestTaskLog = MetaStore.getLastTaskLog(entityManager, "load_a_table")
     entityManager.getTransaction.commit()
-    assert(latestTaskLog.get.getLogType == 0) // Task Started
+    assert(latestTaskLog.get.getLogType === TaskLogType.START) // Task Started
 
-    metaStore.writeFinishTask(startTask, partitionDate, success = false)
+    metaStore.logFinishTask(startTask, partitionDate, success = false)
     entityManager.getTransaction.begin()
     latestTaskLog = MetaStore.getLastTaskLog(entityManager, "load_a_table")
     entityManager.getTransaction.commit()
-    assert(latestTaskLog.get.getLogType == 2) // Task failed
+    assert(latestTaskLog.get.getLogType === TaskLogType.FAILURE) // Task failed
 
     val partitionDate2 = LocalDateTime.of(2001, 1, 1, 0, 0, 0)
     entityManager.getTransaction.begin()
-    val startTask2 = metaStore.writeStartTask()
-    metaStore.writeFinishTask(startTask2, partitionDate2, success = true)
+    val startTask2 = metaStore.logStartTask()
+    metaStore.logFinishTask(startTask2, partitionDate2, success = true)
     entityManager.getTransaction.commit()
     entityManager.getTransaction.begin()
     latestTaskLog = MetaStore.getLastTaskLog(entityManager, "load_a_table")
     entityManager.getTransaction.commit()
-    assert(latestTaskLog.get.getLogType == 1)  // Task succeeded
+    assert(latestTaskLog.get.getLogType === TaskLogType.SUCCESS)  // Task succeeded
   }
 
 }

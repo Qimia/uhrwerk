@@ -30,8 +30,7 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
                startTimes: Seq[LocalDateTime])(implicit ex: ExecutionContext): List[Future[LocalDateTime]] = {
 
     def runSingleTask(time: LocalDateTime): Unit = {
-      // Use metastore to denote start of the run
-      val startLog = store.writeStartTask()
+      val startLog = store.logStartTask()
 
       // Use configured frameManager to read dataframes
       // TODO: Read the proper DF here and get the right connection/time params for it
@@ -45,10 +44,8 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
       val taskInput =
         new TaskInput(store.connections, time, inputDFs)
 
-      // map dataframe using usercode
       val success = try {
         val frame = stepFunction(taskInput)
-        // write output dataframe according to startTime and configuration
         if (frame.isDefined) {
           store.stepConfig.getTargets
             .filter(tar => {
@@ -68,12 +65,9 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
         }
       }
 
-      // Use metastore to denote end of the run
-      store.writeFinishTask(startLog, time, success)
-      // TODO: At the moment always stores all TaskLogs
+      store.logFinishTask(startLog, time, success)
     }
 
-    // Use metastore to check the dependencies from the metastore
     val checkResult =
       store.checkDependencies(store.stepConfig.getDependencies, startTimes)
     // TODO need to add filtering and logic for Virtual Steps and other kinds of steps

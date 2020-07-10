@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.models.config;
 
+import io.qimia.uhrwerk.models.ConnectionType;
+
 public class Connection {
 
     private String name = "";
@@ -25,6 +27,10 @@ public class Connection {
 
     public String getType() {
         return type;
+    }
+
+    public ConnectionType getTypeEnum() {
+        return ConnectionType.getConnectionType(type);
     }
 
     public void setType(String type) {
