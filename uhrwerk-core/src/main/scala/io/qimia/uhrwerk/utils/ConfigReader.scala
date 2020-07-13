@@ -4,12 +4,10 @@ import java.io.FileInputStream
 import java.nio.file.Path
 
 import io.qimia.uhrwerk.models.config.{Global, Step}
-import io.qimia.uhrwerk.models.store.StepConfig
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.representer.Representer
 
-import scala.reflect.ClassTag
 
 object ConfigReader {
 

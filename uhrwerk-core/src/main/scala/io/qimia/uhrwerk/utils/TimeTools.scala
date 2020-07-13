@@ -31,6 +31,7 @@ object TimeTools {
 
   // go from a duration object to a string representation
   def convertDurationToStr(duration: Duration): String = {
+    // TODO: Doesn't handle combinations (1h30m) yet.
     val totalMinutes = duration.toMinutes
     if ((totalMinutes % 60) == 0) {
       val totalHours = totalMinutes / 60
@@ -104,6 +105,13 @@ object TimeTools {
         }
       })
       .map(_.head) // Convert back to big batches
+  }
+
+  def convertToWindowBatchList(largeBatchList: List[LocalDateTime],
+                               stepBatchSize: Duration,
+                               windowSize: Int): List[LocalDateTime] = {
+    val timeSubtractions = (windowSize - 1 until 0).map(stepBatchSize.multipliedBy(_)).map(largeBatchList.head.minus(_))
+    timeSubtractions ++: largeBatchList
   }
 
 }

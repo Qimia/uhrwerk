@@ -17,6 +17,8 @@ public enum DependencyType {
                 resType = WINDOW;
                 break;
             default:
+                System.err.println("Bad dependency type given: " + type);
+                System.err.println("using one on one instead");
                 resType = ONEONONE;
         }
         return resType;

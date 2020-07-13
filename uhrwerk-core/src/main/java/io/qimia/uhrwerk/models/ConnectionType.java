@@ -26,6 +26,8 @@ public enum ConnectionType {
                 res = GC;
                 break;
             default:
+                System.err.println("Bad connection type given: " + connection);
+                System.err.println("using filesystem instead");
                 res = FS;
         }
         return res;
