@@ -6,7 +6,7 @@ import java.util.concurrent.Executors
 import io.qimia.uhrwerk.ManagedIO.FrameManager
 import io.qimia.uhrwerk.MetaStore.{DependencyFailed, DependencySuccess}
 import io.qimia.uhrwerk.StepWrapper.TaskInput
-import io.qimia.uhrwerk.models.DependencyType
+import io.qimia.uhrwerk.models.{ConnectionType, DependencyType}
 import io.qimia.uhrwerk.models.config.{Connection, Dependency}
 import io.qimia.uhrwerk.utils.TimeTools
 import org.apache.spark.sql.DataFrame
@@ -105,8 +105,9 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
       // TODO: Read the proper DF here and get the right connection/time params for it
       val inputDFs: List[DataFrame] = store.stepConfig.getDependencies
         .filter(dep => {
-          !dep.isExternal
-          // TODO: Filter only the ones internal and which can be read using FrameLoader (is df from managed datalake)
+          !dep.isExternal && store.connections(dep.getConnectionName).getTypeEnum.isSparkPath
+          // Filter only the ones internal and which can be read using FrameLoader (is df from managed datalake)
+          // TODO: Discuss if this is how we decide load-by-library / load-by-user
         })
         .map(dep =>
           frameManager.loadDFFromLake(store.connections(dep.getConnectionName),

@@ -134,7 +134,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     entityManager.getTransaction().commit()
     res2.head match {
       case Right(_) => fail
-      case Left(y) => assert(y._2.head === "table_2")
+      case Left(y)  => assert(y._2.head === "table_2")
     }
 
     entityManager.getTransaction().begin()
@@ -145,7 +145,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     entityManager.getTransaction().commit()
     res3.head match {
       case Right(_) => fail
-      case Left(y) => assert(y._2.size == 2)
+      case Left(y)  => assert(y._2.size == 2)
     }
   }
 
@@ -154,6 +154,8 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     val stepConfig = Paths.get("src/test/resources/config/step_test_1.yml")
 
     val metaStore = MetaStore(globalConfig, stepConfig)
+    List("mysql_test", "s3_test", "local_filesystem_test").foreach(name =>
+      assert(metaStore.connections.contains(name)))
     val startTask = metaStore.logStartTask()
     val partitionDate = LocalDateTime.of(2000, 1, 1, 0, 0, 0)
 
@@ -177,7 +179,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     entityManager.getTransaction.begin()
     latestTaskLog = MetaStore.getLastTaskLog(entityManager, "load_a_table")
     entityManager.getTransaction.commit()
-    assert(latestTaskLog.get.getLogType === TaskLogType.SUCCESS)  // Task succeeded
+    assert(latestTaskLog.get.getLogType === TaskLogType.SUCCESS) // Task succeeded
   }
 
 }

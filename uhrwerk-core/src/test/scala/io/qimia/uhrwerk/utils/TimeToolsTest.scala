@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.utils
 
-import java.time.{Duration, LocalDateTime, Month}
+import java.time.{Duration, LocalDateTime, LocalTime, Month}
 
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -148,9 +148,9 @@ class TimeToolsTest extends AnyFlatSpec {
     val fineListA =
       TimeTools.convertToSmallerBatchList(courseListA, courseDuration, dividerA)
     val courseResultList = TimeTools.filterBySmallerBatchList(courseListA,
-      courseDuration,
-      dividerA,
-      fineListA.toSet)
+                                                              courseDuration,
+                                                              dividerA,
+                                                              fineListA.toSet)
     assert(courseListA.toSet.equals(courseResultList.toSet))
 
     val dividerB = 2
@@ -188,9 +188,9 @@ class TimeToolsTest extends AnyFlatSpec {
       LocalDateTime.of(2010, Month.MARCH, 7, 16, 30, 0)
     )
     val outB = TimeTools.filterBySmallerBatchList(courseListB,
-      courseDuration,
-      dividerB,
-      fineListB.toSet)
+                                                  courseDuration,
+                                                  dividerB,
+                                                  fineListB.toSet)
     outB
       .zip(predictedResultB)
       .foreach(timePair => assert(timePair._1.isEqual(timePair._2)))
@@ -204,11 +204,48 @@ class TimeToolsTest extends AnyFlatSpec {
       LocalDateTime.of(2010, Month.MARCH, 5, 13, 0, 0),
       LocalDateTime.of(2010, Month.MARCH, 5, 14, 0, 0)
     )
-    val windowedVersion = TimeTools.convertToWindowBatchList(dateTimes, Duration.ofHours(1), 4)
+    val windowedVersion =
+      TimeTools.convertToWindowBatchList(dateTimes, Duration.ofHours(1), 4)
     assert(windowedVersion.length == (dateTimes.length + 3))
+    assert(
+      windowedVersion.head === LocalDateTime.of(2010, Month.MARCH, 5, 7, 0, 0))
     val outDateTimes = TimeTools.cleanWindowBatchList(windowedVersion, 4)
     assert(dateTimes === outDateTimes)
   }
 
-}
+  "converting a time into a batch number" should "work for common minute values" in {
+    val tenMinuteTest = List(
+      LocalTime.of(11, 0),
+      LocalTime.of(13, 10),
+      LocalTime.of(16, 20),
+      LocalTime.of(3, 30),
+      LocalTime.of(6, 40),
+      LocalTime.of(1, 50)
+    )
+    val tenMinuteCorrect = List(0, 1, 2, 3, 4, 5)
+    val tenMinuteResult = tenMinuteTest.map(time =>
+      TimeTools.getBatchInHourNumber(time, Duration.ofMinutes(10)))
+    assert(tenMinuteResult === tenMinuteCorrect)
 
+    val quarterTest = List(
+      LocalTime.of(13, 0),
+      LocalTime.of(22, 15),
+      LocalTime.of(3, 30),
+      LocalTime.of(6, 45),
+    )
+    val quarterCorrect = List(0, 1, 2, 3)
+    val quarterMinuteResult = quarterTest.map(time =>
+      TimeTools.getBatchInHourNumber(time, Duration.ofMinutes(15)))
+    assert(quarterMinuteResult === quarterCorrect)
+
+    val halfTest = List(
+      LocalTime.of(13, 0),
+      LocalTime.of(22, 30),
+    )
+    val halfCorrect = List(0, 1)
+    val halfResult = halfTest.map(time =>
+      TimeTools.getBatchInHourNumber(time, Duration.ofMinutes(30)))
+    assert(halfResult === halfCorrect)
+  }
+
+}

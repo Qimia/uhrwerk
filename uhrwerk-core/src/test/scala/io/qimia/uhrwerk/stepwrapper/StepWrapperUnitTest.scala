@@ -77,4 +77,45 @@ class StepWrapperUnitTest extends AnyFlatSpec {
     })
   }
 
+  "combining multiple dependency checks" should "merge all failures and successes" in {
+    val dates = Array(
+      LocalDateTime.of(2010, Month.MARCH, 5, 5, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 6, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 7, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 8, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 9, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 10, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 11, 0, 0)
+    )
+    val checkOut1 = List(
+      Left(dates(0), Set("table_a")),
+      Right(dates(1)),
+      Left((dates(2), Set("table_b"))),
+      Right(dates(3)),
+      Right(dates(4)),
+      Left(dates(5), Set("table_a", "table_b")),
+      Right(dates(6))
+    )
+    val checkOut2 = List(
+      Right(dates(0)),
+      Right(dates(1)),
+      Left(dates(2), Set("table_c", "table_d")),
+      Left(dates(3), Set("table_c")),
+      Right(dates(4)),
+      Left(dates(5), Set("table_a", "table_c")),
+      Left(dates(6), Set("table_c", "table_e"))
+    )
+    val mergeChecks = StepWrapper.combineDependencyChecks(checkOut1, checkOut2)
+    val correctMerge = List(
+      Left(dates(0), Set("table_a")),
+      Right(dates(1)),
+      Left(dates(2), Set("table_b", "table_c", "table_d")),
+      Left(dates(3), Set("table_c")),
+      Right(dates(4)),
+      Left(dates(5), Set("table_a", "table_b", "table_c")),
+      Left(dates(6), Set("table_c", "table_e"))
+    )
+    assert(mergeChecks === correctMerge)
+  }
+
 }

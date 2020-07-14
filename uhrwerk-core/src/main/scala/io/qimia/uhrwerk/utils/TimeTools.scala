@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.utils
 
-import java.time.{Duration, LocalDateTime}
+import java.time.{Duration, LocalDateTime, LocalTime}
 import java.time.format.DateTimeFormatter
 
 import scala.collection.mutable.ListBuffer
@@ -44,6 +44,13 @@ object TimeTools {
     } else {
       s"${totalMinutes}m"
     }
+  }
+
+  // Convert a localtime to a batch number (for when batches are smaller than an hour)
+  def getBatchInHourNumber(time: LocalTime, duration: Duration): Long = {
+    val minuteHand = time.getMinute
+    val minuteDuration = duration.toMinutes
+    minuteHand / minuteDuration
   }
 
   // Go from range to a list of dates (with a given batchsize) (start inclusive end exclusive)
@@ -111,7 +118,7 @@ object TimeTools {
   def convertToWindowBatchList(largeBatchList: List[LocalDateTime],
                                stepBatchSize: Duration,
                                windowSize: Int): List[LocalDateTime] = {
-    val timeSubtractions = (-windowSize + 1 until 0).map(stepBatchSize.multipliedBy(_)).map(largeBatchList.head.minus(_))
+    val timeSubtractions = (-windowSize + 1 until 0).map(stepBatchSize.multipliedBy(_)).map(largeBatchList.head.plus(_))
     timeSubtractions ++: largeBatchList
   }
 
