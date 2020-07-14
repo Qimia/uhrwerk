@@ -196,5 +196,19 @@ class TimeToolsTest extends AnyFlatSpec {
       .foreach(timePair => assert(timePair._1.isEqual(timePair._2)))
   }
 
+  "Creating a windowed batch list and reversing it" should "return the original batchlist and have the right size" in {
+    val dateTimes = List(
+      LocalDateTime.of(2010, Month.MARCH, 5, 10, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 11, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 12, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 13, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 14, 0, 0)
+    )
+    val windowedVersion = TimeTools.convertToWindowBatchList(dateTimes, Duration.ofHours(1), 4)
+    assert(windowedVersion.length == (dateTimes.length + 3))
+    val outDateTimes = TimeTools.cleanWindowBatchList(windowedVersion, 4)
+    assert(dateTimes === outDateTimes)
+  }
+
 }
 

@@ -107,11 +107,15 @@ object TimeTools {
       .map(_.head) // Convert back to big batches
   }
 
+  // Adds windowSize - 1 batches to the front of the batchList for windowed dependencies
   def convertToWindowBatchList(largeBatchList: List[LocalDateTime],
                                stepBatchSize: Duration,
                                windowSize: Int): List[LocalDateTime] = {
-    val timeSubtractions = (windowSize - 1 until 0).map(stepBatchSize.multipliedBy(_)).map(largeBatchList.head.minus(_))
+    val timeSubtractions = (-windowSize + 1 until 0).map(stepBatchSize.multipliedBy(_)).map(largeBatchList.head.minus(_))
     timeSubtractions ++: largeBatchList
   }
+
+  // Remove added window elements from the list (reverse of creating the window list)
+  def cleanWindowBatchList[T](windowedBatchList: List[T], windowSize: Int): List[T] = windowedBatchList.drop(windowSize - 1)
 
 }

@@ -24,6 +24,71 @@ object StepWrapper {
 
   def getVirtualDependency() = {} // If we know it's there we can create the dataframe with a function
 
+  // combine the 2 dependency check outputs of different checkers (different virtual ones or metastore)
+  // Assumes the lists are equal size and ordered the same
+  def combineDependencyChecks(
+      a: List[Either[DependencyFailed, DependencySuccess]],
+      b: List[Either[DependencyFailed, DependencySuccess]])
+    : List[Either[DependencyFailed, DependencySuccess]] = {
+
+    def combineEither[R](
+        a: Either[DependencyFailed, R],
+        b: Either[DependencyFailed, R]): Either[DependencyFailed, R] = {
+      (a, b) match {
+        case (Left(a1), Left(b1)) => {
+          Left(new DependencyFailed(a1._1, a1._2 union b1._2))
+        }
+        case (Left(a2), Right(_))  => Left(a2)
+        case (Right(_), Left(b3))  => Left(b3)
+        case (Right(a4), Right(_)) => Right(a4)
+      }
+    }
+
+    assert(a.length == b.length)
+    a.zip(b).map(tup => combineEither(tup._1, tup._2))
+  }
+
+  // Create a boolean filter for the window batches based on window size
+  def createFilterWithWindowList(windowBatchList: List[Boolean],
+                                 windowSize: Int): List[Boolean] = {
+    var toRemove = 0 // TODO proper map without side effects
+    windowBatchList.map {
+      case false => {
+        toRemove = windowSize - 1
+        false
+      }
+      case true => {
+        if (toRemove > 0) {
+          toRemove -= 1
+          false
+        } else {
+          true
+        }
+      }
+    }
+  }
+
+  // apply a boolean filter to an existing dependency-check output
+  def applyWindowFilter(
+      originalOutcome: List[Either[DependencyFailed, DependencySuccess]],
+      filter: List[Boolean],
+      nameDependency: String)
+    : List[Either[DependencyFailed, DependencySuccess]] = {
+    assert(originalOutcome.length == filter.length)
+    originalOutcome
+      .zip(filter)
+      .map(tup => {
+        if (tup._2) {
+          tup._1
+        } else {
+          tup._1 match {
+            case Right(time) =>
+              Left(new DependencyFailed(time, Set(nameDependency)))
+            case Left(f) => Left(f)
+          }
+        }
+      })
+  }
 }
 
 class StepWrapper(store: MetaStore, frameManager: FrameManager) {
@@ -48,11 +113,11 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
                                       dep,
                                       Option(time)))
         .toList
-      val taskInput =
-        new TaskInput(store.connections, time, inputDFs)
+      val taskInput = TaskInput(store.connections, time, inputDFs)
 
       val success = try {
         val frame = stepFunction(taskInput)
+        // TODO error checking: if target should be on datalake but no frame is given
         if (frame.isDefined) {
           store.stepConfig.getTargets
             .filter(tar => {
@@ -89,10 +154,10 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
           case true => {
             val individualVirtOutcomes =
               keyDeps._2.map(checkVirtualStep(_, startTimes.toList))
-            individualVirtOutcomes.reduce(combineDependencyChecks)
+            individualVirtOutcomes.reduce(StepWrapper.combineDependencyChecks)
           }
       })
-      .reduce(combineDependencyChecks)
+      .reduce(StepWrapper.combineDependencyChecks)
     // TODO need to add filtering and logic for Virtual Steps and other kinds of steps
 
     val tasks: mutable.ListBuffer[Future[LocalDateTime]] =
@@ -136,18 +201,31 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
     // Use metaStore to check if the right batches are there
 
     def checkWindowStep(): List[Either[DependencyFailed, DependencySuccess]] = {
-      // First map to the right hours using timetools and the dependency multiplier
+      val windowSize = dependency.getPartitionCount
+      val windowStartTimes = TimeTools.convertToWindowBatchList(
+        startTimes,
+        store.stepConfig.getBatchSizeDuration,
+        windowSize)
 
-      // Then Check these times using the metastore
+      val windowedBatchOutcome =
+        store.checkDependencies(Array(dependency), windowStartTimes)
 
-      // The calculate which windows have been affected by the gaps
+      val booleanOutcome = windowedBatchOutcome.map({
+        case Left(_)  => false
+        case Right(_) => true
+      })
+      val windowFilter =
+        StepWrapper.createFilterWithWindowList(booleanOutcome, windowSize)
+      val filteredOutcome = StepWrapper.applyWindowFilter(windowedBatchOutcome,
+                                                          windowFilter,
+                                                          dependency.getPath)
+      // TODO: Change to name in-case we switch from using the paths to using identifiers/names
 
-      // Return all successes except for those window times that have been affected
-      // (ie. build output list)
-      Nil
+      TimeTools.cleanWindowBatchList(filteredOutcome, windowSize)
     }
 
-    def checkAggregateStep(): List[Either[DependencyFailed, DependencySuccess]] = {
+    def checkAggregateStep()
+      : List[Either[DependencyFailed, DependencySuccess]] = {
       // TODO: Doesn't check if the given duration (dep.getPartitionSizeDuration) agrees with this division
       val smallerStartTimes = TimeTools.convertToSmallerBatchList(
         startTimes,
@@ -158,65 +236,24 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
         store.checkDependencies(Array(dependency), smallerStartTimes)
       val foundSmallBatches =
         smallBatchOutcome.filter(_.isRight).map({ case Right(x) => x }).toSet
-      val foundBigBatches = TimeTools.filterBySmallerBatchList(
-        startTimes,
-        store.stepConfig.getBatchSizeDuration,
-        dependency.getPartitionCount,
-        foundSmallBatches)
+      val foundBigBatches = TimeTools
+        .filterBySmallerBatchList(startTimes,
+                                  store.stepConfig.getBatchSizeDuration,
+                                  dependency.getPartitionCount,
+                                  foundSmallBatches)
         .toSet
 
-      startTimes.map(datetime => if (foundBigBatches.contains(datetime)) {
-        Right(datetime)
-      } else {
-        Left((datetime, Set(dependency.getPath)))
+      startTimes.map(datetime =>
+        if (foundBigBatches.contains(datetime)) {
+          Right(datetime)
+        } else {
+          Left((datetime, Set(dependency.getPath)))
       })
     }
+
     dependency.getTypeEnum match {
       case DependencyType.AGGREGATE => checkAggregateStep()
-      case DependencyType.WINDOW => checkWindowStep()
-    }
-  }
-
-  // combine the 2 dependency check outputs of different checkers (different virtual ones or metastore)
-  // Assumes the lists are equal size and ordered the same
-  def combineDependencyChecks(
-      a: List[Either[DependencyFailed, DependencySuccess]],
-      b: List[Either[DependencyFailed, DependencySuccess]])
-    : List[Either[DependencyFailed, DependencySuccess]] = {
-
-    def combineEither[R](
-        a: Either[DependencyFailed, R],
-        b: Either[DependencyFailed, R]): Either[DependencyFailed, R] = {
-      (a, b) match {
-        case (Left(a1), Left(b1)) => {
-          Left(new DependencyFailed(a1._1, a1._2 union b1._2))
-        }
-        case (Left(a2), Right(_))  => Left(a2)
-        case (Right(_), Left(b3))  => Left(b3)
-        case (Right(a4), Right(_)) => Right(a4)
-      }
-    }
-
-    assert(a.length == b.length)
-    a.zip(b).map(tup => combineEither(tup._1, tup._2))
-  }
-
-  def createFilterWithWindowList(windowBatchList: List[Boolean],
-                              windowSize: Int): List[Boolean] = {
-    var toRemove = 0 // TODO proper map without side effects
-    windowBatchList.map {
-      case false => {
-        toRemove = windowSize - 1
-        false
-      }
-      case true => {
-        if (toRemove > 0) {
-          toRemove -= 1
-          false
-        } else {
-          true
-        }
-      }
+      case DependencyType.WINDOW    => checkWindowStep()
     }
   }
 
