@@ -236,7 +236,10 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
       val smallBatchOutcome =
         store.checkDependencies(Array(dependency), smallerStartTimes)
       val foundSmallBatches =
-        smallBatchOutcome.filter(_.isRight).map({ case Right(x) => x }).toSet
+        smallBatchOutcome.filter(_.isRight).map({
+          case Right(x) => x
+          case Left(_) => throw new RuntimeException
+        }).toSet
       val foundBigBatches = TimeTools
         .filterBySmallerBatchList(startTimes,
                                   store.stepConfig.getBatchSizeDuration,
@@ -255,6 +258,10 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
     dependency.getTypeEnum match {
       case DependencyType.AGGREGATE => checkAggregateStep()
       case DependencyType.WINDOW    => checkWindowStep()
+      case _ => {
+        System.err.println("Error: trying not implemented virtual step")
+        throw new NotImplementedError
+      }
     }
   }
 
