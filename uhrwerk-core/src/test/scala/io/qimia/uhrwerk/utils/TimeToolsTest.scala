@@ -248,4 +248,14 @@ class TimeToolsTest extends AnyFlatSpec {
     assert(halfResult === halfCorrect)
   }
 
+  "checking if one duration is divisible by another" should "return true if possible and false if not" in {
+    val b1 = Duration.ofHours(6)
+    val s1 = Duration.ofHours(1)
+    assert(TimeTools.divisibleBy(b1, s1))
+    val s11 = Duration.ofMinutes(10)
+    assert(TimeTools.divisibleBy(b1, s11))
+    val s12 = Duration.ofMinutes(40)
+    assert(TimeTools.divisibleBy(b1, s12))
+  }
+
 }

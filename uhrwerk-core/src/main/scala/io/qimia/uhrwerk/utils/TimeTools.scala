@@ -125,4 +125,7 @@ object TimeTools {
   // Remove added window elements from the list (reverse of creating the window list)
   def cleanWindowBatchList[T](windowedBatchList: List[T], windowSize: Int): List[T] = windowedBatchList.drop(windowSize - 1)
 
+
+  def divisibleBy(big: Duration, small: Duration): Boolean = big.toMinutes % small.toMinutes == 0
+
 }
