@@ -1,11 +1,10 @@
 package io.qimia.uhrwerk.ManagedIO
+
 import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.models.config.{Connection, Dependency, Target}
 import io.qimia.uhrwerk.utils.TimeTools
-import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions._
 
 object SparkFrameManager {
 
@@ -39,7 +38,14 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
   // TODO: This more of a rough sketch than the actual full FrameManager. We will need to handle different batch sizes
 
-  // Load dataframe from datalake
+  /**
+   * Load dataframe from datalake
+   *
+   * @param conn         Connection
+   * @param locationInfo Location Info
+   * @param startTS      Start Timestamp
+   * @return DataFrame
+   */
   override def loadDFFromLake(conn: Connection,
                               locationInfo: Dependency,
                               startTS: Option[LocalDateTime]): DataFrame = {
@@ -47,10 +53,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     // TODO: Make trailing slashes handling better
     // TODO: Needs to be able to load multiple batches as one dataframe efficiently
     val fullLocation = if (startTS.isDefined) {
-      val duration =
-        TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
-      conn.getStartPath + locationInfo.getPath + s"/batch=${SparkFrameManager
-        .dateTimeToPostFix(startTS.get, duration)}"
+      val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
+      conn.getStartPath + locationInfo.getPath + s"/batch=${SparkFrameManager.dateTimeToPostFix(startTS.get, duration)}"
     } else {
       conn.getStartPath + locationInfo.getPath
     }
@@ -73,17 +77,22 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     df.where(($"batch" >= startRange) and ($"batch" < endRange))
   }
 
-  // safe dataframe to datalake
+  /**
+   * Save dataframe to datalake
+   *
+   * @param frame        DataFrame to save
+   * @param conn         Connection
+   * @param locationInfo Location Info
+   * @param startTS      Start Timestamp
+   */
   override def writeDFToLake(frame: DataFrame,
                              conn: Connection,
                              locationInfo: Target,
                              startTS: Option[LocalDateTime]): Unit = {
     assert(conn.getName == locationInfo.getConnectionName)
     val fullLocation = if (startTS.isDefined) {
-      val duration =
-        TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
-      conn.getStartPath + locationInfo.getPath + s"/batch=${SparkFrameManager
-        .dateTimeToPostFix(startTS.get, duration)}"
+      val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
+      conn.getStartPath + locationInfo.getPath + s"/batch=${SparkFrameManager.dateTimeToPostFix(startTS.get, duration)}"
     } else {
       conn.getStartPath + locationInfo.getPath
     }

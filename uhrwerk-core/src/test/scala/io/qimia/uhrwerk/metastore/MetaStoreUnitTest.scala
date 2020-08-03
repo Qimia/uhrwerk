@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.metastore
 
-import java.nio.file.Paths
+import java.nio.file.{Path, Paths}
 import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.MetaStore
@@ -9,6 +9,8 @@ import io.qimia.uhrwerk.models.store.{PartitionLog, TaskLog}
 import io.qimia.uhrwerk.models.config.Dependency
 import javax.persistence.{EntityManagerFactory, Persistence}
 import org.scalatest.flatspec.AnyFlatSpec
+
+import scala.io.{BufferedSource, Source}
 
 class MetaStoreUnitTest extends AnyFlatSpec {
 
@@ -150,8 +152,8 @@ class MetaStoreUnitTest extends AnyFlatSpec {
   }
 
   "MetaStore object" should "read TaskLogs and write TaskLogs" in {
-    val globalConfig = Paths.get("src/test/resources/config/global_test_1.yml")
-    val stepConfig = Paths.get("src/test/resources/config/step_test_1.yml")
+    val globalConfig: Path = Paths.get(getClass.getResource("/config/global_test_1.yml").getPath)
+    val stepConfig: Path = Paths.get(getClass.getResource("/config/step_test_1.yml").getPath)
 
     val metaStore = MetaStore(globalConfig, stepConfig)
     List("mysql_test", "s3_test", "local_filesystem_test").foreach(name =>

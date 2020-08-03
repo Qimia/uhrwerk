@@ -8,7 +8,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 class ConfigReaderTest extends AnyFlatSpec {
 
   "Given a premade global config it" should "be parsable by the configreader" in {
-    val confPath = Paths.get("src/test/resources/config/global_test_1.yml")
+    val confPath = Paths.get(getClass.getResource("/config/global_test_1.yml").getPath)
     val gconf = ConfigReader.readGlobalConfig(confPath)
 
     val connections = gconf.getConnections()
@@ -18,7 +18,7 @@ class ConfigReaderTest extends AnyFlatSpec {
   }
 
   "Given a premade step config it" should "be parsable by the configreader" in {
-    val confPath = Paths.get("src/test/resources/config/step_test_1.yml")
+    val confPath = Paths.get(getClass.getResource("/config/step_test_1.yml").getPath)
     val stepConf = ConfigReader.readStepConfig(confPath)
 
     assert(stepConf.getName === "load_a_table")

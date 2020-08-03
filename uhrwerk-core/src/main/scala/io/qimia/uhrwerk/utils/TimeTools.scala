@@ -53,7 +53,13 @@ object TimeTools {
     minuteHand / minuteDuration
   }
 
-  // Go from range to a list of dates (with a given batchsize) (start inclusive end exclusive)
+  /**
+   * Go from range to a list of dates (with a given batchsize) (start inclusive end exclusive)
+   * @param startDate
+   * @param endDate
+   * @param batchSize
+   * @return
+   */
   def convertRangeToBatch(startDate: LocalDateTime,
                           endDate: LocalDateTime,
                           batchSize: Duration): List[LocalDateTime] = {
