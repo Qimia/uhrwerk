@@ -134,4 +134,47 @@ object TimeTools {
 
   def divisibleBy(big: Duration, small: Duration): Boolean = big.toMinutes % small.toMinutes == 0
 
+  @scala.annotation.tailrec
+  def leftPad(s: String): String = {
+    if (s.length < 2) {
+      leftPad("0" + s)
+    } else {
+      s
+    }
+  }
+
+  /**
+   * Convert batch start timestamp to postfix needed for reading single batch
+   *
+   * @param date DateTime
+   * @param duration Duration
+   * @return String postfix
+   */
+  def dateTimeToPostFix(date: LocalDateTime, duration: Duration): String = {
+    val year = date.getYear
+    val month = leftPad(date.getMonthValue.toString)
+    val day = leftPad(date.getDayOfMonth.toString)
+    if (duration.toHours >= Duration.ofDays(1).toHours) {
+      return s"${year}-${month}-${day}"
+    }
+    val hour = leftPad(date.getHour.toString)
+    if (duration.toMinutes >= Duration.ofHours(1).toMinutes) {
+      return s"${year}-${month}-${day}-${hour}"
+    }
+    val batch = TimeTools.getBatchInHourNumber(date.toLocalTime, duration).toString
+    s"${year}-${month}-${day}-${hour}-${batch}"
+  }
+
+  /**
+   * Convert batch start timestamp to date
+   *
+   * @param date DateTime
+   * @return String date
+   */
+  def dateTimeToDate(date: LocalDateTime): String = {
+    val year = date.getYear
+    val month = leftPad(date.getMonthValue.toString)
+    val day = leftPad(date.getDayOfMonth.toString)
+    s"${year}-${month}-${day}"
+  }
 }

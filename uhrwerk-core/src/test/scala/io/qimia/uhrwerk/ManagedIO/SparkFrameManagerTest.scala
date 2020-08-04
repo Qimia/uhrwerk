@@ -45,7 +45,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val spark = SparkSession
       .builder()
       .appName("TestFrameManager2")
-      .master("local")
+      .master("local[2]")
       .getOrCreate()
 
     val sc: SparkContext = spark.sparkContext
@@ -54,12 +54,15 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     spark
   }
 
-  "when converting a LocalDateTime to a postfix it" should "be easily convertable" in {
-    val dateTime = LocalDateTime.of(2020, 1, 1, 8, 45)
-    val duration = Duration.ofMinutes(15)
-    val outStr = SparkFrameManager.dateTimeToPostFix(dateTime, duration)
-    val corrStr = s"2020-01-01-08-3"
-    assert(outStr === corrStr)
+  "concatenatePaths" should "properly concatenate paths" in {
+    val a = "a"
+    val b = "b"
+    val c = "/c"
+    val d = "d/"
+    val e = "/e/"
+
+    val result = SparkFrameManager.concatenatePaths(a, b, c, d, e)
+    assert(result === "a/b/c/d/e")
   }
 
   "safe DF to Lake and load from lake" should "return the same df and create the right folderstructure" in {
@@ -144,7 +147,6 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val results = bigDF.agg(min($"batch"), max($"batch")).collect().head
     assert(results.getAs[String](0) === "2015-10-12-20-0")
     assert(results.getAs[String](1) === "2015-10-13-19-1")
-    Thread.sleep(4000) // Deleting the folders will else make the test fragile
     foldersToClean.append(Paths.get("src/test/resources/testlake/testsparkframerange/"))
   }
 

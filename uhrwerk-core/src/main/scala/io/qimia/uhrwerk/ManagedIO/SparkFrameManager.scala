@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.ManagedIO
 
+import java.nio.file.Paths
 import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.models.config.{Connection, Dependency, Target}
@@ -7,30 +8,15 @@ import io.qimia.uhrwerk.utils.TimeTools
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object SparkFrameManager {
-
-  @scala.annotation.tailrec
-  def leftPad(s: String): String = {
-    if (s.length < 2) {
-      leftPad("0" + s)
-    } else {
-      s
-    }
-  }
-
-  // Convert batch start timestamp to postfix needed for reading single batch
-  def dateTimeToPostFix(date: LocalDateTime, duration: Duration): String = {
-    val year = date.getYear
-    val month = leftPad(date.getMonthValue.toString)
-    val day = leftPad(date.getDayOfMonth.toString)
-    if (duration.toHours >= Duration.ofDays(1).toHours) {
-      return s"${year}-${month}-${day}"
-    }
-    val hour = leftPad(date.getHour.toString)
-    if (duration.toMinutes >= Duration.ofHours(1).toMinutes) {
-      return s"${year}-${month}-${day}-${hour}"
-    }
-    val batch = TimeTools.getBatchInHourNumber(date.toLocalTime, duration).toString
-    s"${year}-${month}-${day}-${hour}-${batch}"
+  /**
+   * Concatenates paths into a single string. Handles properly all trailing slashes
+   *
+   * @param first First path
+   * @param more  One or more paths
+   * @return Concatenated path
+   */
+  def concatenatePaths(first: String, more: String*): String = {
+    Paths.get(first, more: _*).toString
   }
 }
 
@@ -39,24 +25,22 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   // TODO: This more of a rough sketch than the actual full FrameManager. We will need to handle different batch sizes
 
   /**
-   * Load dataframe from datalake
+   * Load dataframe from datalake. Either one batch or the full path.
    *
    * @param conn         Connection
    * @param locationInfo Location Info
-   * @param startTS      Start Timestamp
+   * @param batchTS      Batch Timestamp. If not defined, load the full path.
    * @return DataFrame
    */
   override def loadDFFromLake(conn: Connection,
                               locationInfo: Dependency,
-                              startTS: Option[LocalDateTime]): DataFrame = {
+                              batchTS: Option[LocalDateTime]): DataFrame = {
     assert(conn.getName == locationInfo.getConnectionName)
-    // TODO: Make trailing slashes handling better
-    // TODO: Needs to be able to load multiple batches as one dataframe efficiently
-    val fullLocation = if (startTS.isDefined) {
+    val fullLocation = if (batchTS.isDefined) {
       val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
-      conn.getStartPath + locationInfo.getPath + s"/batch=${SparkFrameManager.dateTimeToPostFix(startTS.get, duration)}"
+      SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath, s"batch=${TimeTools.dateTimeToPostFix(batchTS.get, duration)}")
     } else {
-      conn.getStartPath + locationInfo.getPath
+      SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath)
     }
     sparkSession.read.parquet(fullLocation)
   }
@@ -68,12 +52,10 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
                       endTSExcl: LocalDateTime,
                       batchDuration: Duration): DataFrame = {
     import sparkSession.implicits._
-    val loc = conn.getStartPath + locationInfo.getPath
+    val loc = SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath)
     val df = sparkSession.read.parquet(loc)
-    val startRange = SparkFrameManager
-      .dateTimeToPostFix(startTS, batchDuration)
-    val endRange = SparkFrameManager
-      .dateTimeToPostFix(endTSExcl, batchDuration)
+    val startRange = TimeTools.dateTimeToPostFix(startTS, batchDuration)
+    val endRange = TimeTools.dateTimeToPostFix(endTSExcl, batchDuration)
     df.where(($"batch" >= startRange) and ($"batch" < endRange))
   }
 
@@ -83,18 +65,18 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @param frame        DataFrame to save
    * @param conn         Connection
    * @param locationInfo Location Info
-   * @param startTS      Start Timestamp
+   * @param batchTS      Batch Timestamp, optional.
    */
   override def writeDFToLake(frame: DataFrame,
                              conn: Connection,
                              locationInfo: Target,
-                             startTS: Option[LocalDateTime]): Unit = {
+                             batchTS: Option[LocalDateTime]): Unit = {
     assert(conn.getName == locationInfo.getConnectionName)
-    val fullLocation = if (startTS.isDefined) {
+    val fullLocation = if (batchTS.isDefined) {
       val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
-      conn.getStartPath + locationInfo.getPath + s"/batch=${SparkFrameManager.dateTimeToPostFix(startTS.get, duration)}"
+      SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath, s"batch=${TimeTools.dateTimeToPostFix(batchTS.get, duration)}")
     } else {
-      conn.getStartPath + locationInfo.getPath
+      SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath)
     }
     frame.write.parquet(fullLocation)
   }

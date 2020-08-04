@@ -258,4 +258,18 @@ class TimeToolsTest extends AnyFlatSpec {
     assert(TimeTools.divisibleBy(b1, s12))
   }
 
+  "when converting a LocalDateTime to a postfix it" should "be easily convertable" in {
+    val dateTime = LocalDateTime.of(2020, 1, 1, 8, 45)
+    val duration = Duration.ofMinutes(15)
+    val outStr = TimeTools.dateTimeToPostFix(dateTime, duration)
+    val corrStr = s"2020-01-01-08-3"
+    assert(outStr === corrStr)
+  }
+
+  "when converting a LocalDateTime to a date it" should "be easily convertable" in {
+    val dateTime = LocalDateTime.of(2020, 1, 1, 8, 45)
+    val outStr = TimeTools.dateTimeToDate(dateTime)
+    val corrStr = s"2020-01-01"
+    assert(outStr === corrStr)
+  }
 }
