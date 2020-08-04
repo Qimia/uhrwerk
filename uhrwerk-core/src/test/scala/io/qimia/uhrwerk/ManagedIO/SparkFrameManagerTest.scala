@@ -81,7 +81,6 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     tar.setConnectionName("testSparkFrameManager")
     tar.setPath("testsparkframemanager")
     tar.setVersion(1)
-    tar.setExternal(false)
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
     manager.writeDFToLake(df, conn, tar, Option(dateTime))
 
@@ -122,7 +121,6 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     tar.setConnectionName("testSparkRange")
     tar.setPath("testsparkframerange")
     tar.setVersion(1)
-    tar.setExternal(false)
     val tarDuration = tar.getPartitionSizeDuration
 
     val batchDates = TimeTools.convertRangeToBatch(

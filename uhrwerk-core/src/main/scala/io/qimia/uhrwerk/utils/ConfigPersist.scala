@@ -79,12 +79,10 @@ object ConfigPersist {
           s"AND vertical = '${table.getVertical}' " +
           s"AND version = ${table.getVersion} " +
           s"AND connectionName = '${connectionConfig.getName}' " +
-          "AND connection = :conn " +
-          "AND external = :ext ",
+          "AND connection = :conn ",
         classOf[TableInfo]
       )
       .setParameter("conn", connectionConfig)
-      .setParameter("ext", table.isExternal)
       .getResultList
       .asScala
     if (stored.nonEmpty) {
@@ -97,8 +95,7 @@ object ConfigPersist {
       table.getVertical,
       table.getVersion,
       table.getConnectionName,
-      connectionConfig,
-      table.isExternal
+      connectionConfig
     )
     store.persist(tabInfo)
     tabInfo
@@ -179,13 +176,18 @@ object ConfigPersist {
       global.getConnections.map(conn => conn.getName -> conn).toMap
 
     val stepStored = getOrCreateStepRef(store, step)
-    val depConnections = step.getDependencies.map(dep => {
-      val conn = connectionSearch(dep.getConnectionName)
-      val connStored = getOrCreateConnectionRef(store, conn)
-      val tableStored = getOrCreateTableRef(store, dep, connStored)
-      getOrCreateDependencyConfig(store, dep, tableStored, stepStored)
-      dep.getPath -> connStored
-    })
+
+    val depConnections = if (step.dependenciesSet) {
+      Option(step.getDependencies.map(dep => {
+        val conn = connectionSearch(dep.getConnectionName)
+        val connStored = getOrCreateConnectionRef(store, conn)
+        val tableStored = getOrCreateTableRef(store, dep, connStored)
+        getOrCreateDependencyConfig(store, dep, tableStored, stepStored)
+        dep.getPath -> connStored
+      }))
+    } else {
+      None
+    }
     val tarConnections = step.getTargets.map(tar => {
       val conn = connectionSearch(tar.getConnectionName)
       val connStored = getOrCreateConnectionRef(store, conn)
@@ -194,7 +196,11 @@ object ConfigPersist {
       tar.getPath -> connStored
     })
 
-    (stepStored, Array.concat(depConnections, tarConnections).toMap)
+    depConnections match {
+      case Some(depCons) => (stepStored, Array.concat(depCons, tarConnections).toMap)
+      case None => (stepStored, tarConnections.toMap)
+    }
+
   }
 
 }

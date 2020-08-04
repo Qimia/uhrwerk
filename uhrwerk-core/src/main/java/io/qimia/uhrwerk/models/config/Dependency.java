@@ -12,7 +12,6 @@ public class Dependency implements Table {
     private String area = "";
     private String vertical = "";
     private int version = 1;
-    private boolean external = false;
     private String type = "oneonone";
     private String partitionSize = "1h";
     private int partitionCount = 1;
@@ -57,14 +56,6 @@ public class Dependency implements Table {
 
     public void setVersion(int version) {
         this.version = version;
-    }
-
-    public boolean isExternal() {
-        return external;
-    }
-
-    public void setExternal(boolean external) {
-        this.external = external;
     }
 
     public String getType() {
