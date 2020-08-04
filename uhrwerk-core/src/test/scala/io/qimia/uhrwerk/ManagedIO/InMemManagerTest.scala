@@ -26,7 +26,6 @@ class InMemManagerTest extends AnyFlatSpec {
     tar.setConnectionName("testinmem")
     tar.setPath("someframeone")
     tar.setVersion(1)
-    tar.setExternal(false)
 
     val dateTime = LocalDateTime.of(2010, 2, 4, 10, 30)
     manager.writeDFToLake(df, conn, tar, Option(dateTime))
@@ -37,7 +36,6 @@ class InMemManagerTest extends AnyFlatSpec {
     tarU.setConnectionName("testinmem")
     tarU.setPath("otherframetwo")
     tarU.setVersion(1)
-    tarU.setExternal(false)
 
     manager.writeDFToLake(dfUnpartitioned, conn, tarU)
 

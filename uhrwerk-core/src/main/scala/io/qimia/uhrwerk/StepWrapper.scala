@@ -103,28 +103,30 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
 
       // Use configured frameManager to read dataframes
       // TODO: Read the proper DF here and get the right connection/time params for it
-      val inputDFs: List[DataFrame] = store.stepConfig.getDependencies
-        .filter(dep => {
-          !dep.isExternal && store.connections(dep.getConnectionName).getTypeEnum.isSparkPath
-          // Filter only the ones internal and which can be read using FrameLoader (is df from managed datalake)
-          // TODO: Discuss if this is how we decide load-by-library / load-by-user
-        })
-        .map(dep =>
-          frameManager.loadDFFromLake(store.connections(dep.getConnectionName),
-                                      dep,
-                                      Option(time)))
-        .toList
-      val taskInput = TaskInput(store.connections, time, inputDFs)
+      // Note that *we are responsible* for all (standard) loading of DataFrames!
+      val inputDepDFs: List[DataFrame] = if (store.stepConfig.dependenciesSet) {
+        store.stepConfig.getDependencies
+          .map(
+            dep =>
+              frameManager.loadDFFromLake(
+                store.connections(dep.getConnectionName),
+                dep,
+                Option(time)))
+          .toList
+      } else {
+        Nil
+      }
+      // TODO: Implement the Source data loading in a similar fashion to the dependency loading
+      val inputSourceDFs: List[DataFrame] = Nil
+      val taskInput =
+        TaskInput(store.connections, time, inputDepDFs ::: inputSourceDFs)
 
       val success = try {
         val frame = stepFunction(taskInput)
         // TODO error checking: if target should be on datalake but no frame is given
+        // Note: We are responsible for all standard writing of DataFrames
         if (frame.isDefined) {
           store.stepConfig.getTargets
-            .filter(tar => {
-              !tar.isExternal
-              // TODO: Only when it should be written to a file
-            })
             .foreach(
               tar =>
                 frameManager.writeDFToLake(
@@ -146,19 +148,25 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
       store.logFinishTask(startLog, time, success)
     }
 
-    val dependenciesByVirtual = store.stepConfig.getDependencies.groupBy(dep =>
-      dep.getTypeEnum != DependencyType.ONEONONE)
-    val checkResult = dependenciesByVirtual
-      .map(keyDeps =>
-        keyDeps._1 match {
-          case false => store.checkDependencies(keyDeps._2, startTimes)
-          case true => {
-            val individualVirtOutcomes =
-              keyDeps._2.map(checkVirtualStep(_, startTimes.toList))
-            individualVirtOutcomes.reduce(StepWrapper.combineDependencyChecks)
-          }
-      })
-      .reduce(StepWrapper.combineDependencyChecks)
+    val checkResult: List[Either[DependencyFailed, DependencySuccess]] =
+      if (store.stepConfig.dependenciesSet) {
+        val dependenciesByVirtual =
+          store.stepConfig.getDependencies.groupBy(dep =>
+            dep.getTypeEnum != DependencyType.ONEONONE)
+        dependenciesByVirtual
+          .map(keyDeps =>
+            if (keyDeps._1) {
+              val individualVirtOutcomes =
+                keyDeps._2.map(checkVirtualStep(_, startTimes.toList))
+              individualVirtOutcomes.reduce(StepWrapper.combineDependencyChecks)
+            } else {
+              store.checkDependencies(keyDeps._2, startTimes)
+          })
+          .reduce(StepWrapper.combineDependencyChecks)
+      } else {
+        startTimes.map(Right(_)).toList
+      }
+
     // TODO need to add filtering and logic for Virtual Steps and other kinds of steps
 
     val tasks: mutable.ListBuffer[Future[LocalDateTime]] =
@@ -236,10 +244,13 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
       val smallBatchOutcome =
         store.checkDependencies(Array(dependency), smallerStartTimes)
       val foundSmallBatches =
-        smallBatchOutcome.filter(_.isRight).map({
-          case Right(x) => x
-          case Left(_) => throw new RuntimeException
-        }).toSet
+        smallBatchOutcome
+          .filter(_.isRight)
+          .map({
+            case Right(x) => x
+            case Left(_)  => throw new RuntimeException
+          })
+          .toSet
       val foundBigBatches = TimeTools
         .filterBySmallerBatchList(startTimes,
                                   store.stepConfig.getBatchSizeDuration,

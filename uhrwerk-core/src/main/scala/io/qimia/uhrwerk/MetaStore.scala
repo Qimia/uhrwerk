@@ -218,9 +218,8 @@ class MetaStore(globalConf: Global,
     // Either fails completely or writes all tasklogs (no partial completion)
     if (success) {
       stepConfig.getTargets.foreach(t =>
-        if (!t.isExternal) {
           this.writePartitionLog(store, finishLog, t, partitionTS)
-      })
+      )
     }
     ta.commit()
     store.close()

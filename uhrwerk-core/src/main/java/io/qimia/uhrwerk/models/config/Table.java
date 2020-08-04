@@ -9,7 +9,6 @@ public interface Table {
     public String getArea();
     public String getVertical();
     public int getVersion();
-    public boolean isExternal();
     public String getPartitionSize();
     public Duration getPartitionSizeDuration();
 

@@ -10,7 +10,6 @@ dependencies:
     area: staging
     vertical: sourcedb_1
     version: 1
-    external: true
     type: "oneOnone"
     partitionSize: "6h"
     partitionCount: 1
@@ -19,7 +18,6 @@ dependencies:
     area: staging
     vertical: sourcedb_1
     version: 1
-    external: false
     type: "oneOnone"
     partitionSize: "6h"
     partitionCount: 1
@@ -30,5 +28,4 @@ targets:
     area: processing
     vertical: sourcedb_1
     version: 1
-    external: false
     partitionSize: "6h"

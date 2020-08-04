@@ -3,15 +3,17 @@ package io.qimia.uhrwerk.models.config;
 import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
+import java.util.Optional;
 
 public class Step {
 
     private String name;
     private String batchSize;
-    private int parallelism;
-    private int maxBatches;
+    private int parallelism = 1;
+    private int maxBatches = 0;
     private String stepType = "oneOnone";
     private Dependency[] dependencies;
+    private Source[] sources;
     private Target[] targets;
     private int version = 1;
 
@@ -61,12 +63,28 @@ public class Step {
         this.stepType = stepType;
     }
 
+    public boolean dependenciesSet() {
+        return dependencies != null;
+    }
+
     public Dependency[] getDependencies() {
         return dependencies;
     }
 
     public void setDependencies(Dependency[] dependencies) {
         this.dependencies = dependencies;
+    }
+
+    public boolean sourcesSet() {
+        return sources != null;
+    }
+
+    public Source[] getSources() {
+        return sources;
+    }
+
+    public void setSources(Source[] sources) {
+        this.sources = sources;
     }
 
     public Target[] getTargets() {

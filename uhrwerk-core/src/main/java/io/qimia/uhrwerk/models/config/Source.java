@@ -1,20 +1,19 @@
 package io.qimia.uhrwerk.models.config;
 
-import io.qimia.uhrwerk.utils.TimeTools;
-
-import java.time.Duration;
-
-public class Target implements Table {
+public class Source {
 
     private String connectionName = "";
     private String path = "";
     private String area = "";
     private String vertical = "";
     private int version = 1;
-    private String partitionSize = "";
-    private String type = "oneonone";
+    private String partitionSize = "1h";
+    private String partitionQuery;
+    private String partitionColumn;
+    private String selectQuery;
+    private String queryColumn;
 
-    public Target() {}
+    public Source() {}
 
     public String getConnectionName() {
         return connectionName;
@@ -60,19 +59,39 @@ public class Target implements Table {
         return partitionSize;
     }
 
-    public Duration getPartitionSizeDuration() {
-        return TimeTools.convertDurationToObj(partitionSize);
-    }
-
     public void setPartitionSize(String partitionSize) {
         this.partitionSize = partitionSize;
     }
 
-    public String getType() {
-        return type;
+    public String getPartitionQuery() {
+        return partitionQuery;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setPartitionQuery(String partitionQuery) {
+        this.partitionQuery = partitionQuery;
+    }
+
+    public String getPartitionColumn() {
+        return partitionColumn;
+    }
+
+    public void setPartitionColumn(String partitionColumn) {
+        this.partitionColumn = partitionColumn;
+    }
+
+    public String getSelectQuery() {
+        return selectQuery;
+    }
+
+    public void setSelectQuery(String selectQuery) {
+        this.selectQuery = selectQuery;
+    }
+
+    public String getQueryColumn() {
+        return queryColumn;
+    }
+
+    public void setQueryColumn(String queryColumn) {
+        this.queryColumn = queryColumn;
     }
 }

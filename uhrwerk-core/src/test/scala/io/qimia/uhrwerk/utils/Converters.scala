@@ -8,7 +8,6 @@ object Converters {
     val d = new Dependency
     d.setArea(t.getArea)
     d.setConnectionName(t.getConnectionName)
-    d.setExternal(t.isExternal)
     d.setPartitionSize(t.getPartitionSize)
     d.setPath(t.getPath)
     d.setVersion(t.getVersion)
