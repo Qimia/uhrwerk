@@ -6,12 +6,12 @@ import java.time.{Duration, LocalDateTime}
 import java.util.Comparator
 
 import io.qimia.uhrwerk.models.config.{Connection, Target}
-import io.qimia.uhrwerk.utils.{Converters, TimeTools}
+import io.qimia.uhrwerk.utils.{Converters, JDBCTools, TimeTools}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.{BeforeAndAfterEach, Suite, BeforeAndAfterAll}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
@@ -148,4 +148,37 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     foldersToClean.append(Paths.get("src/test/resources/testlake/testsparkframerange/"))
   }
 
+  "safe DF to jdbc and load from jdbc" should "return the same df and create the table in the db" in {
+    val spark = getSparkSession
+    import spark.implicits._
+
+    val df = (1 to 100).map(i => (i, "txt", i * 5)).toDF("a", "b", "c")
+    val manager = new SparkFrameManager(spark)
+
+    val conn = new Connection
+    conn.setName("testSparkJDBCFrameManager")
+    conn.setType("jdbc")
+    conn.setJdbcDriver("com.mysql.cj.jdbc.Driver")
+    conn.setJdbcUri("jdbc:mysql://localhost:43342")
+    conn.setUser("root")
+    conn.setPass("mysql")
+    val tar = new Target
+    tar.setPartitionSize("30m")
+    tar.setConnectionName("testSparkJDBCFrameManager")
+    tar.setPath("testsparkframemanager")
+    tar.setVersion(1)
+    tar.setExternal(false)
+    tar.setArea("uhrwerk_test")
+    val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
+    manager.writeDFToLake(df, conn, tar, Option(dateTime))
+
+    val dep = Converters.convertTargetToDependency(tar)
+    val loadedDF = manager.loadDFFromLake(conn, dep, Option(dateTime)).sort("a", "b", "c")
+
+    val a = df.collect()
+    val b = loadedDF.collect()
+    assert(a === b)
+
+    JDBCTools.dropJDBCDatabase(conn, tar)
+  }
 }
