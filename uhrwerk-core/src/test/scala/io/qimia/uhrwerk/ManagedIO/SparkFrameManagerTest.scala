@@ -6,6 +6,7 @@ import java.time.{Duration, LocalDateTime}
 import java.util.Comparator
 
 import io.qimia.uhrwerk.models.config.{Connection, Target}
+import io.qimia.uhrwerk.tags.{DbTest, Slow}
 import io.qimia.uhrwerk.utils.{Converters, JDBCTools, TimeTools}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions._
@@ -108,7 +109,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     (1 to 50).map(i => (i, year, month, day, hour, batch)).toDF("i", "year", "month", "day", "hour", "bInHour")
   }
 
-  "load DFs" should "result in quick access to a range of batches" in {
+  "load DFs" should "result in quick access to a range of batches" taggedAs Slow in {
     val spark = getSparkSession
     import spark.implicits._
     val manager = new SparkFrameManager(spark)
@@ -148,7 +149,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     foldersToClean.append(Paths.get("src/test/resources/testlake/testsparkframerange/"))
   }
 
-  "safe DF to jdbc and load from jdbc" should "return the same df and create the table in the db" in {
+  "safe DF to jdbc and load from jdbc" should "return the same df and create the table in the db" taggedAs (Slow, DbTest) in {
     val spark = getSparkSession
     import spark.implicits._
 
@@ -167,7 +168,6 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     tar.setConnectionName("testSparkJDBCFrameManager")
     tar.setPath("testsparkframemanager")
     tar.setVersion(1)
-    tar.setExternal(false)
     tar.setArea("uhrwerk_test")
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
     manager.writeDFToLake(df, conn, tar, Option(dateTime))
