@@ -10,6 +10,7 @@ public interface Table {
     public String getVertical();
     public int getVersion();
     public String getPartitionSize();
+    public void setPartitionSize(String partitionSize);
     public Duration getPartitionSizeDuration();
 
 }

@@ -13,7 +13,7 @@ public class Dependency implements Table {
     private String vertical = "";
     private int version = 1;
     private String type = "oneonone";
-    private String partitionSize = "1h";
+    private String partitionSize = "";
     private int partitionCount = 1;
 
     public Dependency() {}

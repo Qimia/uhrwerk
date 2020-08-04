@@ -1,13 +1,18 @@
 package io.qimia.uhrwerk.models.config;
 
-public class Source {
+import io.qimia.uhrwerk.utils.TimeTools;
+
+import java.time.Duration;
+import java.util.Objects;
+
+public class Source implements Table {
 
     private String connectionName = "";
     private String path = "";
     private String area = "";
     private String vertical = "";
     private int version = 1;
-    private String partitionSize = "1h";
+    private String partitionSize = "";
     private String partitionQuery;
     private String partitionColumn;
     private String selectQuery;
@@ -61,6 +66,10 @@ public class Source {
 
     public void setPartitionSize(String partitionSize) {
         this.partitionSize = partitionSize;
+    }
+
+    public Duration getPartitionSizeDuration() {
+        return TimeTools.convertDurationToObj(partitionSize);
     }
 
     public String getPartitionQuery() {

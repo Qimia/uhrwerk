@@ -3,7 +3,6 @@ package io.qimia.uhrwerk.models.config;
 import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
-import java.util.Optional;
 
 public class Step {
 
