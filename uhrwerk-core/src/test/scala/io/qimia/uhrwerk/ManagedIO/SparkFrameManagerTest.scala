@@ -93,8 +93,8 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     assert(a === b)
 
     assert(
-      new File("src/test/resources/testlake/testsparkframemanager" +
-        "/batch=2020-02-04-10-1").isDirectory)
+      new File("src/test/resources/testlake/testsparkframemanager/" +
+        "date=2020-02-04/batch=2020-02-04-10-1").isDirectory)
 
     foldersToClean.append(Paths.get("src/test/resources/testlake/testsparkframemanager"))
   }

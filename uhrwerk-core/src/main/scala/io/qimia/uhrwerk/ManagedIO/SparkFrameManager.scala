@@ -38,7 +38,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     assert(conn.getName == locationInfo.getConnectionName)
     val fullLocation = if (batchTS.isDefined) {
       val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
-      SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath, s"batch=${TimeTools.dateTimeToPostFix(batchTS.get, duration)}")
+      val date = TimeTools.dateTimeToDate(batchTS.get)
+      val batch = TimeTools.dateTimeToPostFix(batchTS.get, duration)
+      SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath, s"date=${date}", s"batch=${batch}")
     } else {
       SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath)
     }
@@ -56,7 +58,11 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     val df = sparkSession.read.parquet(loc)
     val startRange = TimeTools.dateTimeToPostFix(startTS, batchDuration)
     val endRange = TimeTools.dateTimeToPostFix(endTSExcl, batchDuration)
-    df.where(($"batch" >= startRange) and ($"batch" < endRange))
+    val startDate = TimeTools.dateTimeToDate(startTS)
+    val endDate = TimeTools.dateTimeToDate(endTSExcl)
+    df
+      .where(($"date" >= startDate) and ($"date" <= endDate))
+      .where(($"batch" >= startRange) and ($"batch" < endRange))
   }
 
   /**
@@ -74,7 +80,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     assert(conn.getName == locationInfo.getConnectionName)
     val fullLocation = if (batchTS.isDefined) {
       val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
-      SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath, s"batch=${TimeTools.dateTimeToPostFix(batchTS.get, duration)}")
+      val date = TimeTools.dateTimeToDate(batchTS.get)
+      val batch = TimeTools.dateTimeToPostFix(batchTS.get, duration)
+      SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath, s"date=${date}", s"batch=${batch}")
     } else {
       SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath)
     }
