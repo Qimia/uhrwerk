@@ -7,6 +7,7 @@ public class Connection {
     private String name = "";
     private String type = "";
     private String jdbcUri = "";
+    private String jdbcDriver = "";
     private String user = "";
     private String pass = "";
     private String cloudId = "";
@@ -99,5 +100,13 @@ public class Connection {
 
     public void setVersion(int version) {
         this.version = version;
+    }
+
+    public String getJdbcDriver() {
+        return jdbcDriver;
+    }
+
+    public void setJdbcDriver(String jdbcDriver) {
+        this.jdbcDriver = jdbcDriver;
     }
 }
