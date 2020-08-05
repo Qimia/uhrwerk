@@ -19,13 +19,14 @@ object TimeTools {
 
   // Go from a string representation of a duration to a duration object
   def convertDurationToObj(duration: String): Duration = {
-    duration.toCharArray.last match {
+    duration.toCharArray.last.toLower match {
       case 'm' =>
         Duration.ofMinutes(duration.substring(0, duration.length() - 1).toInt)
       case 'h' =>
         Duration.ofHours(duration.substring(0, duration.length() - 1).toInt)
       case 'd' =>
         Duration.ofDays(duration.substring(0, duration.length() - 1).toInt)
+      case _ => throw new RuntimeException("Unknown duration format")
     }
   }
 

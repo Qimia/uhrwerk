@@ -21,8 +21,7 @@ object ConfigPersist {
         s"FROM StepConfig WHERE name = '${step.getName}' " +
           "AND batchSize = :batchsize " +
           s"AND parallelism = ${step.getParallelism} " +
-          s"AND maxBatches = ${step.getMaxBatches} " +
-          s"AND stepType = '${step.getStepType}'",
+          s"AND maxBatches = ${step.getMaxBatches} ",
         classOf[StepConfig]
       )
       .setParameter("batchsize",step.getBatchSizeDuration)
@@ -36,8 +35,7 @@ object ConfigPersist {
       step.getName,
       step.getBatchSizeDuration,
       step.getParallelism,
-      step.getMaxBatches,
-      step.getStepType
+      step.getMaxBatches
     )
     store.persist(stepConf)
     stepConf

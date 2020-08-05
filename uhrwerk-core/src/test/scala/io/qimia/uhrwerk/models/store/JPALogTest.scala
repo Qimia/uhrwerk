@@ -78,8 +78,7 @@ class JPALogTest extends AnyFlatSpec {
       "refstep",
       Duration.ofMinutes(15),
       4,
-      20,
-      "oneOnOne"
+      20
     )
     val testObjWithRef = new TaskLog(
       "refstep",

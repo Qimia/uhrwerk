@@ -12,16 +12,14 @@ public class StepConfig {
     private Duration batchSize;
     private int parallelism;
     private int maxBatches;
-    private String stepType;
 
     public StepConfig() {}
 
-    public StepConfig(String name, Duration batchSize, int parallelism, int maxBatches, String stepType) {
+    public StepConfig(String name, Duration batchSize, int parallelism, int maxBatches) {
         this.name = name;
         this.batchSize = batchSize;
         this.parallelism = parallelism;
         this.maxBatches = maxBatches;
-        this.stepType = stepType;
     }
 
     @Id
@@ -71,12 +69,4 @@ public class StepConfig {
         this.maxBatches = maxBatches;
     }
 
-    @Column
-    public String getStepType() {
-        return stepType;
-    }
-
-    public void setStepType(String stepType) {
-        this.stepType = stepType;
-    }
 }

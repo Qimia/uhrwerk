@@ -10,7 +10,6 @@ public class Step {
     private String batchSize;
     private int parallelism = 1;
     private int maxBatches = 0;
-    private String stepType = "oneOnone";
     private Dependency[] dependencies;
     private Source[] sources;
     private Target[] targets;
@@ -54,13 +53,6 @@ public class Step {
         this.maxBatches = maxBatches;
     }
 
-    public String getStepType() {
-        return stepType;
-    }
-
-    public void setStepType(String stepType) {
-        this.stepType = stepType;
-    }
 
     public boolean dependenciesSet() {
         return dependencies != null;

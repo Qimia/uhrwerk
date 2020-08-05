@@ -157,7 +157,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     val globalConfig: Path = Paths.get(getClass.getResource("/config/global_test_1.yml").getPath)
     val stepConfig: Path = Paths.get(getClass.getResource("/config/step_test_1.yml").getPath)
 
-    val metaStore = MetaStore(globalConfig, stepConfig)
+    val metaStore = MetaStore(globalConfig, stepConfig, false, false)
     List("mysql_test", "s3_test", "local_filesystem_test").foreach(name =>
       assert(metaStore.connections.contains(name)))
     val startTask = metaStore.logStartTask()

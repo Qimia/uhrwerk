@@ -256,6 +256,7 @@ class TimeToolsTest extends AnyFlatSpec {
     assert(TimeTools.divisibleBy(b1, s11))
     val s12 = Duration.ofMinutes(40)
     assert(TimeTools.divisibleBy(b1, s12))
+    assert(!TimeTools.divisibleBy(s1, b1))
   }
 
   "when converting a LocalDateTime to a postfix it" should "be easily convertable" in {

@@ -84,7 +84,7 @@ object StepWrapper {
           tup._1 match {
             case Right(time) =>
               Left(new DependencyFailed(time, Set(nameDependency)))
-            case Left(f) => Left(f)
+            case Left(f) => Left(f.copy(_2 = f._2 + nameDependency))
           }
         }
       })
