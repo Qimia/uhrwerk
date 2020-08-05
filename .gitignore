@@ -131,3 +131,5 @@ buildNumber.properties
 ### Scala ###
 
 # End of https://www.toptal.com/developers/gitignore/api/java,scala,intellij+all,maven
+
+*h2.db
