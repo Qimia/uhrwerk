@@ -31,11 +31,11 @@ object JDBCTools {
     DriverManager.getConnection(url, username, password)
   }
 
-  def dropJDBCDatabase(conn: Connection, locationInfo: Target): Unit = {
+  def dropJDBCDatabase(conn: Connection, databaseName: String): Unit = {
     try {
       val connection = getJDBCConnection(conn)
       val statement = connection.createStatement
-      statement.execute(s"DROP DATABASE ${locationInfo.getArea}")
+      statement.execute(s"DROP DATABASE ${databaseName}")
       connection.close()
     } catch {
       case e: Exception => println(e.getLocalizedMessage)

@@ -98,8 +98,8 @@ class TimeToolsTest extends AnyFlatSpec {
   }
 
   "a course datetime list" should "be converted in smaller parts (even when the larger is not whole)" in {
-    val courseDuration = Duration.ofHours(1)
-    val courseListA = TimeTools.convertRangeToBatch(
+    val courseDuration: Duration = Duration.ofHours(1)
+    val courseListA: List[LocalDateTime] = TimeTools.convertRangeToBatch(
       LocalDateTime.of(2020, Month.JANUARY, 5, 23, 0, 0),
       LocalDateTime.of(2020, Month.JANUARY, 6, 14, 0, 0),
       courseDuration)
@@ -148,9 +148,9 @@ class TimeToolsTest extends AnyFlatSpec {
     val fineListA =
       TimeTools.convertToSmallerBatchList(courseListA, courseDuration, dividerA)
     val courseResultList = TimeTools.filterBySmallerBatchList(courseListA,
-                                                              courseDuration,
-                                                              dividerA,
-                                                              fineListA.toSet)
+      courseDuration,
+      dividerA,
+      fineListA.toSet)
     assert(courseListA.toSet.equals(courseResultList.toSet))
 
     val dividerB = 2
@@ -188,9 +188,9 @@ class TimeToolsTest extends AnyFlatSpec {
       LocalDateTime.of(2010, Month.MARCH, 7, 16, 30, 0)
     )
     val outB = TimeTools.filterBySmallerBatchList(courseListB,
-                                                  courseDuration,
-                                                  dividerB,
-                                                  fineListB.toSet)
+      courseDuration,
+      dividerB,
+      fineListB.toSet)
     outB
       .zip(predictedResultB)
       .foreach(timePair => assert(timePair._1.isEqual(timePair._2)))
@@ -271,5 +271,40 @@ class TimeToolsTest extends AnyFlatSpec {
     val outStr = TimeTools.dateTimeToDate(dateTime)
     val corrStr = s"2020-01-01"
     assert(outStr === corrStr)
+  }
+
+  "getRangeFromAggregate" should "convert an agreggate to a range" in {
+    val dateTime = LocalDateTime.of(2020, 1, 1, 8, 45, 23)
+
+    val (start, end) = TimeTools.getRangeFromAggregate(dateTime, "15m", 4)
+    val (startShouldBe, endShouldBe) = (LocalDateTime.of(2020, 1, 1, 8, 0),
+      LocalDateTime.of(2020, 1, 1, 9, 0))
+
+    assert(start.equals(startShouldBe))
+    assert(end.equals(endShouldBe))
+
+    val (start2, end2) = TimeTools.getRangeFromAggregate(dateTime, "1h", 1)
+
+    assert(start2.equals(startShouldBe))
+    assert(end2.equals(endShouldBe))
+
+    val (startDay, endDay) = TimeTools.getRangeFromAggregate(dateTime, "1h", 24)
+    val (startDayShouldBe, endDayShouldBe) = (LocalDateTime.of(2020, 1, 1, 0, 0),
+      LocalDateTime.of(2020, 1, 2, 0, 0))
+
+    assert(startDay.equals(startDayShouldBe))
+    assert(endDay.equals(endDayShouldBe))
+
+    val (startDay2, endDay2) = TimeTools.getRangeFromAggregate(dateTime, "1d", 1)
+
+    assert(startDay2.equals(startDayShouldBe))
+    assert(endDay2.equals(endDayShouldBe))
+
+    assertThrows[UnsupportedOperationException](TimeTools.getRangeFromAggregate(dateTime, "15m", 3))
+    assertThrows[UnsupportedOperationException](TimeTools.getRangeFromAggregate(dateTime, "15m", 5))
+    assertThrows[UnsupportedOperationException](TimeTools.getRangeFromAggregate(dateTime, "30m", 3))
+    assertThrows[UnsupportedOperationException](TimeTools.getRangeFromAggregate(dateTime, "1h", 3))
+    assertThrows[UnsupportedOperationException](TimeTools.getRangeFromAggregate(dateTime, "1d", 2))
+    assertThrows[UnsupportedOperationException](TimeTools.getRangeFromAggregate(dateTime, "1h", 25))
   }
 }

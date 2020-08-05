@@ -1,7 +1,6 @@
 package io.qimia.uhrwerk.ManagedIO
 
 import java.nio.file.Paths
-import java.sql.DriverManager
 import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.models.ConnectionType
@@ -35,23 +34,30 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @param batchTS      Batch Timestamp. If not defined, load the full path.
    * @return DataFrame
    */
-  override def loadDFFromLake(conn: Connection,
-                              locationInfo: Dependency,
-                              batchTS: Option[LocalDateTime]): DataFrame = {
+  override def loadDataFrame(conn: Connection,
+                             locationInfo: Dependency,
+                             batchTS: Option[LocalDateTime]): DataFrame = {
     assert(conn.getName == locationInfo.getConnectionName)
 
     if (conn.getTypeEnum.equals(ConnectionType.JDBC)) {
       loadDFFromJDBC(conn, locationInfo, batchTS)
     } else {
-      val fullLocation = if (batchTS.isDefined) {
-        val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
-        val date = TimeTools.dateTimeToDate(batchTS.get)
-        val batch = TimeTools.dateTimeToPostFix(batchTS.get, duration)
-        SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath, s"date=${date}", s"batch=${batch}")
+      // aggregates
+      if (batchTS.isDefined && locationInfo.getPartitionCount > 1) {
+        val (startTS, endTSExcl) = TimeTools.getRangeFromAggregate(batchTS.get, locationInfo.getPartitionSize, locationInfo.getPartitionCount)
+        loadDataFrames(conn, locationInfo, startTS, endTSExcl, locationInfo.getPartitionSizeDuration)
       } else {
-        SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath)
+        val fullLocation = if (batchTS.isDefined) {
+          val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
+          val date = TimeTools.dateTimeToDate(batchTS.get)
+          val batch = TimeTools.dateTimeToPostFix(batchTS.get, duration)
+          SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath, s"date=$date", s"batch=$batch")
+
+        } else {
+          SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath)
+        }
+        sparkSession.read.parquet(fullLocation)
       }
-      sparkSession.read.parquet(fullLocation)
     }
   }
 
@@ -107,11 +113,11 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @param batchDuration Batch Duration
    * @return DataFrame
    */
-  def loadDFsFromLake(conn: Connection,
-                      locationInfo: Dependency,
-                      startTS: LocalDateTime,
-                      endTSExcl: LocalDateTime,
-                      batchDuration: Duration): DataFrame = {
+  def loadDataFrames(conn: Connection,
+                     locationInfo: Dependency,
+                     startTS: LocalDateTime,
+                     endTSExcl: LocalDateTime,
+                     batchDuration: Duration): DataFrame = {
     import sparkSession.implicits._
     val loc = SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath)
     val df = sparkSession.read.parquet(loc)
@@ -132,10 +138,10 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @param locationInfo Location Info
    * @param batchTS      Batch Timestamp, optional.
    */
-  override def writeDFToLake(frame: DataFrame,
-                             conn: Connection,
-                             locationInfo: Target,
-                             batchTS: Option[LocalDateTime]): Unit = {
+  override def writeDataFrame(frame: DataFrame,
+                              conn: Connection,
+                              locationInfo: Target,
+                              batchTS: Option[LocalDateTime]): Unit = {
     assert(conn.getName == locationInfo.getConnectionName)
 
     if (conn.getTypeEnum.equals(ConnectionType.JDBC)) {
@@ -145,7 +151,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
         val date = TimeTools.dateTimeToDate(batchTS.get)
         val batch = TimeTools.dateTimeToPostFix(batchTS.get, duration)
-        SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath, s"date=${date}", s"batch=${batch}")
+        SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath, s"date=$date", s"batch=$batch")
       } else {
         SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath)
       }
@@ -198,13 +204,12 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       dfWriter
         .save()
     } catch {
-      case e: Exception => {
+      case e: Exception =>
         println(e.getLocalizedMessage)
         println("Trying to create the database")
         JDBCTools.createJDBCDatabase(conn, locationInfo)
         dfWriter
           .save()
-      }
     }
   }
 }

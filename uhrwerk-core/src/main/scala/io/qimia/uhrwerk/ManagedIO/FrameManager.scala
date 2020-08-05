@@ -9,10 +9,8 @@ import org.apache.spark.sql.DataFrame
 trait FrameManager {
   // There could be a spark / iceberg / deltalake / hudi version depending on what the user wants to use
 
-  def loadDFFromLake(conn: Connection, locationInfo: Dependency, startTS: Option[LocalDateTime] = Option.empty): DataFrame
+  def loadDataFrame(conn: Connection, locationInfo: Dependency, startTS: Option[LocalDateTime] = Option.empty): DataFrame
 
-  def writeDFToLake(frame: DataFrame, conn: Connection, locationInfo: Target, startTS: Option[LocalDateTime] = Option.empty): Unit
-
-  // The generic reading and writing to JDBC / Other data sources is handled by the user for now
+  def writeDataFrame(frame: DataFrame, conn: Connection, locationInfo: Target, startTS: Option[LocalDateTime] = Option.empty): Unit
 
 }
