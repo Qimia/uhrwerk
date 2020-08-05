@@ -28,7 +28,7 @@ class InMemManagerTest extends AnyFlatSpec {
     tar.setVersion(1)
 
     val dateTime = LocalDateTime.of(2010, 2, 4, 10, 30)
-    manager.writeDFToLake(df, conn, tar, Option(dateTime))
+    manager.writeDataFrame(df, conn, tar, Option(dateTime))
 
     val dfUnpartitioned = (1000 to 1200).map(i => (i, "1234qwerty", i - 123)).toDF("x", "y", "z")
     val tarU = new Target
@@ -37,17 +37,17 @@ class InMemManagerTest extends AnyFlatSpec {
     tarU.setPath("otherframetwo")
     tarU.setVersion(1)
 
-    manager.writeDFToLake(dfUnpartitioned, conn, tarU)
+    manager.writeDataFrame(dfUnpartitioned, conn, tarU)
 
     val dep = Converters.convertTargetToDependency(tar)
-    val loadedDF = manager.loadDFFromLake(conn, dep, Option(dateTime))
+    val loadedDF = manager.loadDataFrame(conn, dep, Option(dateTime))
 
     val a = df.collect()
     val b = loadedDF.collect()
     assert(a === b)
 
     val depU = Converters.convertTargetToDependency(tarU)
-    val loadedDF2 = manager.loadDFFromLake(conn, depU)
+    val loadedDF2 = manager.loadDataFrame(conn, depU)
     val in = dfUnpartitioned.collect()
     val out = loadedDF2.collect()
     assert(in === out)

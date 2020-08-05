@@ -108,7 +108,7 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
         store.stepConfig.getDependencies
           .map(
             dep =>
-              frameManager.loadDFFromLake(
+              frameManager.loadDataFrame(
                 store.connections(dep.getConnectionName),
                 dep,
                 Option(time)))
@@ -129,7 +129,7 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
           store.stepConfig.getTargets
             .foreach(
               tar =>
-                frameManager.writeDFToLake(
+                frameManager.writeDataFrame(
                   frame.get,
                   store.connections(tar.getConnectionName),
                   tar,

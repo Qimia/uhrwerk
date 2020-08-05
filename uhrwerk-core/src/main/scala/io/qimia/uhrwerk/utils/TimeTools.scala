@@ -17,6 +17,27 @@ object TimeTools {
 
   // TODO: Durations now have to be exact minutes or hours or days (what if it isn't??)
 
+  def getRangeFromAggregate(ts: LocalDateTime, duration: String, partitionCount: Int): (LocalDateTime, LocalDateTime) = {
+    val durationObj = convertDurationToObj(duration)
+    val multipliedDuration = durationObj.multipliedBy(partitionCount)
+
+    // checking for validity
+    // TODO add months
+    val isHour = multipliedDuration.minusHours(1).getSeconds == 0
+    val isDay = multipliedDuration.minusDays(1).getSeconds == 0
+    if (!isHour && !isDay) {
+      throw new UnsupportedOperationException("A wrong aggregate specified")
+    }
+
+    if (isHour) {
+      val tsHour = ts.minusMinutes(ts.getMinute).minusSeconds(ts.getSecond)
+      (tsHour, tsHour.plusHours(1))
+    } else { //isDay
+      val tsDay = ts.minusHours(ts.getHour).minusMinutes(ts.getMinute).minusSeconds(ts.getSecond)
+      (tsDay, tsDay.plusDays(1))
+    }
+  }
+
   // Go from a string representation of a duration to a duration object
   def convertDurationToObj(duration: String): Duration = {
     duration.toCharArray.last.toLower match {
