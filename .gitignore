@@ -132,4 +132,4 @@ buildNumber.properties
 
 # End of https://www.toptal.com/developers/gitignore/api/java,scala,intellij+all,maven
 
-*h2.db
+*h2.db.mv.db
