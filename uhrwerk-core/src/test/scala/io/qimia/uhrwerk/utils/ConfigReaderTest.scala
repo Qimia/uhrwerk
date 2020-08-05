@@ -47,5 +47,16 @@ class ConfigReaderTest extends AnyFlatSpec {
     assert(source.getPath === "schema.staging_source_table")
     assert(source.getPartitionQuery === "SELECT id FROM <path> WHERE created_at >= <lower_bound> and created_at < <upper_bound>")
     assert(source.getQueryColumn === "created_at")
+    assert(source.getSelectQuery === "SELECT * FROM <path> WHERE created_at >= <lower_bound> AND created_at < <upper_bound>")
+  }
+
+  "readQueryFile with a bad input" should "Read nothing and show error" in {
+    val out = ConfigReader.readQueryFile("a/b/c/file_not_exists.sql")
+    assert (out === "FILEQUERY FAILED")
+  }
+
+  "readQueryFile with a valid query file location" should "read and return the given query" in {
+    val out = ConfigReader.readQueryFile(getClass.getResource("/config/step_test_2_select_query.sql").getPath)
+    assert (out === "SELECT * FROM <path> WHERE created_at >= <lower_bound> AND created_at < <upper_bound>")
   }
 }

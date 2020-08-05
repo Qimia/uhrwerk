@@ -12,7 +12,7 @@ sources:
     partitionSize: "6h"
     partitionQuery: "SELECT id FROM <path> WHERE created_at >= <lower_bound> and created_at < <upper_bound>"
     partitionColumn: "id"
-    selectQuery: "SELECT * FROM <path> WHERE created_at >= <lower_bound> and created_at < <upper_bound>"
+    selectQuery: "step_test_2_select_query.sql"
     queryColumn: "created_at"
 
 targets:
