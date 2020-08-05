@@ -5,7 +5,7 @@ import io.qimia.uhrwerk.utils.TimeTools;
 import java.time.Duration;
 import java.util.Objects;
 
-public class Source implements Table {
+public class Source implements Table, InTable {
 
     private String connectionName = "";
     private String path = "";
@@ -13,10 +13,10 @@ public class Source implements Table {
     private String vertical = "";
     private int version = 1;
     private String partitionSize = "";
-    private String partitionQuery;
-    private String partitionColumn;
-    private String selectQuery;
-    private String queryColumn;
+    private String partitionQuery = "";
+    private String partitionColumn = "";
+    private String selectQuery = "";
+    private String queryColumn  = "";
 
     public Source() {}
 

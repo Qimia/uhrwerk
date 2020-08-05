@@ -47,6 +47,15 @@ object ConfigReader {
         s.setSelectQuery(processQueryConfigString(selQuery, path))
       })
     }
+    if (config.dependenciesSet()) {
+      val dependencies = config.getDependencies
+      dependencies.foreach(s => {
+        val partQuery = s.getPartitionQuery
+        s.setPartitionQuery(processQueryConfigString(partQuery, path))
+        val selQuery = s.getSelectQuery
+        s.setSelectQuery(processQueryConfigString(selQuery, path))
+      })
+    }
     config
   }
 

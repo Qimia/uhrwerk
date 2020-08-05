@@ -5,7 +5,7 @@ import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
 
-public class Dependency implements Table {
+public class Dependency implements Table, InTable {
 
     private String connectionName = "";
     private String path = "";
@@ -15,6 +15,10 @@ public class Dependency implements Table {
     private String type = "oneonone";
     private String partitionSize = "";
     private int partitionCount = 1;
+    private String partitionQuery = "";
+    private String partitionColumn = "";
+    private String selectQuery = "";
+    private String queryColumn = "";
 
     public Dependency() {}
 
@@ -88,5 +92,37 @@ public class Dependency implements Table {
 
     public void setPartitionCount(int partitionCount) {
         this.partitionCount = partitionCount;
+    }
+
+    public String getPartitionQuery() {
+        return partitionQuery;
+    }
+
+    public void setPartitionQuery(String partitionQuery) {
+        this.partitionQuery = partitionQuery;
+    }
+
+    public String getPartitionColumn() {
+        return partitionColumn;
+    }
+
+    public void setPartitionColumn(String partitionColumn) {
+        this.partitionColumn = partitionColumn;
+    }
+
+    public String getSelectQuery() {
+        return selectQuery;
+    }
+
+    public void setSelectQuery(String selectQuery) {
+        this.selectQuery = selectQuery;
+    }
+
+    public String getQueryColumn() {
+        return queryColumn;
+    }
+
+    public void setQueryColumn(String queryColumn) {
+        this.queryColumn = queryColumn;
     }
 }
