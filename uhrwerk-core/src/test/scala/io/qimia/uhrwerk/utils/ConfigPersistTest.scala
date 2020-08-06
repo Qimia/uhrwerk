@@ -20,7 +20,7 @@ class ConfigPersistTest extends AnyFlatSpec {
     val connection1 = new Connection()
     connection1.setName("connection_name")
     connection1.setType("jdbc")
-    connection1.setJdbcUri("jdbc:mysql://host1:33060/sakila")
+    connection1.setJdbcUrl("jdbc:mysql://host1:33060/sakila")
     val connection2 = new Connection()
     connection2.setName("connection_name2")
     connection2.setType("fs")

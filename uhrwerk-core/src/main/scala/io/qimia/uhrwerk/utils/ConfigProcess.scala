@@ -11,8 +11,9 @@ object ConfigProcess {
     * Overall preparation of a new config. Will add missing fields based on filled in fields and
     * will check if the given configuration is valid or not (based on what is only in the config)
     * (This does **not** include warnings based on previously persisted data)
-    * @param step
-    * @return
+    * @param step A single step configuration
+    * @param global A global configuration (connection-information)
+    * @return Did the config validate correctly or not
     */
   def enrichAndValidateConfig(step: Step, global: Global): Boolean = {
     if (!checkFieldsConfig(step, global)) {
@@ -31,7 +32,9 @@ object ConfigProcess {
     true
   }
 
-  // Check if enough fields have been set to progress
+  /**
+   * Check if path-names and connection-names have been filled in
+   */
   def checkFieldsConfig(step: Step, global: Global): Boolean = {
     val connectionNames = global.getConnections.map(_.getName).toSet
     val stepBatchSizeSet = step.getBatchSize != ""
@@ -82,35 +85,48 @@ object ConfigProcess {
     true
   }
 
-  // TODO: If either partition count or size is set we can deduce the other (icm target)
+  /**
+   * Specifically check (and fill in) partition sizes of aggregate dependencies
+   */
   def checkAndUpdateAgg(in: Step): Boolean = {
     val targetPartitionSize = in.getTargets.head.getPartitionSizeDuration
     if (in.dependenciesSet()) {
-      val aggDependencies = in.getDependencies.filter(d => d.getTypeEnum == DependencyType.AGGREGATE)
+      val aggDependencies = in.getDependencies.filter(d =>
+        d.getTypeEnum == DependencyType.AGGREGATE)
       aggDependencies.foreach(ad => {
         val aggSize = ad.getPartitionSize
         val aggCount = ad.getPartitionCount
         val sizeSet = aggSize != ""
         val countSet = aggCount != 1
         if (!sizeSet && !countSet) {
-          System.err.println("Need to set either size or a count (other than 1) for an aggregate dependency")
+          System.err.println(
+            "Need to set either size or a count (other than 1) for an aggregate dependency")
           return false
         } else if (sizeSet && !countSet) {
           val aggSized = ad.getPartitionSizeDuration
-          if (TimeTools.divisibleBy(targetPartitionSize, aggSized)) {
-            ad.setPartitionCount((targetPartitionSize.toMinutes / aggSized.toMinutes).toInt)
+          if (aggSized == targetPartitionSize) {
+            System.err.println(
+              "Use one on one for same-partition-sized dependencies (and not aggregate)")
+            return false
+          } else if (TimeTools.divisibleBy(targetPartitionSize, aggSized)) {
+            ad.setPartitionCount(
+              (targetPartitionSize.toMinutes / aggSized.toMinutes).toInt)
           } else {
-            System.err.println("Can't divide the partition size of the aggregate dependency " +
-            "by the partition size of the target table")
+            System.err.println(
+              "Can't divide the partition size of the target table " +
+                "by the partition size of the aggregate dependency")
             return false
           }
         } else if (!sizeSet && countSet) {
           // TODO: This method needs proper testing
-          val aggCountSize = targetPartitionSize.dividedBy(aggCount).truncatedTo(ChronoUnit.MINUTES)
+          val aggCountSize = targetPartitionSize
+            .dividedBy(aggCount)
+            .truncatedTo(ChronoUnit.MINUTES)
           if (TimeTools.divisibleBy(targetPartitionSize, aggCountSize)) {
             ad.setPartitionSize(TimeTools.convertDurationToStr(aggCountSize))
           } else {
-            System.err.println(s"The target batch size can not be nicely split into ${aggCount} batches")
+            System.err.println(
+              s"The target batch size can not be nicely split into ${aggCount} batches")
             return false
           }
         } else {
@@ -128,9 +144,9 @@ object ConfigProcess {
 
   // If no partition-sizes have been given then take the one set for the whole step
   /**
-   * Take the step's batch size and use it as a partition size of any inTable (except aggregates) or target
-   * @param in
-   */
+    * Take the step's batch size and use it as a partition size of any inTable (except aggregates) or target
+    * @param in
+    */
   def autofillStepPartitionSizes(in: Step): Unit = {
     val batchSize = in.getBatchSize
     if (batchSize == "") {
@@ -176,7 +192,7 @@ object ConfigProcess {
     * - They are not bigger than the target partition size
     * - They are equal size for oneonone & window dependencies
     * - They are equal size for sources
-    * - They are a proper divisible for aggregate dependencies
+    * Warning: Does not check aggregate dependencies (should be done separately)
     */
   def checkInTableTimes(in: Step): Boolean = {
     val targetPartitionSize = in.getTargets.head.getPartitionSizeDuration
@@ -195,16 +211,19 @@ object ConfigProcess {
         d.getTypeEnum match {
           case DependencyType.ONEONONE => {
             if (d.getPartitionSizeDuration != targetPartitionSize) {
-              System.err.println("Dependency has bad partition size wrt. target partition size")
+              System.err.println(
+                "Dependency has bad partition size wrt. target partition size")
               return false
             }
           }
           case DependencyType.WINDOW => {
             if (d.getPartitionSizeDuration != targetPartitionSize) {
-              System.err.println("Dependency has bad partition size wrt. target partition size")
+              System.err.println(
+                "Dependency has bad partition size wrt. target partition size")
               return false
             }
           }
+          case _ =>
         }
       })
     }

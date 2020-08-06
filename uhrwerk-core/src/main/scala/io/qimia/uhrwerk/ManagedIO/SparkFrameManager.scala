@@ -96,7 +96,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     val df = sparkSession
       .read
       .format("jdbc")
-      .option("url", conn.getJdbcUri)
+      .option("url", conn.getJdbcUrl)
       .option("driver", conn.getJdbcDriver)
       .option("user", conn.getUser)
       .option("password", conn.getPass)
@@ -211,7 +211,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       .write
       .mode(SaveMode.Append)
       .format("jdbc")
-      .option("url", conn.getJdbcUri)
+      .option("url", conn.getJdbcUrl)
       .option("driver", conn.getJdbcDriver)
       .option("user", conn.getUser)
       .option("password", conn.getPass)
