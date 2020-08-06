@@ -1,17 +1,15 @@
-package com.sample;
+package io.qimia.uhrwerk.models.db.config;
 
-
-public class DagStep {
+public class ConfigConnection {
 
   private long id;
-  private long tableId;
-  private long parallelism;
-  private long maxPartitions;
+  private String connectionName;
+  private String connectionType;
+  private String connectionUrl;
   private String version;
   private java.sql.Timestamp createdTs;
   private java.sql.Timestamp updatedTs;
   private String description;
-
 
   public long getId() {
     return id;
@@ -21,33 +19,29 @@ public class DagStep {
     this.id = id;
   }
 
-
-  public long getTableId() {
-    return tableId;
+  public String getConnectionName() {
+    return connectionName;
   }
 
-  public void setTableId(long tableId) {
-    this.tableId = tableId;
+  public void setConnectionName(String connectionName) {
+    this.connectionName = connectionName;
   }
 
-
-  public long getParallelism() {
-    return parallelism;
+  public String getConnectionType() {
+    return connectionType;
   }
 
-  public void setParallelism(long parallelism) {
-    this.parallelism = parallelism;
+  public void setConnectionType(String connectionType) {
+    this.connectionType = connectionType;
   }
 
-
-  public long getMaxPartitions() {
-    return maxPartitions;
+  public String getConnectionUrl() {
+    return connectionUrl;
   }
 
-  public void setMaxPartitions(long maxPartitions) {
-    this.maxPartitions = maxPartitions;
+  public void setConnectionUrl(String connectionUrl) {
+    this.connectionUrl = connectionUrl;
   }
-
 
   public String getVersion() {
     return version;
@@ -57,7 +51,6 @@ public class DagStep {
     this.version = version;
   }
 
-
   public java.sql.Timestamp getCreatedTs() {
     return createdTs;
   }
@@ -65,7 +58,6 @@ public class DagStep {
   public void setCreatedTs(java.sql.Timestamp createdTs) {
     this.createdTs = createdTs;
   }
-
 
   public java.sql.Timestamp getUpdatedTs() {
     return updatedTs;
@@ -75,7 +67,6 @@ public class DagStep {
     this.updatedTs = updatedTs;
   }
 
-
   public String getDescription() {
     return description;
   }
@@ -83,5 +74,4 @@ public class DagStep {
   public void setDescription(String description) {
     this.description = description;
   }
-
 }

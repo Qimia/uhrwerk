@@ -1,12 +1,11 @@
-package io.qimia.uhrwerk.models.db;
+package io.qimia.uhrwerk.models.db.data;
 
 
-public class DagTarget {
+public class DataPartitionDependency {
 
   private long id;
-  private long stepId;
-  private long tableId;
-  private String version;
+  private long partitionId;
+  private long dependencyPartitionId;
   private java.sql.Timestamp createdTs;
   private java.sql.Timestamp updatedTs;
   private String description;
@@ -21,30 +20,21 @@ public class DagTarget {
   }
 
 
-  public long getStepId() {
-    return stepId;
+  public long getPartitionId() {
+    return partitionId;
   }
 
-  public void setStepId(long stepId) {
-    this.stepId = stepId;
-  }
-
-
-  public long getTableId() {
-    return tableId;
-  }
-
-  public void setTableId(long tableId) {
-    this.tableId = tableId;
+  public void setPartitionId(long partitionId) {
+    this.partitionId = partitionId;
   }
 
 
-  public String getVersion() {
-    return version;
+  public long getDependencyPartitionId() {
+    return dependencyPartitionId;
   }
 
-  public void setVersion(String version) {
-    this.version = version;
+  public void setDependencyPartitionId(long dependencyPartitionId) {
+    this.dependencyPartitionId = dependencyPartitionId;
   }
 
 

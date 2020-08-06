@@ -1,11 +1,10 @@
-package io.qimia.uhrwerk.models.db;
+package io.qimia.uhrwerk.models.db.data;
 
 
-public class DtPartition {
+public class DataPartition {
 
   private long id;
-  private long tableId;
-  private long taskId;
+  private long dtTableId;
   private String path;
   private String year;
   private String month;
@@ -27,21 +26,12 @@ public class DtPartition {
   }
 
 
-  public long getTableId() {
-    return tableId;
+  public long getDtTableId() {
+    return dtTableId;
   }
 
-  public void setTableId(long tableId) {
-    this.tableId = tableId;
-  }
-
-
-  public long getTaskId() {
-    return taskId;
-  }
-
-  public void setTaskId(long taskId) {
-    this.taskId = taskId;
+  public void setDtTableId(long dtTableId) {
+    this.dtTableId = dtTableId;
   }
 
 

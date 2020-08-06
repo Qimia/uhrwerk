@@ -1,17 +1,15 @@
-package io.qimia.uhrwerk.models.db;
+package io.qimia.uhrwerk.models.db.data;
 
-
-public class DagPartitionSpec {
+public class DataTable {
 
   private long id;
-  private long tableInfoId;
-  private String batchTemporalUnit;
-  private long batchSize;
+  private long cfTableId;
+  private long cfConnectionId;
+  private String path;
   private String version;
   private java.sql.Timestamp createdTs;
   private java.sql.Timestamp updatedTs;
   private String description;
-
 
   public long getId() {
     return id;
@@ -21,33 +19,29 @@ public class DagPartitionSpec {
     this.id = id;
   }
 
-
-  public long getTableInfoId() {
-    return tableInfoId;
+  public long getCfTableId() {
+    return cfTableId;
   }
 
-  public void setTableInfoId(long tableInfoId) {
-    this.tableInfoId = tableInfoId;
+  public void setCfTableId(long cfTableId) {
+    this.cfTableId = cfTableId;
   }
 
-
-  public String getBatchTemporalUnit() {
-    return batchTemporalUnit;
+  public long getCfConnectionId() {
+    return cfConnectionId;
   }
 
-  public void setBatchTemporalUnit(String batchTemporalUnit) {
-    this.batchTemporalUnit = batchTemporalUnit;
+  public void setCfConnectionId(long cfConnectionId) {
+    this.cfConnectionId = cfConnectionId;
   }
 
-
-  public long getBatchSize() {
-    return batchSize;
+  public String getPath() {
+    return path;
   }
 
-  public void setBatchSize(long batchSize) {
-    this.batchSize = batchSize;
+  public void setPath(String path) {
+    this.path = path;
   }
-
 
   public String getVersion() {
     return version;
@@ -57,7 +51,6 @@ public class DagPartitionSpec {
     this.version = version;
   }
 
-
   public java.sql.Timestamp getCreatedTs() {
     return createdTs;
   }
@@ -65,7 +58,6 @@ public class DagPartitionSpec {
   public void setCreatedTs(java.sql.Timestamp createdTs) {
     this.createdTs = createdTs;
   }
-
 
   public java.sql.Timestamp getUpdatedTs() {
     return updatedTs;
@@ -75,7 +67,6 @@ public class DagPartitionSpec {
     this.updatedTs = updatedTs;
   }
 
-
   public String getDescription() {
     return description;
   }
@@ -83,5 +74,4 @@ public class DagPartitionSpec {
   public void setDescription(String description) {
     this.description = description;
   }
-
 }

@@ -1,24 +1,22 @@
 package io.qimia.uhrwerk.models.dao;
 
-import io.qimia.uhrwerk.models.db.DagConnection;
-import io.qimia.uhrwerk.models.db.DagTableSpec;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-class DagTableSpecDAOTest {
+class ConfigDAOTest {
 
   Connection db;
-  DagTableSpecDAO dao;
+  ConfigDAO dao;
 
   @org.junit.jupiter.api.BeforeEach
-  void setUp() throws SQLException {
+  void setUp() throws ClassNotFoundException, SQLException {
     db =
         DriverManager.getConnection(
             "jdbc:mysql://localhost:53306/UHRWERK_METASTORE", "UHRWERK_USER", "Xq92vFqEKF7TB8H9");
-    dao = new DagTableSpecDAO(db);
+    dao = new ConfigDAO(db);
   }
 
   @org.junit.jupiter.api.AfterEach
@@ -28,9 +26,8 @@ class DagTableSpecDAOTest {
 
   @Test
   void save() throws SQLException {
-    DagTableSpec tableSpec =
-        new DagTableSpec(
-            "Test-Area", "Test-Vertical", "Test-Table1", "1.0", false, "Unit Test Connection");
-    dao.save(tableSpec);
+    DagConnection conn =
+        new DagConnection("Test-Conn1", "Test-Type", "Test-URl", "1.0", "Unit Test Connection");
+    dao.saveConnection(conn);
   }
 }

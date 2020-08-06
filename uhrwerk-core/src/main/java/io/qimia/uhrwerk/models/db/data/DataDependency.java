@@ -1,19 +1,20 @@
-package io.qimia.uhrwerk.models.db;
+package io.qimia.uhrwerk.models.db.data;
 
+import io.qimia.uhrwerk.models.db.BatchTemporalUnit;
+import io.qimia.uhrwerk.models.db.PartitionTransform;
 
-public class DagDependency {
+public class DataDependency {
 
   private long id;
-  private long tableId;
-  private long stepId;
-  private String partitionTransform;
-  private String batchTemporalUnit;
-  private long batchSize;
+  private long cfTableId;
+  private long dtTableId;
+  private PartitionTransform partitionTransform;
+  private BatchTemporalUnit batchTemporalUnit;
+  private int batchSize;
   private String version;
   private java.sql.Timestamp createdTs;
   private java.sql.Timestamp updatedTs;
   private String description;
-
 
   public long getId() {
     return id;
@@ -23,51 +24,45 @@ public class DagDependency {
     this.id = id;
   }
 
-
-  public long getTableId() {
-    return tableId;
+  public long getCfTableId() {
+    return cfTableId;
   }
 
-  public void setTableId(long tableId) {
-    this.tableId = tableId;
+  public void setCfTableId(long cfTableId) {
+    this.cfTableId = cfTableId;
   }
 
-
-  public long getStepId() {
-    return stepId;
+  public long getDtTableId() {
+    return dtTableId;
   }
 
-  public void setStepId(long stepId) {
-    this.stepId = stepId;
+  public void setDtTableId(long dtTableId) {
+    this.dtTableId = dtTableId;
   }
 
-
-  public String getPartitionTransform() {
+  public PartitionTransform getPartitionTransform() {
     return partitionTransform;
   }
 
-  public void setPartitionTransform(String partitionTransform) {
+  public void setPartitionTransform(PartitionTransform partitionTransform) {
     this.partitionTransform = partitionTransform;
   }
 
-
-  public String getBatchTemporalUnit() {
+  public BatchTemporalUnit getBatchTemporalUnit() {
     return batchTemporalUnit;
   }
 
-  public void setBatchTemporalUnit(String batchTemporalUnit) {
+  public void setBatchTemporalUnit(BatchTemporalUnit batchTemporalUnit) {
     this.batchTemporalUnit = batchTemporalUnit;
   }
 
-
-  public long getBatchSize() {
+  public int getBatchSize() {
     return batchSize;
   }
 
-  public void setBatchSize(long batchSize) {
+  public void setBatchSize(int batchSize) {
     this.batchSize = batchSize;
   }
-
 
   public String getVersion() {
     return version;
@@ -77,7 +72,6 @@ public class DagDependency {
     this.version = version;
   }
 
-
   public java.sql.Timestamp getCreatedTs() {
     return createdTs;
   }
@@ -85,7 +79,6 @@ public class DagDependency {
   public void setCreatedTs(java.sql.Timestamp createdTs) {
     this.createdTs = createdTs;
   }
-
 
   public java.sql.Timestamp getUpdatedTs() {
     return updatedTs;
@@ -95,7 +88,6 @@ public class DagDependency {
     this.updatedTs = updatedTs;
   }
 
-
   public String getDescription() {
     return description;
   }
@@ -103,5 +95,4 @@ public class DagDependency {
   public void setDescription(String description) {
     this.description = description;
   }
-
 }

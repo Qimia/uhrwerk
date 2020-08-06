@@ -1,14 +1,11 @@
-package io.qimia.uhrwerk.models.db;
+package io.qimia.uhrwerk.models.db.data;
 
 
-public class DagExtSource {
+public class DataSource {
 
   private long id;
-  private long stepId;
-  private String sourceType;
+  private long cfTableId;
   private long connectionId;
-  private String batchTemporalUnit;
-  private long batchSize;
   private String sqlSelectQuery;
   private String sqlPartitionQuery;
   private String partitionColumn;
@@ -28,21 +25,12 @@ public class DagExtSource {
   }
 
 
-  public long getStepId() {
-    return stepId;
+  public long getCfTableId() {
+    return cfTableId;
   }
 
-  public void setStepId(long stepId) {
-    this.stepId = stepId;
-  }
-
-
-  public String getSourceType() {
-    return sourceType;
-  }
-
-  public void setSourceType(String sourceType) {
-    this.sourceType = sourceType;
+  public void setCfTableId(long cfTableId) {
+    this.cfTableId = cfTableId;
   }
 
 
@@ -52,24 +40,6 @@ public class DagExtSource {
 
   public void setConnectionId(long connectionId) {
     this.connectionId = connectionId;
-  }
-
-
-  public String getBatchTemporalUnit() {
-    return batchTemporalUnit;
-  }
-
-  public void setBatchTemporalUnit(String batchTemporalUnit) {
-    this.batchTemporalUnit = batchTemporalUnit;
-  }
-
-
-  public long getBatchSize() {
-    return batchSize;
-  }
-
-  public void setBatchSize(long batchSize) {
-    this.batchSize = batchSize;
   }
 
 
