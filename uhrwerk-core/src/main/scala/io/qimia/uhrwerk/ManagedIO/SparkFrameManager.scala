@@ -3,8 +3,8 @@ package io.qimia.uhrwerk.ManagedIO
 import java.nio.file.Paths
 import java.time.{Duration, LocalDateTime}
 
-import io.qimia.uhrwerk.models.ConnectionType
-import io.qimia.uhrwerk.models.config.{Connection, Dependency, Target}
+import io.qimia.uhrwerk.models.config.{Connection, Dependency, InTable, Target}
+import io.qimia.uhrwerk.models.{ConnectionType, DependencyType}
 import io.qimia.uhrwerk.utils.{JDBCTools, TimeTools}
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
@@ -34,18 +34,28 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @param batchTS      Batch Timestamp. If not defined, load the full path.
    * @return DataFrame
    */
-  override def loadDataFrame(conn: Connection,
-                             locationInfo: Dependency,
-                             batchTS: Option[LocalDateTime]): DataFrame = {
+  override def loadDataFrame[T <: InTable](conn: Connection,
+                                           locationInfo: T,
+                                           batchTS: Option[LocalDateTime]): DataFrame = {
+    val dependency: Option[Dependency] = locationInfo match {
+      case _: Dependency =>
+        Some(locationInfo.asInstanceOf[Dependency])
+      case _: Any =>
+        Option.empty
+    }
     assert(conn.getName == locationInfo.getConnectionName)
 
     if (conn.getTypeEnum.equals(ConnectionType.JDBC)) {
       loadDFFromJDBC(conn, locationInfo, batchTS)
     } else {
       // aggregates
-      if (batchTS.isDefined && locationInfo.getPartitionCount > 1) {
-        val (startTS, endTSExcl) = TimeTools.getRangeFromAggregate(batchTS.get, locationInfo.getPartitionSize, locationInfo.getPartitionCount)
-        loadDataFrames(conn, locationInfo, startTS, endTSExcl, locationInfo.getPartitionSizeDuration)
+      if (dependency.isDefined && batchTS.isDefined && dependency.get.getTypeEnum.equals(DependencyType.AGGREGATE)) {
+        val (startTS, endTSExcl) = TimeTools.getRangeFromAggregate(batchTS.get, dependency.get.getPartitionSize, dependency.get.getPartitionCount)
+        loadMoreBatches(conn, dependency.get, startTS, endTSExcl, dependency.get.getPartitionSizeDuration)
+        // windows
+      } else if (dependency.isDefined && batchTS.isDefined && dependency.get.getTypeEnum.equals(DependencyType.WINDOW)) {
+        val (startTS, endTSExcl) = TimeTools.getRangeFromWindow(batchTS.get, dependency.get.getPartitionSize, dependency.get.getPartitionCount)
+        loadMoreBatches(conn, dependency.get, startTS, endTSExcl, dependency.get.getPartitionSizeDuration)
       } else {
         val fullLocation = if (batchTS.isDefined) {
           val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
@@ -70,7 +80,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @return DataFrame
    */
   private def loadDFFromJDBC(conn: Connection,
-                             locationInfo: Dependency,
+                             locationInfo: InTable,
                              batchTS: Option[LocalDateTime]): DataFrame = {
     import sparkSession.implicits._
     assert(conn.getName == locationInfo.getConnectionName)
@@ -113,11 +123,11 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @param batchDuration Batch Duration
    * @return DataFrame
    */
-  def loadDataFrames(conn: Connection,
-                     locationInfo: Dependency,
-                     startTS: LocalDateTime,
-                     endTSExcl: LocalDateTime,
-                     batchDuration: Duration): DataFrame = {
+  def loadMoreBatches(conn: Connection,
+                      locationInfo: Dependency,
+                      startTS: LocalDateTime,
+                      endTSExcl: LocalDateTime,
+                      batchDuration: Duration): DataFrame = {
     import sparkSession.implicits._
     val loc = SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath)
     val df = sparkSession.read.parquet(loc)
@@ -125,9 +135,16 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     val endRange = TimeTools.dateTimeToPostFix(endTSExcl, batchDuration)
     val startDate = TimeTools.dateTimeToDate(startTS)
     val endDate = TimeTools.dateTimeToDate(endTSExcl)
-    df
+
+    val filtered = df
       .where(($"date" >= startDate) and ($"date" <= endDate))
-      .where(($"batch" >= startRange) and ($"batch" < endRange))
+
+    if (TimeTools.isDurationSizeDays(batchDuration)) {
+      filtered
+    } else {
+      filtered
+        .where(($"batch" >= startRange) and ($"batch" < endRange))
+    }
   }
 
   /**

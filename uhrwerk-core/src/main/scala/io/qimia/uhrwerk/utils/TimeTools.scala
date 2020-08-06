@@ -1,11 +1,17 @@
 package io.qimia.uhrwerk.utils
 
-import java.time.{Duration, LocalDateTime, LocalTime}
 import java.time.format.DateTimeFormatter
+import java.time.{Duration, LocalDateTime, LocalTime}
+
+import com.mysql.cj.exceptions.WrongArgumentException
 
 import scala.collection.mutable.ListBuffer
 
 object TimeTools {
+  def isDurationSizeDays(batchDuration: Duration): Boolean = {
+    convertDurationToStr(batchDuration).contains("d")
+  }
+
 
   // convert a datetime string to a datetime object
   def convertTSToTimeObj(date: String): LocalDateTime =
@@ -17,25 +23,69 @@ object TimeTools {
 
   // TODO: Durations now have to be exact minutes or hours or days (what if it isn't??)
 
+  /**
+   * Returns min and max (exclusive) timestamps for a specified aggregate.
+   * E.g. with input (LocalDateTime.of(2020, 1, 1, 8, 45, 23), "15m", 4) returns
+   * (LocalDateTime.of(2020, 1, 1, 8, 0), LocalDateTime.of(2020, 1, 1, 9, 0))
+   * It is only allowed to go to a full hour, full day or a full month.
+   * The underlying batch size can differ though, e.g. going both from "15m" and "30m" to "1h" is feasible.
+   *
+   * @param ts             TimeStamp that is taken as the basis of the aggregate.
+   * @param duration       Duration as string, e.g. "15m" or "1h".
+   * @param partitionCount The multiplier of the duration - the result needs to give a full aggregate.
+   *                       E.g. "15m" * 5 is not valid.
+   * @return A tuple with min and max timestamps of the aggregate.
+   * @throws UnsupportedOperationException if the aggregate is not valid, e.g. "1h" * 7 -> not a full day
+   */
   def getRangeFromAggregate(ts: LocalDateTime, duration: String, partitionCount: Int): (LocalDateTime, LocalDateTime) = {
     val durationObj = convertDurationToObj(duration)
     val multipliedDuration = durationObj.multipliedBy(partitionCount)
 
     // checking for validity
-    // TODO add months
     val isHour = multipliedDuration.minusHours(1).getSeconds == 0
     val isDay = multipliedDuration.minusDays(1).getSeconds == 0
-    if (!isHour && !isDay) {
+    val correctNumberOfDays = ts.getMonth.length(((ts.getYear % 4 == 0) && (ts.getYear % 100 != 0)) || (ts.getYear % 400 == 0))
+    val isMonth = multipliedDuration.minusDays(correctNumberOfDays).getSeconds == 0
+    if (!isHour && !isDay && !isMonth) {
       throw new UnsupportedOperationException("A wrong aggregate specified")
     }
 
     if (isHour) {
       val tsHour = ts.minusMinutes(ts.getMinute).minusSeconds(ts.getSecond)
       (tsHour, tsHour.plusHours(1))
-    } else { //isDay
+    } else if (isDay) {
       val tsDay = ts.minusHours(ts.getHour).minusMinutes(ts.getMinute).minusSeconds(ts.getSecond)
       (tsDay, tsDay.plusDays(1))
+    } else { // isMonth
+      val tsMonth = ts.minusDays(ts.getDayOfMonth - 1).minusHours(ts.getHour).minusMinutes(ts.getMinute).minusSeconds(ts.getSecond)
+      (tsMonth, tsMonth.plusMonths(1))
     }
+  }
+
+  /**
+   * Returns min and max (exclusive) timestamps for a specified window.
+   * The function supposes that {@code duration} is the minimum batch size as it has no other information.
+   * Example: with input (LocalDateTime.of(2020, 1, 1, 8, 45), "15m", 4) returns
+   * (LocalDateTime.of(2020, 1, 1, 8, 0), LocalDateTime.of(2020, 1, 1, 9, 0)).
+   * With input (LocalDateTime.of(2020, 1, 1, 8, 30), "1h", 3) returns
+   * (LocalDateTime.of(2020, 1, 1, 6, 30), LocalDateTime.of(2020, 1, 1, 9, 30)).
+   *
+   * @param ts             TimeStamp that is taken as the max timestamp of the window.
+   *                       As the reading works with the interval (min - inclusive, max - exclusive),
+   *                       the {@code duration} is added to create the max timestamp.
+   * @param duration       Duration as string, e.g. "15m" or "1h".
+   * @param partitionCount The multiplier of the duration.
+   * @return A tuple with min and max timestamps of the window.
+   * @throws WrongArgumentException when {@code partitionCount} is not >1 as the function doesn't make sense then.
+   */
+  def getRangeFromWindow(ts: LocalDateTime, duration: String, partitionCount: Int): (LocalDateTime, LocalDateTime) = {
+    if (partitionCount <= 1) {
+      throw new WrongArgumentException("partitionCount must be bigger than 1")
+    }
+    val durationObj = convertDurationToObj(duration)
+    val multipliedDuration = durationObj.multipliedBy(partitionCount - 1)
+
+    (ts.minusMinutes(multipliedDuration.toMinutes), ts.plusMinutes(durationObj.toMinutes))
   }
 
   // Go from a string representation of a duration to a duration object
@@ -77,6 +127,7 @@ object TimeTools {
 
   /**
    * Go from range to a list of dates (with a given batchsize) (start inclusive end exclusive)
+   *
    * @param startDate
    * @param endDate
    * @param batchSize
@@ -116,16 +167,18 @@ object TimeTools {
       .map(x => smallerDuration.multipliedBy(x.toLong))
     for (batch <- largeBatchList;
          durationAdd <- durationAdditions)
-      yield { batch.plus(durationAdd) }
+      yield {
+        batch.plus(durationAdd)
+      }
   }
 
   // See for a list of larger batches if a list of smaller batches (with a given big-batch-duration and divideBy)
   // which of those large batches have all the smaller batches present
   def filterBySmallerBatchList(
-      largeBatchList: List[LocalDateTime],
-      runBatchSize: Duration,
-      divideBy: Int,
-      smallBatches: Set[LocalDateTime]): List[LocalDateTime] = {
+                                largeBatchList: List[LocalDateTime],
+                                runBatchSize: Duration,
+                                divideBy: Int,
+                                smallBatches: Set[LocalDateTime]): List[LocalDateTime] = {
     val smallerDuration = runBatchSize.dividedBy(divideBy)
     val durationAdditions = (0 until divideBy).toList
       .map(x => smallerDuration.multipliedBy(x.toLong))
@@ -168,7 +221,7 @@ object TimeTools {
   /**
    * Convert batch start timestamp to postfix needed for reading single batch
    *
-   * @param date DateTime
+   * @param date     DateTime
    * @param duration Duration
    * @return String postfix
    */

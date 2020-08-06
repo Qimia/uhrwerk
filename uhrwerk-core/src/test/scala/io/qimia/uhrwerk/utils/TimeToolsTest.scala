@@ -2,6 +2,7 @@ package io.qimia.uhrwerk.utils
 
 import java.time.{Duration, LocalDateTime, LocalTime, Month}
 
+import com.mysql.cj.exceptions.WrongArgumentException
 import org.scalatest.flatspec.AnyFlatSpec
 
 class TimeToolsTest extends AnyFlatSpec {
@@ -281,25 +282,33 @@ class TimeToolsTest extends AnyFlatSpec {
     val (startShouldBe, endShouldBe) = (LocalDateTime.of(2020, 1, 1, 8, 0),
       LocalDateTime.of(2020, 1, 1, 9, 0))
 
-    assert(start.equals(startShouldBe))
-    assert(end.equals(endShouldBe))
+    assert(start === startShouldBe)
+    assert(end === endShouldBe)
 
     val (start2, end2) = TimeTools.getRangeFromAggregate(dateTime, "1h", 1)
 
-    assert(start2.equals(startShouldBe))
-    assert(end2.equals(endShouldBe))
+    assert(start2 === startShouldBe)
+    assert(end2 === endShouldBe)
 
     val (startDay, endDay) = TimeTools.getRangeFromAggregate(dateTime, "1h", 24)
     val (startDayShouldBe, endDayShouldBe) = (LocalDateTime.of(2020, 1, 1, 0, 0),
       LocalDateTime.of(2020, 1, 2, 0, 0))
 
-    assert(startDay.equals(startDayShouldBe))
-    assert(endDay.equals(endDayShouldBe))
+    assert(startDay === startDayShouldBe)
+    assert(endDay === endDayShouldBe)
 
     val (startDay2, endDay2) = TimeTools.getRangeFromAggregate(dateTime, "1d", 1)
 
-    assert(startDay2.equals(startDayShouldBe))
-    assert(endDay2.equals(endDayShouldBe))
+    assert(startDay2 === startDayShouldBe)
+    assert(endDay2 === endDayShouldBe)
+
+    val (startMonthShouldBe, endMonthShouldBe) = (LocalDateTime.of(2020, 1, 1, 0, 0),
+      LocalDateTime.of(2020, 2, 1, 0, 0))
+
+    val (startMonth, endMonth) = TimeTools.getRangeFromAggregate(dateTime, "1d", 31)
+
+    assert(startMonth === startMonthShouldBe)
+    assert(endMonth === endMonthShouldBe)
 
     assertThrows[UnsupportedOperationException](TimeTools.getRangeFromAggregate(dateTime, "15m", 3))
     assertThrows[UnsupportedOperationException](TimeTools.getRangeFromAggregate(dateTime, "15m", 5))
@@ -307,5 +316,51 @@ class TimeToolsTest extends AnyFlatSpec {
     assertThrows[UnsupportedOperationException](TimeTools.getRangeFromAggregate(dateTime, "1h", 3))
     assertThrows[UnsupportedOperationException](TimeTools.getRangeFromAggregate(dateTime, "1d", 2))
     assertThrows[UnsupportedOperationException](TimeTools.getRangeFromAggregate(dateTime, "1h", 25))
+  }
+
+  "getRangeFromWindow" should "convert a window to a range" in {
+    val dateTime = LocalDateTime.of(2020, 1, 1, 8, 45, 0)
+
+    val (start, end) = TimeTools.getRangeFromWindow(dateTime, "15m", 4)
+    val (startShouldBe, endShouldBe) = (LocalDateTime.of(2020, 1, 1, 8, 0),
+      LocalDateTime.of(2020, 1, 1, 9, 0))
+
+    assert(start === startShouldBe)
+    assert(end === endShouldBe)
+
+    val (startHour, endHour) = TimeTools.getRangeFromWindow(dateTime, "1h", 3)
+    val (startHourShouldBe, endHourShouldBe) = (LocalDateTime.of(2020, 1, 1, 6, 45),
+      LocalDateTime.of(2020, 1, 1, 9, 45))
+
+    assert(startHour === startHourShouldBe)
+    assert(endHour === endHourShouldBe)
+
+    val (startDay, endDay) = TimeTools.getRangeFromWindow(dateTime, "1h", 24)
+    val (startDayShouldBe, endDayShouldBe) = (LocalDateTime.of(2019, 12, 31, 9, 45),
+      LocalDateTime.of(2020, 1, 1, 9, 45))
+
+    assert(startDay === startDayShouldBe)
+    assert(endDay === endDayShouldBe)
+
+    val (startMonthShouldBe, endMonthShouldBe) = (LocalDateTime.of(2019, 12, 2, 8, 45),
+      LocalDateTime.of(2020, 1, 2, 8, 45))
+
+    val (startMonth, endMonth) = TimeTools.getRangeFromWindow(dateTime, "1d", 31)
+
+    assert(startMonth === startMonthShouldBe)
+    assert(endMonth === endMonthShouldBe)
+
+    assertThrows[WrongArgumentException](TimeTools.getRangeFromWindow(dateTime, "15m", 1))
+    assertThrows[WrongArgumentException](TimeTools.getRangeFromWindow(dateTime, "15m", 1))
+    assertThrows[WrongArgumentException](TimeTools.getRangeFromWindow(dateTime, "30m", 0))
+    assertThrows[WrongArgumentException](TimeTools.getRangeFromWindow(dateTime, "1h", -4))
+  }
+
+  "is duration size days" should "return the correct answer" in {
+    assert(!TimeTools.isDurationSizeDays(Duration.ofHours(1)))
+    assert(!TimeTools.isDurationSizeDays(Duration.ofHours(7)))
+    assert(!TimeTools.isDurationSizeDays(Duration.ofMinutes(5)))
+    assert(TimeTools.isDurationSizeDays(Duration.ofDays(1)))
+    assert(TimeTools.isDurationSizeDays(Duration.ofDays(19)))
   }
 }

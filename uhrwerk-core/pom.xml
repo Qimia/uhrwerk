@@ -104,9 +104,10 @@
                 <version>2.0.0</version>
                 <configuration>
                     <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
-                    <forkMode>never</forkMode>
+                    <forkMode>once</forkMode>
                     <junitxml>.</junitxml>
                     <filereports>TestSuiteReport.txt</filereports>
+                    <parallel>true</parallel>
                 </configuration>
                 <executions>
                     <execution>

@@ -5,7 +5,7 @@ import java.nio.file.{Files, Path, Paths}
 import java.time.{Duration, LocalDateTime}
 import java.util.Comparator
 
-import io.qimia.uhrwerk.models.config.{Connection, Dependency, Target}
+import io.qimia.uhrwerk.models.config.{Connection, Dependency, Source, Target}
 import io.qimia.uhrwerk.tags.{DbTest, Slow}
 import io.qimia.uhrwerk.utils.{Converters, JDBCTools, TimeTools}
 import org.apache.spark.SparkContext
@@ -20,19 +20,27 @@ import scala.collection.mutable.ListBuffer
 trait BuildTeardown extends BeforeAndAfterAll {
   this: Suite =>
 
-  val foldersToClean: ListBuffer[Path] = new ListBuffer[Path]
   val DATABASE_NAME: String = "uhrwerk_test"
 
   override def afterAll() {
-    try super.afterAll() // To be stackable, must call super.afterEach
-    finally {
+    val foldersToClean: ListBuffer[Path] = new ListBuffer[Path]
+    foldersToClean.append(Paths.get("src/test/resources/testlake/testsparkframemanagerwithoutbatches"))
+    foldersToClean.append(Paths.get("src/test/resources/testlake/testsparkframemanager"))
+    foldersToClean.append(Paths.get("src/test/resources/testlake/testaggregatedependency/"))
+    foldersToClean.append(Paths.get("src/test/resources/testlake/testsparkframerange/"))
+    foldersToClean.append(Paths.get("src/test/resources/testlake/testwindowdependency/"))
 
-      val conn = getJDBCConnection
-      JDBCTools.dropJDBCDatabase(conn, DATABASE_NAME)
-      foldersToClean.foreach(p => {
+    val conn = getJDBCConnection
+    JDBCTools.dropJDBCDatabase(conn, DATABASE_NAME)
+    foldersToClean.foreach(p => {
+      try {
         cleanFolder(p)
-      })
-    }
+      } catch {
+        case exception: Exception =>
+          println("Couldn't remove folder")
+          println(exception.getLocalizedMessage)
+      }
+    })
   }
 
   def cleanFolder(location: Path): Unit = {
@@ -43,6 +51,7 @@ trait BuildTeardown extends BeforeAndAfterAll {
       .asScala
       .map(_.toFile)
       .foreach(f => f.delete())
+
   }
 
   def getJDBCConnection: Connection = {
@@ -123,8 +132,6 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
 
     assert(
       new File("src/test/resources/testlake/testsparkframemanagerwithoutbatches/").isDirectory)
-
-    foldersToClean.append(Paths.get("src/test/resources/testlake/testsparkframemanagerwithoutbatches"))
   }
 
   "save DF to Lake and load from lake" should "return the same df and create the right folderstructure" in {
@@ -162,7 +169,15 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       new File("src/test/resources/testlake/testsparkframemanager/" +
         "date=2020-02-04/batch=2020-02-04-10-1").isDirectory)
 
-    foldersToClean.append(Paths.get("src/test/resources/testlake/testsparkframemanager"))
+    // loading should work also with a Source class
+    val source = new Source
+    source.setPartitionSize("30m")
+    source.setConnectionName("testSparkFrameManager")
+    source.setPath("testsparkframemanager")
+    source.setVersion(1)
+    val loadedDFSource = manager.loadDataFrame(conn, source, Option(dateTime)).sort("a", "b", "c")
+    val bSource = loadedDF.collect()
+    assert(a === bSource)
   }
 
   "load DF with aggregate dependencies" should "properly load the batches" in {
@@ -180,12 +195,12 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     tar.setConnectionName("testAggregateDependency")
     tar.setPath("testaggregatedependency")
     tar.setVersion(1)
-    List(0, 15, 30, 45).foreach(b => {
-      val dateTime = LocalDateTime.of(2020, 7, 4, 10, b)
+    List(2, 3, 4).foreach(day => List(10, 11).foreach(hour => List(0, 15, 30, 45).foreach(b => {
+      val dateTime = LocalDateTime.of(2020, 7, day, hour, b)
       manager.writeDataFrame(df, conn, tar, Option(dateTime))
-      assert(       new File("src/test/resources/testlake/testaggregatedependency/" +
-          s"date=2020-07-04/batch=2020-07-04-10-${b % 15}").isDirectory)
-    })
+      assert(new File("src/test/resources/testlake/testaggregatedependency/" +
+        s"date=2020-07-0$day/batch=2020-07-0$day-$hour-${b % 15}").isDirectory)
+    })))
 
     val dep = new Dependency
     dep.setPartitionSize("15m")
@@ -199,6 +214,94 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
 
     assert(loadedDF.count === df.count * 4)
     assert(loadedDF.select("batch").distinct().count === 4)
+
+    // one day
+    dep.setPartitionCount(4 * 24)
+    val loadedDFDay = manager.loadDataFrame(conn, dep, Option(depDateTime)).cache
+    assert(loadedDFDay.count === df.count * 4 * 2)
+    assert(loadedDFDay.select("batch").distinct().count === 8)
+
+    // one day written as 1d
+    dep.setPartitionSize("1d")
+    dep.setPartitionCount(1)
+    val loadedDFDay2 = manager.loadDataFrame(conn, dep, Option(depDateTime)).cache
+    assert(loadedDFDay2.count === df.count * 4 * 2)
+    assert(loadedDFDay2.select("batch").distinct().count === 8)
+
+    // one month
+    dep.setPartitionSize("1d")
+    dep.setPartitionCount(31)
+    val loadedDFMonth = manager.loadDataFrame(conn, dep, Option(depDateTime)).cache
+    assert(loadedDFMonth.count === df.count * 4 * 2 * 3)
+    assert(loadedDFMonth.select("batch").distinct().count === 3 * 2 * 4)
+  }
+
+  "load DF with window dependencies" should "properly load the batches" in {
+    val spark = getSparkSession
+
+    val df = createMockDataFrame(spark)
+    val manager = new SparkFrameManager(spark)
+
+    val conn = new Connection
+    conn.setName("testWindowDependency")
+    conn.setType("fs")
+    conn.setStartPath("src/test/resources/testlake/")
+    val tar = new Target
+    tar.setPartitionSize("15m")
+    tar.setConnectionName("testWindowDependency")
+    tar.setPath("testwindowdependency")
+    tar.setVersion(1)
+    List(2, 3, 4).foreach(day => List(10, 11).foreach(hour => List(0, 15, 30, 45).foreach(b => {
+      val dateTime = LocalDateTime.of(2020, 7, day, hour, b)
+      manager.writeDataFrame(df, conn, tar, Option(dateTime))
+      assert(new File("src/test/resources/testlake/testwindowdependency/" +
+        s"date=2020-07-0$day/batch=2020-07-0$day-$hour-${b % 15}").isDirectory)
+    })))
+
+    val dep = new Dependency
+    dep.setPartitionSize("15m")
+    dep.setType("window")
+    dep.setPartitionCount(4)
+    dep.setConnectionName("testWindowDependency")
+    dep.setPath("testwindowdependency")
+
+    val depDateTime = LocalDateTime.of(2020, 7, 4, 10, 0)
+    val loadedDF = manager.loadDataFrame(conn, dep, Option(depDateTime)).cache
+
+    assert(loadedDF.count === df.count)
+    assert(loadedDF.select("batch").distinct().count === 1)
+
+    val depDateTime2 = LocalDateTime.of(2020, 7, 4, 10, 30)
+    val loadedDF2 = manager.loadDataFrame(conn, dep, Option(depDateTime2)).cache
+
+    assert(loadedDF2.count === df.count * 3)
+    assert(loadedDF2.select("batch").distinct().count === 3)
+
+    val depDateTime3 = LocalDateTime.of(2020, 7, 4, 11, 15)
+    val loadedDF3 = manager.loadDataFrame(conn, dep, Option(depDateTime3)).cache
+
+    assert(loadedDF3.count === df.count * 4)
+    assert(loadedDF3.select("batch").distinct().count === 4)
+
+    // one day
+    dep.setPartitionCount(4 * 24)
+    val loadedDFDay = manager.loadDataFrame(conn, dep, Option(depDateTime3)).cache
+    assert(loadedDFDay.count === df.count * 8)
+    assert(loadedDFDay.select("batch").distinct().count === 8)
+
+    // two days
+    dep.setPartitionSize("1d")
+    dep.setPartitionCount(2)
+    val loadedDFDay2 = manager.loadDataFrame(conn, dep, Option(depDateTime3)).cache
+    assert(loadedDFDay2.count === df.count * 16)
+    assert(loadedDFDay2.select("batch").distinct().count === 16)
+
+    // one month
+    dep.setPartitionSize("1d")
+    dep.setPartitionCount(31)
+    val loadedDFMonth = manager.loadDataFrame(conn, dep, Option(depDateTime)).cache
+    assert(loadedDFMonth.count === df.count * 4 * 2 * 3)
+    assert(loadedDFMonth.select("batch").distinct().count === 3 * 2 * 4)
   }
 
   "load DFs" should "result in quick access to a range of batches" taggedAs Slow in {
@@ -228,7 +331,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     })
 
     val dep = Converters.convertTargetToDependency(tar)
-    val bigDF = manager.loadDataFrames(
+    val bigDF = manager.loadMoreBatches(
       conn,
       dep,
       LocalDateTime.of(2015, 10, 12, 20, 0),
@@ -238,7 +341,6 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val results = bigDF.agg(min($"batch"), max($"batch")).collect().head
     assert(results.getAs[String](0) === "2015-10-12-20-0")
     assert(results.getAs[String](1) === "2015-10-13-19-1")
-    foldersToClean.append(Paths.get("src/test/resources/testlake/testsparkframerange/"))
   }
 
   "save DF to jdbc and load from jdbc without batches" should "return the same df and create the table in the db" taggedAs(Slow, DbTest) in {
