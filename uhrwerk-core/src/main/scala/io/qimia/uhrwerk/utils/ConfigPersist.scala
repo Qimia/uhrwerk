@@ -47,7 +47,7 @@ object ConfigPersist {
       .createQuery(
         s"FROM ConnectionConfig WHERE name = '${connection.getName}' " +
         s"AND type = '${connection.getType}' " +
-        s"AND url = '${connection.getJdbcUri}' " +
+        s"AND url = '${connection.getJdbcUrl}' " +
         s"AND version = ${connection.getVersion} ",
         classOf[ConnectionConfig]
       )
@@ -60,7 +60,7 @@ object ConfigPersist {
     val connConf = new ConnectionConfig(
       connection.getName,
       connection.getType,
-      connection.getJdbcUri,
+      connection.getJdbcUrl,
       connection.getVersion
     )
     store.persist(connConf)

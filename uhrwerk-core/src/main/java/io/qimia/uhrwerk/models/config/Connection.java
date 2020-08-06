@@ -6,7 +6,7 @@ public class Connection {
 
     private String name = "";
     private String type = "";
-    private String jdbcUri = "";
+    private String jdbcUrl = "";
     private String jdbcDriver = "";
     private String user = "";
     private String pass = "";
@@ -38,12 +38,12 @@ public class Connection {
         this.type = type;
     }
 
-    public String getJdbcUri() {
-        return jdbcUri;
+    public String getJdbcUrl() {
+        return jdbcUrl;
     }
 
-    public void setJdbcUri(String jdbcUri) {
-        this.jdbcUri = jdbcUri;
+    public void setJdbcUrl(String jdbcUrl) {
+        this.jdbcUrl = jdbcUrl;
     }
 
     public String getUser() {

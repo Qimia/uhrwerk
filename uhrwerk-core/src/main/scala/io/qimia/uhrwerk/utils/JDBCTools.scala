@@ -7,7 +7,7 @@ import io.qimia.uhrwerk.models.config.{Connection, Target}
 
 object JDBCTools {
   def createJDBCDatabase(conn: Connection, locationInfo: Target): Unit = {
-    val url = conn.getJdbcUri
+    val url = conn.getJdbcUrl
     val driver = conn.getJdbcDriver
     val username = conn.getUser
     val password = conn.getPass
@@ -23,7 +23,7 @@ object JDBCTools {
   }
 
   def getJDBCConnection(conn: Connection): sql.Connection = {
-    val url = conn.getJdbcUri
+    val url = conn.getJdbcUrl
     val driver = conn.getJdbcDriver
     val username = conn.getUser
     val password = conn.getPass
