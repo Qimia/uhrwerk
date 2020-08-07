@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.ManagedIO
 
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.config.model.{Connection, Target}
+import io.qimia.uhrwerk.config.model.{Connection, Table, Target}
 import io.qimia.uhrwerk.utils.Converters
 import org.apache.spark.sql.SparkSession
 import org.scalatest.flatspec.AnyFlatSpec
@@ -22,22 +22,19 @@ class InMemManagerTest extends AnyFlatSpec {
     val conn = new Connection
     conn.setName("testinmem")
     val tar = new Target
-    tar.setPartitionSize("15m")
     tar.setConnectionName("testinmem")
     tar.setPath("someframeone")
-    tar.setVersion(1)
+    val table = new Table
 
     val dateTime = LocalDateTime.of(2010, 2, 4, 10, 30)
-    manager.writeDataFrame(df, conn, tar, Option(dateTime))
+    manager.writeDataFrame(df, conn, tar, table, Option(dateTime))
 
     val dfUnpartitioned = (1000 to 1200).map(i => (i, "1234qwerty", i - 123)).toDF("x", "y", "z")
     val tarU = new Target
-    tarU.setType("unpartitioned")  // TODO: See if target-types change or not (what to do with unpartitioned)
     tarU.setConnectionName("testinmem")
     tarU.setPath("otherframetwo")
-    tarU.setVersion(1)
 
-    manager.writeDataFrame(dfUnpartitioned, conn, tarU)
+    manager.writeDataFrame(dfUnpartitioned, conn, tarU, table)
 
     val dep = Converters.convertTargetToDependency(tar)
     val loadedDF = manager.loadDataFrame(conn, dep, Option(dateTime))

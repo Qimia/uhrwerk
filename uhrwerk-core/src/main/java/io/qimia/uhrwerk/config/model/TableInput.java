@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.config.model;
 
 import java.time.Duration;
 
-public interface StepInput {
+public interface TableInput {
 
     public String getConnectionName();
     public void setConnectionName(String connectionName);
@@ -21,5 +21,6 @@ public interface StepInput {
     public void setSelectQuery(String selectQuery);
     public String getQueryColumn();
     public void setQueryColumn(String queryColumn);
-
+    public int getSparkReaderNumPartitions();
+    public void setSparkReaderNumPartitions(int sparkReaderNumPartitions);
 }

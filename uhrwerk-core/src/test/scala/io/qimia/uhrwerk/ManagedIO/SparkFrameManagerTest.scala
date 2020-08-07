@@ -5,7 +5,7 @@ import java.nio.file.{Files, Path, Paths}
 import java.time.{Duration, LocalDateTime}
 import java.util.Comparator
 
-import io.qimia.uhrwerk.config.model.{Connection, Dependency, Source, Target}
+import io.qimia.uhrwerk.config.model.{Connection, Dependency, Source, Table, Target}
 import io.qimia.uhrwerk.tags.{DbTest, Slow}
 import io.qimia.uhrwerk.utils.{Converters, JDBCTools, TimeTools}
 import org.apache.spark.SparkContext
@@ -122,6 +122,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     tar.setConnectionName("testSparkFrameManagerWithoutBatches")
     tar.setPath("testsparkframemanagerwithoutbatches")
     tar.setVersion(1)
+    val tab = new Table
     manager.writeDataFrame(df, conn, tar)
 
     val a = df.collect()

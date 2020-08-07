@@ -2,6 +2,9 @@ name: load_a_table
 batchSize: 6h
 parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
 maxBatches: 12
+targetArea: processing
+targetVertical: sourcedb_1
+targetPartitionSize: "6h"
 
 dependencies:
   - connectionName: connection_name
@@ -24,7 +27,4 @@ dependencies:
 targets:
   - connectionName: connection_name2
     path: someplace/new_table
-    area: processing
-    vertical: sourcedb_1
     version: 1
-    partitionSize: "6h"

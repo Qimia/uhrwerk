@@ -18,7 +18,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     val tableName = "testhelperfunction"
 
     val entityManagerFactory =
-      Persistence.createEntityManagerFactory("io.qimia.uhrwerk.models")
+      Persistence.createEntityManagerFactory("io.qimia.uhrwerk.backend.jpa")
     val entityManager = entityManagerFactory.createEntityManager()
 
     // At the start there should be nothing
@@ -70,7 +70,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
 
   "getDependencies helper function" should "only get the right dependencies" in {
     val entityManagerFactory =
-      Persistence.createEntityManagerFactory("io.qimia.uhrwerk.models")
+      Persistence.createEntityManagerFactory("io.qimia.uhrwerk.backend.jpa")
     val entityManager = entityManagerFactory.createEntityManager()
     entityManager.getTransaction().begin()
     entityManager.persist(
@@ -189,7 +189,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     val globalConfig: Path = Paths.get(getClass.getResource("/config/global_test_1.yml").getPath)
     val stepConfig: Path = Paths.get(getClass.getResource("/config/table_test_1.yml").getPath)
 
-    val metaStore = MetaStore(globalConfig, stepConfig, false, false)
+    val metaStore = MetaStore(globalConfig, stepConfig, false)
     List("mysql_test", "s3_test", "local_filesystem_test").foreach(name =>
       assert(metaStore.connections.contains(name)))
     val startTask = metaStore.logStartTask()

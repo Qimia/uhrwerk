@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.utils
 import java.time.temporal.{ChronoUnit, TemporalUnit}
 
 import io.qimia.uhrwerk.config.DependencyType
-import io.qimia.uhrwerk.config.model.{Global, Table, DataTable}
+import io.qimia.uhrwerk.config.model.{Global, Table}
 
 object ConfigProcess {
 
@@ -20,9 +20,6 @@ object ConfigProcess {
       return false
     }
     autofillStepPartitionSizes(step)
-    if (!checkAllTargetTimes(step)) {
-      return false
-    }
     if (!checkAndUpdateAgg(step)) {
       return false
     }
@@ -35,13 +32,13 @@ object ConfigProcess {
   /**
    * Check if path-names and connection-names have been filled in
    */
-  def checkFieldsConfig(step: Table, global: Global): Boolean = {
+  def checkFieldsConfig(table: Table, global: Global): Boolean = {
     val connectionNames = global.getConnections.map(_.getName).toSet
-    val stepBatchSizeSet = step.getBatchSize != ""
+    val stepBatchSizeSet = table.getBatchSize != ""
     // TODO: Require a step name or not?
 
-    if (step.dependenciesSet()) {
-      val dependencies = step.getDependencies
+    if (table.dependenciesSet()) {
+      val dependencies = table.getDependencies
       dependencies.foreach(d => {
         if (!connectionNames.contains(d.getConnectionName)) {
           return false
@@ -56,8 +53,8 @@ object ConfigProcess {
         }
       })
     }
-    if (step.sourcesSet()) {
-      val sources = step.getSources
+    if (table.sourcesSet()) {
+      val sources = table.getSources
       sources.foreach(s => {
         if (!connectionNames.contains(s.getConnectionName)) {
           return false
@@ -70,7 +67,7 @@ object ConfigProcess {
         }
       })
     }
-    val targets = step.getTargets
+    val targets = table.getTargets
     targets.foreach(t => {
       if (!connectionNames.contains(t.getConnectionName)) {
         return false
@@ -78,7 +75,7 @@ object ConfigProcess {
       if (t.getPath == "") {
         return false
       }
-      if (!stepBatchSizeSet && t.getPartitionSize == "") {
+      if (!stepBatchSizeSet && table.getTargetPartitionSize == "") {
         return false
       }
     })
@@ -89,7 +86,7 @@ object ConfigProcess {
    * Specifically check (and fill in) partition sizes of aggregate dependencies
    */
   def checkAndUpdateAgg(in: Table): Boolean = {
-    val targetPartitionSize = in.getTargets.head.getPartitionSizeDuration
+    val targetPartitionSize = in.getTargetPartitionSizeDuration
     if (in.dependenciesSet()) {
       val aggDependencies = in.getDependencies.filter(d =>
         d.getTypeEnum == DependencyType.AGGREGATE)
@@ -173,19 +170,10 @@ object ConfigProcess {
         }
       })
     }
-    val targets = in.getTargets
-    targets.foreach(t => {
-      if (t.getPartitionSize == "") {
-        t.setPartitionSize(batchSize)
-      }
-    })
+    if (in.getTargetPartitionSize == "") {
+      in.setTargetPartitionSize(batchSize)
+    }
   }
-
-  /**
-    * Check if all target partition (batch) sizes are equal
-    */
-  def checkAllTargetTimes(in: Table): Boolean =
-    in.getTargets.map(_.getPartitionSizeDuration).toSet.size == 1
 
   /**
     * Check if all input partition sizes are in accordance to the target partition size meaning:
@@ -195,7 +183,7 @@ object ConfigProcess {
     * Warning: Does not check aggregate dependencies (should be done separately)
     */
   def checkInTableTimes(in: Table): Boolean = {
-    val targetPartitionSize = in.getTargets.head.getPartitionSizeDuration
+    val targetPartitionSize = in.getTargetPartitionSizeDuration
     if (in.sourcesSet()) {
       val sources = in.getSources
       sources.foreach(s => {

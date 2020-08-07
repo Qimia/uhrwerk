@@ -13,7 +13,10 @@ public class Table {
     private Dependency[] dependencies;
     private Source[] sources;
     private Target[] targets;
-    private int version = 1;
+    private String targetArea = "";
+    private String targetVertical = "";
+    private String targetPartitionSize = "";
+    private int targetVersion = 1;
 
     public Table() {}
 
@@ -86,11 +89,39 @@ public class Table {
         this.targets = targets;
     }
 
-    public int getVersion() {
-        return version;
+    public String getTargetArea() {
+        return targetArea;
     }
 
-    public void setVersion(int version) {
-        this.version = version;
+    public void setTargetArea(String targetArea) {
+        this.targetArea = targetArea;
+    }
+
+    public String getTargetVertical() {
+        return targetVertical;
+    }
+
+    public void setTargetVertical(String targetVertical) {
+        this.targetVertical = targetVertical;
+    }
+
+    public String getTargetPartitionSize() {
+        return targetPartitionSize;
+    }
+
+    public Duration getTargetPartitionSizeDuration() {
+        return TimeTools.convertDurationToObj(targetPartitionSize);
+    }
+
+    public void setTargetPartitionSize(String targetPartitionSize) {
+        this.targetPartitionSize = targetPartitionSize;
+    }
+
+    public int getTargetVersion() {
+        return targetVersion;
+    }
+
+    public void setTargetVersion(int targetVersion) {
+        this.targetVersion = targetVersion;
     }
 }
