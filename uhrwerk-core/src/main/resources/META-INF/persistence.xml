@@ -18,7 +18,7 @@
         <class>io.qimia.uhrwerk.models.store.DependencyConfig</class>
         <class>io.qimia.uhrwerk.models.store.JobLog</class>
         <class>io.qimia.uhrwerk.models.store.PartitionLog</class>
-        <class>io.qimia.uhrwerk.models.store.StepConfig</class>
+        <class>io.qimia.uhrwerk.models.store.TableConfig</class>
         <class>io.qimia.uhrwerk.models.store.TableInfo</class>
         <class>io.qimia.uhrwerk.models.store.TargetConfig</class>
         <class>io.qimia.uhrwerk.models.store.TaskLog</class>

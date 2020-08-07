@@ -66,7 +66,7 @@ class JPALogTest extends AnyFlatSpec {
     val entityManager2 = entityManagerFactory.createEntityManager
     entityManager2.getTransaction.begin()
     val results = entityManager2
-      .createQuery("FROM TaskLog WHERE stepName = 'stepqimia'", classOf[TaskLog])
+      .createQuery("FROM TaskLog WHERE tableName = 'stepqimia'", classOf[TaskLog])
       .getResultList
       .asScala
     entityManager2.getTransaction.commit()
@@ -74,7 +74,7 @@ class JPALogTest extends AnyFlatSpec {
     assert(results.head.getRunDuration === Duration.ofHours(2))
     assert(results.head.getStep === null)
 
-    val refStep = new StepConfig(
+    val refStep = new TableConfig(
       "refstep",
       Duration.ofMinutes(15),
       4,
@@ -97,7 +97,7 @@ class JPALogTest extends AnyFlatSpec {
 
     entityManager2.getTransaction.begin()
     val results2 = entityManager2
-      .createQuery("FROM TaskLog WHERE stepName = 'refstep'", classOf[TaskLog])
+      .createQuery("FROM TaskLog WHERE tableName = 'refstep'", classOf[TaskLog])
       .getResultList
       .asScala
     entityManager2.getTransaction.commit()

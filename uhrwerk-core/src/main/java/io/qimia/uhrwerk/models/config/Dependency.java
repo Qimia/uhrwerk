@@ -5,7 +5,7 @@ import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
 
-public class Dependency implements Table, InTable {
+public class Dependency implements DataTable, StepInput {
 
     private String connectionName = "";
     private String path = "";

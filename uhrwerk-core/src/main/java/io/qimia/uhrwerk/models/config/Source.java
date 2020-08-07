@@ -3,14 +3,11 @@ package io.qimia.uhrwerk.models.config;
 import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
-import java.util.Objects;
 
-public class Source implements Table, InTable {
+public class Source implements StepInput {
 
     private String connectionName = "";
     private String path = "";
-    private String area = "";
-    private String vertical = "";
     private int version = 1;
     private String partitionSize = "";
     private String partitionQuery = "";
@@ -34,22 +31,6 @@ public class Source implements Table, InTable {
 
     public void setPath(String path) {
         this.path = path;
-    }
-
-    public String getArea() {
-        return area;
-    }
-
-    public void setArea(String area) {
-        this.area = area;
-    }
-
-    public String getVertical() {
-        return vertical;
-    }
-
-    public void setVertical(String vertical) {
-        this.vertical = vertical;
     }
 
     public int getVersion() {

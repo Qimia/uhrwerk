@@ -11,7 +11,7 @@ public class DependencyConfig {
     private TableInfo table;
     private Duration partitionSize;
     private int partitionCount;
-    private StepConfig stepConfig;
+    private TableConfig tableConfig;
     private String type;
 
     public DependencyConfig() {
@@ -21,13 +21,13 @@ public class DependencyConfig {
             TableInfo table,
             Duration partitionSize,
             int partitionCount,
-            StepConfig stepConfig,
+            TableConfig tableConfig,
             String type
     ) {
         this.table = table;
         this.partitionSize = partitionSize;
         this.partitionCount = partitionCount;
-        this.stepConfig = stepConfig;
+        this.tableConfig = tableConfig;
         this.type = type;
     }
 
@@ -72,12 +72,12 @@ public class DependencyConfig {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stepConfigId")
-    public StepConfig getStepConfig() {
-        return stepConfig;
+    public TableConfig getStepConfig() {
+        return tableConfig;
     }
 
-    public void setStepConfig(StepConfig stepConfig) {
-        this.stepConfig = stepConfig;
+    public void setStepConfig(TableConfig tableConfig) {
+        this.tableConfig = tableConfig;
     }
 
     @Column

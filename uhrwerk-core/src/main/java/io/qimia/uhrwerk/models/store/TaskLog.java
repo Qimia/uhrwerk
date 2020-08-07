@@ -5,7 +5,6 @@ import io.qimia.uhrwerk.models.TaskLogType;
 import javax.persistence.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 // Task logs for persistance
 @Entity
@@ -13,10 +12,10 @@ import java.util.Optional;
 public class TaskLog {
 
     private int id;
-    private String stepName;
+    private String tableName;
     // Either a stepConfig is given and there is a foreign-key. Or in devmode the configs are not persisted and
     // it will stay empty
-    private StepConfig stepConfig;
+    private TableConfig tableConfig;
     private int runNumber;
     private int version;
     private LocalDateTime runTs;
@@ -26,16 +25,16 @@ public class TaskLog {
     public TaskLog() {}
 
     public TaskLog(
-            String stepName,
-            StepConfig stepConfig,
+            String tableName,
+            TableConfig tableConfig,
             int runNumber,
             int version,
             LocalDateTime runTs,
             Duration runDuration,
             TaskLogType logType
     ) {
-        this.stepName = stepName;
-        this.stepConfig = stepConfig;
+        this.tableName = tableName;
+        this.tableConfig = tableConfig;
         this.runNumber = runNumber;
         this.version = version;
         this.runTs = runTs;
@@ -44,15 +43,15 @@ public class TaskLog {
     }
 
     public TaskLog(
-            String stepName,
+            String tableName,
             int runNumber,
             int version,
             LocalDateTime runTs,
             Duration runDuration,
             TaskLogType logType
     ) {
-        this.stepName = stepName;
-        this.stepConfig = null;  // Optional step reference
+        this.tableName = tableName;
+        this.tableConfig = null;  // Optional step reference
         this.runNumber = runNumber;
         this.version = version;
         this.runTs = runTs;
@@ -72,21 +71,21 @@ public class TaskLog {
     }
 
     @Column
-    public String getStepName() {
-        return stepName;
+    public String getTableName() {
+        return tableName;
     }
 
-    public void setStepName(String stepName) {
-        this.stepName = stepName;
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 
     @ManyToOne
     @JoinColumn(name="stepConfigId")
-    public StepConfig getStep() {
-        return stepConfig;
+    public TableConfig getStep() {
+        return tableConfig;
     }
-    public void setStep(StepConfig stepConfig) {
-        this.stepConfig = stepConfig;
+    public void setStep(TableConfig tableConfig) {
+        this.tableConfig = tableConfig;
     }
 
     @Column

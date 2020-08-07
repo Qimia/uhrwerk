@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.utils
 import java.time.temporal.{ChronoUnit, TemporalUnit}
 
 import io.qimia.uhrwerk.models.DependencyType
-import io.qimia.uhrwerk.models.config.{Global, Step, Table}
+import io.qimia.uhrwerk.models.config.{Global, Table, DataTable}
 
 object ConfigProcess {
 
@@ -15,7 +15,7 @@ object ConfigProcess {
     * @param global A global configuration (connection-information)
     * @return Did the config validate correctly or not
     */
-  def enrichAndValidateConfig(step: Step, global: Global): Boolean = {
+  def enrichAndValidateConfig(step: Table, global: Global): Boolean = {
     if (!checkFieldsConfig(step, global)) {
       return false
     }
@@ -35,7 +35,7 @@ object ConfigProcess {
   /**
    * Check if path-names and connection-names have been filled in
    */
-  def checkFieldsConfig(step: Step, global: Global): Boolean = {
+  def checkFieldsConfig(step: Table, global: Global): Boolean = {
     val connectionNames = global.getConnections.map(_.getName).toSet
     val stepBatchSizeSet = step.getBatchSize != ""
     // TODO: Require a step name or not?
@@ -88,7 +88,7 @@ object ConfigProcess {
   /**
    * Specifically check (and fill in) partition sizes of aggregate dependencies
    */
-  def checkAndUpdateAgg(in: Step): Boolean = {
+  def checkAndUpdateAgg(in: Table): Boolean = {
     val targetPartitionSize = in.getTargets.head.getPartitionSizeDuration
     if (in.dependenciesSet()) {
       val aggDependencies = in.getDependencies.filter(d =>
@@ -147,7 +147,7 @@ object ConfigProcess {
     * Take the step's batch size and use it as a partition size of any inTable (except aggregates) or target
     * @param in
     */
-  def autofillStepPartitionSizes(in: Step): Unit = {
+  def autofillStepPartitionSizes(in: Table): Unit = {
     val batchSize = in.getBatchSize
     if (batchSize == "") {
       return
@@ -184,7 +184,7 @@ object ConfigProcess {
   /**
     * Check if all target partition (batch) sizes are equal
     */
-  def checkAllTargetTimes(in: Step): Boolean =
+  def checkAllTargetTimes(in: Table): Boolean =
     in.getTargets.map(_.getPartitionSizeDuration).toSet.size == 1
 
   /**
@@ -194,7 +194,7 @@ object ConfigProcess {
     * - They are equal size for sources
     * Warning: Does not check aggregate dependencies (should be done separately)
     */
-  def checkInTableTimes(in: Step): Boolean = {
+  def checkInTableTimes(in: Table): Boolean = {
     val targetPartitionSize = in.getTargets.head.getPartitionSizeDuration
     if (in.sourcesSet()) {
       val sources = in.getSources

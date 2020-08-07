@@ -2,17 +2,17 @@ package io.qimia.uhrwerk.stepwrapper
 
 import java.time.{LocalDateTime, Month}
 
-import io.qimia.uhrwerk.StepWrapper
+import io.qimia.uhrwerk.TableWrapper
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
-class StepWrapperUnitTest extends AnyFlatSpec {
+class TableWrapperUnitTest extends AnyFlatSpec {
 
   "creating a window filter" should "filter out the right values" in {
     val testA = ArrayBuffer.fill(12)(true)
     testA(3) = false
-    val out = StepWrapper.createFilterWithWindowList(testA.toList, 3)
+    val out = TableWrapper.createFilterWithWindowList(testA.toList, 3)
     val falseIdx = Set(3, 4, 5)
     out.zipWithIndex.map(tup => if (falseIdx.contains(tup._2)) {
       assert(!tup._1)
@@ -22,7 +22,7 @@ class StepWrapperUnitTest extends AnyFlatSpec {
 
     testA(4) = false
     testA(5) = false
-    val out2 = StepWrapper.createFilterWithWindowList(testA.toList, 3)
+    val out2 = TableWrapper.createFilterWithWindowList(testA.toList, 3)
     val falseIdx2 = Set(3, 4, 5, 6, 7)
     out2.zipWithIndex.map(tup => if (falseIdx2.contains(tup._2)) {
       assert(!tup._1)
@@ -59,7 +59,7 @@ class StepWrapperUnitTest extends AnyFlatSpec {
       false,
       false
     )
-    val filteredList = StepWrapper.applyWindowFilter(testCheckOutput.toList, booleanFilter, "fail_path")
+    val filteredList = TableWrapper.applyWindowFilter(testCheckOutput.toList, booleanFilter, "fail_path")
     val leftIndices = Set(0, 2, 5, 6)
     filteredList.zipWithIndex.foreach(tup => {
       if(leftIndices.contains(tup._2)) {
@@ -105,7 +105,7 @@ class StepWrapperUnitTest extends AnyFlatSpec {
       Left(dates(5), Set("table_a", "table_c")),
       Left(dates(6), Set("table_c", "table_e"))
     )
-    val mergeChecks = StepWrapper.combineDependencyChecks(checkOut1, checkOut2)
+    val mergeChecks = TableWrapper.combineDependencyChecks(checkOut1, checkOut2)
     val correctMerge = List(
       Left(dates(0), Set("table_a")),
       Right(dates(1)),

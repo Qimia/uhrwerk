@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.utils
 import java.io.{FileInputStream, FileNotFoundException, IOException}
 import java.nio.file.Path
 
-import io.qimia.uhrwerk.models.config.{Global, Step}
+import io.qimia.uhrwerk.models.config.{Global, Table}
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.representer.Representer
@@ -32,12 +32,12 @@ object ConfigReader {
    * @param path path to the yaml file
    * @return the step-config object
    */
-  def readStepConfig(path: Path): Step = {
+  def readStepConfig(path: Path): Table = {
     val fileStream   = new FileInputStream(path.toFile)
     val representer = new Representer
     representer.getPropertyUtils.setSkipMissingProperties(true)
-    val yaml   = new Yaml(new Constructor(classOf[Step]), representer)
-    val config = yaml.load(fileStream).asInstanceOf[Step]
+    val yaml   = new Yaml(new Constructor(classOf[Table]), representer)
+    val config = yaml.load(fileStream).asInstanceOf[Table]
     if (config.sourcesSet()) {
       val sources = config.getSources
       sources.foreach(s => {

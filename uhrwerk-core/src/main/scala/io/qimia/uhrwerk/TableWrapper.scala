@@ -5,7 +5,7 @@ import java.util.concurrent.Executors
 
 import io.qimia.uhrwerk.ManagedIO.FrameManager
 import io.qimia.uhrwerk.MetaStore.{DependencyFailed, DependencySuccess}
-import io.qimia.uhrwerk.StepWrapper.TaskInput
+import io.qimia.uhrwerk.TableWrapper.TaskInput
 import io.qimia.uhrwerk.models.{ConnectionType, DependencyType}
 import io.qimia.uhrwerk.models.config.{Connection, Dependency}
 import io.qimia.uhrwerk.utils.TimeTools
@@ -16,7 +16,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-object StepWrapper {
+object TableWrapper {
 
   case class TaskInput(connections: Map[String, Connection],
                        startTS: LocalDateTime,
@@ -91,22 +91,22 @@ object StepWrapper {
   }
 }
 
-class StepWrapper(store: MetaStore, frameManager: FrameManager) {
+class TableWrapper(store: MetaStore, frameManager: FrameManager) {
 
   // Smallest execution step in our DAG (gets most parameters from configuration given by store)
-  def runTasks(stepFunction: TaskInput => Option[DataFrame],
+  def runTasks(TableFunction: TaskInput => Option[DataFrame],
                startTimes: Seq[LocalDateTime])(
       implicit ex: ExecutionContext): List[Future[LocalDateTime]] = {
 
-    // Run a step for a single partition (denoted by starting-time)
+    // Run a Table for a single partition (denoted by starting-time)
     def runSingleTask(time: LocalDateTime): Unit = {
       val startLog = store.logStartTask()
 
       // Use configured frameManager to read dataframes
       // TODO: Read the proper DF here and get the right connection/time params for it
       // Note that *we are responsible* for all (standard) loading of DataFrames!
-      val inputDepDFs: List[DataFrame] = if (store.stepConfig.dependenciesSet) {
-        store.stepConfig.getDependencies
+      val inputDepDFs: List[DataFrame] = if (store.tableConfig.dependenciesSet) {
+        store.tableConfig.getDependencies
           .map(
             dep =>
               frameManager.loadDataFrame(
@@ -123,11 +123,11 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
         TaskInput(store.connections, time, inputDepDFs ::: inputSourceDFs)
 
       val success = try {
-        val frame = stepFunction(taskInput)
+        val frame = TableFunction(taskInput)
         // TODO error checking: if target should be on datalake but no frame is given
         // Note: We are responsible for all standard writing of DataFrames
         if (frame.isDefined) {
-          store.stepConfig.getTargets
+          store.tableConfig.getTargets
             .foreach(
               tar =>
                 frameManager.writeDataFrame(
@@ -150,20 +150,20 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
     }
 
     val checkResult: List[Either[DependencyFailed, DependencySuccess]] =
-      if (store.stepConfig.dependenciesSet) {
+      if (store.tableConfig.dependenciesSet) {
         val dependenciesByVirtual =
-          store.stepConfig.getDependencies.groupBy(dep =>
+          store.tableConfig.getDependencies.groupBy(dep =>
             dep.getTypeEnum != DependencyType.ONEONONE)
         dependenciesByVirtual
           .map(keyDeps =>
             if (keyDeps._1) {
               val individualVirtOutcomes =
                 keyDeps._2.map(checkVirtualStep(_, startTimes.toList))
-              individualVirtOutcomes.reduce(StepWrapper.combineDependencyChecks)
+              individualVirtOutcomes.reduce(TableWrapper.combineDependencyChecks)
             } else {
               store.checkDependencies(keyDeps._2, startTimes)
           })
-          .reduce(StepWrapper.combineDependencyChecks)
+          .reduce(TableWrapper.combineDependencyChecks)
       } else {
         startTimes.map(Right(_)).toList
       }
@@ -214,7 +214,7 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
       val windowSize = dependency.getPartitionCount
       val windowStartTimes = TimeTools.convertToWindowBatchList(
         startTimes,
-        store.stepConfig.getBatchSizeDuration,
+        store.tableConfig.getBatchSizeDuration,
         windowSize)
 
       val windowedBatchOutcome =
@@ -225,8 +225,8 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
         case Right(_) => true
       })
       val windowFilter =
-        StepWrapper.createFilterWithWindowList(booleanOutcome, windowSize)
-      val filteredOutcome = StepWrapper.applyWindowFilter(windowedBatchOutcome,
+        TableWrapper.createFilterWithWindowList(booleanOutcome, windowSize)
+      val filteredOutcome = TableWrapper.applyWindowFilter(windowedBatchOutcome,
                                                           windowFilter,
                                                           dependency.getPath)
       // TODO: Change to name in-case we switch from using the paths to using identifiers/names
@@ -239,7 +239,7 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
       // TODO: Doesn't check if the given duration (dep.getPartitionSizeDuration) agrees with this division
       val smallerStartTimes = TimeTools.convertToSmallerBatchList(
         startTimes,
-        store.stepConfig.getBatchSizeDuration,
+        store.tableConfig.getBatchSizeDuration,
         dependency.getPartitionCount
       )
       val smallBatchOutcome =
@@ -254,7 +254,7 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
           .toSet
       val foundBigBatches = TimeTools
         .filterBySmallerBatchList(startTimes,
-                                  store.stepConfig.getBatchSizeDuration,
+                                  store.tableConfig.getBatchSizeDuration,
                                   dependency.getPartitionCount,
                                   foundSmallBatches)
         .toSet

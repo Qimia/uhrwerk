@@ -5,7 +5,7 @@ import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.MetaStore.{DependencyFailed, DependencySuccess}
 import io.qimia.uhrwerk.models.TaskLogType
-import io.qimia.uhrwerk.models.config.{Dependency, Global, Step, Target}
+import io.qimia.uhrwerk.models.config.{Dependency, Global, Table, Target}
 import io.qimia.uhrwerk.models.store.{PartitionLog, TaskLog}
 import io.qimia.uhrwerk.utils.{
   ConfigPersist,
@@ -25,15 +25,15 @@ object MetaStore {
   type DependencySuccess = LocalDateTime
 
   /**
-    * Retrieve the latest TaskLog for a particular Step
+    * Retrieve the latest TaskLog for a particular Table
     * @param store Persistence Entity manager
-    * @param stepName Name of the step
+    * @param tableName Name of the step
     * @return Latest tasklog if there is one
     */
   def getLastTaskLog(store: EntityManager,
-                     stepName: String): Option[TaskLog] = {
+                     tableName: String): Option[TaskLog] = {
     val results = store
-      .createQuery(s"FROM TaskLog WHERE stepName = '${stepName}'" +
+      .createQuery(s"FROM TaskLog WHERE tableName = '${tableName}'" +
                      "ORDER BY runTs DESC",
                    classOf[TaskLog])
       .setMaxResults(1)
@@ -131,29 +131,29 @@ object MetaStore {
   }
 
   def apply(globalConf: Path,
-            stepConf: Path,
+            tableConf: Path,
             persist: Boolean = false,
             validate: Boolean = true): MetaStore = {
     val globalConfig: Global = ConfigReader.readGlobalConfig(globalConf)
-    val stepConfig: Step = ConfigReader.readStepConfig(stepConf)
-    new MetaStore(globalConfig, stepConfig, persist, validate)
+    val tableConfig: Table = ConfigReader.readStepConfig(tableConf)
+    new MetaStore(globalConfig, tableConfig, persist, validate)
   }
 }
 
 class MetaStore(globalConf: Global,
-                stepConf: Step,
+                tableConf: Table,
                 persist: Boolean = false,
                 validate: Boolean = true) {
   // TODO: After loading the config we should check if it is correct (if it's in a valid state)
   if (validate) {
-    val valid = ConfigProcess.enrichAndValidateConfig(stepConf, globalConf)
+    val valid = ConfigProcess.enrichAndValidateConfig(tableConf, globalConf)
     if (!valid) {
       System.err.println("loaded configuration is not valid")
       exit(1)
     }
   }
   val globalConfig = globalConf
-  val stepConfig = stepConf
+  val tableConfig = tableConf
   val connections =
     globalConfig.getConnections.map(conn => conn.getName -> conn).toMap
   val storeFactory =
@@ -163,7 +163,7 @@ class MetaStore(globalConf: Global,
   val persistedConf: Option[ConfigPersist.PersistStruc] = if (persist) {
     val store = storeFactory.createEntityManager
     store.getTransaction.begin()
-    val res = ConfigPersist.persistStep(store, stepConfig, globalConfig)
+    val res = ConfigPersist.persistStep(store, tableConfig, globalConfig)
     store.getTransaction.commit()
     Option(res)
   } else {
@@ -197,7 +197,7 @@ class MetaStore(globalConf: Global,
 
     val ta = store.getTransaction
     ta.begin
-    val previousRun = MetaStore.getLastTaskLog(store, stepConfig.getName)
+    val previousRun = MetaStore.getLastTaskLog(store, tableConfig.getName)
     // TODO: For now version without storing the config (but should be configurable / devmode)
     val previousRunNr = if (previousRun.isDefined) {
       previousRun.get.getRunNumber + 1
@@ -206,19 +206,19 @@ class MetaStore(globalConf: Global,
     }
     val startLog = if (persistedConf.isDefined) {
       new TaskLog(
-        stepConfig.getName,
+        tableConfig.getName,
         persistedConf.get._1,
-        previousRunNr, // How often did this step run
-        stepConfig.getVersion,
+        previousRunNr, // How often did this table run
+        tableConfig.getVersion,
         LocalDateTime.now(),
         Duration.ZERO,
         TaskLogType.START
       )
     } else {
       new TaskLog(
-        stepConfig.getName,
-        previousRunNr, // How often did this step run
-        stepConfig.getVersion,
+        tableConfig.getName,
+        previousRunNr, // How often did this table run
+        tableConfig.getVersion,
         LocalDateTime.now(),
         Duration.ZERO,
         TaskLogType.START
@@ -254,19 +254,19 @@ class MetaStore(globalConf: Global,
     }
     val finishLog = if (persistedConf.isDefined) {
       new TaskLog(
-        stepConfig.getName,
+        tableConfig.getName,
         persistedConf.get._1,
-        startLog.getRunNumber(), // How often did this step run
-        stepConfig.getVersion,
+        startLog.getRunNumber(), // How often did this table run
+        tableConfig.getVersion,
         timeNow,
         Duration.between(startLog.getRunTs, timeNow),
         logType
       )
     } else {
       new TaskLog(
-        stepConfig.getName,
+        tableConfig.getName,
         startLog.getRunNumber(),
-        stepConfig.getVersion,
+        tableConfig.getVersion,
         timeNow,
         Duration.between(startLog.getRunTs, timeNow),
         logType
@@ -277,7 +277,7 @@ class MetaStore(globalConf: Global,
     // if success then also call writePartitionLog next
     // Either fails completely or writes all tasklogs (no partial completion)
     if (success) {
-      stepConfig.getTargets.foreach(t =>
+      tableConfig.getTargets.foreach(t =>
         this.writePartitionLog(store, finishLog, t, partitionTS))
     }
     ta.commit()

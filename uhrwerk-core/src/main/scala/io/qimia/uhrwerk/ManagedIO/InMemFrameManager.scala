@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.ManagedIO
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.models.config.{Connection, Dependency, InTable, Target}
+import io.qimia.uhrwerk.models.config.{Connection, Dependency, StepInput, Target}
 import org.apache.spark.sql.DataFrame
 
 import scala.collection.mutable
@@ -13,7 +13,7 @@ class InMemFrameManager extends FrameManager {
   val partitionedTables: mutable.Map[partitionedKey, DataFrame] = mutable.HashMap.empty[partitionedKey, DataFrame]
   val unpartitionedTables: mutable.Map[unpartitionedKey, DataFrame] = mutable.HashMap.empty[unpartitionedKey, DataFrame]
 
-  override def loadDataFrame[T <: InTable](conn: Connection, locationInfo: T, startTS: Option[LocalDateTime]): DataFrame = {
+  override def loadDataFrame[T <: StepInput](conn: Connection, locationInfo: T, startTS: Option[LocalDateTime]): DataFrame = {
     assert(conn.getName == locationInfo.getConnectionName)
     if (startTS.isDefined) {
       partitionedTables((conn.getName, locationInfo.getPath, startTS.get))
