@@ -14,7 +14,7 @@ class ConnectionDAOTest {
   java.sql.Connection db;
 
   @org.junit.jupiter.api.BeforeEach
-  void setUp() throws ClassNotFoundException, SQLException {
+  void setUp() throws SQLException {
     db =
         DriverManager.getConnection(
             "jdbc:mysql://localhost:53306/UHRWERK_METASTORE", "UHRWERK_USER", "Xq92vFqEKF7TB8H9");

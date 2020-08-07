@@ -59,7 +59,7 @@ trait BuildTeardown extends BeforeAndAfterAll {
     conn.setName("testSparkJDBCFrameManager")
     conn.setType("jdbc")
     conn.setJdbcDriver("com.mysql.cj.jdbc.Driver")
-    conn.setJdbcUrl("jdbc:mysql://localhost:43342")
+    conn.setJdbcUrl("jdbc:mysql://localhost:53306")
     conn.setUser("root")
     conn.setPass("mysql")
     conn
