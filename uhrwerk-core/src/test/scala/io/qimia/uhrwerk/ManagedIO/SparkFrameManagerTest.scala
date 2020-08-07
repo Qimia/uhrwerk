@@ -7,7 +7,7 @@ import java.util.Comparator
 
 import io.qimia.uhrwerk.config.model._
 import io.qimia.uhrwerk.tags.{DbTest, Slow}
-import io.qimia.uhrwerk.utils.{Converters, JDBCTools, TimeTools}
+import io.qimia.uhrwerk.utils.{Converters, JDBCTools, JDBCToolsTest, TimeTools}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -20,7 +20,7 @@ import scala.collection.mutable.ListBuffer
 trait BuildTeardown extends BeforeAndAfterAll {
   this: Suite =>
 
-  val DATABASE_NAME: String = "uhrwerk_test"
+  val DATABASE_NAME: String = "uhrwerk_spark_frame_manager_test"
 
   override def afterAll() {
     val foldersToClean: ListBuffer[Path] = new ListBuffer[Path]
@@ -30,7 +30,7 @@ trait BuildTeardown extends BeforeAndAfterAll {
     foldersToClean.append(Paths.get("src/test/resources/testlake/testsparkframerange/"))
     foldersToClean.append(Paths.get("src/test/resources/testlake/testwindowdependency/"))
 
-    val conn = getJDBCConnection
+    val conn = JDBCToolsTest.getJDBCConnection
     JDBCTools.dropJDBCDatabase(conn, DATABASE_NAME)
     foldersToClean.foreach(p => {
       try {
@@ -52,17 +52,6 @@ trait BuildTeardown extends BeforeAndAfterAll {
       .map(_.toFile)
       .foreach(f => f.delete())
 
-  }
-
-  def getJDBCConnection: Connection = {
-    val conn = new Connection
-    conn.setName("testSparkJDBCFrameManager")
-    conn.setType("jdbc")
-    conn.setJdbcDriver("com.mysql.cj.jdbc.Driver")
-    conn.setJdbcUrl("jdbc:mysql://localhost:53306")
-    conn.setUser("root")
-    conn.setPass("mysql")
-    conn
   }
 }
 
@@ -359,9 +348,9 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val df = createMockDataFrame(spark)
     val manager = new SparkFrameManager(spark)
 
-    val conn = getJDBCConnection
+    val conn = JDBCToolsTest.getJDBCConnection
     val tar = new Target
-    tar.setConnectionName("testSparkJDBCFrameManager")
+    tar.setConnectionName("testJDBCConnection")
     tar.setPath(s"$DATABASE_NAME.testsparkframemanagerwithoutbatches")
     val tab = new Table
     tab.setTargetPartitionSize("30m")
@@ -384,9 +373,9 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val df = createMockDataFrame(spark)
     val manager = new SparkFrameManager(spark)
 
-    val conn = getJDBCConnection
+    val conn = JDBCToolsTest.getJDBCConnection
     val tar = new Target
-    tar.setConnectionName("testSparkJDBCFrameManager")
+    tar.setConnectionName("testJDBCConnection")
     tar.setPath(s"$DATABASE_NAME.testsparkframemanager")
     val tab = new Table
     tab.setTargetPartitionSize("30m")

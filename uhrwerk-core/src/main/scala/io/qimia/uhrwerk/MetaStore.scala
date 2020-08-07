@@ -18,6 +18,7 @@ import scala.sys.exit
 object MetaStore {
   type DependencyFailed = (LocalDateTime, Set[String])
   type DependencySuccess = LocalDateTime
+  type TargetNeeded = (LocalDateTime, Set[String])
 
   /**
     * Retrieve the latest TaskLog for a particular Table
@@ -44,7 +45,8 @@ object MetaStore {
   // Starttime and endtime inclusive
   def getBatchedDependencies(store: EntityManager,
                              batchedDependencies: Array[Dependency],
-                             startTimes: Seq[LocalDateTime])
+                             startTimes: Seq[LocalDateTime],
+                             batchDuration: Duration)
     : List[Either[DependencyFailed, DependencySuccess]] = {
     // TODO: Create groupBy version when figured out howto filter each dependency with its version number
     // (Could be done with a very big WHERE (a-specs OR b-specs OR c-specs) clause, not sure if there is a performance gain)
@@ -53,7 +55,7 @@ object MetaStore {
       new mutable.HashMap().withDefaultValue(Set())
 
     // Either we only send a start and enddate or we have to send all dates in the query
-    if (TimeTools.checkIsSequentialIncreasing(startTimes)) {
+    if (TimeTools.checkIsSequentialIncreasing(startTimes, batchDuration)) {
       val startTime = startTimes.head
       val endTime = startTimes.last
 
@@ -90,12 +92,12 @@ object MetaStore {
               s"AND path = '${depPathName}' " +
               s"AND version = ${dep.getVersion} " +
               s"AND partitionDuration = :partDur " +
-              s"AND partitionTs IN :partTimes",
+              s"AND partitionTs IN (:partTimes)",
             // TODO: Need to check connection
             classOf[PartitionLog]
           )
           .setParameter("partDur", dep.getPartitionSizeDuration)
-          .setParameter("parttimes", startTimes)
+          .setParameter("partTimes", startTimes.asJava)
           .getResultList
           .asScala
         results
@@ -153,15 +155,25 @@ class MetaStore(globalConf: Global,
     Persistence.createEntityManagerFactory("io.qimia.uhrwerk.backend.jpa")
 
   // For each LocalDateTime check if all dependencies are there or tell which ones are not
+  /**
+   * Check for an array of dependencies (with the same partition size) and a sequence of partitionTimeStamps if
+   * all the dependencies have been met or which ones have not been met. This does not translate the timestamps based
+   * on dependency type, meaning the caller has to already have processed those (see TableWrapper's virtual dependencies)
+   * @param batchedDependencies array of Dependencies
+   * @param startTimes timestamps for which the dependencies will be tested
+   * @return DependencyFailed or DependencySuccess for each of the starttimes
+   */
   def checkDependencies(batchedDependencies: Array[Dependency],
                         startTimes: Seq[LocalDateTime])
     : List[Either[DependencyFailed, DependencySuccess]] = {
-    // Should be simple one on one check
+    val partitionSizeSet = batchedDependencies.map(_.getPartitionSizeDuration).toSet
+    require(partitionSizeSet.size == 1)
+    // We only allow the same batchSize as input and it can only be a simple check if the datetime is there
     val store = storeFactory.createEntityManager
     val ta = store.getTransaction
     ta.begin()
     val res =
-      MetaStore.getBatchedDependencies(store, batchedDependencies, startTimes)
+      MetaStore.getBatchedDependencies(store, batchedDependencies, startTimes, partitionSizeSet.head)
     ta.commit()
     store.close()
     res
