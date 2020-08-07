@@ -5,7 +5,7 @@ import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
 
-public class Dependency implements DataTable, StepInput {
+public class Dependency implements TableInput {
 
     private String connectionName = "";
     private String path = "";
@@ -19,6 +19,7 @@ public class Dependency implements DataTable, StepInput {
     private String partitionColumn = "";
     private String selectQuery = "";
     private String queryColumn = "";
+    private int sparkReaderNumPartitions = 10;
 
     public Dependency() {}
 
@@ -124,5 +125,13 @@ public class Dependency implements DataTable, StepInput {
 
     public void setQueryColumn(String queryColumn) {
         this.queryColumn = queryColumn;
+    }
+
+    public int getSparkReaderNumPartitions() {
+        return sparkReaderNumPartitions;
+    }
+
+    public void setSparkReaderNumPartitions(int sparkReaderNumPartitions) {
+        this.sparkReaderNumPartitions = sparkReaderNumPartitions;
     }
 }

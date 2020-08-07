@@ -1,6 +1,10 @@
 name: dump_a_table
 batchSize: 1h
 parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+targetArea: staging
+targetVertical: sourcedb_1
+targetPartitionSize: "6h"
+targetVersion: 1
 
 sources:
   - connectionName: connection_name
@@ -11,11 +15,8 @@ sources:
     partitionColumn: "id"
     selectQuery: "table_test_2_select_query.sql"
     queryColumn: "created_at"
+    sparkReaderNumPartitions: 40
 
 targets:
   - connectionName: connection_name2
     path: someplace/managed_table
-    area: staging
-    vertical: sourcedb_1
-    version: 1
-    partitionSize: "6h"

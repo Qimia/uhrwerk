@@ -15,7 +15,7 @@ object JDBCTools {
       Class.forName(driver)
       val connection = DriverManager.getConnection(url, username, password)
       val statement = connection.createStatement
-      statement.execute(s"CREATE DATABASE ${locationInfo.getArea}")
+      statement.execute(s"CREATE DATABASE ${conn.getName}") // TODO: This should be set/done differently
       connection.close()
     } catch {
       case e: Exception => println(e.getLocalizedMessage)

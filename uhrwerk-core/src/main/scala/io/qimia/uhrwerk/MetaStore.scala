@@ -7,7 +7,7 @@ import io.qimia.uhrwerk.MetaStore.{DependencyFailed, DependencySuccess}
 import io.qimia.uhrwerk.backend.jpa.{PartitionLog, TaskLog}
 import io.qimia.uhrwerk.config.TaskLogType
 import io.qimia.uhrwerk.config.model.{Dependency, Global, Table, Target}
-import io.qimia.uhrwerk.utils.{ConfigPersist, ConfigProcess, ConfigReader, TimeTools}
+import io.qimia.uhrwerk.utils.{ConfigProcess, ConfigReader, TimeTools}
 
 import collection.JavaConverters._
 import javax.persistence.{EntityManager, Persistence}
@@ -127,17 +127,15 @@ object MetaStore {
 
   def apply(globalConf: Path,
             tableConf: Path,
-            persist: Boolean = false,
             validate: Boolean = true): MetaStore = {
     val globalConfig: Global = ConfigReader.readGlobalConfig(globalConf)
     val tableConfig: Table = ConfigReader.readStepConfig(tableConf)
-    new MetaStore(globalConfig, tableConfig, persist, validate)
+    new MetaStore(globalConfig, tableConfig, validate)
   }
 }
 
 class MetaStore(globalConf: Global,
                 tableConf: Table,
-                persist: Boolean = false,
                 validate: Boolean = true) {
   // TODO: After loading the config we should check if it is correct (if it's in a valid state)
   if (validate) {
@@ -152,18 +150,7 @@ class MetaStore(globalConf: Global,
   val connections =
     globalConfig.getConnections.map(conn => conn.getName -> conn).toMap
   val storeFactory =
-    Persistence.createEntityManagerFactory("io.qimia.uhrwerk.models")
-
-  // TODO: Optional persistence of the configurations
-  val persistedConf: Option[ConfigPersist.PersistStruc] = if (persist) {
-    val store = storeFactory.createEntityManager
-    store.getTransaction.begin()
-    val res = ConfigPersist.persistStep(store, tableConfig, globalConfig)
-    store.getTransaction.commit()
-    Option(res)
-  } else {
-    Option.empty
-  }
+    Persistence.createEntityManagerFactory("io.qimia.uhrwerk.backend.jpa")
 
   // For each LocalDateTime check if all dependencies are there or tell which ones are not
   def checkDependencies(batchedDependencies: Array[Dependency],
@@ -199,26 +186,15 @@ class MetaStore(globalConf: Global,
     } else {
       1
     }
-    val startLog = if (persistedConf.isDefined) {
-      new TaskLog(
+    val startLog =new TaskLog(
         tableConfig.getName,
-        persistedConf.get._1,
         previousRunNr, // How often did this table run
-        tableConfig.getVersion,
+        tableConfig.getTargetVersion,
         LocalDateTime.now(),
         Duration.ZERO,
         TaskLogType.START
       )
-    } else {
-      new TaskLog(
-        tableConfig.getName,
-        previousRunNr, // How often did this table run
-        tableConfig.getVersion,
-        LocalDateTime.now(),
-        Duration.ZERO,
-        TaskLogType.START
-      )
-    }
+
     store.persist(startLog)
     ta.commit()
     store.close()
@@ -247,33 +223,21 @@ class MetaStore(globalConf: Global,
     } else {
       TaskLogType.FAILURE
     }
-    val finishLog = if (persistedConf.isDefined) {
-      new TaskLog(
-        tableConfig.getName,
-        persistedConf.get._1,
-        startLog.getRunNumber(), // How often did this table run
-        tableConfig.getVersion,
-        timeNow,
-        Duration.between(startLog.getRunTs, timeNow),
-        logType
-      )
-    } else {
-      new TaskLog(
+    val finishLog = new TaskLog(
         tableConfig.getName,
         startLog.getRunNumber(),
-        tableConfig.getVersion,
+        tableConfig.getTargetVersion,
         timeNow,
         Duration.between(startLog.getRunTs, timeNow),
         logType
       )
-    }
     store.persist(finishLog)
 
     // if success then also call writePartitionLog next
     // Either fails completely or writes all tasklogs (no partial completion)
     if (success) {
       tableConfig.getTargets.foreach(t =>
-        this.writePartitionLog(store, finishLog, t, partitionTS))
+        this.writePartitionLog(store, finishLog, t, tableConfig, partitionTS))
     }
     ta.commit()
     store.close()
@@ -289,35 +253,19 @@ class MetaStore(globalConf: Global,
   def writePartitionLog(store: EntityManager,
                         finishLog: TaskLog,
                         target: Target,
+                        table: Table,
                         partitionTS: LocalDateTime): Unit = {
     // TODO: Check that partition-size and batch-size are correctly set (when loading the config)
-    val tablePath = target.getPath
-    val connectionConf = persistedConf.flatMap(_._2.get(tablePath))
-    val newPartition = if (connectionConf.isDefined) {
-      // TODO: Can easily fail if connection hasn't been stored properly
-      new PartitionLog(
-        target.getArea,
-        target.getVertical,
-        connectionConf.get, // Insert reference to already stored connection config
-        tablePath,
-        partitionTS,
-        target.getPartitionSizeDuration,
-        target.getVersion,
-        finishLog,
-        0
-      )
-    } else {
-      new PartitionLog(
-        target.getArea,
-        target.getVertical,
+    val newPartition = new PartitionLog(
+        table.getTargetArea,
+        table.getTargetVertical,
         target.getPath,
         partitionTS,
-        target.getPartitionSizeDuration,
-        target.getVersion,
+        table.getTargetPartitionSizeDuration,
+        table.getTargetVersion,
         finishLog,
         0
       )
-    }
     store.persist(newPartition)
   }
 

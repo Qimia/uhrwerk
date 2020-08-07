@@ -134,6 +134,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
                   frame.get,
                   store.connections(tar.getConnectionName),
                   tar,
+                  store.tableConfig,
                   Option(time)))
           // TODO: add right connection info
         }

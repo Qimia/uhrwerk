@@ -4,7 +4,7 @@ import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
 
-public class Source implements StepInput {
+public class Source implements TableInput {
 
     private String connectionName = "";
     private String path = "";
@@ -14,6 +14,7 @@ public class Source implements StepInput {
     private String partitionColumn = "";
     private String selectQuery = "";
     private String queryColumn  = "";
+    private int sparkReaderNumPartitions = 10;
 
     public Source() {}
 
@@ -83,5 +84,13 @@ public class Source implements StepInput {
 
     public void setQueryColumn(String queryColumn) {
         this.queryColumn = queryColumn;
+    }
+
+    public int getSparkReaderNumPartitions() {
+        return sparkReaderNumPartitions;
+    }
+
+    public void setSparkReaderNumPartitions(int sparkReaderNumPartitions) {
+        this.sparkReaderNumPartitions = sparkReaderNumPartitions;
     }
 }
