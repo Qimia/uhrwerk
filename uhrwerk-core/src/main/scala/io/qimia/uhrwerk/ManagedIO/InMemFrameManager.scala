@@ -15,8 +15,8 @@ class InMemFrameManager extends FrameManager {
 
   override def loadDataFrame[T <: TableInput](conn: Connection, locationInfo: T, startTS: Option[LocalDateTime]): DataFrame = {
     assert(conn.getName == locationInfo.getConnectionName)
-    if (startTS.isDefined) {
-      partitionedTables((conn.getName, locationInfo.getPath, startTS.get))
+    if (batchTS.isDefined) {
+      partitionedTables((conn.getName, locationInfo.getPath, batchTS.get))
     } else {
       unpartitionedTables((conn.getName, locationInfo.getPath))
     }
