@@ -252,4 +252,21 @@ object TimeTools {
     val day = leftPad(date.getDayOfMonth.toString)
     s"${year}-${month}-${day}"
   }
+
+  /**
+   * Check if there are gaps in a list of LocalDateTime or if they are all in order and increasing
+   * @param in A sequence for LocalDateTime
+   * @param partitionSize Duration (step-size between 2 localdatetimes)
+   * @return True for no-gaps
+   */
+  def checkIsSequentialIncreasing(in: Seq[LocalDateTime], partitionSize: Option[Duration] = Option.empty): Boolean = {
+    if(in.length == 1) {
+      return true
+    }
+    val partSizeReal = partitionSize.getOrElse(Duration.between(in.head, in.tail.head))
+    if (partSizeReal.isNegative) {
+      return false
+    }
+    in.sliding(2).map(pairSeq => Duration.between(pairSeq.head, pairSeq.tail.head)).forall(dur => dur == partSizeReal)
+  }
 }

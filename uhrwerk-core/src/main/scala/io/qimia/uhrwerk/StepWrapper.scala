@@ -98,6 +98,7 @@ class StepWrapper(store: MetaStore, frameManager: FrameManager) {
                startTimes: Seq[LocalDateTime])(
       implicit ex: ExecutionContext): List[Future[LocalDateTime]] = {
 
+    // Run a step for a single partition (denoted by starting-time)
     def runSingleTask(time: LocalDateTime): Unit = {
       val startLog = store.logStartTask()
 

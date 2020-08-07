@@ -99,6 +99,28 @@ class MetaStoreUnitTest extends AnyFlatSpec {
       new PartitionLog(
         "area_a",
         "vertical_v",
+        "table_1",
+        LocalDateTime.of(2000, 1, 1, 2, 0, 0),
+        Duration.ofHours(1),
+        1,
+        null,
+        0
+      ))
+    entityManager.persist(
+      new PartitionLog(
+        "area_a",
+        "vertical_v",
+        "table_1",
+        LocalDateTime.of(2000, 1, 1, 3, 0, 0),
+        Duration.ofHours(1),
+        1,
+        null,
+        0
+      ))
+    entityManager.persist(
+      new PartitionLog(
+        "area_a",
+        "vertical_v",
         "table_2",
         LocalDateTime.of(2000, 1, 1, 0, 0, 0),
         Duration.ofHours(1),
@@ -151,6 +173,16 @@ class MetaStoreUnitTest extends AnyFlatSpec {
       case Right(_) => fail
       case Left(y)  => assert(y._2.size == 2)
     }
+
+    entityManager.getTransaction().begin()
+    val queryTimes = List(LocalDateTime.of(2000, 1, 1, 1, 0, 0),
+      LocalDateTime.of(2000, 1, 1, 3, 0, 0))
+    val res4 = MetaStore.getBatchedDependencies(
+      entityManager,
+      Array(dependencies(0)),
+      queryTimes)
+    entityManager.getTransaction().commit()
+    assert(res4 === queryTimes.map(x => Right(x)))
   }
 
   "MetaStore object" should "read TaskLogs and write TaskLogs" in {

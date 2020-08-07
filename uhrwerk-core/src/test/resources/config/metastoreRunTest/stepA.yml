@@ -1,0 +1,10 @@
+name: "step-a"
+batchSize: "1h"
+
+sources:
+  - connectionName: "local_filesystem_test"
+    path: "untracked/external/loc"
+
+targets:
+  - connectionName: "local_filesystem_test"
+    path: "tracked/internal/loc"

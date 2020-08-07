@@ -54,35 +54,64 @@ object MetaStore {
     // TODO: Create groupBy version when figured out howto filter each dependency with its version number
     // (Could be done with a very big WHERE (a-specs OR b-specs OR c-specs) clause, not sure if there is a performance gain)
 
-    val startTime = startTimes.head
-    val endTime = startTimes.last
     val storedPartitions: mutable.Map[LocalDateTime, Set[String]] =
       new mutable.HashMap().withDefaultValue(Set())
 
-    def updateStoredPartitions(dep: Dependency): Unit = {
-      val depName = dep.getPath // TODO: If Dependencies gets a proper name / key field use that instead
-      val results = store
-        .createQuery(
-          s"FROM PartitionLog WHERE area = '${dep.getArea}' " +
-            s"AND vertical = '${dep.getVertical}' " +
-            s"AND path = '${depName}' " +
-            s"AND version = ${dep.getVersion} " +
-            s"AND partitionDuration = :partDur " +
-            s"AND partitionTs BETWEEN :partstart AND :partfinish",
-          // TODO: Need to check connection
-          classOf[PartitionLog]
-        )
-        .setParameter("partDur", dep.getPartitionSizeDuration)
-        .setParameter("partstart", startTime)
-        .setParameter("partfinish", endTime)
-        .getResultList
-        .asScala
-      results
-        .map(_.getPartitionTs)
-        .foreach(ldt => storedPartitions(ldt) += depName)
-    }
-    batchedDependencies.foreach(updateStoredPartitions)
+    // Either we only send a start and enddate or we have to send all dates in the query
+    if (TimeTools.checkIsSequentialIncreasing(startTimes)) {
+      val startTime = startTimes.head
+      val endTime = startTimes.last
 
+      def updateStoredPartitions(dep: Dependency): Unit = {
+        val depPathName = dep.getPath // TODO: If Dependencies gets a proper name / key field use that instead
+        val results = store
+          .createQuery(
+            s"FROM PartitionLog WHERE area = '${dep.getArea}' " +
+              s"AND vertical = '${dep.getVertical}' " +
+              s"AND path = '${depPathName}' " +
+              s"AND version = ${dep.getVersion} " +
+              s"AND partitionDuration = :partDur " +
+              s"AND partitionTs BETWEEN :partstart AND :partfinish",
+            // TODO: Need to check connection
+            classOf[PartitionLog]
+          )
+          .setParameter("partDur", dep.getPartitionSizeDuration)
+          .setParameter("partstart", startTime)
+          .setParameter("partfinish", endTime)
+          .getResultList
+          .asScala
+        results
+          .map(_.getPartitionTs)
+          .foreach(ldt => storedPartitions(ldt) += depPathName)
+      }
+      batchedDependencies.foreach(updateStoredPartitions)
+    } else {
+      def updateStoredPartitions(dep: Dependency): Unit = {
+        val depPathName = dep.getPath // TODO: If Dependencies gets a proper name / key field use that instead
+        val results = store
+          .createQuery(
+            s"FROM PartitionLog WHERE area = '${dep.getArea}' " +
+              s"AND vertical = '${dep.getVertical}' " +
+              s"AND path = '${depPathName}' " +
+              s"AND version = ${dep.getVersion} " +
+              s"AND partitionDuration = :partDur " +
+              s"AND partitionTs IN :partTimes",
+            // TODO: Need to check connection
+            classOf[PartitionLog]
+          )
+          .setParameter("partDur", dep.getPartitionSizeDuration)
+          .setParameter("parttimes", startTimes)
+          .getResultList
+          .asScala
+        results
+          .map(_.getPartitionTs)
+          .foreach(ldt => storedPartitions(ldt) += depPathName)
+      }
+
+      batchedDependencies.foreach(updateStoredPartitions)
+    }
+
+    // Translate the resulting dependencies found to if there are any still needed or not
     val requiredDependencies = batchedDependencies.map(_.getPath).toSet
     startTimes
       .map(startTime => {
@@ -142,7 +171,6 @@ class MetaStore(globalConf: Global,
   }
 
   // For each LocalDateTime check if all dependencies are there or tell which ones are not
-  // !! Assumes the startTimes are ordered and continuous (no gaps) !!
   def checkDependencies(batchedDependencies: Array[Dependency],
                         startTimes: Seq[LocalDateTime])
     : List[Either[DependencyFailed, DependencySuccess]] = {

@@ -363,4 +363,45 @@ class TimeToolsTest extends AnyFlatSpec {
     assert(TimeTools.isDurationSizeDays(Duration.ofDays(1)))
     assert(TimeTools.isDurationSizeDays(Duration.ofDays(19)))
   }
+
+  "a continuous datetime series" should "be marked as continuous" in {
+    val dateTimes1 = List(
+      LocalDateTime.of(2010, Month.MARCH, 5, 10, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 11, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 12, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 13, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 14, 0, 0)
+    )
+    val res1 = TimeTools.checkIsSequentialIncreasing(dateTimes1)
+    assert(res1)
+
+    val dateTimes2 = List(
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 0, 0),
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 20, 0),
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 40, 0),
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 11, 0, 0)
+    )
+    val res2 = TimeTools.checkIsSequentialIncreasing(dateTimes2)
+    assert(res2)
+  }
+
+  "a non-continuous datetime series" should "be marked as non-continous" in {
+    val dateTimes1 = List(
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 0, 0),
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 15, 0), // No 30
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 45, 0),
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 11, 0, 0)
+    )
+    val res1 = TimeTools.checkIsSequentialIncreasing(dateTimes1)
+    assert(!res1)
+
+    val dateTimes2 = List(
+      LocalDateTime.of(2010, Month.MARCH, 5, 12, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 11, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 10, 0, 0),
+      LocalDateTime.of(2010, Month.MARCH, 5, 9, 0, 0),
+    )
+    val res2 = TimeTools.checkIsSequentialIncreasing(dateTimes2)
+    assert(!res2)
+  }
 }

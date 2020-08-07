@@ -1,0 +1,10 @@
+name: "step-b"
+batchSize: "1h"
+
+dependencies:
+  - connectionName: "local_filesystem_test"
+    path: "tracked/internal/loc"
+
+targets:
+  - connectionName: "local_filesystem_test"
+    path: "tracked/internal/loc2"
