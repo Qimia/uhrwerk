@@ -5,7 +5,7 @@ import java.nio.file.{Files, Path, Paths}
 import java.time.{Duration, LocalDateTime}
 import java.util.Comparator
 
-import io.qimia.uhrwerk.config.model.{Connection, Dependency, Source, Table, Target}
+import io.qimia.uhrwerk.config.model._
 import io.qimia.uhrwerk.tags.{DbTest, Slow}
 import io.qimia.uhrwerk.utils.{Converters, JDBCTools, TimeTools}
 import org.apache.spark.SparkContext
@@ -118,12 +118,13 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     conn.setType("fs")
     conn.setStartPath("src/test/resources/testlake/")
     val tar = new Target
-    tar.setPartitionSize("30m")
     tar.setConnectionName("testSparkFrameManagerWithoutBatches")
     tar.setPath("testsparkframemanagerwithoutbatches")
-    tar.setVersion(1)
     val tab = new Table
-    manager.writeDataFrame(df, conn, tar)
+    tab.setTargetPartitionSize("30m")
+    tab.setTargetVersion(1)
+
+    manager.writeDataFrame(df, conn, tar, tab)
 
     val a = df.collect()
     val dep = Converters.convertTargetToDependency(tar)
@@ -146,12 +147,14 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     conn.setType("fs")
     conn.setStartPath("src/test/resources/testlake/")
     val tar = new Target
-    tar.setPartitionSize("30m")
     tar.setConnectionName("testSparkFrameManager")
     tar.setPath("testsparkframemanager")
-    tar.setVersion(1)
+    val tab = new Table
+    tab.setTargetPartitionSize("30m")
+    tab.setTargetVersion(1)
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
-    manager.writeDataFrame(df, conn, tar, Option(dateTime))
+
+    manager.writeDataFrame(df, conn, tar, tab, Option(dateTime))
 
     val dep = Converters.convertTargetToDependency(tar)
     val loadedDF = manager.loadDataFrame(conn, dep, Option(dateTime)).sort("a", "b", "c")
@@ -192,13 +195,15 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     conn.setType("fs")
     conn.setStartPath("src/test/resources/testlake/")
     val tar = new Target
-    tar.setPartitionSize("15m")
     tar.setConnectionName("testAggregateDependency")
     tar.setPath("testaggregatedependency")
-    tar.setVersion(1)
+    val tab = new Table
+    tab.setTargetPartitionSize("15m")
+    tab.setTargetVersion(1)
+
     List(2, 3, 4).foreach(day => List(10, 11).foreach(hour => List(0, 15, 30, 45).foreach(b => {
       val dateTime = LocalDateTime.of(2020, 7, day, hour, b)
-      manager.writeDataFrame(df, conn, tar, Option(dateTime))
+      manager.writeDataFrame(df, conn, tar, tab, Option(dateTime))
       assert(new File("src/test/resources/testlake/testaggregatedependency/" +
         s"date=2020-07-0$day/batch=2020-07-0$day-$hour-${b % 15}").isDirectory)
     })))
@@ -248,13 +253,15 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     conn.setType("fs")
     conn.setStartPath("src/test/resources/testlake/")
     val tar = new Target
-    tar.setPartitionSize("15m")
     tar.setConnectionName("testWindowDependency")
     tar.setPath("testwindowdependency")
-    tar.setVersion(1)
+    val tab = new Table
+    tab.setTargetPartitionSize("15m")
+    tab.setTargetVersion(1)
+
     List(2, 3, 4).foreach(day => List(10, 11).foreach(hour => List(0, 15, 30, 45).foreach(b => {
       val dateTime = LocalDateTime.of(2020, 7, day, hour, b)
-      manager.writeDataFrame(df, conn, tar, Option(dateTime))
+      manager.writeDataFrame(df, conn, tar, tab, Option(dateTime))
       assert(new File("src/test/resources/testlake/testwindowdependency/" +
         s"date=2020-07-0$day/batch=2020-07-0$day-$hour-${b % 15}").isDirectory)
     })))
@@ -314,11 +321,13 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     conn.setType("fs")
     conn.setStartPath("src/test/resources/testlake/")
     val tar = new Target
-    tar.setPartitionSize("30m")
     tar.setConnectionName("testSparkRange")
     tar.setPath("testsparkframerange")
-    tar.setVersion(1)
-    val tarDuration = tar.getPartitionSizeDuration
+    val tab = new Table
+    tab.setTargetPartitionSize("30m")
+    tab.setTargetVersion(1)
+
+    val tarDuration = tab.getTargetPartitionSizeDuration
 
     val batchDates = TimeTools.convertRangeToBatch(
       LocalDateTime.of(2015, 10, 12, 0, 0),
@@ -328,7 +337,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     batchDates.foreach(bd => {
       println(bd)
       val df = generateDF(spark, tarDuration, bd)
-      manager.writeDataFrame(df, conn, tar, Option(bd))
+      manager.writeDataFrame(df, conn, tar, tab, Option(bd))
     })
 
     val dep = Converters.convertTargetToDependency(tar)
@@ -352,12 +361,14 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
 
     val conn = getJDBCConnection
     val tar = new Target
-    tar.setPartitionSize("30m")
     tar.setConnectionName("testSparkJDBCFrameManager")
     tar.setPath(s"$DATABASE_NAME.testsparkframemanagerwithoutbatches")
-    tar.setVersion(1)
-    tar.setArea("staging")
-    manager.writeDataFrame(df, conn, tar)
+    val tab = new Table
+    tab.setTargetPartitionSize("30m")
+    tab.setTargetVersion(1)
+    tab.setTargetArea("staging")
+
+    manager.writeDataFrame(df, conn, tar, tab)
 
     val dep = Converters.convertTargetToDependency(tar)
     val loadedDF = manager.loadDataFrame(conn, dep).sort("a", "b", "c")
@@ -375,13 +386,15 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
 
     val conn = getJDBCConnection
     val tar = new Target
-    tar.setPartitionSize("30m")
     tar.setConnectionName("testSparkJDBCFrameManager")
     tar.setPath(s"$DATABASE_NAME.testsparkframemanager")
-    tar.setVersion(1)
-    tar.setArea("staging")
+    val tab = new Table
+    tab.setTargetPartitionSize("30m")
+    tab.setTargetVersion(1)
+    tab.setTargetArea("staging")
+
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
-    manager.writeDataFrame(df, conn, tar, Option(dateTime))
+    manager.writeDataFrame(df, conn, tar, tab, Option(dateTime))
 
     val dep = Converters.convertTargetToDependency(tar)
     val loadedDF = manager.loadDataFrame(conn, dep, Option(dateTime)).sort("a", "b", "c")
