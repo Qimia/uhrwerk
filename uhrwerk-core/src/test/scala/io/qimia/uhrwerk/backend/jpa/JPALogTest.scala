@@ -13,7 +13,7 @@ class JPALogTest extends AnyFlatSpec {
 
   "When using JPA it" should "store and return PartitionLog entities" in {
     val entityManagerFactory: EntityManagerFactory =
-      Persistence.createEntityManagerFactory("io.qimia.uhrwerk.models")
+      Persistence.createEntityManagerFactory("io.qimia.uhrwerk.backend.jpa")
 
     val entityManager = entityManagerFactory.createEntityManager
     entityManager.getTransaction().begin()
@@ -48,7 +48,7 @@ class JPALogTest extends AnyFlatSpec {
 
   it should "Store TaskLogs with or without config references too" in {
     val entityManagerFactory: EntityManagerFactory =
-      Persistence.createEntityManagerFactory("io.qimia.uhrwerk.models")
+      Persistence.createEntityManagerFactory("io.qimia.uhrwerk.backend.jpa")
 
     val entityManager = entityManagerFactory.createEntityManager
     entityManager.getTransaction().begin()

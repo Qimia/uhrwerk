@@ -127,7 +127,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     manager.writeDataFrame(df, conn, tar, tab)
 
     val a = df.collect()
-    val dep = Converters.convertTargetToDependency(tar)
+    val dep = Converters.convertTargetToDependency(tar, tab)
     val loadedWholeDF = manager.loadDataFrame(conn, dep).sort("a", "b", "c")
     val collected = loadedWholeDF.collect()
     assert(a === collected)
@@ -156,7 +156,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
 
     manager.writeDataFrame(df, conn, tar, tab, Option(dateTime))
 
-    val dep = Converters.convertTargetToDependency(tar)
+    val dep = Converters.convertTargetToDependency(tar, tab)
     val loadedDF = manager.loadDataFrame(conn, dep, Option(dateTime)).sort("a", "b", "c")
 
     val a = df.collect()
@@ -340,7 +340,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       manager.writeDataFrame(df, conn, tar, tab, Option(bd))
     })
 
-    val dep = Converters.convertTargetToDependency(tar)
+    val dep = Converters.convertTargetToDependency(tar, tab)
     val bigDF = manager.loadMoreBatches(
       conn,
       dep,
@@ -370,7 +370,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
 
     manager.writeDataFrame(df, conn, tar, tab)
 
-    val dep = Converters.convertTargetToDependency(tar)
+    val dep = Converters.convertTargetToDependency(tar, tab)
     val loadedDF = manager.loadDataFrame(conn, dep).sort("a", "b", "c")
 
     val a = df.collect()
@@ -396,7 +396,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
     manager.writeDataFrame(df, conn, tar, tab, Option(dateTime))
 
-    val dep = Converters.convertTargetToDependency(tar)
+    val dep = Converters.convertTargetToDependency(tar, tab)
     val loadedDF = manager.loadDataFrame(conn, dep, Option(dateTime)).sort("a", "b", "c")
 
     val a = df.collect()
