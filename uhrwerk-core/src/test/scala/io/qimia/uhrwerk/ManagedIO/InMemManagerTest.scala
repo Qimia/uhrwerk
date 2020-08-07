@@ -25,6 +25,7 @@ class InMemManagerTest extends AnyFlatSpec {
     tar.setConnectionName("testinmem")
     tar.setPath("someframeone")
     val table = new Table
+    table.setTargetPartitionSize("1h")
 
     val dateTime = LocalDateTime.of(2010, 2, 4, 10, 30)
     manager.writeDataFrame(df, conn, tar, table, Option(dateTime))
@@ -36,14 +37,14 @@ class InMemManagerTest extends AnyFlatSpec {
 
     manager.writeDataFrame(dfUnpartitioned, conn, tarU, table)
 
-    val dep = Converters.convertTargetToDependency(tar)
+    val dep = Converters.convertTargetToDependency(tar, table)
     val loadedDF = manager.loadDataFrame(conn, dep, Option(dateTime))
 
     val a = df.collect()
     val b = loadedDF.collect()
     assert(a === b)
 
-    val depU = Converters.convertTargetToDependency(tarU)
+    val depU = Converters.convertTargetToDependency(tarU, table)
     val loadedDF2 = manager.loadDataFrame(conn, depU)
     val in = dfUnpartitioned.collect()
     val out = loadedDF2.collect()

@@ -75,10 +75,10 @@ object ConfigProcess {
       if (t.getPath == "") {
         return false
       }
-      if (!stepBatchSizeSet && table.getTargetPartitionSize == "") {
-        return false
-      }
     })
+    if (!stepBatchSizeSet && table.getTargetPartitionSize == "") {
+      return false
+    }
     true
   }
 

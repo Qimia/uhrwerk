@@ -6,51 +6,27 @@ import org.scalatest.flatspec.AnyFlatSpec
 class ConfigProcessTest extends AnyFlatSpec {
 
   "given a single batchsize all unknown partitioned tables" should "use the step's batchsize" in {
-    val someStep = new Table()
-    someStep.setName("some_step")
-    someStep.setBatchSize("30m")
+    val someTable = new Table()
+    someTable.setName("some_step")
+    someTable.setBatchSize("30m")
     val sourceA = new Source
     val sources = Array(sourceA)
-    someStep.setSources(sources)
+    someTable.setSources(sources)
     val dependencyA = new Dependency
     val dependencyB = new Dependency
     dependencyB.setPartitionSize("15m")
     val dependencies = Array(dependencyA, dependencyB)
-    someStep.setDependencies(dependencies)
+    someTable.setDependencies(dependencies)
     val targetA = new Target
     val targets = Array(targetA)
-    someStep.setTargets(targets)
-    ConfigProcess.autofillStepPartitionSizes(someStep)
+    someTable.setTargets(targets)
+    ConfigProcess.autofillStepPartitionSizes(someTable)
 
-    assert(someStep.getBatchSize == "30m")
+    assert(someTable.getBatchSize == "30m")
     assert(sourceA.getPartitionSize == "30m")
     assert(dependencyA.getPartitionSize == "30m")
     assert(dependencyB.getPartitionSize == "15m")
-    assert(targetA.getPartitionSize == "30m")
-  }
-
-  "given multiple target with different partition sizes to process" should "fail to validate" in {
-    val targetA = new Target
-    targetA.setPartitionSize("30m")
-    val targetB = new Target
-    targetB.setPartitionSize("15m")
-    val aStep = new Table
-    aStep.setTargets(Array(targetA, targetB))
-    val res = ConfigProcess.checkAllTargetTimes(aStep)
-    assert (!res)
-  }
-
-  "given multiple target with the same partition sizes " should "validate" in {
-    val targetA = new Target
-    targetA.setPartitionSize("15m")
-    val targetB = new Target
-    targetB.setPartitionSize("15m")
-    val targetC = new Target
-    targetC.setPartitionSize("15M")
-    val aStep = new Table
-    aStep.setTargets(Array(targetA, targetB, targetC))
-    val res = ConfigProcess.checkAllTargetTimes(aStep)
-    assert(res)
+    assert(someTable.getTargetPartitionSize == "30m")
   }
 
   "given a global & step config with missing connection-name it" should "not validate the combination" in {
@@ -88,8 +64,8 @@ class ConfigProcessTest extends AnyFlatSpec {
     connectionC.setPass("myPassword")
     goodGlobal.setConnections(Array(connectionA, connectionB, connectionC))
 
-    val goodStep = new Table()
-    goodStep.setBatchSize("30m")
+    val goodTable = new Table()
+    goodTable.setBatchSize("30m")
     val dependencyA = new Dependency()
     dependencyA.setConnectionName("conn1")
     dependencyA.setPath("core/tableOne")
@@ -104,22 +80,22 @@ class ConfigProcessTest extends AnyFlatSpec {
     dependencyC.setPartitionCount(2)
     dependencyC.setPath("schema.table")
     dependencyC.setPartitionColumn("created_at")
-    goodStep.setDependencies(Array(dependencyA, dependencyB, dependencyC))
+    goodTable.setDependencies(Array(dependencyA, dependencyB, dependencyC))
     val sourceA = new Source()
     sourceA.setConnectionName("conn3")
     sourceA.setPath("externalschema.externaltable")
     sourceA.setPartitionColumn("created_at")
-    goodStep.setSources(Array(sourceA))
+    goodTable.setSources(Array(sourceA))
     val targetA = new Target()
     targetA.setConnectionName("conn1")
     targetA.setPath("core/tableTwo")
-    goodStep.setTargets(Array(targetA))
+    goodTable.setTargets(Array(targetA))
 
-    val res = ConfigProcess.enrichAndValidateConfig(goodStep, goodGlobal)
+    val res = ConfigProcess.enrichAndValidateConfig(goodTable, goodGlobal)
     assert(res)
     assert(dependencyA.getPartitionSize === "30m")
     assert(sourceA.getPartitionSize === "30m")
-    assert(targetA.getPartitionSize === "30m")
+    assert(goodTable.getTargetPartitionSize === "30m")
     assert(dependencyC.getPartitionSize === "15m")
   }
 
@@ -130,7 +106,7 @@ class ConfigProcessTest extends AnyFlatSpec {
     aggDep.setPartitionSize("20m")
     someStep1.setDependencies(Array(aggDep))
     val target1 = new Target()
-    target1.setPartitionSize("30m")
+    someStep1.setTargetPartitionSize("30m")
     someStep1.setTargets(Array(target1))
     val res1 = ConfigProcess.checkAndUpdateAgg(someStep1)
     assert(!res1)
@@ -141,72 +117,76 @@ class ConfigProcessTest extends AnyFlatSpec {
     aggCountDep.setPartitionCount(7)
     someStep2.setDependencies(Array(aggCountDep))
     val target2 = new Target()
-    target2.setPartitionSize("1h")
+    someStep2.setTargetPartitionSize("1h")
     someStep2.setTargets(Array(target2))
 
     val res2 = ConfigProcess.checkAndUpdateAgg(someStep2)
     assert(!res2)
 
-    val someStep3 = new Table()
+    val someTable3 = new Table()
     val actuallyOneOnOne = new Dependency()
     actuallyOneOnOne.setType("agg")
     actuallyOneOnOne.setPartitionSize("30m")
-    someStep3.setDependencies(Array(actuallyOneOnOne))
-    someStep3.setTargets(Array(target1))
-    val res3 = ConfigProcess.checkAndUpdateAgg(someStep3)
+    someTable3.setDependencies(Array(actuallyOneOnOne))
+    someTable3.setTargets(Array(target1))
+    someTable3.setTargetPartitionSize("30m")
+    val res3 = ConfigProcess.checkAndUpdateAgg(someTable3)
     assert(!res3)
 
-    val someStep4 = new Table()
+    val someTable4 = new Table()
     val aggDoubleSetDep = new Dependency()
     aggDoubleSetDep.setType("agg")
     aggDoubleSetDep.setPartitionSize("15m")
     aggDoubleSetDep.setPartitionCount(3)
-    someStep4.setDependencies(Array(aggDoubleSetDep))
-    someStep4.setTargets(Array(target1))
-    val res4 = ConfigProcess.checkAndUpdateAgg(someStep4)
+    someTable4.setDependencies(Array(aggDoubleSetDep))
+    someTable4.setTargets(Array(target1))
+    someTable4.setTargetPartitionSize("30m")
+    val res4 = ConfigProcess.checkAndUpdateAgg(someTable4)
     assert(!res4)
   }
 
   "given correct aggregate dependency, they" should "validate" in {
-    val someStep1 = new Table()
+    val someTable1 = new Table()
     val aggDep = new Dependency()
     aggDep.setType("agg")
     aggDep.setPartitionSize("10m")
-    someStep1.setDependencies(Array(aggDep))
+    someTable1.setDependencies(Array(aggDep))
     val target1 = new Target()
-    target1.setPartitionSize("30m")
-    someStep1.setTargets(Array(target1))
-    val res1 = ConfigProcess.checkAndUpdateAgg(someStep1)
+    someTable1.setTargetPartitionSize("30m")
+    someTable1.setTargets(Array(target1))
+    val res1 = ConfigProcess.checkAndUpdateAgg(someTable1)
     assert(res1)
 
-    val someStep2 = new Table()
+    val someTable2 = new Table()
     val aggCountDep = new Dependency()
     aggCountDep.setType("aggregate")
     aggCountDep.setPartitionCount(5)
-    someStep2.setDependencies(Array(aggCountDep))
+    someTable2.setDependencies(Array(aggCountDep))
     val target2 = new Target()
-    target2.setPartitionSize("1h")
-    someStep2.setTargets(Array(target2))
+    someTable2.setTargetPartitionSize("1h")
+    someTable2.setTargets(Array(target2))
 
-    val res2 = ConfigProcess.checkAndUpdateAgg(someStep2)
+    val res2 = ConfigProcess.checkAndUpdateAgg(someTable2)
     assert(res2)
 
-    val someStep3 = new Table()
+    val someTable3 = new Table()
     aggCountDep.setPartitionSize("")
     aggCountDep.setPartitionCount(3)
-    someStep3.setDependencies(Array(aggCountDep))
-    someStep3.setTargets(Array(target2))
+    someTable3.setDependencies(Array(aggCountDep))
+    someTable3.setTargetPartitionSize("1h")
+    someTable3.setTargets(Array(target2))
 
-    val res3 = ConfigProcess.checkAndUpdateAgg(someStep3)
+    val res3 = ConfigProcess.checkAndUpdateAgg(someTable3)
     assert(res3)
 
-    val someStep4 = new Table()
+    val someTable4 = new Table()
     aggCountDep.setPartitionCount(1)
     aggCountDep.setPartitionSize("15m")
-    someStep4.setDependencies(Array(aggCountDep))
-    someStep4.setTargets(Array(target2))
+    someTable4.setDependencies(Array(aggCountDep))
+    someTable4.setTargets(Array(target2))
+    someTable4.setTargetPartitionSize("1h")
 
-    val res4 = ConfigProcess.checkAndUpdateAgg(someStep4)
+    val res4 = ConfigProcess.checkAndUpdateAgg(someTable4)
     assert(res4)
   }
 }
