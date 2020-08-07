@@ -11,7 +11,7 @@ sources:
     path: schema.staging_source_table  # On DB
     version: 1
     partitionSize: "6h"
-    partitionQuery: "SELECT id FROM <path> WHERE created_at >= <lower_bound> and created_at < <upper_bound>"
+    partitionQuery: "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'"
     partitionColumn: "id"
     selectQuery: "table_test_2_select_query.sql"
     queryColumn: "created_at"
