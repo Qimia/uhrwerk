@@ -148,7 +148,8 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     val res1 = MetaStore.getBatchedDependencies(
       entityManager,
       dependencies,
-      List(LocalDateTime.of(2000, 1, 1, 0, 0, 0)))
+      List(LocalDateTime.of(2000, 1, 1, 0, 0, 0)),
+      Duration.ofHours(1))
     entityManager.getTransaction.commit()
     assert(res1.head === Right(LocalDateTime.of(2000, 1, 1, 0, 0, 0)))
 
@@ -156,7 +157,8 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     val res2 = MetaStore.getBatchedDependencies(
       entityManager,
       dependencies,
-      List(LocalDateTime.of(2000, 1, 1, 1, 0, 0)))
+      List(LocalDateTime.of(2000, 1, 1, 1, 0, 0)),
+      Duration.ofHours(1))
     entityManager.getTransaction().commit()
     res2.head match {
       case Right(_) => fail
@@ -167,7 +169,8 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     val res3 = MetaStore.getBatchedDependencies(
       entityManager,
       dependencies,
-      List(LocalDateTime.of(2020, 1, 1, 1, 0, 0)))
+      List(LocalDateTime.of(2020, 1, 1, 1, 0, 0)),
+      Duration.ofHours(1))
     entityManager.getTransaction().commit()
     res3.head match {
       case Right(_) => fail
@@ -176,18 +179,20 @@ class MetaStoreUnitTest extends AnyFlatSpec {
 
     entityManager.getTransaction().begin()
     val queryTimes = List(LocalDateTime.of(2000, 1, 1, 1, 0, 0),
-      LocalDateTime.of(2000, 1, 1, 3, 0, 0))
-    val res4 = MetaStore.getBatchedDependencies(
-      entityManager,
-      Array(dependencies(0)),
-      queryTimes)
+                          LocalDateTime.of(2000, 1, 1, 3, 0, 0))
+    val res4 = MetaStore.getBatchedDependencies(entityManager,
+                                                Array(dependencies(0)),
+                                                queryTimes,
+                                                Duration.ofHours(1))
     entityManager.getTransaction().commit()
     assert(res4 === queryTimes.map(x => Right(x)))
   }
 
   "MetaStore object" should "read TaskLogs and write TaskLogs" in {
-    val globalConfig: Path = Paths.get(getClass.getResource("/config/global_test_1.yml").getPath)
-    val stepConfig: Path = Paths.get(getClass.getResource("/config/table_test_1.yml").getPath)
+    val globalConfig: Path =
+      Paths.get(getClass.getResource("/config/global_test_1.yml").getPath)
+    val stepConfig: Path =
+      Paths.get(getClass.getResource("/config/table_test_1.yml").getPath)
 
     val metaStore = MetaStore(globalConfig, stepConfig, false)
     List("mysql_test", "s3_test", "local_filesystem_test").foreach(name =>

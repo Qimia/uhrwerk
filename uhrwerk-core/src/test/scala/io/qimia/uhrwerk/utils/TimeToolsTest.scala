@@ -372,7 +372,8 @@ class TimeToolsTest extends AnyFlatSpec {
       LocalDateTime.of(2010, Month.MARCH, 5, 13, 0, 0),
       LocalDateTime.of(2010, Month.MARCH, 5, 14, 0, 0)
     )
-    val res1 = TimeTools.checkIsSequentialIncreasing(dateTimes1)
+    val dur1 = Duration.ofHours(1)
+    val res1 = TimeTools.checkIsSequentialIncreasing(dateTimes1, dur1)
     assert(res1)
 
     val dateTimes2 = List(
@@ -381,7 +382,8 @@ class TimeToolsTest extends AnyFlatSpec {
       LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 40, 0),
       LocalDateTime.of(2020, Month.FEBRUARY, 5, 11, 0, 0)
     )
-    val res2 = TimeTools.checkIsSequentialIncreasing(dateTimes2)
+    val dur2 = Duration.ofMinutes(20)
+    val res2 = TimeTools.checkIsSequentialIncreasing(dateTimes2, dur2)
     assert(res2)
   }
 
@@ -392,7 +394,8 @@ class TimeToolsTest extends AnyFlatSpec {
       LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 45, 0),
       LocalDateTime.of(2020, Month.FEBRUARY, 5, 11, 0, 0)
     )
-    val res1 = TimeTools.checkIsSequentialIncreasing(dateTimes1)
+    val dur1 = Duration.ofMinutes(15)
+    val res1 = TimeTools.checkIsSequentialIncreasing(dateTimes1, dur1)
     assert(!res1)
 
     val dateTimes2 = List(
@@ -401,7 +404,8 @@ class TimeToolsTest extends AnyFlatSpec {
       LocalDateTime.of(2010, Month.MARCH, 5, 10, 0, 0),
       LocalDateTime.of(2010, Month.MARCH, 5, 9, 0, 0),
     )
-    val res2 = TimeTools.checkIsSequentialIncreasing(dateTimes2)
+    val dur2 = Duration.ofHours(1)
+    val res2 = TimeTools.checkIsSequentialIncreasing(dateTimes2, dur2)
     assert(!res2)
   }
 }
