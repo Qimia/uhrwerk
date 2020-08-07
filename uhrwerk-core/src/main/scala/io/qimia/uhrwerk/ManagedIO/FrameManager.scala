@@ -9,8 +9,8 @@ import org.apache.spark.sql.DataFrame
 trait FrameManager {
   // There could be a spark / iceberg / deltalake / hudi version depending on what the user wants to use
 
-  def loadDataFrame[T <: StepInput](conn: Connection, locationInfo: T, startTS: Option[LocalDateTime] = Option.empty): DataFrame
+  def loadDataFrame[T <: StepInput](conn: Connection, locationInfo: T, batchTS: Option[LocalDateTime] = Option.empty): DataFrame
 
-  def writeDataFrame(frame: DataFrame, conn: Connection, locationInfo: Target, startTS: Option[LocalDateTime] = Option.empty): Unit
+  def writeDataFrame(frame: DataFrame, conn: Connection, locationInfo: Target, batchTS: Option[LocalDateTime] = Option.empty): Unit
 
 }

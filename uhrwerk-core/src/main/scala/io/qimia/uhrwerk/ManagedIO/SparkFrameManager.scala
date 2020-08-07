@@ -6,8 +6,8 @@ import java.time.{Duration, LocalDateTime}
 import io.qimia.uhrwerk.config.model.{Connection, Dependency, StepInput, Target}
 import io.qimia.uhrwerk.config.{ConnectionType, DependencyType}
 import io.qimia.uhrwerk.utils.{JDBCTools, TimeTools}
+import org.apache.spark.sql._
 import org.apache.spark.sql.functions.lit
-import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
 object SparkFrameManager {
   /**
@@ -72,18 +72,20 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   }
 
   /**
-   * Load dataframe from JDBC. Either one batch or the full path.
+   * Loads a dataframe from JDBC. Either one batch or the full path.
+   * If the selectQuery is set, it uses that instead of the path.
+   * If the partitionQuery is set, it first runs this to get the partition boundaries.
    *
-   * @param conn         Connection
+   * @param connection   Connection
    * @param locationInfo Location Info
    * @param batchTS      Batch Timestamp. If not defined, load the full path.
    * @return DataFrame
    */
-  private def loadDFFromJDBC(conn: Connection,
+  private def loadDFFromJDBC(connection: Connection,
                              locationInfo: StepInput,
                              batchTS: Option[LocalDateTime]): DataFrame = {
     import sparkSession.implicits._
-    assert(conn.getName == locationInfo.getConnectionName)
+    assert(connection.getName == locationInfo.getConnectionName)
 
     val (date: Option[String], batch: Option[String]) = if (batchTS.isDefined) {
       val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
@@ -93,14 +95,37 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     } else {
       (Option.empty, Option.empty)
     }
-    val df = sparkSession
-      .read
-      .format("jdbc")
-      .option("url", conn.getJdbcUrl)
-      .option("driver", conn.getJdbcDriver)
-      .option("user", conn.getUser)
-      .option("password", conn.getPass)
-      .option("dbtable", s"${locationInfo.getPath}") // schema.tableName in path
+
+    val dfReader: DataFrameReader = JDBCTools.getDbConfig(sparkSession, connection)
+
+    val dfReaderWithQuery: DataFrameReader = if (locationInfo.getSelectQuery.nonEmpty) {
+      val query: String =
+        JDBCTools.queryTable(locationInfo.getSelectQuery, batchTS)
+
+      val dfReaderWithQuery = dfReader
+        .option("dbtable", query)
+      //        .option("numPartitions", locationInfo.getNumPartitions) todo add
+
+      if (locationInfo.getPartitionQuery.nonEmpty) {
+        val (minId, maxId) = JDBCTools.minMaxQueryIds(sparkSession,
+          connection,
+          locationInfo.getPartitionColumn,
+          locationInfo.getPartitionQuery,
+          batchTS)
+
+        dfReaderWithQuery
+          .option("partitionColumn", locationInfo.getPartitionColumn)
+          .option("lowerBound", minId)
+          .option("upperBound", maxId)
+      } else {
+        dfReaderWithQuery
+      }
+    } else {
+      dfReader
+        .option("dbtable", s"${locationInfo.getPath}") // schema.tableName
+    }
+
+    val df = dfReaderWithQuery
       .load()
 
     if (date.isDefined && batch.isDefined) {
@@ -153,7 +178,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @param frame        DataFrame to save
    * @param conn         Connection
    * @param locationInfo Location Info
-   * @param batchTS      Batch Timestamp, optional.
+   * @param batchTS      Batch Timestamp, optional
    */
   override def writeDataFrame(frame: DataFrame,
                               conn: Connection,
@@ -182,7 +207,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @param frame        DataFrame to save
    * @param conn         Connection
    * @param locationInfo Location Info
-   * @param batchTS      Batch Timestamp, optional.
+   * @param batchTS      Batch Timestamp, optional
    */
   private def writeDFToJDBC(frame: DataFrame,
                             conn: Connection,
@@ -207,7 +232,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       frame
     }
 
-    val dfWriter = df
+    val dfWriter: DataFrameWriter[Row] = df
       .write
       .mode(SaveMode.Append)
       .format("jdbc")
@@ -215,7 +240,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       .option("driver", conn.getJdbcDriver)
       .option("user", conn.getUser)
       .option("password", conn.getPass)
-      .option("dbtable", s"${locationInfo.getArea}.${locationInfo.getPath}") // schema.tableName ?
+      .option("dbtable", s"${locationInfo.getPath}") // schema.tableName
 
     try {
       dfWriter
@@ -224,7 +249,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       case e: Exception =>
         println(e.getLocalizedMessage)
         println("Trying to create the database")
-        JDBCTools.createJDBCDatabase(conn, locationInfo)
+        JDBCTools.createJDBCDatabase(conn, locationInfo.getPath.split("\\.")(0))
         dfWriter
           .save()
     }

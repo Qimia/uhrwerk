@@ -13,19 +13,19 @@ class InMemFrameManager extends FrameManager {
   val partitionedTables: mutable.Map[partitionedKey, DataFrame] = mutable.HashMap.empty[partitionedKey, DataFrame]
   val unpartitionedTables: mutable.Map[unpartitionedKey, DataFrame] = mutable.HashMap.empty[unpartitionedKey, DataFrame]
 
-  override def loadDataFrame[T <: StepInput](conn: Connection, locationInfo: T, startTS: Option[LocalDateTime]): DataFrame = {
+  override def loadDataFrame[T <: StepInput](conn: Connection, locationInfo: T, batchTS: Option[LocalDateTime]): DataFrame = {
     assert(conn.getName == locationInfo.getConnectionName)
-    if (startTS.isDefined) {
-      partitionedTables((conn.getName, locationInfo.getPath, startTS.get))
+    if (batchTS.isDefined) {
+      partitionedTables((conn.getName, locationInfo.getPath, batchTS.get))
     } else {
       unpartitionedTables((conn.getName, locationInfo.getPath))
     }
   }
 
-  override def writeDataFrame(frame: DataFrame, conn: Connection, locationInfo: Target, startTS: Option[LocalDateTime]): Unit = {
+  override def writeDataFrame(frame: DataFrame, conn: Connection, locationInfo: Target, batchTS: Option[LocalDateTime]): Unit = {
     assert(conn.getName == locationInfo.getConnectionName)
-    if (startTS.isDefined) {
-      partitionedTables((conn.getName, locationInfo.getPath, startTS.get)) = frame
+    if (batchTS.isDefined) {
+      partitionedTables((conn.getName, locationInfo.getPath, batchTS.get)) = frame
     } else {
       unpartitionedTables((conn.getName, locationInfo.getPath)) = frame
     }

@@ -353,9 +353,9 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val tar = new Target
     tar.setPartitionSize("30m")
     tar.setConnectionName("testSparkJDBCFrameManager")
-    tar.setPath("testsparkframemanagerwithoutbatches")
+    tar.setPath(s"$DATABASE_NAME.testsparkframemanagerwithoutbatches")
     tar.setVersion(1)
-    tar.setArea(DATABASE_NAME)
+    tar.setArea("staging")
     manager.writeDataFrame(df, conn, tar)
 
     val dep = Converters.convertTargetToDependency(tar)
@@ -376,9 +376,9 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val tar = new Target
     tar.setPartitionSize("30m")
     tar.setConnectionName("testSparkJDBCFrameManager")
-    tar.setPath("testsparkframemanager")
+    tar.setPath(s"$DATABASE_NAME.testsparkframemanager")
     tar.setVersion(1)
-    tar.setArea(DATABASE_NAME)
+    tar.setArea("staging")
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
     manager.writeDataFrame(df, conn, tar, Option(dateTime))
 
