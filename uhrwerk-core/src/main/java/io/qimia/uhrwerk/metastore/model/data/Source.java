@@ -1,7 +1,7 @@
-package io.qimia.uhrwerk.models.db.data;
+package io.qimia.uhrwerk.metastore.model.data;
 
 
-public class DataSource {
+public class Source {
 
   private long id;
   private long cfTableId;

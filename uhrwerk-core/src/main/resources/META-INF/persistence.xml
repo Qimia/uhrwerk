@@ -36,7 +36,7 @@
 <!--            <property name="javax.persistence.jdbc.user" value="" />-->
 <!--            <property name="javax.persistence.jdbc.password" value="" />-->
 <!--            <property name="hibernate.dialect" value="org.hibernate.dialect.SQLiteDialect" />-->
-<!--            <property name="hibernate.configConnection.release_mode" value="auto" />-->
+<!--            <property name="hibernate.connection.release_mode" value="auto" />-->
 <!--            <property name="hibernate.transaction.auto_close_session" value="true" />-->
 <!--            <property name="org.hibernate.flushMode" value="COMMIT" />-->
 

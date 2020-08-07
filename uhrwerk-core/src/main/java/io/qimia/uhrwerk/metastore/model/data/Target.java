@@ -1,6 +1,6 @@
-package io.qimia.uhrwerk.models.db.data;
+package io.qimia.uhrwerk.metastore.model.data;
 
-public class DataTable {
+public class Target {
 
   private long id;
   private long cfTableId;

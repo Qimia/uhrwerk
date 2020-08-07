@@ -1,17 +1,16 @@
-package io.qimia.uhrwerk.models.db.config;
+package io.qimia.uhrwerk.metastore.model.data;
 
-import io.qimia.uhrwerk.models.db.BatchTemporalUnit;
+import io.qimia.uhrwerk.metastore.model.BatchTemporalUnit;
+import io.qimia.uhrwerk.metastore.model.PartitionTransform;
 
-public class ConfigTable {
+public class Dependency {
 
   private long id;
-  private String area;
-  private String vertical;
-  private String tableName;
+  private long cfTableId;
+  private long dtTargetId;
+  private PartitionTransform partitionTransform;
   private BatchTemporalUnit batchTemporalUnit;
   private int batchSize;
-  private int parallelism;
-  private int maxPartitions;
   private String version;
   private java.sql.Timestamp createdTs;
   private java.sql.Timestamp updatedTs;
@@ -25,28 +24,28 @@ public class ConfigTable {
     this.id = id;
   }
 
-  public String getArea() {
-    return area;
+  public long getCfTableId() {
+    return cfTableId;
   }
 
-  public void setArea(String area) {
-    this.area = area;
+  public void setCfTableId(long cfTableId) {
+    this.cfTableId = cfTableId;
   }
 
-  public String getVertical() {
-    return vertical;
+  public long getDtTargetId() {
+    return dtTargetId;
   }
 
-  public void setVertical(String vertical) {
-    this.vertical = vertical;
+  public void setDtTargetId(long dtTargetId) {
+    this.dtTargetId = dtTargetId;
   }
 
-  public String getTableName() {
-    return tableName;
+  public PartitionTransform getPartitionTransform() {
+    return partitionTransform;
   }
 
-  public void setTableName(String tableName) {
-    this.tableName = tableName;
+  public void setPartitionTransform(PartitionTransform partitionTransform) {
+    this.partitionTransform = partitionTransform;
   }
 
   public BatchTemporalUnit getBatchTemporalUnit() {
@@ -63,22 +62,6 @@ public class ConfigTable {
 
   public void setBatchSize(int batchSize) {
     this.batchSize = batchSize;
-  }
-
-  public int getParallelism() {
-    return parallelism;
-  }
-
-  public void setParallelism(int parallelism) {
-    this.parallelism = parallelism;
-  }
-
-  public int getMaxPartitions() {
-    return maxPartitions;
-  }
-
-  public void setMaxPartitions(int maxPartitions) {
-    this.maxPartitions = maxPartitions;
   }
 
   public String getVersion() {

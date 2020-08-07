@@ -1,10 +1,10 @@
-package io.qimia.uhrwerk.models.db.data;
+package io.qimia.uhrwerk.metastore.model.data;
 
 
-public class DataPartition {
+public class Partition {
 
   private long id;
-  private long dtTableId;
+  private long dtTargetId;
   private String path;
   private String year;
   private String month;
@@ -26,12 +26,12 @@ public class DataPartition {
   }
 
 
-  public long getDtTableId() {
-    return dtTableId;
+  public long getDtTargetId() {
+    return dtTargetId;
   }
 
-  public void setDtTableId(long dtTableId) {
-    this.dtTableId = dtTableId;
+  public void setDtTargetId(long dtTargetId) {
+    this.dtTargetId = dtTargetId;
   }
 
 
