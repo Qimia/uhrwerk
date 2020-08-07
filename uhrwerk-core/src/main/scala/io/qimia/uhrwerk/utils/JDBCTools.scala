@@ -49,15 +49,15 @@ object JDBCTools {
   /**
    * Removes a database using the specified connection and database name.
    *
-   * @param conn         Connection information
+   * @param connection   Connection information
    * @param databaseName Database name
    */
-  def dropJDBCDatabase(conn: Connection, databaseName: String): Unit = {
+  def dropJDBCDatabase(connection: Connection, databaseName: String): Unit = {
     try {
-      val connection = getJDBCConnection(conn)
-      val statement = connection.createStatement
+      val jdbcConnection = getJDBCConnection(connection)
+      val statement = jdbcConnection.createStatement
       statement.execute(s"DROP DATABASE ${databaseName}")
-      connection.close()
+      jdbcConnection.close()
     } catch {
       case e: Exception => println(e.getLocalizedMessage)
     }
@@ -70,12 +70,14 @@ object JDBCTools {
    * @param upperBound             Optional upper bound
    * @param partitionColumn        Partition column, e.g. id
    * @param partitionQueryTemplate The partition query template
+   * @param path                   Optional path with format schema.table
    * @return
    */
   def minMaxQuery(lowerBound: Option[LocalDateTime],
                   upperBound: Option[LocalDateTime],
                   partitionColumn: String,
-                  partitionQueryTemplate: String): String = {
+                  partitionQueryTemplate: String,
+                  path: Option[String] = Option.empty): String = {
     val query = new ST(partitionQueryTemplate)
     if (lowerBound.isDefined) {
       query.add("lower_bound", TimeTools.convertTSToString(lowerBound.get))
@@ -83,8 +85,11 @@ object JDBCTools {
     if (upperBound.isDefined) {
       query.add("upper_bound", TimeTools.convertTSToString(upperBound.get))
     }
+    if (path.isDefined) {
+      query.add("path", path.get)
+    }
     val partitionQuery = query.render
-    s"(SELECT MIN(partition_query_table.$partitionColumn) AS lower_bound, MAX(partition_query_table.$partitionColumn) AS upper_bound " +
+    s"(SELECT MIN(partition_query_table.$partitionColumn) AS min_id, MAX(partition_query_table.$partitionColumn) AS max_id " +
       s"FROM ($partitionQuery) AS partition_query_table) AS tmp_table"
   }
 
