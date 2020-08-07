@@ -1,7 +1,8 @@
 package io.qimia.uhrwerk.ManagedIO
-import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.config.model.{Connection, Dependency, Table, TableInput, Target}
+import java.time.{Duration, LocalDateTime}
+
+import io.qimia.uhrwerk.config.model._
 import org.apache.spark.sql.DataFrame
 
 import scala.collection.mutable
@@ -30,4 +31,6 @@ class InMemFrameManager extends FrameManager {
       unpartitionedTables((conn.getName, locationTargetInfo.getPath)) = frame
     }
   }
+
+  override def loadMoreBatches(conn: Connection, locationInfo: Dependency, startTS: LocalDateTime, endTSExcl: LocalDateTime, batchDuration: Duration): DataFrame = null // todo implement
 }

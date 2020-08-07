@@ -1,16 +1,28 @@
 package io.qimia.uhrwerk.ManagedIO
 
-import java.time.LocalDateTime
+import java.time.{Duration, LocalDateTime}
 
-import io.qimia.uhrwerk.config.model.{Connection, Dependency, Source, Table, TableInput, Target}
+import io.qimia.uhrwerk.config.model._
 import org.apache.spark.sql.DataFrame
 
 // Trait that describes how to read and write dataframes to and from the datalake/datawarehouse
 trait FrameManager {
   // There could be a spark / iceberg / deltalake / hudi version depending on what the user wants to use
 
-  def loadDataFrame[T <: TableInput](conn: Connection, locationInfo: T, batchTS: Option[LocalDateTime] = Option.empty): DataFrame
+  def loadDataFrame[T <: TableInput](conn: Connection,
+                                     locationInfo: T,
+                                     batchTS: Option[LocalDateTime] = Option.empty): DataFrame
 
-  def writeDataFrame(frame: DataFrame, conn: Connection, locationTargetInfo: Target, locationTableInfo: Table,  batchTS: Option[LocalDateTime] = Option.empty): Unit
+  def writeDataFrame(frame: DataFrame,
+                     conn: Connection,
+                     locationTargetInfo: Target,
+                     locationTableInfo: Table,
+                     batchTS: Option[LocalDateTime] = Option.empty): Unit
+
+  def loadMoreBatches(conn: Connection,
+                      locationInfo: Dependency,
+                      startTS: LocalDateTime,
+                      endTSExcl: LocalDateTime,
+                      batchDuration: Duration): DataFrame
 
 }
