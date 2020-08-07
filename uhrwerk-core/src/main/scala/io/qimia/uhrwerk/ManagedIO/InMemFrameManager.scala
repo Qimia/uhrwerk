@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.ManagedIO
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.models.config.{Connection, Dependency, StepInput, Target}
+import io.qimia.uhrwerk.config.model.{Connection, Dependency, StepInput, Target}
 import org.apache.spark.sql.DataFrame
 
 import scala.collection.mutable

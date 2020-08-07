@@ -3,8 +3,8 @@ package io.qimia.uhrwerk.ManagedIO
 import java.nio.file.Paths
 import java.time.{Duration, LocalDateTime}
 
-import io.qimia.uhrwerk.models.config.{Connection, Dependency, StepInput, Target}
-import io.qimia.uhrwerk.models.{ConnectionType, DependencyType}
+import io.qimia.uhrwerk.config.model.{Connection, Dependency, StepInput, Target}
+import io.qimia.uhrwerk.config.{ConnectionType, DependencyType}
 import io.qimia.uhrwerk.utils.{JDBCTools, TimeTools}
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}

@@ -5,7 +5,7 @@ import java.nio.file.{Files, Path, Paths}
 import java.time.{Duration, LocalDateTime}
 import java.util.Comparator
 
-import io.qimia.uhrwerk.models.config.{Connection, Dependency, Source, Target}
+import io.qimia.uhrwerk.config.model.{Connection, Dependency, Source, Target}
 import io.qimia.uhrwerk.tags.{DbTest, Slow}
 import io.qimia.uhrwerk.utils.{Converters, JDBCTools, TimeTools}
 import org.apache.spark.SparkContext

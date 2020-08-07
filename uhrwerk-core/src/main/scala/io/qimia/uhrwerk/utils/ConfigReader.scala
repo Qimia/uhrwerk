@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.utils
 import java.io.{FileInputStream, FileNotFoundException, IOException}
 import java.nio.file.Path
 
-import io.qimia.uhrwerk.models.config.{Global, Table}
+import io.qimia.uhrwerk.config.model.{Global, Table}
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.representer.Representer

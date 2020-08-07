@@ -2,10 +2,11 @@ package io.qimia.uhrwerk.utils
 
 import java.nio.file.Paths
 
-import io.qimia.uhrwerk.models.config.{Connection, Global}
-import io.qimia.uhrwerk.models.store._
+import io.qimia.uhrwerk.backend.jpa.{ConnectionConfig, DependencyConfig, TableConfig, TableInfo, TargetConfig}
+import io.qimia.uhrwerk.config.model.{Connection, Global}
 import javax.persistence.{EntityManagerFactory, Persistence}
 import org.scalatest.flatspec.AnyFlatSpec
+
 import collection.JavaConverters._
 
 class ConfigPersistTest extends AnyFlatSpec {

@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.utils
 import java.sql
 import java.sql.DriverManager
 
-import io.qimia.uhrwerk.models.config.{Connection, Target}
+import io.qimia.uhrwerk.config.model.{Connection, Target}
 
 object JDBCTools {
   def createJDBCDatabase(conn: Connection, locationInfo: Target): Unit = {

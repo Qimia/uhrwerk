@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.utils
 
-import io.qimia.uhrwerk.models.config.{Dependency, Target}
+import io.qimia.uhrwerk.config.model.{Dependency, Target}
 
 object Converters {
 

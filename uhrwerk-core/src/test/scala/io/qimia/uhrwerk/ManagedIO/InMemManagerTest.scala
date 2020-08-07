@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.ManagedIO
 
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.models.config.{Connection, Target}
+import io.qimia.uhrwerk.config.model.{Connection, Target}
 import io.qimia.uhrwerk.utils.Converters
 import org.apache.spark.sql.SparkSession
 import org.scalatest.flatspec.AnyFlatSpec

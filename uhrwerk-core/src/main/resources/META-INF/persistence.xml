@@ -9,19 +9,19 @@
              xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
              version="2.0">
 
-    <persistence-unit name="io.qimia.uhrwerk.models">
+    <persistence-unit name="io.qimia.uhrwerk.config">
         <description>
             Uhrwerk Persistence Models
         </description>
 
-        <class>io.qimia.uhrwerk.models.store.ConnectionConfig</class>
-        <class>io.qimia.uhrwerk.models.store.DependencyConfig</class>
-        <class>io.qimia.uhrwerk.models.store.JobLog</class>
-        <class>io.qimia.uhrwerk.models.store.PartitionLog</class>
-        <class>io.qimia.uhrwerk.models.store.TableConfig</class>
-        <class>io.qimia.uhrwerk.models.store.TableInfo</class>
-        <class>io.qimia.uhrwerk.models.store.TargetConfig</class>
-        <class>io.qimia.uhrwerk.models.store.TaskLog</class>
+        <class>io.qimia.uhrwerk.backend.jpa.ConnectionConfig</class>
+        <class>io.qimia.uhrwerk.backend.jpa.DependencyConfig</class>
+        <class>io.qimia.uhrwerk.backend.jpa.JobLog</class>
+        <class>io.qimia.uhrwerk.backend.jpa.PartitionLog</class>
+        <class>io.qimia.uhrwerk.backend.jpa.TableConfig</class>
+        <class>io.qimia.uhrwerk.backend.jpa.TableInfo</class>
+        <class>io.qimia.uhrwerk.backend.jpa.TargetConfig</class>
+        <class>io.qimia.uhrwerk.backend.jpa.TaskLog</class>
 
 
         <properties>

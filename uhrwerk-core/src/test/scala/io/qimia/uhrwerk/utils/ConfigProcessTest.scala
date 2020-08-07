@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.utils
 
-import io.qimia.uhrwerk.models.config.{Connection, Dependency, Global, Source, Table, Target}
+import io.qimia.uhrwerk.config.model.{Connection, Dependency, Global, Source, Table, Target}
 import org.scalatest.flatspec.AnyFlatSpec
 
 class ConfigProcessTest extends AnyFlatSpec {

@@ -2,8 +2,8 @@ package io.qimia.uhrwerk.utils
 
 import java.time.temporal.{ChronoUnit, TemporalUnit}
 
-import io.qimia.uhrwerk.models.DependencyType
-import io.qimia.uhrwerk.models.config.{Global, Table, DataTable}
+import io.qimia.uhrwerk.config.DependencyType
+import io.qimia.uhrwerk.config.model.{Global, Table, DataTable}
 
 object ConfigProcess {
 

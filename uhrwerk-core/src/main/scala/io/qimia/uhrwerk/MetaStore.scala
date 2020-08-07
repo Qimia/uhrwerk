@@ -4,15 +4,10 @@ import java.nio.file.Path
 import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.MetaStore.{DependencyFailed, DependencySuccess}
-import io.qimia.uhrwerk.models.TaskLogType
-import io.qimia.uhrwerk.models.config.{Dependency, Global, Table, Target}
-import io.qimia.uhrwerk.models.store.{PartitionLog, TaskLog}
-import io.qimia.uhrwerk.utils.{
-  ConfigPersist,
-  ConfigProcess,
-  ConfigReader,
-  TimeTools
-}
+import io.qimia.uhrwerk.backend.jpa.{PartitionLog, TaskLog}
+import io.qimia.uhrwerk.config.TaskLogType
+import io.qimia.uhrwerk.config.model.{Dependency, Global, Table, Target}
+import io.qimia.uhrwerk.utils.{ConfigPersist, ConfigProcess, ConfigReader, TimeTools}
 
 import collection.JavaConverters._
 import javax.persistence.{EntityManager, Persistence}

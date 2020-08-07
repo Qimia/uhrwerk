@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.utils
 
 import java.nio.file.Paths
 
-import io.qimia.uhrwerk.models.config.{Global, Table}
+import io.qimia.uhrwerk.config.model.{Global, Table}
 import org.scalatest.flatspec.AnyFlatSpec
 
 class ConfigReaderTest extends AnyFlatSpec {

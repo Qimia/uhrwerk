@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.ManagedIO
 
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.models.config.{Connection, Dependency, StepInput, Source, Target}
+import io.qimia.uhrwerk.config.model.{Connection, Dependency, StepInput, Source, Target}
 import org.apache.spark.sql.DataFrame
 
 // Trait that describes how to read and write dataframes to and from the datalake/datawarehouse

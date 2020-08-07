@@ -1,8 +1,9 @@
 package io.qimia.uhrwerk.utils
 
-import io.qimia.uhrwerk.models.config._
-import io.qimia.uhrwerk.models.store._
+import io.qimia.uhrwerk.backend.jpa.{ConnectionConfig, DependencyConfig, TableConfig, TableInfo, TargetConfig}
+import io.qimia.uhrwerk.config.model._
 import javax.persistence.EntityManager
+
 import collection.JavaConverters._
 
 object ConfigPersist {
