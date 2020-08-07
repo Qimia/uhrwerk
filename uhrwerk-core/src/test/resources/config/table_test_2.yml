@@ -5,13 +5,11 @@ parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
 sources:
   - connectionName: connection_name
     path: schema.staging_source_table  # On DB
-    area: staging
-    vertical: sourcedb_1
     version: 1
     partitionSize: "6h"
     partitionQuery: "SELECT id FROM <path> WHERE created_at >= <lower_bound> and created_at < <upper_bound>"
     partitionColumn: "id"
-    selectQuery: "step_test_2_select_query.sql"
+    selectQuery: "table_test_2_select_query.sql"
     queryColumn: "created_at"
 
 targets:

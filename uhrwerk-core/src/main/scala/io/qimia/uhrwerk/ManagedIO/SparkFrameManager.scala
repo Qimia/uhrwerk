@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.ManagedIO
 import java.nio.file.Paths
 import java.time.{Duration, LocalDateTime}
 
-import io.qimia.uhrwerk.models.config.{Connection, Dependency, InTable, Target}
+import io.qimia.uhrwerk.models.config.{Connection, Dependency, StepInput, Target}
 import io.qimia.uhrwerk.models.{ConnectionType, DependencyType}
 import io.qimia.uhrwerk.utils.{JDBCTools, TimeTools}
 import org.apache.spark.sql.functions.lit
@@ -34,9 +34,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @param batchTS      Batch Timestamp. If not defined, load the full path.
    * @return DataFrame
    */
-  override def loadDataFrame[T <: InTable](conn: Connection,
-                                           locationInfo: T,
-                                           batchTS: Option[LocalDateTime]): DataFrame = {
+  override def loadDataFrame[T <: StepInput](conn: Connection,
+                                             locationInfo: T,
+                                             batchTS: Option[LocalDateTime]): DataFrame = {
     val dependency: Option[Dependency] = locationInfo match {
       case _: Dependency =>
         Some(locationInfo.asInstanceOf[Dependency])
@@ -80,7 +80,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @return DataFrame
    */
   private def loadDFFromJDBC(conn: Connection,
-                             locationInfo: InTable,
+                             locationInfo: StepInput,
                              batchTS: Option[LocalDateTime]): DataFrame = {
     import sparkSession.implicits._
     assert(conn.getName == locationInfo.getConnectionName)
@@ -100,7 +100,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       .option("driver", conn.getJdbcDriver)
       .option("user", conn.getUser)
       .option("password", conn.getPass)
-      .option("dbtable", s"${locationInfo.getArea}.${locationInfo.getPath}") // schema.tableName ?
+      .option("dbtable", s"${locationInfo.getPath}") // schema.tableName in path
       .load()
 
     if (date.isDefined && batch.isDefined) {

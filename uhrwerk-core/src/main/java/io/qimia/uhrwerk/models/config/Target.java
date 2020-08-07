@@ -4,7 +4,7 @@ import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
 
-public class Target implements Table {
+public class Target implements DataTable {
 
     private String connectionName = "";
     private String path = "";

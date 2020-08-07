@@ -15,7 +15,7 @@ import scala.io.{BufferedSource, Source}
 class MetaStoreUnitTest extends AnyFlatSpec {
 
   "getLastTaskLog helper function" should "get the latest tasklog" in {
-    val stepName = "testhelperfunction"
+    val tableName = "testhelperfunction"
 
     val entityManagerFactory =
       Persistence.createEntityManagerFactory("io.qimia.uhrwerk.models")
@@ -24,13 +24,13 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     // At the start there should be nothing
     val entityRequestManager = entityManagerFactory.createEntityManager()
     entityRequestManager.getTransaction().begin()
-    val res1 = MetaStore.getLastTaskLog(entityRequestManager, stepName)
+    val res1 = MetaStore.getLastTaskLog(entityRequestManager, tableName)
     entityRequestManager.getTransaction().commit()
     assert(res1.isEmpty)
 
     entityManager.getTransaction().begin()
     val testObj1 = new TaskLog(
-      stepName,
+      tableName,
       1,
       1,
       LocalDateTime.of(2000, 1, 1, 0, 0, 0),
@@ -39,7 +39,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     )
     entityManager.persist(testObj1)
     val testObj2 = new TaskLog(
-      stepName,
+      tableName,
       1,
       1,
       LocalDateTime.of(2000, 1, 2, 0, 0, 0),
@@ -49,7 +49,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     entityManager.persist(testObj2)
     val lastDate = LocalDateTime.of(2000, 1, 3, 0, 0, 0)
     val testObj3 = new TaskLog(
-      stepName,
+      tableName,
       1,
       1,
       lastDate,
@@ -61,10 +61,10 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     entityManager.close()
 
     entityRequestManager.getTransaction().begin()
-    val res2 = MetaStore.getLastTaskLog(entityRequestManager, stepName)
+    val res2 = MetaStore.getLastTaskLog(entityRequestManager, tableName)
     entityRequestManager.getTransaction().commit()
     entityRequestManager.close()
-    assert(res2.get.getStepName === stepName)
+    assert(res2.get.getTableName === tableName)
     assert(res2.get.getRunTs === lastDate)
   }
 
@@ -187,7 +187,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
 
   "MetaStore object" should "read TaskLogs and write TaskLogs" in {
     val globalConfig: Path = Paths.get(getClass.getResource("/config/global_test_1.yml").getPath)
-    val stepConfig: Path = Paths.get(getClass.getResource("/config/step_test_1.yml").getPath)
+    val stepConfig: Path = Paths.get(getClass.getResource("/config/table_test_1.yml").getPath)
 
     val metaStore = MetaStore(globalConfig, stepConfig, false, false)
     List("mysql_test", "s3_test", "local_filesystem_test").foreach(name =>

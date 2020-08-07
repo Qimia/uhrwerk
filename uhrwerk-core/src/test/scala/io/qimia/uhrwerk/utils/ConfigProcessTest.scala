@@ -1,12 +1,12 @@
 package io.qimia.uhrwerk.utils
 
-import io.qimia.uhrwerk.models.config.{Connection, Dependency, Global, Source, Step, Target}
+import io.qimia.uhrwerk.models.config.{Connection, Dependency, Global, Source, Table, Target}
 import org.scalatest.flatspec.AnyFlatSpec
 
 class ConfigProcessTest extends AnyFlatSpec {
 
   "given a single batchsize all unknown partitioned tables" should "use the step's batchsize" in {
-    val someStep = new Step()
+    val someStep = new Table()
     someStep.setName("some_step")
     someStep.setBatchSize("30m")
     val sourceA = new Source
@@ -34,7 +34,7 @@ class ConfigProcessTest extends AnyFlatSpec {
     targetA.setPartitionSize("30m")
     val targetB = new Target
     targetB.setPartitionSize("15m")
-    val aStep = new Step
+    val aStep = new Table
     aStep.setTargets(Array(targetA, targetB))
     val res = ConfigProcess.checkAllTargetTimes(aStep)
     assert (!res)
@@ -47,14 +47,14 @@ class ConfigProcessTest extends AnyFlatSpec {
     targetB.setPartitionSize("15m")
     val targetC = new Target
     targetC.setPartitionSize("15M")
-    val aStep = new Step
+    val aStep = new Table
     aStep.setTargets(Array(targetA, targetB, targetC))
     val res = ConfigProcess.checkAllTargetTimes(aStep)
     assert(res)
   }
 
   "given a global & step config with missing connection-name it" should "not validate the combination" in {
-    val someStep = new Step()
+    val someStep = new Table()
     someStep.setName("some_step")
     val sourceA = new Source
     sourceA.setPath("a/b/c.parquet")
@@ -88,7 +88,7 @@ class ConfigProcessTest extends AnyFlatSpec {
     connectionC.setPass("myPassword")
     goodGlobal.setConnections(Array(connectionA, connectionB, connectionC))
 
-    val goodStep = new Step()
+    val goodStep = new Table()
     goodStep.setBatchSize("30m")
     val dependencyA = new Dependency()
     dependencyA.setConnectionName("conn1")
@@ -124,7 +124,7 @@ class ConfigProcessTest extends AnyFlatSpec {
   }
 
   "given some aggregate dependency with the wrong size it" should "not validate" in {
-    val someStep1 = new Step()
+    val someStep1 = new Table()
     val aggDep = new Dependency()
     aggDep.setType("agg")
     aggDep.setPartitionSize("20m")
@@ -135,7 +135,7 @@ class ConfigProcessTest extends AnyFlatSpec {
     val res1 = ConfigProcess.checkAndUpdateAgg(someStep1)
     assert(!res1)
 
-    val someStep2 = new Step()
+    val someStep2 = new Table()
     val aggCountDep = new Dependency()
     aggCountDep.setType("aggregate")
     aggCountDep.setPartitionCount(7)
@@ -147,7 +147,7 @@ class ConfigProcessTest extends AnyFlatSpec {
     val res2 = ConfigProcess.checkAndUpdateAgg(someStep2)
     assert(!res2)
 
-    val someStep3 = new Step()
+    val someStep3 = new Table()
     val actuallyOneOnOne = new Dependency()
     actuallyOneOnOne.setType("agg")
     actuallyOneOnOne.setPartitionSize("30m")
@@ -156,7 +156,7 @@ class ConfigProcessTest extends AnyFlatSpec {
     val res3 = ConfigProcess.checkAndUpdateAgg(someStep3)
     assert(!res3)
 
-    val someStep4 = new Step()
+    val someStep4 = new Table()
     val aggDoubleSetDep = new Dependency()
     aggDoubleSetDep.setType("agg")
     aggDoubleSetDep.setPartitionSize("15m")
@@ -168,7 +168,7 @@ class ConfigProcessTest extends AnyFlatSpec {
   }
 
   "given correct aggregate dependency, they" should "validate" in {
-    val someStep1 = new Step()
+    val someStep1 = new Table()
     val aggDep = new Dependency()
     aggDep.setType("agg")
     aggDep.setPartitionSize("10m")
@@ -179,7 +179,7 @@ class ConfigProcessTest extends AnyFlatSpec {
     val res1 = ConfigProcess.checkAndUpdateAgg(someStep1)
     assert(res1)
 
-    val someStep2 = new Step()
+    val someStep2 = new Table()
     val aggCountDep = new Dependency()
     aggCountDep.setType("aggregate")
     aggCountDep.setPartitionCount(5)
@@ -191,7 +191,7 @@ class ConfigProcessTest extends AnyFlatSpec {
     val res2 = ConfigProcess.checkAndUpdateAgg(someStep2)
     assert(res2)
 
-    val someStep3 = new Step()
+    val someStep3 = new Table()
     aggCountDep.setPartitionSize("")
     aggCountDep.setPartitionCount(3)
     someStep3.setDependencies(Array(aggCountDep))
@@ -200,7 +200,7 @@ class ConfigProcessTest extends AnyFlatSpec {
     val res3 = ConfigProcess.checkAndUpdateAgg(someStep3)
     assert(res3)
 
-    val someStep4 = new Step()
+    val someStep4 = new Table()
     aggCountDep.setPartitionCount(1)
     aggCountDep.setPartitionSize("15m")
     someStep4.setDependencies(Array(aggCountDep))

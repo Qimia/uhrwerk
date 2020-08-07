@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.utils
 
 import java.nio.file.Paths
 
-import io.qimia.uhrwerk.models.config.{Global, Step}
+import io.qimia.uhrwerk.models.config.{Global, Table}
 import org.scalatest.flatspec.AnyFlatSpec
 
 class ConfigReaderTest extends AnyFlatSpec {
@@ -18,7 +18,7 @@ class ConfigReaderTest extends AnyFlatSpec {
   }
 
   "Given a premade step config it" should "be parsable by the configreader" in {
-    val confPath = Paths.get(getClass.getResource("/config/step_test_1.yml").getPath)
+    val confPath = Paths.get(getClass.getResource("/config/table_test_1.yml").getPath)
     val stepConf = ConfigReader.readStepConfig(confPath)
 
     assert(stepConf.getName === "load_a_table")
@@ -35,7 +35,7 @@ class ConfigReaderTest extends AnyFlatSpec {
   }
 
   it should "be parsable with sources instead of dependencies" in {
-    val confPath = Paths.get(getClass.getResource("/config/step_test_2.yml").getPath)
+    val confPath = Paths.get(getClass.getResource("/config/table_test_2.yml").getPath)
     val stepConf = ConfigReader.readStepConfig(confPath)
 
     assert(stepConf.getName === "dump_a_table")
@@ -56,7 +56,7 @@ class ConfigReaderTest extends AnyFlatSpec {
   }
 
   "readQueryFile with a valid query file location" should "read and return the given query" in {
-    val out = ConfigReader.readQueryFile(getClass.getResource("/config/step_test_2_select_query.sql").getPath)
+    val out = ConfigReader.readQueryFile(getClass.getResource("/config/table_test_2_select_query.sql").getPath)
     assert (out === "SELECT * FROM <path> WHERE created_at >= <lower_bound> AND created_at < <upper_bound>")
   }
 }

@@ -10,15 +10,15 @@ public class TargetConfig {
     private int id;
     private TableInfo table;
     private Duration partitionSize;
-    private StepConfig stepConfig;
+    private TableConfig tableConfig;
     private String type;
 
     public TargetConfig() {}
 
-    public TargetConfig(TableInfo table, Duration partitionSize, StepConfig stepConfig, String type) {
+    public TargetConfig(TableInfo table, Duration partitionSize, TableConfig tableConfig, String type) {
         this.table = table;
         this.partitionSize = partitionSize;
-        this.stepConfig = stepConfig;
+        this.tableConfig = tableConfig;
         this.type = type;
     }
 
@@ -54,12 +54,12 @@ public class TargetConfig {
 
     @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="stepConfigId")
-    public StepConfig getStepConfig() {
-        return stepConfig;
+    public TableConfig getStepConfig() {
+        return tableConfig;
     }
 
-    public void setStepConfig(StepConfig stepConfig) {
-        this.stepConfig = stepConfig;
+    public void setStepConfig(TableConfig tableConfig) {
+        this.tableConfig = tableConfig;
     }
 
     @Column

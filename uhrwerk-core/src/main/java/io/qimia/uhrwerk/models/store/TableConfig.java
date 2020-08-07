@@ -5,7 +5,7 @@ import java.time.Duration;
 
 @Entity
 @Table( name = "stepconfigs" )
-public class StepConfig {
+public class TableConfig {
 
     private int id;
     private String name;
@@ -13,9 +13,9 @@ public class StepConfig {
     private int parallelism;
     private int maxBatches;
 
-    public StepConfig() {}
+    public TableConfig() {}
 
-    public StepConfig(String name, Duration batchSize, int parallelism, int maxBatches) {
+    public TableConfig(String name, Duration batchSize, int parallelism, int maxBatches) {
         this.name = name;
         this.batchSize = batchSize;
         this.parallelism = parallelism;

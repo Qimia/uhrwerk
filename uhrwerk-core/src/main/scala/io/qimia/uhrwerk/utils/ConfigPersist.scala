@@ -14,15 +14,15 @@ object ConfigPersist {
   // we reference the old one if nothing has changed, but does this comparison lead
   // to extra requests and less performance?)
 
-  def getOrCreateStepRef(store: EntityManager, step: Step): StepConfig = {
+  def getOrCreateStepRef(store: EntityManager, step: Table): TableConfig = {
 
     val stored = store
       .createQuery(
-        s"FROM StepConfig WHERE name = '${step.getName}' " +
+        s"FROM TableConfig WHERE name = '${step.getName}' " +
           "AND batchSize = :batchsize " +
           s"AND parallelism = ${step.getParallelism} " +
           s"AND maxBatches = ${step.getMaxBatches} ",
-        classOf[StepConfig]
+        classOf[TableConfig]
       )
       .setParameter("batchsize",step.getBatchSizeDuration)
       .getResultList
@@ -31,7 +31,7 @@ object ConfigPersist {
       return stored.head
     }
 
-    val stepConf = new StepConfig(
+    val stepConf = new TableConfig(
       step.getName,
       step.getBatchSizeDuration,
       step.getParallelism,
@@ -68,7 +68,7 @@ object ConfigPersist {
   }
 
   def getOrCreateTableRef(store: EntityManager,
-                          table: Table,
+                          table: DataTable,
                           connectionConfig: ConnectionConfig): TableInfo = {
     val stored = store
       .createQuery(
@@ -102,7 +102,7 @@ object ConfigPersist {
   def getOrCreateTargetConfig(store: EntityManager,
                               target: Target,
                               tableUsed: TableInfo,
-                              step: StepConfig): TargetConfig = {
+                              step: TableConfig): TargetConfig = {
     val stored = store
       .createQuery(
         "FROM TargetConfig WHERE table = :tab " +
@@ -133,7 +133,7 @@ object ConfigPersist {
   def getOrCreateDependencyConfig(store: EntityManager,
                                   dependency: Dependency,
                                   tableUsed: TableInfo,
-                                  step: StepConfig): DependencyConfig = {
+                                  step: TableConfig): DependencyConfig = {
     val stored = store
       .createQuery(
         "FROM DependencyConfig WHERE table = :tab " +
@@ -164,10 +164,10 @@ object ConfigPersist {
   }
 
   // Different configuration parts which are connected to the Log storage
-  type PersistStruc = (StepConfig, Map[String, ConnectionConfig])
+  type PersistStruc = (TableConfig, Map[String, ConnectionConfig])
 
   def persistStep(store: EntityManager,
-                  step: Step,
+                  step: Table,
                   global: Global): PersistStruc = {
 
     val connectionSearch =

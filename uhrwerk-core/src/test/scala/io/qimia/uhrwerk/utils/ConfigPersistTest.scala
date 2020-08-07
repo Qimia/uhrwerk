@@ -15,7 +15,7 @@ class ConfigPersistTest extends AnyFlatSpec {
     val entityManager = entityManagerFactory.createEntityManager
 
     // Note: Relies on the ConfigReader to function (not pure unit test)
-    val stepPath = Paths.get(getClass.getResource("/config/step_test_1.yml").getPath)
+    val stepPath = Paths.get(getClass.getResource("/config/table_test_1.yml").getPath)
     val stepConf = ConfigReader.readStepConfig(stepPath)
     val connection1 = new Connection()
     connection1.setName("connection_name")
@@ -45,8 +45,8 @@ class ConfigPersistTest extends AnyFlatSpec {
       classOf[DependencyConfig]
     ).getResultList().asScala
     val allSteps = entityManager.createQuery(
-      "FROM StepConfig",
-      classOf[StepConfig]
+      "FROM TableConfig",
+      classOf[TableConfig]
     ).getResultList().asScala
     val allTables = entityManager.createQuery(
       "FROM TableInfo",
