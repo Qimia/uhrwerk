@@ -13,7 +13,7 @@ class InMemFrameManager extends FrameManager {
   val partitionedTables: mutable.Map[partitionedKey, DataFrame] = mutable.HashMap.empty[partitionedKey, DataFrame]
   val unpartitionedTables: mutable.Map[unpartitionedKey, DataFrame] = mutable.HashMap.empty[unpartitionedKey, DataFrame]
 
-  override def loadDataFrame[T <: TableInput](conn: Connection, locationInfo: T, startTS: Option[LocalDateTime]): DataFrame = {
+  override def loadDataFrame[T <: TableInput](conn: Connection, locationInfo: T, batchTS: Option[LocalDateTime]): DataFrame = {
     assert(conn.getName == locationInfo.getConnectionName)
     if (batchTS.isDefined) {
       partitionedTables((conn.getName, locationInfo.getPath, batchTS.get))
