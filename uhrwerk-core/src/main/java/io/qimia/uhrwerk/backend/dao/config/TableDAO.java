@@ -1,8 +1,12 @@
 package io.qimia.uhrwerk.backend.dao.config;
 
+import io.qimia.uhrwerk.backend.dao.data.DependencyDAO;
+import io.qimia.uhrwerk.backend.dao.data.SourceDAO;
 import io.qimia.uhrwerk.backend.dao.data.TargetDAO;
 import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
 import io.qimia.uhrwerk.backend.model.config.Table;
+import io.qimia.uhrwerk.backend.model.data.Dependency;
+import io.qimia.uhrwerk.backend.model.data.Source;
 import io.qimia.uhrwerk.backend.model.data.Target;
 
 import java.sql.PreparedStatement;
@@ -38,6 +42,18 @@ public class TableDAO {
         target.setCfTableId(tableId);
       }
       TargetDAO.save(db, table.getTargets());
+    }
+    if (table.getDependencies() != null && !table.getDependencies().isEmpty()) {
+      for (Dependency dependency : table.getDependencies()) {
+        dependency.setCfTableId(tableId);
+      }
+      DependencyDAO.save(db, table.getDependencies());
+    }
+    if (table.getSources() != null && !table.getSources().isEmpty()) {
+      for (Source source : table.getSources()) {
+        source.setCfTableId(tableId);
+      }
+      SourceDAO.save(db, table.getSources());
     }
     db.commit();
     return tableId;
