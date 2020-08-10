@@ -47,7 +47,7 @@ class ConfigReaderTest extends AnyFlatSpec {
     assert(stepConf.getDependencies == null)
     val source = stepConf.getSources.head
     assert(source.getPath === "schema.staging_source_table")
-    assert(source.getPartitionQuery === "SELECT id FROM <path> WHERE created_at >= <lower_bound> and created_at < <upper_bound>")
+    assert(source.getPartitionQuery === "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'")
     assert(source.getQueryColumn === "created_at")
     assert(source.getSelectQuery === "SELECT * FROM <path> WHERE created_at >= <lower_bound> AND created_at < <upper_bound>")
     assert(source.getSparkReaderNumPartitions == 40)
