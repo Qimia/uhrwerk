@@ -24,16 +24,25 @@ object TableWrapper {
 
   def getVirtualDependency() = {} // If we know it's there we can create the dataframe with a function
 
-  // combine the 2 dependency check outputs of different checkers (different virtual ones or metastore)
-  // Assumes the lists are equal size and ordered the same
+  /**
+    * Combine different dependency checking outputs. Important when combining virtual-steps with one on one dependencies
+    * in a single check. Warning: Assumes that exactly the same datetime partitions have been used and returned for a and b.
+    * This means the same ordering of datetimes for a and b.
+    *
+    * If one of the two dependencies was not met than it means it failed with those missing dependencies.
+    * If both failed than the union of missing dependencies is taken
+    * @param a a dependency check output
+    * @param b a different dependency check output
+    * @return combined result
+    */
   def combineDependencyChecks(
-                               a: List[Either[DependencyFailedOld, DependencySuccess]],
-                               b: List[Either[DependencyFailedOld, DependencySuccess]])
+      a: List[Either[DependencyFailedOld, DependencySuccess]],
+      b: List[Either[DependencyFailedOld, DependencySuccess]])
     : List[Either[DependencyFailedOld, DependencySuccess]] = {
 
     def combineEither[R](
-                          a: Either[DependencyFailedOld, R],
-                          b: Either[DependencyFailedOld, R]): Either[DependencyFailedOld, R] = {
+        a: Either[DependencyFailedOld, R],
+        b: Either[DependencyFailedOld, R]): Either[DependencyFailedOld, R] = {
       (a, b) match {
         case (Left(a1), Left(b1)) => {
           Left(new DependencyFailedOld(a1._1, a1._2 union b1._2))
@@ -48,7 +57,13 @@ object TableWrapper {
     a.zip(b).map(tup => combineEither(tup._1, tup._2))
   }
 
-  // Create a boolean filter for the window batches based on window size
+  /**
+    * Create a boolean window filter based on an existing list of boolean values (representing partitions found/missing)
+    * and the size of the window. For example a window 3 means that the next 2 "values" should also be false.
+    * @param windowBatchList List of boolean values (representing batches found or missing)
+    * @param windowSize Size of the window of effect of the false values.
+    * @return New boolean filter with the window applied
+    */
   def createFilterWithWindowList(windowBatchList: List[Boolean],
                                  windowSize: Int): List[Boolean] = {
     var toRemove = 0 // TODO proper map without side effects
@@ -68,11 +83,17 @@ object TableWrapper {
     }
   }
 
-  // apply a boolean filter to an existing dependency-check output
+  /**
+    * Apply some boolean filter to a dependency check outcome
+    * @param originalOutcome dependency check outcome
+    * @param filter extra filter that needs to be applied
+    * @param nameDependency name of the dependency that is set to be missing if filter is false
+    * @return new dependency check outcome with the filter applied
+    */
   def applyWindowFilter(
-                         originalOutcome: List[Either[DependencyFailedOld, DependencySuccess]],
-                         filter: List[Boolean],
-                         nameDependency: String)
+      originalOutcome: List[Either[DependencyFailedOld, DependencySuccess]],
+      filter: List[Boolean],
+      nameDependency: String)
     : List[Either[DependencyFailedOld, DependencySuccess]] = {
     assert(originalOutcome.length == filter.length)
     originalOutcome
@@ -93,32 +114,51 @@ object TableWrapper {
 
 class TableWrapper(store: MetaStore, frameManager: FrameManager) {
 
-  // Smallest execution step in our DAG (gets most parameters from configuration given by store)
+  /**
+    * Process a single table for a list for partitionTS
+    * @param TableFunction User-defined function which combines the dependencies and processed the data
+    * @param startTimes sequence of partitionTS which need to be processed
+    * @param ex context on which the futures run for the different batches
+    * @return a list of futures containing the batch partition times
+    */
   def runTasks(TableFunction: TaskInput => Option[DataFrame],
                startTimes: Seq[LocalDateTime])(
       implicit ex: ExecutionContext): List[Future[LocalDateTime]] = {
 
     // Run a Table for a single partition (denoted by starting-time)
-    def runSingleTask(time: LocalDateTime): Unit = {
+    def runSingleTask(time: LocalDateTime, targets: Set[String]): Unit = {
       val startLog = store.logStartTask()
 
       // Use configured frameManager to read dataframes
       // TODO: Read the proper DF here and get the right connection/time params for it
       // Note that *we are responsible* for all (standard) loading of DataFrames!
-      val inputDepDFs: List[DataFrame] = if (store.tableConfig.dependenciesSet) {
-        store.tableConfig.getDependencies
+      val inputDepDFs: List[DataFrame] =
+        if (store.tableConfig.dependenciesSet) {
+          store.tableConfig.getDependencies
+            .map(
+              dep =>
+                frameManager.loadDataFrame(
+                  store.connections(dep.getConnectionName),
+                  dep,
+                  Option(time)))
+            .toList
+        } else {
+          Nil
+        }
+      // TODO: Implement the Source data loading in a similar fashion to the dependency loading
+      val inputSourceDFs: List[DataFrame] = if (store.tableConfig.sourcesSet) {
+        store.tableConfig.getSources
           .map(
-            dep =>
+            sou =>
               frameManager.loadDataFrame(
-                store.connections(dep.getConnectionName),
-                dep,
-                Option(time)))
+                store.connections(sou.getConnectionName),
+                sou,
+                Option(time))
+          )
           .toList
       } else {
         Nil
       }
-      // TODO: Implement the Source data loading in a similar fashion to the dependency loading
-      val inputSourceDFs: List[DataFrame] = Nil
       val taskInput =
         TaskInput(store.connections, time, inputDepDFs ::: inputSourceDFs)
 
@@ -128,6 +168,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
         // Note: We are responsible for all standard writing of DataFrames
         if (frame.isDefined) {
           store.tableConfig.getTargets
+            .filter(t => targets.contains(t.getPath))
             .foreach(
               tar =>
                 frameManager.writeDataFrame(
@@ -150,6 +191,9 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
       store.logFinishTask(startLog, time, success)
     }
 
+    val targetsNeeded = store.checkTargets(startTimes)
+    val partitionsNeeded = targetsNeeded.map(_._1)
+
     val checkResult: List[Either[DependencyFailedOld, DependencySuccess]] =
       if (store.tableConfig.dependenciesSet) {
         val dependenciesByVirtual =
@@ -159,26 +203,27 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
           .map(keyDeps =>
             if (keyDeps._1) {
               val individualVirtOutcomes =
-                keyDeps._2.map(checkVirtualStep(_, startTimes.toList))
-              individualVirtOutcomes.reduce(TableWrapper.combineDependencyChecks)
+                keyDeps._2.map(checkVirtualStep(_, partitionsNeeded))
+              individualVirtOutcomes.reduce(
+                TableWrapper.combineDependencyChecks)
             } else {
-              store.checkDependencies(keyDeps._2, startTimes)
+              store.checkDependencies(keyDeps._2, partitionsNeeded)
           })
           .reduce(TableWrapper.combineDependencyChecks)
       } else {
         startTimes.map(Right(_)).toList
       }
 
-    // TODO need to add filtering and logic for Virtual Steps and other kinds of steps
-
     val tasks: mutable.ListBuffer[Future[LocalDateTime]] =
       new mutable.ListBuffer
+    // Every checkResult time should be present in targetMap
+    val targetMap = targetsNeeded.toMap
 
     checkResult
       .foreach({
         case Right(time) => {
           val runningTask = Future {
-            runSingleTask(time)
+            runSingleTask(time, targetMap(time))
             time
           }
           tasks.append(runningTask)
@@ -191,8 +236,13 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
     tasks.toList
   }
 
-  // If you want to execute this step for a given list of startTimes without thinking about the execution context
-  // or the futures
+  /**
+    * Utility function to create an execution context and block until runTasks is done processing the batches.
+    * See [[io.qimia.uhrwerk.TableWrapper#runTasks]]
+    * @param stepFunction User-defined function which combines the dependencies and processed the data
+    * @param startTimes sequence of partitionTS which need to be processed
+    * @param threads number of threads used by the threadpool
+    */
   def runTasksAndWait(stepFunction: TaskInput => Option[DataFrame],
                       startTimes: Seq[LocalDateTime],
                       threads: Option[Int] = Option.empty): Unit = {
@@ -207,11 +257,21 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
                  duration.Duration(24, duration.HOURS))
   }
 
+  /**
+    * Dependency checking for virtual-steps. When a dependency is produced by a virtual step than we need to do a
+    * transformation to check its dependencies. After transforming the normal dependency checking is applied and
+    * the result is transformed back into the datetime list given to checkVirtualStep
+    * @param dependency virtual dependency that needs to be check
+    * @param startTimes list of partitionTS that need to be checked
+    * @return dependency checking result looking the same as a normal metastore dependency checking result
+    */
   def checkVirtualStep(dependency: Dependency, startTimes: List[LocalDateTime])
     : List[Either[DependencyFailedOld, DependencySuccess]] = {
     // Use metaStore to check if the right batches are there
 
-    def checkWindowStep(): List[Either[DependencyFailedOld, DependencySuccess]] = {
+    // function for checking virtual window dependencies
+    def checkWindowStep()
+      : List[Either[DependencyFailedOld, DependencySuccess]] = {
       val windowSize = dependency.getPartitionCount
       val windowStartTimes = TimeTools.convertToWindowBatchList(
         startTimes,
@@ -228,13 +288,14 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
       val windowFilter =
         TableWrapper.createFilterWithWindowList(booleanOutcome, windowSize)
       val filteredOutcome = TableWrapper.applyWindowFilter(windowedBatchOutcome,
-                                                          windowFilter,
-                                                          dependency.getPath)
+                                                           windowFilter,
+                                                           dependency.getPath)
       // TODO: Change to name in-case we switch from using the paths to using identifiers/names
 
       TimeTools.cleanWindowBatchList(filteredOutcome, windowSize)
     }
 
+    // function for checking virtual aggregate dependencies
     def checkAggregateStep()
       : List[Either[DependencyFailedOld, DependencySuccess]] = {
       // TODO: Doesn't check if the given duration (dep.getPartitionSizeDuration) agrees with this division
