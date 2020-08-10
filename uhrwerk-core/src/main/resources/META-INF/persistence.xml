@@ -41,7 +41,7 @@
 <!--            <property name="org.hibernate.flushMode" value="COMMIT" />-->
 
 
-            <property name="hibernate.show_sql" value="true" />
+            <property name="hibernate.show_sql" value="false" />
             <property name="hibernate.hbm2ddl.auto" value="create" />
 
         </properties>

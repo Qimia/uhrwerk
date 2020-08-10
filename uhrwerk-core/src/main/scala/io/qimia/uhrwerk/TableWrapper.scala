@@ -4,7 +4,7 @@ import java.time.{Duration, LocalDateTime}
 import java.util.concurrent.Executors
 
 import io.qimia.uhrwerk.ManagedIO.FrameManager
-import io.qimia.uhrwerk.MetaStore.{DependencyFailed, DependencySuccess}
+import io.qimia.uhrwerk.MetaStore.{DependencyFailedOld, DependencySuccess}
 import io.qimia.uhrwerk.TableWrapper.TaskInput
 import io.qimia.uhrwerk.config.{ConnectionType, DependencyType}
 import io.qimia.uhrwerk.config.model.{Connection, Dependency}
@@ -27,16 +27,16 @@ object TableWrapper {
   // combine the 2 dependency check outputs of different checkers (different virtual ones or metastore)
   // Assumes the lists are equal size and ordered the same
   def combineDependencyChecks(
-      a: List[Either[DependencyFailed, DependencySuccess]],
-      b: List[Either[DependencyFailed, DependencySuccess]])
-    : List[Either[DependencyFailed, DependencySuccess]] = {
+                               a: List[Either[DependencyFailedOld, DependencySuccess]],
+                               b: List[Either[DependencyFailedOld, DependencySuccess]])
+    : List[Either[DependencyFailedOld, DependencySuccess]] = {
 
     def combineEither[R](
-        a: Either[DependencyFailed, R],
-        b: Either[DependencyFailed, R]): Either[DependencyFailed, R] = {
+                          a: Either[DependencyFailedOld, R],
+                          b: Either[DependencyFailedOld, R]): Either[DependencyFailedOld, R] = {
       (a, b) match {
         case (Left(a1), Left(b1)) => {
-          Left(new DependencyFailed(a1._1, a1._2 union b1._2))
+          Left(new DependencyFailedOld(a1._1, a1._2 union b1._2))
         }
         case (Left(a2), Right(_))  => Left(a2)
         case (Right(_), Left(b3))  => Left(b3)
@@ -70,10 +70,10 @@ object TableWrapper {
 
   // apply a boolean filter to an existing dependency-check output
   def applyWindowFilter(
-      originalOutcome: List[Either[DependencyFailed, DependencySuccess]],
-      filter: List[Boolean],
-      nameDependency: String)
-    : List[Either[DependencyFailed, DependencySuccess]] = {
+                         originalOutcome: List[Either[DependencyFailedOld, DependencySuccess]],
+                         filter: List[Boolean],
+                         nameDependency: String)
+    : List[Either[DependencyFailedOld, DependencySuccess]] = {
     assert(originalOutcome.length == filter.length)
     originalOutcome
       .zip(filter)
@@ -83,7 +83,7 @@ object TableWrapper {
         } else {
           tup._1 match {
             case Right(time) =>
-              Left(new DependencyFailed(time, Set(nameDependency)))
+              Left(new DependencyFailedOld(time, Set(nameDependency)))
             case Left(f) => Left(f.copy(_2 = f._2 + nameDependency))
           }
         }
@@ -150,7 +150,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
       store.logFinishTask(startLog, time, success)
     }
 
-    val checkResult: List[Either[DependencyFailed, DependencySuccess]] =
+    val checkResult: List[Either[DependencyFailedOld, DependencySuccess]] =
       if (store.tableConfig.dependenciesSet) {
         val dependenciesByVirtual =
           store.tableConfig.getDependencies.groupBy(dep =>
@@ -208,10 +208,10 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
   }
 
   def checkVirtualStep(dependency: Dependency, startTimes: List[LocalDateTime])
-    : List[Either[DependencyFailed, DependencySuccess]] = {
+    : List[Either[DependencyFailedOld, DependencySuccess]] = {
     // Use metaStore to check if the right batches are there
 
-    def checkWindowStep(): List[Either[DependencyFailed, DependencySuccess]] = {
+    def checkWindowStep(): List[Either[DependencyFailedOld, DependencySuccess]] = {
       val windowSize = dependency.getPartitionCount
       val windowStartTimes = TimeTools.convertToWindowBatchList(
         startTimes,
@@ -236,7 +236,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
     }
 
     def checkAggregateStep()
-      : List[Either[DependencyFailed, DependencySuccess]] = {
+      : List[Either[DependencyFailedOld, DependencySuccess]] = {
       // TODO: Doesn't check if the given duration (dep.getPartitionSizeDuration) agrees with this division
       val smallerStartTimes = TimeTools.convertToSmallerBatchList(
         startTimes,
