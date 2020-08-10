@@ -1,6 +1,5 @@
 package io.qimia.uhrwerk.backend.dao.data;
 
-import io.qimia.uhrwerk.backend.model.data.Dependency;
 import io.qimia.uhrwerk.backend.model.data.Partition;
 import io.qimia.uhrwerk.backend.model.data.Target;
 
@@ -17,7 +16,7 @@ public class PartitionDAO {
       "INSERT INTO DT_PARTITION(dt_target_id, path, year, month, day, hour, minute, partition_hash)  VALUES (?,?,?,?,?,?,?,?)";
 
   private static String SELECT_BY_ID =
-      "SELECT id, cf_table_id, cf_connection_id, path, created_ts, updated_ts FROM DT_TARGET WHERE id = ?";
+      "SELECT id, dt_target_id, path, year, month, day, hour, minute, partition_hash, created_ts, updated_ts FROM DT_PARTITION WHERE id=?";
 
   public static Long save(java.sql.Connection db, Partition partition) throws SQLException {
     PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
