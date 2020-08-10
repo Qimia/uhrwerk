@@ -8,7 +8,21 @@ import io.qimia.uhrwerk.config.model.Connection
 import org.apache.spark.sql.{DataFrameReader, SparkSession}
 import org.stringtemplate.v4.ST
 
+import scala.io.Source
+
 object JDBCTools {
+  def executeSqlFile(connection: Connection, fileName: String): Unit = {
+    val jdbcConnection = getJDBCConnection(connection)
+
+    val statement = jdbcConnection.createStatement
+    val sqlCommands = Source.fromResource(fileName).mkString.split(";").map(s => s.trim).filter(s => s.length > 0)
+    sqlCommands.foreach(c => {
+//      println(c)
+      statement.execute(c)
+    })
+    jdbcConnection.close()
+  }
+
   /**
    * Creates a new database using the specified connection and database name.
    *
@@ -16,12 +30,11 @@ object JDBCTools {
    * @param databaseName Database name
    */
   def createJDBCDatabase(connection: Connection, databaseName: String): Unit = {
-    val url = connection.getJdbcUrl
+    val url = connection.getJdbcUri
     val driver = connection.getJdbcDriver
     val username = connection.getUser
     val password = connection.getPass
     try {
-      Class.forName(driver)
       val connection = DriverManager.getConnection(url, username, password)
       val statement = connection.createStatement
       statement.execute(s"CREATE DATABASE ${databaseName}")
@@ -38,11 +51,10 @@ object JDBCTools {
    * @return The created SQL connection
    */
   def getJDBCConnection(connection: Connection): sql.Connection = {
-    val url = connection.getJdbcUrl
+    val url = connection.getJdbcUri
     val driver = connection.getJdbcDriver
     val username = connection.getUser
     val password = connection.getPass
-    Class.forName(driver)
     DriverManager.getConnection(url, username, password)
   }
 
@@ -139,7 +151,7 @@ object JDBCTools {
     sparkSession
       .read
       .format("jdbc")
-      .option("url", connection.getJdbcUrl)
+      .option("url", connection.getJdbcUri)
       .option("driver", connection.getJdbcDriver)
       .option("user", connection.getUser)
       .option("password", connection.getPass)

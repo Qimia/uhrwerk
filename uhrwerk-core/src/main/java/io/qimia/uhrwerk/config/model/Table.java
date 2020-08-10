@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.config.model;
 
+import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
 import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
@@ -34,6 +35,14 @@ public class Table {
 
     public Duration getBatchSizeDuration() {
         return TimeTools.convertDurationToObj(batchSize);
+    }
+
+    public BatchTemporalUnit getBatchTemporalUnit() {
+        return TimeTools.convertDurationToBatchTemporalUnit(getBatchSizeDuration()).getOrElse(null);
+    }
+
+    public int getBatchSizeAsInt() {
+        return TimeTools.convertDurationToBatchSize(getBatchSize());
     }
 
     public void setBatchSize(String batchSize) {

@@ -4,14 +4,48 @@ import java.time.format.DateTimeFormatter
 import java.time.{Duration, LocalDateTime, LocalTime}
 
 import com.mysql.cj.exceptions.WrongArgumentException
+import io.qimia.uhrwerk.backend.model.BatchTemporalUnit
 
 import scala.collection.mutable.ListBuffer
 
 object TimeTools {
+  /**
+   * Checks whether the duration size is days.
+   *
+   * @param batchDuration Duration to check.
+   * @return True/False
+   */
   def isDurationSizeDays(batchDuration: Duration): Boolean = {
     convertDurationToStr(batchDuration).contains("d")
   }
 
+  /**
+   * Converts a duration to a backend BatchTemporalUnit.
+   *
+   * @param duration Duration to convert.
+   * @return Option[BatchTemporalUnit]
+   */
+  def convertDurationToBatchTemporalUnit(duration: Duration): Option[BatchTemporalUnit] = {
+    val mappings = Map("m" -> BatchTemporalUnit.MINUTES,
+      "h" -> BatchTemporalUnit.HOURS,
+      "d" -> BatchTemporalUnit.DAYS,
+      "l" -> BatchTemporalUnit.MONTHS, // todo check if named correctly - "l" as Luna
+      "y" -> BatchTemporalUnit.YEARS)
+
+    mappings collectFirst {
+      case (str, v) if convertDurationToStr(duration) contains str => v
+    }
+  }
+
+  /**
+   * Converts a string duration into a batch size as integer.
+   *
+   * @param duration String duration.
+   * @return Batch size as Int.
+   */
+  def convertDurationToBatchSize(duration: String): Int = {
+    duration.slice(0, duration.length - 1).toInt
+  }
 
   // convert a datetime string to a datetime object
   def convertTSToTimeObj(date: String): LocalDateTime =
@@ -255,12 +289,13 @@ object TimeTools {
 
   /**
    * Check if there are gaps in a list of LocalDateTime or if they are all in order and increasing
-   * @param in A sequence for LocalDateTime
+   *
+   * @param in            A sequence for LocalDateTime
    * @param partitionSize Duration (step-size between 2 localdatetimes)
    * @return True for no-gaps
    */
   def checkIsSequentialIncreasing(in: Seq[LocalDateTime], partitionSize: Duration): Boolean = {
-    if(in.length == 1) {
+    if (in.length == 1) {
       return true
     }
     if (partitionSize.isNegative) {
