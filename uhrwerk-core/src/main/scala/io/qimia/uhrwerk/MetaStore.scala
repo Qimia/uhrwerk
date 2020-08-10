@@ -5,7 +5,7 @@ import java.sql
 import java.sql.DriverManager
 import java.time.{Duration, LocalDateTime}
 
-import io.qimia.uhrwerk.MetaStore.{DependencyFailedOld, DependencySuccess}
+import io.qimia.uhrwerk.MetaStore.{DependencyFailedOld, DependencySuccess, TargetNeededOld}
 import io.qimia.uhrwerk.backend.jpa.{PartitionLog, TaskLog}
 import io.qimia.uhrwerk.config.TaskLogType
 import io.qimia.uhrwerk.config.dao.config.{ConnectionDAO, TableDAO}
@@ -255,6 +255,25 @@ class MetaStore(globalConf: Global,
         batchedDependencies,
         startTimes,
         partitionSizeSet.head)
+    ta.commit()
+    store.close()
+    res
+  }
+
+  /**
+   * Check for the table this metastore is tied to which of a set of partitions still need writing and which of
+   * the targets need writing
+   * @param startTimes Sequence of datetime representing partitionStartTimeStamps
+   * @return List of DateTimes which still need to be processed and for each which target needs to be written
+   */
+  def checkTargets(startTimes: Seq[LocalDateTime]): List[TargetNeededOld] = {
+    val store = storeFactory.createEntityManager
+    val ta = store.getTransaction
+    ta.begin()
+    val res =
+      MetaStore.getUnprocessedTargets(store,
+        tableConfig,
+        startTimes)
     ta.commit()
     store.close()
     res
