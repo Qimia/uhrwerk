@@ -12,3 +12,9 @@ connections:
   - name: local_filesystem_test
     type: filesystem
     startpath: '/path/to/local/datalake'
+  - name: uhrwerk-backend
+    type: mysql
+    jdbcUri: 'jdbc:mysql://localhost:53306/UHRWERK_METASTORE'
+    jdbcDriver: 'com.mysql.jdbc.Driver'
+    user: UHRWERK_USER
+    pass: Xq92vFqEKF7TB8H9

@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.config.model;
 
+import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
 import io.qimia.uhrwerk.config.DependencyType;
 import io.qimia.uhrwerk.utils.TimeTools;
 
@@ -81,6 +82,10 @@ public class Dependency implements TableInput {
 
     public Duration getPartitionSizeDuration() {
         return TimeTools.convertDurationToObj(partitionSize);
+    }
+
+    public BatchTemporalUnit getBatchTemporalUnit() {
+        return TimeTools.convertDurationToBatchTemporalUnit(getPartitionSizeDuration()).getOrElse(null);
     }
 
     public void setPartitionSize(String partitionSize) {

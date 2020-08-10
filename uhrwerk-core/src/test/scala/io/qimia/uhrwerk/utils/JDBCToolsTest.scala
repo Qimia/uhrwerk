@@ -70,7 +70,7 @@ object JDBCToolsTest {
     conn.setName("testJDBCConnection")
     conn.setType("jdbc")
     conn.setJdbcDriver("com.mysql.cj.jdbc.Driver")
-    conn.setJdbcUrl("jdbc:mysql://localhost:53306")
+    conn.setJdbcUri("jdbc:mysql://localhost:53306")
     conn.setUser("root")
     conn.setPass("mysql")
     conn

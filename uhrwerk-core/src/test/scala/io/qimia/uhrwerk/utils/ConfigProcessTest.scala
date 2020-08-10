@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.utils
 
+import io.qimia.uhrwerk.MetaStore
 import io.qimia.uhrwerk.config.model.{Connection, Dependency, Global, Source, Table, Target}
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -59,10 +60,17 @@ class ConfigProcessTest extends AnyFlatSpec {
     val connectionC = new Connection()
     connectionC.setName("conn3")
     connectionC.setJdbcDriver("org.mariadb.jdbc.Driver")
-    connectionC.setJdbcUrl("jdbc:mariadb://localhost:3306/db")
+    connectionC.setJdbcUri("jdbc:mariadb://localhost:3306/db")
     connectionC.setUser("root")
     connectionC.setPass("myPassword")
-    goodGlobal.setConnections(Array(connectionA, connectionB, connectionC))
+    val backendConnection = new Connection()
+    backendConnection.setName(ConfigProcess.UHRWERK_BACKEND_CONNECTION_NAME)
+    backendConnection.setJdbcDriver("org.mariadb.jdbc.Driver")
+    backendConnection.setJdbcUri("jdbc:mariadb://localhost:3306/db")
+    backendConnection.setUser("root")
+    backendConnection.setPass("myPassword")
+    goodGlobal.setConnections(Array(connectionA, connectionB, connectionC, backendConnection))
+
 
     val goodTable = new Table()
     goodTable.setBatchSize("30m")

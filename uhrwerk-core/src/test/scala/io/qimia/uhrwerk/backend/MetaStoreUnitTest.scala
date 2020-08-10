@@ -188,7 +188,7 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     assert(res4 === queryTimes.map(x => Right(x)))
   }
 
-  "MetaStore object" should "read TaskLogs and write TaskLogs" in {
+  "MetaStore object" should "read TaskLogs and write TaskLogs" ignore { // todo in progress
     val globalConfig: Path =
       Paths.get(getClass.getResource("/config/global_test_1.yml").getPath)
     val stepConfig: Path =

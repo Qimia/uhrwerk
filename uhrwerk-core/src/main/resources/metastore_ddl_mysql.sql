@@ -47,7 +47,7 @@ create table if not exists DT_DEPENDENCY
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     cf_table_id         BIGINT                                                        NOT NULL,
     dt_target_id        BIGINT                                                        NOT NULL,
-    partition_transform enum ('AGGREGATE', 'WINDOW')                                  NOT NULL,
+    partition_transform enum ('AGGREGATE', 'WINDOW', 'ONEONONE')                      NOT NULL,
     batch_temporal_unit enum ('YEARS', 'MONTHS', 'WEEKS', 'DAYS', 'HOURS', 'MINUTES') NOT NULL,
     batch_size          int                                                           NOT NULL,
     created_ts          TIMESTAMP DEFAULT CURRENT_TIMESTAMP                           NULL,
@@ -104,7 +104,3 @@ CREATE TABLE IF NOT EXISTS DT_SOURCE
     FOREIGN KEY (connection_id)
         REFERENCES CF_CONNECTION (id)
 );
-
-
-
-

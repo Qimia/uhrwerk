@@ -1,20 +1,23 @@
 package io.qimia.uhrwerk.utils
 
-import java.time.temporal.{ChronoUnit, TemporalUnit}
+import java.time.temporal.ChronoUnit
 
 import io.qimia.uhrwerk.config.DependencyType
 import io.qimia.uhrwerk.config.model.{Global, Table}
 
 object ConfigProcess {
+  val UHRWERK_BACKEND_SQL_CREATE_TABLES_FILE = "metastore_ddl_mysql.sql" // todo this might be configurable in the future
+  val UHRWERK_BACKEND_CONNECTION_NAME: String = "uhrwerk-backend" // todo this might be configurable in the future
 
   /**
-    * Overall preparation of a new config. Will add missing fields based on filled in fields and
-    * will check if the given configuration is valid or not (based on what is only in the config)
-    * (This does **not** include warnings based on previously persisted data)
-    * @param step A single step configuration
-    * @param global A global configuration (connection-information)
-    * @return Did the config validate correctly or not
-    */
+   * Overall preparation of a new config. Will add missing fields based on filled in fields and
+   * will check if the given configuration is valid or not (based on what is only in the config)
+   * (This does **not** include warnings based on previously persisted data)
+   *
+   * @param step   A single step configuration
+   * @param global A global configuration (connection-information)
+   * @return Did the config validate correctly or not
+   */
   def enrichAndValidateConfig(step: Table, global: Global): Boolean = {
     if (!checkFieldsConfig(step, global)) {
       return false
@@ -30,12 +33,21 @@ object ConfigProcess {
   }
 
   /**
-   * Check if path-names and connection-names have been filled in
+   * Check if path-names and connection-names have been filled in.
+   * Also checks whether there is a connection for the backend.
+   *
+   * @param table
+   * @param global
+   * @return
    */
   def checkFieldsConfig(table: Table, global: Global): Boolean = {
     val connectionNames = global.getConnections.map(_.getName).toSet
     val stepBatchSizeSet = table.getBatchSize != ""
     // TODO: Require a step name or not?
+
+    if (!connectionNames.contains(UHRWERK_BACKEND_CONNECTION_NAME)) {
+      return false
+    }
 
     if (table.dependenciesSet()) {
       val dependencies = table.getDependencies
@@ -47,8 +59,8 @@ object ConfigProcess {
           return false
         }
         if (!stepBatchSizeSet &&
-            (d.getTypeEnum != DependencyType.AGGREGATE) &&
-            (d.getPartitionSize == "")) {
+          (d.getTypeEnum != DependencyType.AGGREGATE) &&
+          (d.getPartitionSize == "")) {
           return false
         }
       })
@@ -141,9 +153,10 @@ object ConfigProcess {
 
   // If no partition-sizes have been given then take the one set for the whole step
   /**
-    * Take the step's batch size and use it as a partition size of any inTable (except aggregates) or target
-    * @param in
-    */
+   * Take the step's batch size and use it as a partition size of any inTable (except aggregates) or target
+   *
+   * @param in
+   */
   def autofillStepPartitionSizes(in: Table): Unit = {
     val batchSize = in.getBatchSize
     if (batchSize == "") {
@@ -176,12 +189,12 @@ object ConfigProcess {
   }
 
   /**
-    * Check if all input partition sizes are in accordance to the target partition size meaning:
-    * - They are not bigger than the target partition size
-    * - They are equal size for oneonone & window dependencies
-    * - They are equal size for sources
-    * Warning: Does not check aggregate dependencies (should be done separately)
-    */
+   * Check if all input partition sizes are in accordance to the target partition size meaning:
+   * - They are not bigger than the target partition size
+   * - They are equal size for oneonone & window dependencies
+   * - They are equal size for sources
+   * Warning: Does not check aggregate dependencies (should be done separately)
+   */
   def checkInTableTimes(in: Table): Boolean = {
     val targetPartitionSize = in.getTargetPartitionSizeDuration
     if (in.sourcesSet()) {

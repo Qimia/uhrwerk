@@ -6,7 +6,7 @@ public class Connection {
 
     private String name = "";
     private String type = "";
-    private String jdbcUrl = "";
+    private String jdbcUri = "";
     private String jdbcDriver = "";
     private String user = "";
     private String pass = "";
@@ -15,6 +15,23 @@ public class Connection {
     private String cloudRegion = "";
     private String startPath = "";
     private int version = 1;
+
+    @Override
+    public String toString() {
+        return "Connection{" +
+                "name='" + name + '\'' +
+                ", type='" + type + '\'' +
+                ", jdbcUrl='" + jdbcUri + '\'' +
+                ", jdbcDriver='" + jdbcDriver + '\'' +
+                ", user='" + user + '\'' +
+                ", pass='" + pass + '\'' +
+                ", cloudId='" + cloudId + '\'' +
+                ", cloudPass='" + cloudPass + '\'' +
+                ", cloudRegion='" + cloudRegion + '\'' +
+                ", startPath='" + startPath + '\'' +
+                ", version=" + version +
+                '}';
+    }
 
     public Connection() {}
 
@@ -38,12 +55,12 @@ public class Connection {
         this.type = type;
     }
 
-    public String getJdbcUrl() {
-        return jdbcUrl;
+    public String getJdbcUri() {
+        return jdbcUri;
     }
 
-    public void setJdbcUrl(String jdbcUrl) {
-        this.jdbcUrl = jdbcUrl;
+    public void setJdbcUri(String jdbcUri) {
+        this.jdbcUri = jdbcUri;
     }
 
     public String getUser() {

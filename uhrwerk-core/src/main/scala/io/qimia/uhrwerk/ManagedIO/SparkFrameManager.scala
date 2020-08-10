@@ -238,7 +238,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       .write
       .mode(SaveMode.Append)
       .format("jdbc")
-      .option("url", conn.getJdbcUrl)
+      .option("url", conn.getJdbcUri)
       .option("driver", conn.getJdbcDriver)
       .option("user", conn.getUser)
       .option("password", conn.getPass)

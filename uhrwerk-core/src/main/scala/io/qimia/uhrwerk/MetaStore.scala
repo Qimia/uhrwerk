@@ -1,17 +1,19 @@
 package io.qimia.uhrwerk
 
 import java.nio.file.Path
+import java.sql
+import java.sql.DriverManager
 import java.time.{Duration, LocalDateTime}
 
-import io.qimia.uhrwerk.MetaStore.{DependencyFailedOld, DependencySuccess}
+import io.qimia.uhrwerk.MetaStore.{DependencyFailedOld, DependencySuccess, TargetNeededOld}
 import io.qimia.uhrwerk.backend.jpa.{PartitionLog, TaskLog}
 import io.qimia.uhrwerk.config.TaskLogType
-import io.qimia.uhrwerk.config.model.{Dependency, Global, Table, Target}
-import io.qimia.uhrwerk.utils.{ConfigProcess, ConfigReader, TimeTools}
-
-import collection.JavaConverters._
+import io.qimia.uhrwerk.config.dao.config.{ConnectionDAO, TableDAO}
+import io.qimia.uhrwerk.config.model._
+import io.qimia.uhrwerk.utils.{ConfigProcess, ConfigReader, JDBCTools, TimeTools}
 import javax.persistence.{EntityManager, Persistence}
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.sys.exit
 
@@ -21,17 +23,18 @@ object MetaStore {
   type TargetNeededOld = (LocalDateTime, Set[String])
 
   /**
-    * Retrieve the latest TaskLog for a particular Table
-    * @param store Persistence Entity manager
-    * @param tableName Name of the step
-    * @return Latest tasklog if there is one
-    */
+   * Retrieve the latest TaskLog for a particular Table
+   *
+   * @param store     Persistence Entity manager
+   * @param tableName Name of the step
+   * @return Latest tasklog if there is one
+   */
   def getLastTaskLog(store: EntityManager,
                      tableName: String): Option[TaskLog] = {
     val results = store
       .createQuery(s"FROM TaskLog WHERE tableName = '${tableName}'" +
-                     "ORDER BY runTs DESC",
-                   classOf[TaskLog])
+        "ORDER BY runTs DESC",
+        classOf[TaskLog])
       .setMaxResults(1)
       .getResultList
       .asScala
@@ -47,7 +50,7 @@ object MetaStore {
                              batchedDependencies: Array[Dependency],
                              startTimes: Seq[LocalDateTime],
                              batchDuration: Duration)
-    : List[Either[DependencyFailedOld, DependencySuccess]] = {
+  : List[Either[DependencyFailedOld, DependencySuccess]] = {
     // TODO: Create groupBy version when figured out howto filter each dependency with its version number
     // (Could be done with a very big WHERE (a-specs OR b-specs OR c-specs) clause, not sure if there is a performance gain)
 
@@ -81,6 +84,7 @@ object MetaStore {
           .map(_.getPartitionTs)
           .foreach(ldt => storedPartitions(ldt) += depPathName)
       }
+
       batchedDependencies.foreach(updateStoredPartitions)
     } else {
       def updateStoredPartitions(dep: Dependency): Unit = {
@@ -156,21 +160,40 @@ object MetaStore {
     val targetPathSet = targetSet.map(t => t.getPath)
 
     val includingEmptyRes: Seq[TargetNeededOld] = startTimes.map(time =>
-        if (!storedPartitions.contains(time)) {
-          // Every target is needed
-          (time, targetPathSet)
+      if (!storedPartitions.contains(time)) {
+        // Every target is needed
+        (time, targetPathSet)
+      } else {
+        val partitionPaths = storedPartitions(time)
+        if (partitionPaths.size == targets.size) {
+          val emptySet: Set[String] = Set()
+          // Don't need to run and can be filtered out
+          (time, emptySet)
         } else {
-          val partitionPaths = storedPartitions(time)
-          if (partitionPaths.size == targets.size) {
-            val emptySet: Set[String] = Set()
-            // Don't need to run and can be filtered out
-            (time, emptySet)
-          } else {
-            // only targets not found are needed
-            (time, targetPathSet diff partitionPaths)
-          }
-        })
-      includingEmptyRes.filter(x => x._2.nonEmpty).toList
+          // only targets not found are needed
+          (time, targetPathSet diff partitionPaths)
+        }
+      })
+    includingEmptyRes.filter(x => x._2.nonEmpty).toList
+  }
+
+  /**
+   * Creates an SQL Connection from a global config.
+   * This config needs to contain a connection with the name specified in ConfigProcess.UHRWERK_BACKEND_CONNECTION_NAME.
+   * If it doesn't, the function will fail.
+   *
+   * @param globalConf Global Config
+   * @return SQL Connection
+   */
+  def createSqlConnectionFromConfig(globalConf: Global): java.sql.Connection = {
+    val backendConnection = globalConf
+      .getConnections
+      .find(c => c.getName.equals(ConfigProcess.UHRWERK_BACKEND_CONNECTION_NAME))
+      .get
+
+    println(backendConnection)
+    JDBCTools.executeSqlFile(backendConnection, ConfigProcess.UHRWERK_BACKEND_SQL_CREATE_TABLES_FILE)
+    JDBCTools.getJDBCConnection(backendConnection)
   }
 
   def apply(globalConf: Path,
@@ -193,25 +216,33 @@ class MetaStore(globalConf: Global,
       exit(1)
     }
   }
-  val globalConfig = globalConf
-  val tableConfig = tableConf
-  val connections =
-    globalConfig.getConnections.map(conn => conn.getName -> conn).toMap
+
+  // save the configs to the backend
+  val backendDb: sql.Connection = MetaStore.createSqlConnectionFromConfig(globalConf)
+  globalConf.getConnections.foreach(c => ConnectionDAO.save(backendDb, c))
+  TableDAO.save(backendDb, tableConf)
+
+  val globalConfig: Global = globalConf
+  val tableConfig: Table = tableConf
+  val connections: Map[String, Connection] = globalConfig.getConnections.map(conn => conn.getName -> conn).toMap
+
+  // todo remove
   val storeFactory =
     Persistence.createEntityManagerFactory("io.qimia.uhrwerk.backend.jpa")
 
   // For each LocalDateTime check if all dependencies are there or tell which ones are not
   /**
-    * Check for an array of dependencies (with the same partition size) and a sequence of partitionTimeStamps if
-    * all the dependencies have been met or which ones have not been met. This does not translate the timestamps based
-    * on dependency type, meaning the caller has to already have processed those (see TableWrapper's virtual dependencies)
-    * @param batchedDependencies array of Dependencies
-    * @param startTimes timestamps for which the dependencies will be tested
-    * @return DependencyFailed or DependencySuccess for each of the starttimes
-    */
+   * Check for an array of dependencies (with the same partition size) and a sequence of partitionTimeStamps if
+   * all the dependencies have been met or which ones have not been met. This does not translate the timestamps based
+   * on dependency type, meaning the caller has to already have processed those (see TableWrapper's virtual dependencies)
+   *
+   * @param batchedDependencies array of Dependencies
+   * @param startTimes          timestamps for which the dependencies will be tested
+   * @return DependencyFailed or DependencySuccess for each of the starttimes
+   */
   def checkDependencies(batchedDependencies: Array[Dependency],
                         startTimes: Seq[LocalDateTime])
-    : List[Either[DependencyFailedOld, DependencySuccess]] = {
+  : List[Either[DependencyFailedOld, DependencySuccess]] = {
     val partitionSizeSet =
       batchedDependencies.map(_.getPartitionSizeDuration).toSet
     require(partitionSizeSet.size == 1)
@@ -221,19 +252,39 @@ class MetaStore(globalConf: Global,
     ta.begin()
     val res =
       MetaStore.getBatchedDependencies(store,
-                                       batchedDependencies,
-                                       startTimes,
-                                       partitionSizeSet.head)
+        batchedDependencies,
+        startTimes,
+        partitionSizeSet.head)
     ta.commit()
     store.close()
     res
   }
 
   /**
-    * Flag the start of a task. The Metastore will log this and return the log object
-    * (used when writing the matching finish object)
-    * @return TaskLog object stored using persistence
-    */
+   * Check for the table this metastore is tied to which of a set of partitions still need writing and which of
+   * the targets need writing
+   * @param startTimes Sequence of datetime representing partitionStartTimeStamps
+   * @return List of DateTimes which still need to be processed and for each which target needs to be written
+   */
+  def checkTargets(startTimes: Seq[LocalDateTime]): List[TargetNeededOld] = {
+    val store = storeFactory.createEntityManager
+    val ta = store.getTransaction
+    ta.begin()
+    val res =
+      MetaStore.getUnprocessedTargets(store,
+        tableConfig,
+        startTimes)
+    ta.commit()
+    store.close()
+    res
+  }
+
+  /**
+   * Flag the start of a task. The Metastore will log this and return the log object
+   * (used when writing the matching finish object)
+   *
+   * @return TaskLog object stored using persistence
+   */
   def logStartTask(): TaskLog = {
     // Make sure that getting the latest runNr and incrementing it is done
     // in 1 transaction
@@ -265,12 +316,13 @@ class MetaStore(globalConf: Global,
   }
 
   /**
-    * Flag the end of task. The metastore will write the finished log plus the partition logs if the task was completed
-    * successfully.
-    * @param startLog Matching start-log generated by [[io.qimia.uhrwerk.MetaStore#logStartTask()]]
-    * @param partitionTS Starttime of the partition that ran
-    * @param success If the task was a success or not (most often was the partition successfully written)
-    */
+   * Flag the end of task. The metastore will write the finished log plus the partition logs if the task was completed
+   * successfully.
+   *
+   * @param startLog    Matching start-log generated by [[io.qimia.uhrwerk.MetaStore#logStartTask()]]
+   * @param partitionTS Starttime of the partition that ran
+   * @param success     If the task was a success or not (most often was the partition successfully written)
+   */
   def logFinishTask(startLog: TaskLog,
                     partitionTS: LocalDateTime,
                     success: Boolean) = {
@@ -306,12 +358,13 @@ class MetaStore(globalConf: Global,
   }
 
   /**
-    * Write a partitionlog for a particular target for one partition timestamp
-    * @param store Persistence Entity manager
-    * @param finishLog reference to the persisted finished TaskLog
-    * @param target the target for which a partition was written
-    * @param partitionTS the starting timestamp of the partition
-    */
+   * Write a partitionlog for a particular target for one partition timestamp
+   *
+   * @param store       Persistence Entity manager
+   * @param finishLog   reference to the persisted finished TaskLog
+   * @param target      the target for which a partition was written
+   * @param partitionTS the starting timestamp of the partition
+   */
   def writePartitionLog(store: EntityManager,
                         finishLog: TaskLog,
                         target: Target,
