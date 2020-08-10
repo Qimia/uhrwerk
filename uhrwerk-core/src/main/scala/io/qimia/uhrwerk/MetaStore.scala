@@ -3,7 +3,7 @@ package io.qimia.uhrwerk
 import java.nio.file.Path
 import java.time.{Duration, LocalDateTime}
 
-import io.qimia.uhrwerk.MetaStore.{DependencyFailed, DependencySuccess}
+import io.qimia.uhrwerk.MetaStore.{DependencyFailedOld, DependencySuccess}
 import io.qimia.uhrwerk.backend.jpa.{PartitionLog, TaskLog}
 import io.qimia.uhrwerk.config.TaskLogType
 import io.qimia.uhrwerk.config.model.{Dependency, Global, Table, Target}
@@ -16,9 +16,9 @@ import scala.collection.mutable
 import scala.sys.exit
 
 object MetaStore {
-  type DependencyFailed = (LocalDateTime, Set[String])
+  type DependencyFailedOld = (LocalDateTime, Set[String])
   type DependencySuccess = LocalDateTime
-  type TargetNeeded = (LocalDateTime, Set[String])
+  type TargetNeededOld = (LocalDateTime, Set[String])
 
   /**
     * Retrieve the latest TaskLog for a particular Table
@@ -47,7 +47,7 @@ object MetaStore {
                              batchedDependencies: Array[Dependency],
                              startTimes: Seq[LocalDateTime],
                              batchDuration: Duration)
-    : List[Either[DependencyFailed, DependencySuccess]] = {
+    : List[Either[DependencyFailedOld, DependencySuccess]] = {
     // TODO: Create groupBy version when figured out howto filter each dependency with its version number
     // (Could be done with a very big WHERE (a-specs OR b-specs OR c-specs) clause, not sure if there is a performance gain)
 
@@ -127,6 +127,52 @@ object MetaStore {
       .toList
   }
 
+  def getUnprocessedTargets(store: EntityManager,
+                            table: Table,
+                            startTimes: Seq[LocalDateTime]): List[TargetNeededOld] = {
+    val storedPartitions: mutable.Map[LocalDateTime, Set[String]] =
+      new mutable.HashMap().withDefaultValue(Set())
+    val targets = table.getTargets
+
+    val results = store
+      .createQuery(
+        s"FROM PartitionLog WHERE area = '${table.getTargetArea}' " +
+          s"AND vertical = '${table.getTargetVertical}' " +
+          s"AND path in (:pathNames) " +
+          s"AND version = ${table.getTargetVersion} " +
+          s"AND partitionDuration = :partDur " +
+          s"AND partitionTs IN (:partTimes)",
+        classOf[PartitionLog]
+      )
+      .setParameter("pathNames", targets.map(_.getPath))
+      .setParameter("partDur", table.getTargetPartitionSizeDuration)
+      .setParameter("partTimes", startTimes.asJava)
+      .getResultList
+      .asScala
+    results
+      .foreach(pl => storedPartitions(pl.getPartitionTs) += pl.getPath)
+
+    val targetSet = targets.toSet
+    val targetPathSet = targetSet.map(t => t.getPath)
+
+    val includingEmptyRes: Seq[TargetNeededOld] = startTimes.map(time =>
+        if (!storedPartitions.contains(time)) {
+          // Every target is needed
+          (time, targetPathSet)
+        } else {
+          val partitionPaths = storedPartitions(time)
+          if (partitionPaths.size == targets.size) {
+            val emptySet: Set[String] = Set()
+            // Don't need to run and can be filtered out
+            (time, emptySet)
+          } else {
+            // only targets not found are needed
+            (time, targetPathSet diff partitionPaths)
+          }
+        })
+      includingEmptyRes.filter(x => x._2.nonEmpty).toList
+  }
+
   def apply(globalConf: Path,
             tableConf: Path,
             validate: Boolean = true): MetaStore = {
@@ -156,24 +202,28 @@ class MetaStore(globalConf: Global,
 
   // For each LocalDateTime check if all dependencies are there or tell which ones are not
   /**
-   * Check for an array of dependencies (with the same partition size) and a sequence of partitionTimeStamps if
-   * all the dependencies have been met or which ones have not been met. This does not translate the timestamps based
-   * on dependency type, meaning the caller has to already have processed those (see TableWrapper's virtual dependencies)
-   * @param batchedDependencies array of Dependencies
-   * @param startTimes timestamps for which the dependencies will be tested
-   * @return DependencyFailed or DependencySuccess for each of the starttimes
-   */
+    * Check for an array of dependencies (with the same partition size) and a sequence of partitionTimeStamps if
+    * all the dependencies have been met or which ones have not been met. This does not translate the timestamps based
+    * on dependency type, meaning the caller has to already have processed those (see TableWrapper's virtual dependencies)
+    * @param batchedDependencies array of Dependencies
+    * @param startTimes timestamps for which the dependencies will be tested
+    * @return DependencyFailed or DependencySuccess for each of the starttimes
+    */
   def checkDependencies(batchedDependencies: Array[Dependency],
                         startTimes: Seq[LocalDateTime])
-    : List[Either[DependencyFailed, DependencySuccess]] = {
-    val partitionSizeSet = batchedDependencies.map(_.getPartitionSizeDuration).toSet
+    : List[Either[DependencyFailedOld, DependencySuccess]] = {
+    val partitionSizeSet =
+      batchedDependencies.map(_.getPartitionSizeDuration).toSet
     require(partitionSizeSet.size == 1)
     // We only allow the same batchSize as input and it can only be a simple check if the datetime is there
     val store = storeFactory.createEntityManager
     val ta = store.getTransaction
     ta.begin()
     val res =
-      MetaStore.getBatchedDependencies(store, batchedDependencies, startTimes, partitionSizeSet.head)
+      MetaStore.getBatchedDependencies(store,
+                                       batchedDependencies,
+                                       startTimes,
+                                       partitionSizeSet.head)
     ta.commit()
     store.close()
     res
@@ -198,14 +248,14 @@ class MetaStore(globalConf: Global,
     } else {
       1
     }
-    val startLog =new TaskLog(
-        tableConfig.getName,
-        previousRunNr, // How often did this table run
-        tableConfig.getTargetVersion,
-        LocalDateTime.now(),
-        Duration.ZERO,
-        TaskLogType.START
-      )
+    val startLog = new TaskLog(
+      tableConfig.getName,
+      previousRunNr, // How often did this table run
+      tableConfig.getTargetVersion,
+      LocalDateTime.now(),
+      Duration.ZERO,
+      TaskLogType.START
+    )
 
     store.persist(startLog)
     ta.commit()
@@ -236,13 +286,13 @@ class MetaStore(globalConf: Global,
       TaskLogType.FAILURE
     }
     val finishLog = new TaskLog(
-        tableConfig.getName,
-        startLog.getRunNumber(),
-        tableConfig.getTargetVersion,
-        timeNow,
-        Duration.between(startLog.getRunTs, timeNow),
-        logType
-      )
+      tableConfig.getName,
+      startLog.getRunNumber(),
+      tableConfig.getTargetVersion,
+      timeNow,
+      Duration.between(startLog.getRunTs, timeNow),
+      logType
+    )
     store.persist(finishLog)
 
     // if success then also call writePartitionLog next
@@ -269,15 +319,15 @@ class MetaStore(globalConf: Global,
                         partitionTS: LocalDateTime): Unit = {
     // TODO: Check that partition-size and batch-size are correctly set (when loading the config)
     val newPartition = new PartitionLog(
-        table.getTargetArea,
-        table.getTargetVertical,
-        target.getPath,
-        partitionTS,
-        table.getTargetPartitionSizeDuration,
-        table.getTargetVersion,
-        finishLog,
-        0
-      )
+      table.getTargetArea,
+      table.getTargetVertical,
+      target.getPath,
+      partitionTS,
+      table.getTargetPartitionSizeDuration,
+      table.getTargetVersion,
+      finishLog,
+      0
+    )
     store.persist(newPartition)
   }
 
