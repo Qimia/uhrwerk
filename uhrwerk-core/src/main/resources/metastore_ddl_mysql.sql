@@ -27,6 +27,8 @@ create table if not exists CF_TABLE
     description         VARCHAR(512)                                                  NULL
 );
 
+CREATE INDEX TABLE_INDX ON CF_TABLE (area(128), vertical(128), table_name(128), version(64));
+
 create table if not exists DT_TARGET
 (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
