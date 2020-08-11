@@ -1,12 +1,14 @@
-name: "step-b"
+name: "step-c"
 batchSize: "1h"
 
 dependencies:
   - connectionName: "local_filesystem_test"
-    path: "tracked/internal/loc"
+    tableName: "step-a"
+    format: "parquet"
   - connectionName: "local_filesystem_test"
-      path: "tracked/internal/loc2"
+    tableName: "step-b"
+    format: "parquet"
 
 targets:
   - connectionName: "local_filesystem_test"
-      path: "tracked/internal/loc3"
+    format: "parquet"

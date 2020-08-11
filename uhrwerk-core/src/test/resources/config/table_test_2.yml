@@ -1,14 +1,15 @@
 name: dump_a_table
 batchSize: 1h
 parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
-targetArea: staging
-targetVertical: sourcedb_1
-targetPartitionSize: "6h"
-targetVersion: 1
+area: staging
+vertical: sourcedb_1
+partitionSize: "6h"
+version: 1
 
 sources:
   - connectionName: connection_name
-    path: schema.staging_source_table  # On DB
+    tableName: staging_source_table  # On DB
+    format: "jdbc"
     version: 1
     partitionSize: "6h"
     partitionQuery: "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'"
@@ -19,4 +20,4 @@ sources:
 
 targets:
   - connectionName: connection_name2
-    path: someplace/managed_table
+    format: "jdbc"

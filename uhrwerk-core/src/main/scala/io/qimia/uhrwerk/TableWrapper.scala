@@ -137,7 +137,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
           store.tableConfig.getDependencies
             .map(
               dep =>
-                frameManager.loadDataFrame(
+                frameManager.loadDependencyDataFrame(
                   store.connections(dep.getConnectionName),
                   dep,
                   Option(time)))
@@ -150,7 +150,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
         store.tableConfig.getSources
           .map(
             sou =>
-              frameManager.loadDataFrame(
+              frameManager.loadSourceDataFrame(
                 store.connections(sou.getConnectionName),
                 sou,
                 Option(time))

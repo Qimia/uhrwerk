@@ -1,20 +1,20 @@
 connections:
   - name: mysql_test
     type: mysql
-    jdbcUri: 'jdbc:mysql://localhost:3306'
+    connectionUrl: 'jdbc:mysql://localhost:3306'
     user: root
     pass: mysql
   - name: s3_test
     type: s3
+    connectionUrl: "s3://bucketname/somesuffix/"
     cloudId: blabla
     cloudPass: yaya
-    startpath: "s3://bucketname/somesuffix/"
   - name: local_filesystem_test
     type: filesystem
-    startpath: '/path/to/local/datalake'
+    connectionUrl: '/path/to/local/datalake'
   - name: uhrwerk-backend
     type: mysql
-    jdbcUri: 'jdbc:mysql://localhost:53306/UHRWERK_METASTORE'
+    connectionUrl: 'jdbc:mysql://localhost:53306/UHRWERK_METASTORE'
     jdbcDriver: 'com.mysql.jdbc.Driver'
     user: UHRWERK_USER
     pass: Xq92vFqEKF7TB8H9

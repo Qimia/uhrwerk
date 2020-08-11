@@ -10,14 +10,13 @@ public class Connection {
 
     private String name = "";
     private String type = "";
-    private String jdbcUri = "";
+    private String connectionUrl = "";
     private String jdbcDriver = "";
     private String user = "";
     private String pass = "";
     private String cloudId = "";
     private String cloudPass = "";
     private String cloudRegion = "";
-    private String startPath = "";
     private String version = "1";
 
     private LocalDateTime createdTS;
@@ -28,14 +27,13 @@ public class Connection {
         return "Connection{" +
                 "name='" + name + '\'' +
                 ", type='" + type + '\'' +
-                ", jdbcUrl='" + jdbcUri + '\'' +
+                ", jdbcUrl='" + connectionUrl + '\'' +
                 ", jdbcDriver='" + jdbcDriver + '\'' +
                 ", user='" + user + '\'' +
                 ", pass='" + pass + '\'' +
                 ", cloudId='" + cloudId + '\'' +
                 ", cloudPass='" + cloudPass + '\'' +
                 ", cloudRegion='" + cloudRegion + '\'' +
-                ", startPath='" + startPath + '\'' +
                 ", version=" + version +
                 '}';
     }
@@ -70,12 +68,12 @@ public class Connection {
         this.type = type;
     }
 
-    public String getJdbcUri() {
-        return jdbcUri;
+    public String getConnectionUrl() {
+        return connectionUrl;
     }
 
-    public void setJdbcUri(String jdbcUri) {
-        this.jdbcUri = jdbcUri;
+    public void setConnectionUrl(String connectionUrl) {
+        this.connectionUrl = connectionUrl;
     }
 
     public String getUser() {
@@ -116,14 +114,6 @@ public class Connection {
 
     public void setCloudRegion(String cloudRegion) {
         this.cloudRegion = cloudRegion;
-    }
-
-    public String getStartPath() {
-        return startPath;
-    }
-
-    public void setStartPath(String startPath) {
-        this.startPath = startPath;
     }
 
     public String getVersion() {

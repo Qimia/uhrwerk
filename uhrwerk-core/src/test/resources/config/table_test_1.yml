@@ -2,13 +2,15 @@ name: load_a_table
 batchSize: 6h
 parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
 maxBatches: 12
-targetArea: processing
-targetVertical: sourcedb_1
-targetPartitionSize: "6h"
+area: processing
+vertical: sourcedb_1
+partitionSize: "6h"
+version: 1
 
 dependencies:
   - connectionName: connection_name
-    path: schema.table  # On DB
+    tableName: tableOne  # On DB
+    format: "jdbc"
     area: staging
     vertical: sourcedb_1
     version: 1
@@ -16,7 +18,8 @@ dependencies:
     partitionSize: "6h"
     partitionCount: 1
   - connectionName: connection_name2
-    path: someplace/other_table  # On FS
+    tableName: tableTwo  # On FS
+    format: "parquet"
     area: staging
     vertical: sourcedb_1
     version: 1
@@ -26,5 +29,4 @@ dependencies:
 
 targets:
   - connectionName: connection_name2
-    path: someplace/new_table
-    version: 1
+    format: "parquet"
