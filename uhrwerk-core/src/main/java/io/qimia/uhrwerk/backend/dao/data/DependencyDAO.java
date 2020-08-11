@@ -40,8 +40,8 @@ public class DependencyDAO {
       throws SQLException {
     PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
     for (Iterator<Dependency> iterator = dependencies.iterator(); iterator.hasNext(); ) {
-      Dependency target = iterator.next();
-      setInsertParams(target, insert);
+      Dependency dependency = iterator.next();
+      setInsertParams(dependency, insert);
       insert.addBatch();
     }
     insert.executeBatch();
