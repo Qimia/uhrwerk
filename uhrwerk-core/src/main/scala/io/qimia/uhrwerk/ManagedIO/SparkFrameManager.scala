@@ -29,15 +29,16 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   /**
    * Loads a source dataframe. Either one batch or the full path.
    *
-   * @param conn    Connection
-   * @param source  Source
-   * @param startTS Batch Timestamp. If not defined, load the full path.
+   * @param conn                   Connection
+   * @param source                 Source
+   * @param startTS                Batch Timestamp. If not defined, load the full path.
+   * @param dataFrameReaderOptions Optional Spark reading options.
    * @return DataFrame
    */
-  override def loadSourceDataFrame(
-                                    conn: Connection,
-                                    source: Source,
-                                    startTS: Option[LocalDateTime] = Option.empty): DataFrame = {
+  override def loadSourceDataFrame(conn: Connection,
+                                   source: Source,
+                                   startTS: Option[LocalDateTime] = Option.empty,
+                                   dataFrameReaderOptions: Option[Map[String, String]] = Option.empty): DataFrame = {
     assert(conn.getName == source.getConnectionName)
 
     if (conn.getTypeEnum.equals(ConnectionType.JDBC)) {
@@ -49,15 +50,25 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         source.getPath,
         startTS)
     } else {
-      loadDataFrameFromFileSystem(startTS, source.getPartitionSize, conn.getConnectionUrl, source.getPath)
+      loadDataFrameFromFileSystem(startTS, source.getPartitionSize, conn.getConnectionUrl,
+        source.getPath, source.getFormat, dataFrameReaderOptions)
     }
   }
 
-  private def loadDataFrameFromFileSystem(startTS: Option[LocalDateTime],
-                                          partitionSize: String,
-                                          connectionUrl: String,
-                                          path: String): DataFrame = {
-    val fullLocation = if (startTS.isDefined) {
+  /**
+   * Returns a full location based on the parameters.
+   *
+   * @param startTS       Batch timestamp.
+   * @param partitionSize Partition size, e.g 15m.
+   * @param connectionUrl Connection Url, i.e. the full path prefix.
+   * @param path          Path to the dataframe.
+   * @return Full location.
+   */
+  def getFullLocation(startTS: Option[LocalDateTime],
+                      partitionSize: String,
+                      connectionUrl: String,
+                      path: String): String = {
+    if (startTS.isDefined) {
       val duration = TimeTools.convertDurationStrToObj(partitionSize)
       val date = TimeTools.dateTimeToDate(startTS.get)
       val batch = TimeTools.dateTimeToPostFix(startTS.get, duration)
@@ -65,18 +76,52 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     } else {
       SparkFrameManager.concatenatePaths(connectionUrl, path)
     }
-    sparkSession.read.parquet(fullLocation)
+  }
+
+  /**
+   * Loads a dataframe from a file system.
+   *
+   * @param startTS                Batch timestamp.
+   * @param partitionSize          Partition size, e.g 15m.
+   * @param connectionUrl          Connection Url, i.e. the full path prefix.
+   * @param path                   Path to the dataframe.
+   * @param format                 DataFrame format, specified according to spark docs, i.e. json, parquet, orc, libsvm, csv, text.
+   * @param dataFrameWriterOptions Optional Spark reading options.
+   * @return Loaded DataFrame.
+   */
+  private def loadDataFrameFromFileSystem(startTS: Option[LocalDateTime],
+                                          partitionSize: String,
+                                          connectionUrl: String,
+                                          path: String,
+                                          format: String,
+                                          dataFrameWriterOptions: Option[Map[String, String]] = Option.empty): DataFrame = {
+    val fullLocation = getFullLocation(startTS, partitionSize, connectionUrl, path)
+
+    val reader = if (dataFrameWriterOptions.isDefined) {
+      sparkSession
+        .read
+        .options(dataFrameWriterOptions.get)
+    } else {
+      sparkSession
+        .read
+    }
+
+    reader.format(format).load(fullLocation)
   }
 
   /**
    * Loads a dependency dataframe. Either one batch or the full path.
    *
-   * @param conn       Connection
-   * @param dependency Dependency
-   * @param startTS    Batch Timestamp. If not defined, load the full path.
+   * @param conn                   Connection
+   * @param dependency             Dependency
+   * @param startTS                Batch Timestamp. If not defined, load the full path.
+   * @param dataFrameReaderOptions Optional Spark reading options.
    * @return DataFrame
    */
-  override def loadDependencyDataFrame(conn: Connection, dependency: Dependency, startTS: Option[LocalDateTime]): DataFrame = {
+  override def loadDependencyDataFrame(conn: Connection,
+                                       dependency: Dependency,
+                                       startTS: Option[LocalDateTime],
+                                       dataFrameReaderOptions: Option[Map[String, String]] = Option.empty): DataFrame = {
     assert(conn.getName == dependency.getConnectionName)
 
     // aggregates
@@ -88,7 +133,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       val (startTSWindow, endTSExcl) = TimeTools.getRangeFromWindow(startTS.get, dependency.getPartitionSize, dependency.getPartitionCount)
       loadMoreBatches(conn, dependency, startTSWindow, endTSExcl, dependency.getPartitionSizeDuration)
     } else {
-      loadDataFrameFromFileSystem(startTS, dependency.getPartitionSize, conn.getConnectionUrl, dependency.getPath(true))
+      loadDataFrameFromFileSystem(startTS, dependency.getPartitionSize, conn.getConnectionUrl,
+        dependency.getPath(true), dependency.getFormat, dataFrameReaderOptions)
     }
   }
 
@@ -97,13 +143,13 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * If the selectQuery is set, it uses that instead of the path.
    * If the partitionQuery is set, it first runs this to get the partition boundaries.
    *
-   * @param connection Connection
-   * @param partitionSize
-   * @param selectQuery
-   * @param partitionQuery
-   * @param partitionColumn
-   * @param path
-   * @param startTS    Batch Timestamp. If not defined, load the full path.
+   * @param connection      Connection
+   * @param partitionSize   Partition size, e.g. 30m.
+   * @param selectQuery     Select query.
+   * @param partitionQuery  Partition query.
+   * @param partitionColumn Partition column.
+   * @param path            Path (schema + table name)
+   * @param startTS         Batch Timestamp. If not defined, load the full path.
    * @return DataFrame
    */
   private def loadDFFromJDBC(connection: Connection,
@@ -204,46 +250,55 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   /**
    * Save dataframe to datalake
    *
-   * @param frame              DataFrame to save
-   * @param conn               Connection
-   * @param locationTargetInfo Location Info
-   * @param startTS            Batch Timestamp, optional
+   * @param frame                  DataFrame to save
+   * @param conn                   Connection
+   * @param locationTargetInfo     Location Info
+   * @param startTS                Batch Timestamp, optional
+   * @param dataFrameWriterOptions Optional Spark writing options.
    */
   override def writeDataFrame(frame: DataFrame,
                               conn: Connection,
                               locationTargetInfo: Target,
                               locationTableInfo: Table,
-                              startTS: Option[LocalDateTime]): Unit = {
+                              startTS: Option[LocalDateTime] = Option.empty,
+                              dataFrameWriterOptions: Option[Map[String, String]] = Option.empty): Unit = {
     assert(conn.getName == locationTargetInfo.getConnectionName)
 
     if (conn.getTypeEnum.equals(ConnectionType.JDBC)) {
-      writeDFToJDBC(frame, conn, locationTargetInfo, locationTableInfo, startTS)
+      writeDataFrameToJDBC(frame, conn, locationTargetInfo, locationTableInfo, startTS, dataFrameWriterOptions)
     } else {
-      val fullLocation = if (startTS.isDefined) {
-        val duration = TimeTools.convertDurationStrToObj(locationTableInfo.getPartitionSize)
-        val date = TimeTools.dateTimeToDate(startTS.get)
-        val batch = TimeTools.dateTimeToPostFix(startTS.get, duration)
-        SparkFrameManager.concatenatePaths(conn.getConnectionUrl, locationTableInfo.getPath, s"date=$date", s"batch=$batch")
+      val fullLocation = getFullLocation(startTS,
+        locationTableInfo.getPartitionSize,
+        conn.getConnectionUrl,
+        locationTableInfo.getPath)
+
+      val writer = frame.write.mode(SaveMode.Append).format(locationTargetInfo.getFormat)
+      val writerWithOptions = if (dataFrameWriterOptions.isDefined) {
+        writer
+          .options(dataFrameWriterOptions.get)
       } else {
-        SparkFrameManager.concatenatePaths(conn.getConnectionUrl, locationTableInfo.getPath)
+        writer
       }
-      frame.write.mode(SaveMode.Append).parquet(fullLocation)
+
+      writerWithOptions.save(fullLocation)
     }
   }
 
   /**
    * Write dataframe to JDBC. Either one batch or the full path.
    *
-   * @param frame              DataFrame to save
-   * @param conn               Connection
-   * @param locationTargetInfo Location Info
-   * @param startTS            Batch Timestamp, optional
+   * @param frame                  DataFrame to save
+   * @param conn                   Connection
+   * @param locationTargetInfo     Location Info
+   * @param startTS                Batch Timestamp, optional
+   * @param dataFrameWriterOptions Optional Spark writing options.
    */
-  private def writeDFToJDBC(frame: DataFrame,
-                            conn: Connection,
-                            locationTargetInfo: Target,
-                            locationTableInfo: Table,
-                            startTS: Option[LocalDateTime]): Unit = {
+  private def writeDataFrameToJDBC(frame: DataFrame,
+                                   conn: Connection,
+                                   locationTargetInfo: Target,
+                                   locationTableInfo: Table,
+                                   startTS: Option[LocalDateTime],
+                                   dataFrameWriterOptions: Option[Map[String, String]] = Option.empty): Unit = {
     assert(conn.getName == locationTargetInfo.getConnectionName)
 
     val (date: Option[String], batch: Option[String]) = if (startTS.isDefined) {
@@ -263,15 +318,23 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       frame
     }
 
-    val dfWriter: DataFrameWriter[Row] = df
-      .write
+    val dfWriterWithUserOptions = if (dataFrameWriterOptions.isDefined) {
+      df
+        .write
+        .options(dataFrameWriterOptions.get)
+    } else {
+      df
+        .write
+    }
+
+    val dfWriter: DataFrameWriter[Row] = dfWriterWithUserOptions
       .mode(SaveMode.Append)
       .format("jdbc")
       .option("url", conn.getConnectionUrl)
       .option("driver", conn.getJdbcDriver)
       .option("user", conn.getUser)
       .option("password", conn.getPass)
-      .option("dbtable", s"${locationTargetInfo.getFormat}") // schema.tableName
+      .option("dbtable", locationTableInfo.getPath)
 
     try {
       dfWriter
@@ -280,7 +343,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       case e: Exception =>
         println(e.getLocalizedMessage)
         println("Trying to create the database")
-        JDBCTools.createJDBCDatabase(conn, locationTargetInfo.getFormat.split("\\.")(0))
+        JDBCTools.createJDBCDatabase(conn, locationTableInfo.getPath.split("\\.")(0))
         dfWriter
           .save()
     }

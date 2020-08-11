@@ -15,20 +15,23 @@ class InMemFrameManager extends FrameManager {
   val partitionedTables: mutable.Map[partitionedKey, DataFrame] = mutable.HashMap.empty[partitionedKey, DataFrame]
   val unpartitionedTables: mutable.Map[unpartitionedKey, DataFrame] = mutable.HashMap.empty[unpartitionedKey, DataFrame]
 
-  override def loadSourceDataFrame(
-                                    conn: Connection,
-                                    locationInfo: Source,
-                                    startTS: Option[LocalDateTime] = Option.empty): DataFrame = {
+  override def loadSourceDataFrame(conn: Connection,
+                                   locationInfo: Source,
+                                   startTS: Option[LocalDateTime] = Option.empty,
+                                   dataFrameReaderOptions: Option[Map[String, String]] = Option.empty): DataFrame = {
     assert(conn.getName == locationInfo.getConnectionName)
 
-  if (startTS.isDefined) {
+    if (startTS.isDefined) {
       partitionedTables((conn.getName, locationInfo.getPath, startTS.get))
     } else {
       unpartitionedTables((conn.getName, locationInfo.getPath))
     }
   }
 
-  override def loadDependencyDataFrame(conn: Connection, locationInfo: Dependency, startTS: Option[LocalDateTime]): DataFrame = {
+  override def loadDependencyDataFrame(conn: Connection,
+                                       locationInfo: Dependency,
+                                       startTS: Option[LocalDateTime],
+                                       dataFrameReaderOptions: Option[Map[String, String]] = Option.empty): DataFrame = {
     assert(conn.getName == locationInfo.getConnectionName)
 
     if (startTS.isDefined) {
@@ -38,7 +41,12 @@ class InMemFrameManager extends FrameManager {
     }
   }
 
-  override def writeDataFrame(frame: DataFrame, conn: Connection, locationTargetInfo: Target, locationTableInfo: Table, startTS: Option[LocalDateTime]): Unit = {
+  override def writeDataFrame(frame: DataFrame,
+                              conn: Connection,
+                              locationTargetInfo: Target,
+                              locationTableInfo: Table,
+                              startTS: Option[LocalDateTime],
+                              dataFrameWriterOptions: Option[Map[String, String]] = Option.empty): Unit = {
     assert(conn.getName == locationTargetInfo.getConnectionName)
 
     val fullPath = Paths.get(locationTableInfo.getPath, "format=", locationTargetInfo.getFormat).toString

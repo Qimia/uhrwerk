@@ -398,4 +398,16 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     assert(loadedWholeDF.columns.contains("date") && loadedWholeDF.columns.contains("batch"))
     assert(a === collected)
   }
+
+  "writing and reading csv with some options specified" should "properly write and read a dataframe" in {
+    val spark = getSparkSession
+
+    val df = createMockDataFrame(spark)
+    val manager = new SparkFrameManager(spark)
+
+    val conn = new Connection
+    conn.setName("testCsvReading")
+    conn.setType("fs")
+    conn.setConnectionUrl("src/test/resources/testlake/")
+  }
 }
