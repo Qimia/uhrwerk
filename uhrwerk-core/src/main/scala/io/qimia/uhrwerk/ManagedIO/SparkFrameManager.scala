@@ -58,7 +58,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         loadMoreBatches(conn, dependency.get, startTS, endTSExcl, dependency.get.getPartitionSizeDuration)
       } else {
         val fullLocation = if (batchTS.isDefined) {
-          val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
+          val duration = TimeTools.convertDurationStrToObj(locationInfo.getPartitionSize)
           val date = TimeTools.dateTimeToDate(batchTS.get)
           val batch = TimeTools.dateTimeToPostFix(batchTS.get, duration)
           SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getFormat, s"date=$date", s"batch=$batch")
@@ -88,7 +88,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     assert(connection.getName == locationInfo.getConnectionName)
 
     val (date: Option[String], batch: Option[String]) = if (batchTS.isDefined) {
-      val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
+      val duration = TimeTools.convertDurationStrToObj(locationInfo.getPartitionSize)
       val date = TimeTools.dateTimeToDate(batchTS.get)
       val batch = TimeTools.dateTimeToPostFix(batchTS.get, duration)
       (Option(date), Option(batch))
@@ -191,7 +191,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       writeDFToJDBC(frame, conn, locationTargetInfo, locationTableInfo, batchTS)
     } else {
       val fullLocation = if (batchTS.isDefined) {
-        val duration = TimeTools.convertDurationToObj(locationTableInfo.getPartitionSize)
+        val duration = TimeTools.convertDurationStrToObj(locationTableInfo.getPartitionSize)
         val date = TimeTools.dateTimeToDate(batchTS.get)
         val batch = TimeTools.dateTimeToPostFix(batchTS.get, duration)
         SparkFrameManager.concatenatePaths(conn.getStartPath, locationTargetInfo.getFormat, s"date=$date", s"batch=$batch")
@@ -218,7 +218,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     assert(conn.getName == locationTargetInfo.getConnectionName)
 
     val (date: Option[String], batch: Option[String]) = if (batchTS.isDefined) {
-      val duration = TimeTools.convertDurationToObj(locationTableInfo.getPartitionSize)
+      val duration = TimeTools.convertDurationStrToObj(locationTableInfo.getPartitionSize)
       val date = TimeTools.dateTimeToDate(batchTS.get)
       val batch = TimeTools.dateTimeToPostFix(batchTS.get, duration)
       (Option(date), Option(batch))

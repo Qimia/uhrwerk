@@ -1,6 +1,5 @@
 package io.qimia.uhrwerk.config.model;
 
-import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
 import io.qimia.uhrwerk.config.PartitionTemporalType;
 import io.qimia.uhrwerk.utils.TimeTools;
 
@@ -115,11 +114,22 @@ public class Table {
     }
 
     public Duration getPartitionSizeDuration() {
-        return TimeTools.convertDurationToObj(partitionSize);
+        return TimeTools.convertDurationStrToObj(partitionSize);
     }
 
     public void setPartitionSize(String partitionSize) {
         this.partitionSize = partitionSize;
+        var tuple = TimeTools.convertDurationStrToTuple(partitionSize);
+        this.partitionSizeInt = tuple.count();
+        this.partitionSizeType = tuple.durationUnit();
+    }
+
+    public Integer getPartitionSizeInt() {
+        return partitionSizeInt;
+    }
+
+    public PartitionTemporalType getPartitionSizeType() {
+        return partitionSizeType;
     }
 
     public String getVersion() {

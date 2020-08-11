@@ -61,21 +61,21 @@ class TimeToolsTest extends AnyFlatSpec {
 
   "a duration string and matching object" should "be convertable from one to the other and back" in {
     var input = "45m"
-    var convertedInput = TimeTools.convertDurationToObj(input)
+    var convertedInput = TimeTools.convertDurationStrToObj(input)
     var predictedResult = Duration.ofMinutes(45)
     assert(convertedInput.compareTo(predictedResult) == 0)
     var convertBack = TimeTools.convertDurationToStr(convertedInput)
     assert(input.compareTo(convertBack) == 0)
 
     input = "1h"
-    convertedInput = TimeTools.convertDurationToObj(input)
+    convertedInput = TimeTools.convertDurationStrToObj(input)
     predictedResult = Duration.ofHours(1)
     assert(convertedInput.compareTo(predictedResult) == 0)
     convertBack = TimeTools.convertDurationToStr(convertedInput)
     assert(input.compareTo(convertBack) == 0)
 
     input = "3d"
-    convertedInput = TimeTools.convertDurationToObj(input)
+    convertedInput = TimeTools.convertDurationStrToObj(input)
     predictedResult = Duration.ofDays(3)
     assert(convertedInput.compareTo(predictedResult) == 0)
     convertBack = TimeTools.convertDurationToStr(convertedInput)
@@ -85,7 +85,7 @@ class TimeToolsTest extends AnyFlatSpec {
   "empty duration" should "not screw up the system" in {
     val emptyDur = Duration.ZERO
     val someOut = TimeTools.convertDurationToStr(emptyDur)
-    val someOut2 = TimeTools.convertDurationToObj(someOut)
+    val someOut2 = TimeTools.convertDurationStrToObj(someOut)
     assert(emptyDur === someOut2)
   }
 

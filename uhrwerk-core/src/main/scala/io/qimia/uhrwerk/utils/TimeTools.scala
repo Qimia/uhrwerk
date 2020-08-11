@@ -5,10 +5,13 @@ import java.time.{Duration, LocalDateTime, LocalTime}
 
 import com.mysql.cj.exceptions.WrongArgumentException
 import io.qimia.uhrwerk.backend.model.BatchTemporalUnit
+import io.qimia.uhrwerk.config.PartitionTemporalType
 
 import scala.collection.mutable.ListBuffer
 
 object TimeTools {
+  case class DurationTuple(count: Int, durationUnit: PartitionTemporalType)
+
   /**
    * Checks whether the duration size is days.
    *
@@ -72,7 +75,7 @@ object TimeTools {
    * @throws UnsupportedOperationException if the aggregate is not valid, e.g. "1h" * 7 -> not a full day
    */
   def getRangeFromAggregate(ts: LocalDateTime, duration: String, partitionCount: Int): (LocalDateTime, LocalDateTime) = {
-    val durationObj = convertDurationToObj(duration)
+    val durationObj = convertDurationStrToObj(duration)
     val multipliedDuration = durationObj.multipliedBy(partitionCount)
 
     // checking for validity
@@ -116,14 +119,18 @@ object TimeTools {
     if (partitionCount <= 1) {
       throw new WrongArgumentException("partitionCount must be bigger than 1")
     }
-    val durationObj = convertDurationToObj(duration)
+    val durationObj = convertDurationStrToObj(duration)
     val multipliedDuration = durationObj.multipliedBy(partitionCount - 1)
 
     (ts.minusMinutes(multipliedDuration.toMinutes), ts.plusMinutes(durationObj.toMinutes))
   }
 
-  // Go from a string representation of a duration to a duration object
-  def convertDurationToObj(duration: String): Duration = {
+  /**
+   * Go from a string representation of a duration to a duration object
+   * @param duration string representing a duration
+   * @return Duration object
+   */
+  def convertDurationStrToObj(duration: String): Duration = {
     duration.toCharArray.last.toLower match {
       case 'm' =>
         Duration.ofMinutes(duration.substring(0, duration.length() - 1).toInt)
@@ -133,6 +140,17 @@ object TimeTools {
         Duration.ofDays(duration.substring(0, duration.length() - 1).toInt)
       case _ => throw new RuntimeException("Unknown duration format")
     }
+  }
+
+  def convertDurationStrToTuple(duration: String): DurationTuple = {
+    val temporalPart = duration.toCharArray.last.toLower match {
+      case 'm' => PartitionTemporalType.MINUTES
+      case 'h' => PartitionTemporalType.HOURS
+      case 'd' => PartitionTemporalType.DAYS
+      case _ => throw new RuntimeException("Unknown duration format")
+    }
+    val count = duration.substring(0, duration.length() - 1).toInt
+    DurationTuple(count, temporalPart)
   }
 
   // go from a duration object to a string representation
