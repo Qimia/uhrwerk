@@ -22,7 +22,7 @@ public class Dependency {
   private String vertical = "";
   private String version = "1";
   private String type = "oneonone";
-  private String partitionSize = "";
+  private String partitionSize = "";  // Leave out of yaml-pojo
   private Integer partitionSizeInt = 0;
   private PartitionTemporalType partitionSizeType;
   private Integer partitionCount = 1;
@@ -136,7 +136,7 @@ public class Dependency {
   public void setPartitionSize(String partitionSize) {
     this.partitionSize = partitionSize;
   // Set extra fields for persistence
-        if (partitionSize != "") {
+        if (!partitionSize.equals("")) {
             var tuple = TimeTools.convertDurationStrToTuple(partitionSize);
             this.partitionSizeInt = tuple.count();
             this.partitionSizeType = tuple.durationUnit();

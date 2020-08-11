@@ -14,8 +14,6 @@ dependencies:
     vertical: sourcedb_1
     version: 1
     type: "oneOnone"
-    partitionSize: "6h"
-    partitionCount: 1
   - connectionName: connection_name2
     tableName: tableTwo  # On FS
     format: "parquet"
@@ -23,8 +21,6 @@ dependencies:
     vertical: sourcedb_1
     version: 1
     type: "oneOnone"
-    partitionSize: "6h"
-    partitionCount: 1
 
 targets:
   - connectionName: connection_name2
