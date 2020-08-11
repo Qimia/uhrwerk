@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.config.yaml;
 
+import io.qimia.uhrwerk.config.model.Dependency;
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
@@ -12,18 +13,19 @@ class DependencyTest {
   void parseDependency() {
     String yamlString =
         "connectionName: connection_name\n"
-            + "tableName: staging_source_table  # On DB\n"
+            + "tableName: tableOne  # On DB\n"
             + "format: \"jdbc\"\n"
+            + "area: staging\n"
+            + "vertical: sourcedb_1\n"
             + "version: 1\n"
+            + "type: \"oneOnone\"\n"
             + "partitionSize: \"6h\"\n"
-            + "partitionQuery: \"SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\\\< '<upper_bound>'\"\n"
-            + "partitionColumn: \"id\"\n"
-            + "selectQuery: \"table_test_2_select_query.sql\"\n"
-            + "queryColumn: \"created_at\"\n"
-            + "sparkReaderNumPartitions: 40";
+            + "partitionCount: 1";
     Yaml yaml = new Yaml();
 
     Map<String, Object> obj = yaml.load(yamlString);
     System.out.println(obj);
+    Dependency dependency = yaml.loadAs(yamlString, Dependency.class);
+    System.out.println(dependency);
   }
 }
