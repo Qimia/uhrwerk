@@ -2,27 +2,28 @@ package io.qimia.uhrwerk.utils
 
 import java.time.temporal.ChronoUnit
 
-import io.qimia.uhrwerk.config.DependencyType
+import io.qimia.uhrwerk.config.{ConnectionType, DependencyType}
 import io.qimia.uhrwerk.config.model.{Global, Table}
 
 object ConfigProcess {
   val UHRWERK_BACKEND_SQL_CREATE_TABLES_FILE = "metastore_ddl_mysql.sql" // todo this might be configurable in the future
-  val UHRWERK_BACKEND_CONNECTION_NAME: String = "uhrwerk-backend" // todo this might be configurable in the future
+  val UHRWERK_BACKEND_CONNECTION_NAME
+    : String = "uhrwerk-backend" // todo this might be configurable in the future
 
   /**
-   * Overall preparation of a new config. Will add missing fields based on filled in fields and
-   * will check if the given configuration is valid or not (based on what is only in the config)
-   * (This does **not** include warnings based on previously persisted data)
-   *
-   * @param step   A single step configuration
-   * @param global A global configuration (connection-information)
-   * @return Did the config validate correctly or not
-   */
+    * Overall preparation of a new config. Will add missing fields based on filled in fields and
+    * will check if the given configuration is valid or not (based on what is only in the config)
+    * (This does **not** include warnings based on previously persisted data)
+    *
+    * @param step   A single step configuration
+    * @param global A global configuration (connection-information)
+    * @return Did the config validate correctly or not
+    */
   def enrichAndValidateConfig(step: Table, global: Global): Boolean = {
     if (!checkFieldsConfig(step, global)) {
       return false
     }
-    autofillStepPartitionSizes(step)
+    autofillPartitionSizes(step)
     if (!checkAndUpdateAgg(step)) {
       return false
     }
@@ -33,61 +34,90 @@ object ConfigProcess {
   }
 
   /**
-   * Check if path-names and connection-names have been filled in.
-   * Also checks whether there is a connection for the backend.
-   *
-   * @param table
-   * @param global
-   * @return
-   */
+    * Check if path-names and connection-names have been filled in.
+    * Also checks whether there is a connection for the backend.
+    *
+    * Auto-fills jdbc format if connection is jdbc
+    *
+    * @param table
+    * @param global
+    * @return
+    */
   def checkFieldsConfig(table: Table, global: Global): Boolean = {
-    val connectionNames = global.getConnections.map(_.getName).toSet
+    val connectionTypes =
+      global.getConnections.map(conn => conn.getName -> conn.getTypeEnum).toMap
     if (table.getPartitionSize == "") {
+      System.err.println("Missing partition size for table")
       return false
     }
     // TODO: Require a step name or not?
 
-    if (!connectionNames.contains(UHRWERK_BACKEND_CONNECTION_NAME)) {
+    if (!connectionTypes.contains(UHRWERK_BACKEND_CONNECTION_NAME)) {
       return false
     }
 
     if (table.dependenciesSet()) {
       val dependencies = table.getDependencies
       dependencies.foreach(d => {
-        if (!connectionNames.contains(d.getConnectionName)) {
+        if (!connectionTypes.contains(d.getConnectionName)) {
+          System.err.println("Unknown connection name for dependency")
           return false
         }
         if (d.getFormat == "") {
-          return false
+          val connType = connectionTypes(d.getConnectionName)
+          if (connType == ConnectionType.JDBC) {
+            d.setFormat("jdbc")
+          } else {
+            System.err.println("Missing format for dependency")
+            return false
+          }
         }
       })
     }
     if (table.sourcesSet()) {
       val sources = table.getSources
       sources.foreach(s => {
-        if (!connectionNames.contains(s.getConnectionName)) {
+        if (!connectionTypes.contains(s.getConnectionName)) {
+          System.err.println("Unknown connection name for source")
           return false
         }
         if (s.getFormat == "") {
+          val connType = connectionTypes(s.getConnectionName)
+          if (connType == ConnectionType.JDBC) {
+            s.setFormat("jdbc")
+          } else {
+            System.err.println("Missing format for source")
+            return false
+          }
+        }
+        if (s.getPath == "") {
+          System.err.println("Missing path for source")
           return false
         }
       })
     }
     val targets = table.getTargets
     targets.foreach(t => {
-      if (!connectionNames.contains(t.getConnectionName)) {
+      if (!connectionTypes.contains(t.getConnectionName)) {
+        System.err.println("Unknown connection name for target")
         return false
       }
       if (t.getFormat == "") {
-        return false
+        val connType = connectionTypes(t.getConnectionName)
+        if (connType == ConnectionType.JDBC) {
+          t.setFormat("jdbc")
+        } else {
+          System.err.println("Missing format for target")
+          return false
+        }
       }
     })
     true
   }
 
   /**
-   * Specifically check (and fill in) partition sizes of aggregate dependencies
-   */
+    * Specifically check (and fill in) partition sizes of aggregate dependencies
+    */
   def checkAndUpdateAgg(in: Table): Boolean = {
     val targetPartitionSize = in.getPartitionSizeDuration
     if (in.dependenciesSet()) {
@@ -144,11 +174,11 @@ object ConfigProcess {
 
   // If no partition-sizes have been given then take the one set for the whole step
   /**
-   * Take the step's batch size and use it as a partition size of any inTable (except aggregates) or target
-   *
-   * @param in
-   */
-  def autofillStepPartitionSizes(in: Table): Unit = {
+    * Take the step's batch size and use it as a partition size of any inTable (except aggregates) or target
+    *
+    * @param in
+    */
+  def autofillPartitionSizes(in: Table): Unit = {
     val batchSize = in.getPartitionSize // Must be set now
 
     if (in.sourcesSet()) {
@@ -171,18 +201,15 @@ object ConfigProcess {
         }
       })
     }
-    if (in.getPartitionSize == "") {
-      in.setPartitionSize(batchSize)
-    }
   }
 
   /**
-   * Check if all input partition sizes are in accordance to the target partition size meaning:
-   * - They are not bigger than the target partition size
-   * - They are equal size for oneonone & window dependencies
-   * - They are equal size for sources
-   * Warning: Does not check aggregate dependencies (should be done separately)
-   */
+    * Check if all input partition sizes are in accordance to the target partition size meaning:
+    * - They are not bigger than the target partition size
+    * - They are equal size for oneonone & window dependencies
+    * - They are equal size for sources
+    * Warning: Does not check aggregate dependencies (should be done separately)
+    */
   def checkInTableTimes(in: Table): Boolean = {
     val targetPartitionSize = in.getPartitionSizeDuration
     if (in.sourcesSet()) {
@@ -190,6 +217,7 @@ object ConfigProcess {
       sources.foreach(s => {
         val partSize = s.getPartitionSizeDuration
         if (partSize != targetPartitionSize) {
+          System.err.println("Source has different partition size as the table")
           return false
         }
       })

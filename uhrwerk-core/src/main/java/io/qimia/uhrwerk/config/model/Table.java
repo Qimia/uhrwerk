@@ -120,9 +120,11 @@ public class Table {
 
     public void setPartitionSize(String partitionSize) {
         this.partitionSize = partitionSize;
-        var tuple = TimeTools.convertDurationStrToTuple(partitionSize);
-        this.partitionSizeInt = tuple.count();
-        this.partitionSizeType = tuple.durationUnit();
+        if (!partitionSize.equals("")) {
+            var tuple = TimeTools.convertDurationStrToTuple(partitionSize);
+            this.partitionSizeInt = tuple.count();
+            this.partitionSizeType = tuple.durationUnit();
+        }
     }
 
     public Integer getPartitionSizeInt() {
