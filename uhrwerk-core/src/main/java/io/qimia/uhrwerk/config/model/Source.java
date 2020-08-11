@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.config.model;
 
+import io.qimia.uhrwerk.config.PartitionTemporalType;
 import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
@@ -17,6 +18,8 @@ public class Source {
     private String path = "";
     private String version = "1";
     private String partitionSize = "";
+    private Integer partitionSizeInt = 0;
+    private PartitionTemporalType partitionSizeType;
     private String partitionQuery = "";
     private String partitionColumn = "";
     private String selectQuery = "";

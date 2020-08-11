@@ -42,7 +42,9 @@ object ConfigProcess {
    */
   def checkFieldsConfig(table: Table, global: Global): Boolean = {
     val connectionNames = global.getConnections.map(_.getName).toSet
-    val stepBatchSizeSet = table.getBatchSize != ""
+    if (table.getPartitionSize == "") {
+      return false
+    }
     // TODO: Require a step name or not?
 
     if (!connectionNames.contains(UHRWERK_BACKEND_CONNECTION_NAME)) {
@@ -58,8 +60,7 @@ object ConfigProcess {
         if (d.getFormat == "") {
           return false
         }
-        if (!stepBatchSizeSet &&
-          (d.getTypeEnum != DependencyType.AGGREGATE) &&
+        if ((d.getTypeEnum != DependencyType.AGGREGATE) &&
           (d.getPartitionSize == "")) {
           return false
         }
@@ -74,9 +75,6 @@ object ConfigProcess {
         if (s.getFormat == "") {
           return false
         }
-        if (!stepBatchSizeSet && s.getPartitionSize == "") {
-          return false
-        }
       })
     }
     val targets = table.getTargets
@@ -88,9 +86,6 @@ object ConfigProcess {
         return false
       }
     })
-    if (!stepBatchSizeSet && table.getPartitionSize == "") {
-      return false
-    }
     true
   }
 
@@ -158,10 +153,7 @@ object ConfigProcess {
    * @param in
    */
   def autofillStepPartitionSizes(in: Table): Unit = {
-    val batchSize = in.getBatchSize
-    if (batchSize == "") {
-      return
-    }
+    val batchSize = in.getPartitionSize // Must be set now
 
     if (in.sourcesSet()) {
       val sources = in.getSources

@@ -2,6 +2,7 @@ package io.qimia.uhrwerk.config.model;
 
 import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
 import io.qimia.uhrwerk.config.DependencyType;
+import io.qimia.uhrwerk.config.PartitionTemporalType;
 import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
@@ -21,6 +22,8 @@ public class Dependency {
   private String version = "1";
   private String type = "oneonone";
   private String partitionSize = "";
+  private Integer partitionSizeInt = 0;
+  private PartitionTemporalType partitionSizeType;
   private Integer partitionCount = 1;
   private String partitionQuery = "";
   private String partitionColumn = "";

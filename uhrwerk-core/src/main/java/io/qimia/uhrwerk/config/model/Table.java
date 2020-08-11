@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.config.model;
 
 import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
+import io.qimia.uhrwerk.config.PartitionTemporalType;
 import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
@@ -11,7 +12,6 @@ public class Table {
     private Long id;
 
     private String name;
-    private String batchSize;
     private int parallelism = 1;
     private int maxBatches = 0;
     private Dependency[] dependencies;
@@ -20,6 +20,8 @@ public class Table {
     private String area = "";
     private String vertical = "";
     private String partitionSize = "";
+    private Integer partitionSizeInt = 0;
+    private PartitionTemporalType partitionSizeType;
     private String version = "1";
 
     private LocalDateTime createdTS;
@@ -41,26 +43,6 @@ public class Table {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getBatchSize() {
-        return batchSize;
-    }
-
-    public Duration getBatchSizeDuration() {
-        return TimeTools.convertDurationToObj(batchSize);
-    }
-
-    public BatchTemporalUnit getBatchTemporalUnit() {
-        return TimeTools.convertDurationToBatchTemporalUnit(getBatchSizeDuration()).getOrElse(null);
-    }
-
-    public int getBatchSizeAsInt() {
-        return TimeTools.convertDurationToBatchSize(getBatchSize());
-    }
-
-    public void setBatchSize(String batchSize) {
-        this.batchSize = batchSize;
     }
 
     public int getParallelism() {
