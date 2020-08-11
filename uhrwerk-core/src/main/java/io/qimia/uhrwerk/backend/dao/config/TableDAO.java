@@ -4,10 +4,10 @@ import io.qimia.uhrwerk.backend.dao.data.DependencyDAO;
 import io.qimia.uhrwerk.backend.dao.data.SourceDAO;
 import io.qimia.uhrwerk.backend.dao.data.TargetDAO;
 import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
-import io.qimia.uhrwerk.backend.model.config.Table;
 import io.qimia.uhrwerk.backend.model.data.Dependency;
 import io.qimia.uhrwerk.backend.model.data.Source;
-import io.qimia.uhrwerk.backend.model.data.Target;
+import io.qimia.uhrwerk.config.model.Table;
+import io.qimia.uhrwerk.config.model.Target;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,10 +16,10 @@ import java.sql.Statement;
 
 public class TableDAO {
   private static String INSERT =
-      "INSERT INTO CF_TABLE(area, vertical, table_name, batch_temporal_unit, batch_size, parallelism, max_partitions, version) VALUES(?,?,?,?,?,?,?,?)";
+      "INSERT INTO TABLE_(area, vertical, table_name, batch_temporal_unit, batch_size, parallelism, max_partitions, version) VALUES(?,?,?,?,?,?,?,?)";
 
   private static String SELECT_BY_ID =
-      "SELECT id, area, vertical, table_name, batch_temporal_unit, batch_size, parallelism, max_partitions, version, created_ts, updated_ts FROM CF_TABLE WHERE id = ?";
+      "SELECT id, area, vertical, table_name, batch_temporal_unit, batch_size, parallelism, max_partitions, version, created_ts, updated_ts FROM TABLE_ WHERE id = ?";
 
   public static Long save(java.sql.Connection db, Table table) throws SQLException {
     Long tableId = null;
@@ -27,21 +27,22 @@ public class TableDAO {
     PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
     insert.setString(1, table.getArea());
     insert.setString(2, table.getVertical());
-    insert.setString(3, table.getTableName());
+    insert.setString(3, table.getName());
     insert.setString(4, table.getBatchTemporalUnit().name());
-    insert.setInt(5, table.getBatchSize());
+    insert.setInt(5, table.getBatchSizeAsInt());
     insert.setInt(6, table.getParallelism());
-    insert.setInt(7, table.getMaxPartitions());
+    insert.setInt(7, table.getMaxBatches());
     insert.setString(8, table.getVersion());
     insert.executeUpdate();
     ResultSet generatedKeys = insert.getGeneratedKeys();
     if (generatedKeys.next()) tableId = generatedKeys.getLong(1);
 
-    if (table.getTargets() != null && !table.getTargets().isEmpty()) {
-      for (Target target : table.getTargets()) {
-        target.setCfTableId(tableId);
+    if (table.getTargets() != null && table.getTargets().length > 0) {
+      Target[] targets = table.getTargets();
+      for (int i = 0; i < targets.length; i++) {
+        targets[i].setTableId(tableId);
       }
-      TargetDAO.save(db, table.getTargets());
+      TargetDAO.save(db, targets);
     }
     if (table.getDependencies() != null && !table.getDependencies().isEmpty()) {
       for (Dependency dependency : table.getDependencies()) {

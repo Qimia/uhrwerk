@@ -1,45 +1,43 @@
 package io.qimia.uhrwerk.backend.dao.data;
 
-import io.qimia.uhrwerk.backend.model.data.Target;
+import io.qimia.uhrwerk.config.model.Target;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class TargetDAO {
   private static String INSERT =
-      "INSERT INTO DT_TARGET(cf_table_id, cf_connection_id, path) VALUES (?,?,?)";
+      "INSERT INTO DT_TARGET(cf_table_id, cf_connection_id, format) VALUES (?,?,?)";
 
   private static String SELECT_BY_ID =
-      "SELECT id, cf_table_id, cf_connection_id, path, created_ts, updated_ts FROM DT_TARGET WHERE id = ?";
+      "SELECT id, cf_table_id, cf_connection_id, format, created_ts, updated_ts FROM DT_TARGET WHERE id = ?";
 
   public static Long save(java.sql.Connection db, Target target) throws SQLException {
     PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-    insert.setLong(1, target.getCfTableId());
-    insert.setLong(2, target.getCfConnectionId());
-    insert.setString(3, target.getPath());
+    insert.setLong(1, target.getTableId());
+    insert.setLong(2, target.getConnectionId());
+    insert.setString(3, target.getFormat());
     insert.executeUpdate();
     ResultSet generatedKeys = insert.getGeneratedKeys();
     if (generatedKeys.next()) return generatedKeys.getLong(1);
     return null;
   }
 
-  public static List<Long> save(java.sql.Connection db, List<Target> targets) throws SQLException {
+  public static List<Long> save(java.sql.Connection db, Target[] targets) throws SQLException {
     PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-    for (Iterator<Target> iterator = targets.iterator(); iterator.hasNext(); ) {
-      Target target = iterator.next();
-      insert.setLong(1, target.getCfTableId());
-      insert.setLong(2, target.getCfConnectionId());
-      insert.setString(3, target.getPath());
+    for (int i = 0; i < targets.length; i++) {
+      insert.setLong(1, targets[i].getTableId());
+      insert.setLong(2, targets[i].getConnectionId());
+      insert.setString(3, targets[i].getFormat());
       insert.addBatch();
     }
     insert.executeBatch();
     ResultSet generatedKeys = insert.getGeneratedKeys();
-    List<Long> ids = new ArrayList<>(targets.size());
+    List<Long> ids = new ArrayList<>(targets.length);
     while (generatedKeys.next()) ids.add(generatedKeys.getLong(1));
     return ids;
   }

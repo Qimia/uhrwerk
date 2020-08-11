@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.backend.dao.data;
 
-import io.qimia.uhrwerk.backend.model.data.Dependency;
-import io.qimia.uhrwerk.backend.model.data.Target;
+
+import io.qimia.uhrwerk.config.model.Dependency;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,10 +13,7 @@ import java.util.List;
 
 public class DependencyDAO {
   private static String INSERT =
-      "INSERT INTO DT_DEPENDENCY(cf_table_id, dt_target_id, partition_transform, batch_temporal_unit, batch_size)  VALUES (?,?,?,?,?)";
-
-  private static String SELECT_BY_ID =
-      "SELECT id, cf_table_id, cf_connection_id, path, created_ts, updated_ts FROM DT_TARGET WHERE id = ?";
+      "INSERT INTO DEPENDENCY(table_id, target_id, partition_transform, batch_temporal_unit, batch_size)  VALUES (?,?,?,?,?)";
 
   public static Long save(java.sql.Connection db, Dependency dependency) throws SQLException {
     PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
@@ -29,8 +26,8 @@ public class DependencyDAO {
 
   private static void setInsertParams(Dependency dependency, PreparedStatement insert)
       throws SQLException {
-    insert.setLong(1, dependency.getCfTableId());
-    insert.setLong(2, dependency.getDtTargetId());
+    insert.setLong(1, dependency.getTableId());
+    insert.setLong(2, dependency.getTargetId());
     insert.setString(3, dependency.getPartitionTransform().name());
     insert.setString(4, dependency.getBatchTemporalUnit().name());
     insert.setInt(5, dependency.getBatchSize());

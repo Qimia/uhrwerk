@@ -4,71 +4,71 @@ import java.time.LocalDateTime;
 
 public class Target {
 
-    private long id;
-    private long cfTableId;
-    private long cfConnectionId;
+  private long id;
+  private long tableId;
+  private long connectionId;
 
-    private String connectionName = "";
-    private String format = "";
+  private String connectionName = "";
+  private String format = "";
 
-    private LocalDateTime createdTS;
-    private LocalDateTime updatedTS;
+  private LocalDateTime createdTS;
+  private LocalDateTime updatedTS;
 
-    public Target() {}
+  public Target() {}
 
-    public long getId() {
-        return id;
-    }
+  public long getId() {
+    return id;
+  }
 
-    public void setId(long id) {
-        this.id = id;
-    }
+  public void setId(long id) {
+    this.id = id;
+  }
 
-    public long getCfTableId() {
-        return cfTableId;
-    }
+  public long getTableId() {
+    return tableId;
+  }
 
-    public void setCfTableId(long cfTableId) {
-        this.cfTableId = cfTableId;
-    }
+  public void setTableId(long tableId) {
+    this.tableId = tableId;
+  }
 
-    public long getCfConnectionId() {
-        return cfConnectionId;
-    }
+  public long getConnectionId() {
+    return connectionId;
+  }
 
-    public void setCfConnectionId(long cfConnectionId) {
-        this.cfConnectionId = cfConnectionId;
-    }
+  public void setConnectionId(long connectionId) {
+    this.connectionId = connectionId;
+  }
 
-    public String getConnectionName() {
-        return connectionName;
-    }
+  public String getConnectionName() {
+    return connectionName;
+  }
 
-    public void setConnectionName(String connectionName) {
-        this.connectionName = connectionName;
-    }
+  public void setConnectionName(String connectionName) {
+    this.connectionName = connectionName;
+  }
 
-    public String getFormat() {
-        return format;
-    }
+  public String getFormat() {
+    return format;
+  }
 
-    public void setFormat(String format) {
-        this.format = format;
-    }
+  public void setFormat(String format) {
+    this.format = format;
+  }
 
-    public LocalDateTime getCreatedTS() {
-        return createdTS;
-    }
+  public LocalDateTime getCreatedTS() {
+    return createdTS;
+  }
 
-    public void setCreatedTS(LocalDateTime createdTS) {
-        this.createdTS = createdTS;
-    }
+  public void setCreatedTS(LocalDateTime createdTS) {
+    this.createdTS = createdTS;
+  }
 
-    public LocalDateTime getUpdatedTS() {
-        return updatedTS;
-    }
+  public LocalDateTime getUpdatedTS() {
+    return updatedTS;
+  }
 
-    public void setUpdatedTS(LocalDateTime updatedTS) {
-        this.updatedTS = updatedTS;
-    }
+  public void setUpdatedTS(LocalDateTime updatedTS) {
+    this.updatedTS = updatedTS;
+  }
 }

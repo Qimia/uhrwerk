@@ -6,196 +6,194 @@ import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 public class Dependency {
 
-    private Long id;
-    private Long cfTableId;
-    private Long dtTargetId;
+  private Long id;
+  private Long tableId;
+  private Long targetId;
 
-    private String connectionName = "";
-    private String tableName = "";
-    private String format = "";
-    private String area = "";
-    private String vertical = "";
-    private String version = "1";
-    private String type = "oneonone";
-    private String partitionSize = "";
-    private Integer partitionCount = 1;
-    private String partitionQuery = "";
-    private String partitionColumn = "";
-    private String selectQuery = "";
-    private String queryColumn = "";
-    private Integer sparkReaderNumPartitions = 10;
+  private String connectionName = "";
+  private String tableName = "";
+  private String format = "";
+  private String area = "";
+  private String vertical = "";
+  private String version = "1";
+  private String type = "oneonone";
+  private String partitionSize = "";
+  private Integer partitionCount = 1;
+  private String partitionQuery = "";
+  private String partitionColumn = "";
+  private String selectQuery = "";
+  private String queryColumn = "";
+  private Integer sparkReaderNumPartitions = 10;
 
-    private LocalDateTime createdTS;
-    private LocalDateTime updatedTS;
+  private LocalDateTime createdTS;
+  private LocalDateTime updatedTS;
 
+  public Dependency() {}
 
-    public Dependency() {}
+  public Long getId() {
+    return id;
+  }
 
-    public Long getId() {
-        return id;
-    }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public Long getTableId() {
+    return tableId;
+  }
 
-    public Long getCfTableId() {
-        return cfTableId;
-    }
+  public void setTableId(Long tableId) {
+    this.tableId = tableId;
+  }
 
-    public void setCfTableId(Long cfTableId) {
-        this.cfTableId = cfTableId;
-    }
+  public Long getTargetId() {
+    return targetId;
+  }
 
-    public Long getDtTargetId() {
-        return dtTargetId;
-    }
+  public void setTargetId(Long targetId) {
+    this.targetId = targetId;
+  }
 
-    public void setDtTargetId(Long dtTargetId) {
-        this.dtTargetId = dtTargetId;
-    }
+  public String getConnectionName() {
+    return connectionName;
+  }
 
-    public String getConnectionName() {
-        return connectionName;
-    }
+  public void setConnectionName(String connectionName) {
+    this.connectionName = connectionName;
+  }
 
-    public void setConnectionName(String connectionName) {
-        this.connectionName = connectionName;
-    }
+  public String getTableName() {
+    return tableName;
+  }
 
-    public String getTableName() {
-        return tableName;
-    }
+  public void setTableName(String tableName) {
+    this.tableName = tableName;
+  }
 
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
+  public String getFormat() {
+    return format;
+  }
 
-    public String getFormat() {
-        return format;
-    }
+  public void setFormat(String format) {
+    this.format = format;
+  }
 
-    public void setFormat(String format) {
-        this.format = format;
-    }
+  public String getArea() {
+    return area;
+  }
 
-    public String getArea() {
-        return area;
-    }
+  public void setArea(String area) {
+    this.area = area;
+  }
 
-    public void setArea(String area) {
-        this.area = area;
-    }
+  public String getVertical() {
+    return vertical;
+  }
 
-    public String getVertical() {
-        return vertical;
-    }
+  public void setVertical(String vertical) {
+    this.vertical = vertical;
+  }
 
-    public void setVertical(String vertical) {
-        this.vertical = vertical;
-    }
+  public String getVersion() {
+    return version;
+  }
 
-    public String getVersion() {
-        return version;
-    }
+  public void setVersion(String version) {
+    this.version = version;
+  }
 
-    public void setVersion(String version) {
-        this.version = version;
-    }
+  public String getType() {
+    return type;
+  }
 
-    public String getType() {
-        return type;
-    }
+  public DependencyType getTypeEnum() {
+    return DependencyType.getDependencyType(type);
+  }
 
-    public DependencyType getTypeEnum() {
-        return DependencyType.getDependencyType(type);
-    }
+  public void setType(String type) {
+    this.type = type;
+  }
 
-    public void setType(String type) {
-        this.type = type;
-    }
+  public String getPartitionSize() {
+    return partitionSize;
+  }
 
-    public String getPartitionSize() {
-        return partitionSize;
-    }
+  public Duration getPartitionSizeDuration() {
+    return TimeTools.convertDurationToObj(partitionSize);
+  }
 
-    public Duration getPartitionSizeDuration() {
-        return TimeTools.convertDurationToObj(partitionSize);
-    }
+  public BatchTemporalUnit getBatchTemporalUnit() {
+    return TimeTools.convertDurationToBatchTemporalUnit(getPartitionSizeDuration()).getOrElse(null);
+  }
 
-    public BatchTemporalUnit getBatchTemporalUnit() {
-        return TimeTools.convertDurationToBatchTemporalUnit(getPartitionSizeDuration()).getOrElse(null);
-    }
+  public void setPartitionSize(String partitionSize) {
+    this.partitionSize = partitionSize;
+  }
 
-    public void setPartitionSize(String partitionSize) {
-        this.partitionSize = partitionSize;
-    }
+  public Integer getPartitionCount() {
+    return partitionCount;
+  }
 
-    public Integer getPartitionCount() {
-        return partitionCount;
-    }
+  public void setPartitionCount(Integer partitionCount) {
+    this.partitionCount = partitionCount;
+  }
 
-    public void setPartitionCount(Integer partitionCount) {
-        this.partitionCount = partitionCount;
-    }
+  public String getPartitionQuery() {
+    return partitionQuery;
+  }
 
-    public String getPartitionQuery() {
-        return partitionQuery;
-    }
+  public void setPartitionQuery(String partitionQuery) {
+    this.partitionQuery = partitionQuery;
+  }
 
-    public void setPartitionQuery(String partitionQuery) {
-        this.partitionQuery = partitionQuery;
-    }
+  public String getPartitionColumn() {
+    return partitionColumn;
+  }
 
-    public String getPartitionColumn() {
-        return partitionColumn;
-    }
+  public void setPartitionColumn(String partitionColumn) {
+    this.partitionColumn = partitionColumn;
+  }
 
-    public void setPartitionColumn(String partitionColumn) {
-        this.partitionColumn = partitionColumn;
-    }
+  public String getSelectQuery() {
+    return selectQuery;
+  }
 
-    public String getSelectQuery() {
-        return selectQuery;
-    }
+  public void setSelectQuery(String selectQuery) {
+    this.selectQuery = selectQuery;
+  }
 
-    public void setSelectQuery(String selectQuery) {
-        this.selectQuery = selectQuery;
-    }
+  public String getQueryColumn() {
+    return queryColumn;
+  }
 
-    public String getQueryColumn() {
-        return queryColumn;
-    }
+  public void setQueryColumn(String queryColumn) {
+    this.queryColumn = queryColumn;
+  }
 
-    public void setQueryColumn(String queryColumn) {
-        this.queryColumn = queryColumn;
-    }
+  public Integer getSparkReaderNumPartitions() {
+    return sparkReaderNumPartitions;
+  }
 
-    public Integer getSparkReaderNumPartitions() {
-        return sparkReaderNumPartitions;
-    }
+  public void setSparkReaderNumPartitions(Integer sparkReaderNumPartitions) {
+    this.sparkReaderNumPartitions = sparkReaderNumPartitions;
+  }
 
-    public void setSparkReaderNumPartitions(Integer sparkReaderNumPartitions) {
-        this.sparkReaderNumPartitions = sparkReaderNumPartitions;
-    }
+  public LocalDateTime getCreatedTS() {
+    return createdTS;
+  }
 
-    public LocalDateTime getCreatedTS() {
-        return createdTS;
-    }
+  public void setCreatedTS(LocalDateTime createdTS) {
+    this.createdTS = createdTS;
+  }
 
-    public void setCreatedTS(LocalDateTime createdTS) {
-        this.createdTS = createdTS;
-    }
+  public LocalDateTime getUpdatedTS() {
+    return updatedTS;
+  }
 
-    public LocalDateTime getUpdatedTS() {
-        return updatedTS;
-    }
-
-    public void setUpdatedTS(LocalDateTime updatedTS) {
-        this.updatedTS = updatedTS;
-    }
+  public void setUpdatedTS(LocalDateTime updatedTS) {
+    this.updatedTS = updatedTS;
+  }
 }
