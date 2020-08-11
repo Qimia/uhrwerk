@@ -34,7 +34,7 @@ create table if not exists DT_TARGET
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
     cf_table_id      BIGINT                              NOT NULL,
     cf_connection_id BIGINT                              NOT NULL,
-    path             VARCHAR(512)                        NOT NULL,
+    format           VARCHAR(64)                         NOT NULL,
     created_ts       TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
     updated_ts       TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
     description      VARCHAR(512)                        NULL,
@@ -90,8 +90,9 @@ create table if not exists DT_PARTITION_DEPENDENCY
 CREATE TABLE IF NOT EXISTS DT_SOURCE
 (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    cf_table_id         BIGINT NOT NULL,
-    connection_id       BIGINT NOT NULL,
+    cf_table_id         BIGINT       NOT NULL,
+    connection_id       BIGINT       NOT NULL,
+    path                VARCHAR(512) NOT NULL,
     sql_select_query    VARCHAR(2048) DEFAULT NULL,
     sql_partition_query VARCHAR(2048) DEFAULT NULL,
     partition_column    VARCHAR(256)  DEFAULT NULL,
