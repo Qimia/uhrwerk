@@ -12,23 +12,22 @@ trait FrameManager {
   def loadSourceDataFrame(
       conn: Connection,
       locationInfo: Source,
-      batchTS: Option[LocalDateTime] = Option.empty): DataFrame
+      startTS: Option[LocalDateTime] = Option.empty): DataFrame
 
   def loadDependencyDataFrame(
       conn: Connection,
       locationInfo: Dependency,
-      batchTS: Option[LocalDateTime] = Option.empty): DataFrame
+      startTS: Option[LocalDateTime] = Option.empty): DataFrame
 
   def writeDataFrame(frame: DataFrame,
                      conn: Connection,
                      locationTargetInfo: Target,
                      locationTableInfo: Table,
-                     batchTS: Option[LocalDateTime] = Option.empty): Unit
+                     startTS: Option[LocalDateTime] = Option.empty): Unit
 
   def loadMoreBatches(conn: Connection,
                       locationInfo: Dependency,
                       startTS: LocalDateTime,
                       endTSExcl: LocalDateTime,
                       batchDuration: Duration): DataFrame
-
 }

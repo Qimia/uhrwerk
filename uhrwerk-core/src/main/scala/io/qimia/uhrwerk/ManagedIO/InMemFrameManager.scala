@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.ManagedIO
 
+import java.nio.file.Paths
 import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.config.model._
@@ -14,32 +15,40 @@ class InMemFrameManager extends FrameManager {
   val partitionedTables: mutable.Map[partitionedKey, DataFrame] = mutable.HashMap.empty[partitionedKey, DataFrame]
   val unpartitionedTables: mutable.Map[unpartitionedKey, DataFrame] = mutable.HashMap.empty[unpartitionedKey, DataFrame]
 
-  override def loadSourceDataFrame(conn: Connection, locationInfo: Source, batchTS: Option[LocalDateTime]): DataFrame = {
+  override def loadSourceDataFrame(
+                                    conn: Connection,
+                                    locationInfo: Source,
+                                    startTS: Option[LocalDateTime] = Option.empty): DataFrame = {
     assert(conn.getName == locationInfo.getConnectionName)
-    if (batchTS.isDefined) {
-      partitionedTables((conn.getName, locationInfo.getFormat, batchTS.get))
+
+  if (startTS.isDefined) {
+      partitionedTables((conn.getName, locationInfo.getPath, startTS.get))
     } else {
-      unpartitionedTables((conn.getName, locationInfo.getFormat))
+      unpartitionedTables((conn.getName, locationInfo.getPath))
     }
   }
 
-  override def loadDependencyDataFrame(conn: Connection, locationInfo: Dependency, batchTS: Option[LocalDateTime]): DataFrame = {
+  override def loadDependencyDataFrame(conn: Connection, locationInfo: Dependency, startTS: Option[LocalDateTime]): DataFrame = {
     assert(conn.getName == locationInfo.getConnectionName)
-    if (batchTS.isDefined) {
-      partitionedTables((conn.getName, locationInfo.getFormat, batchTS.get))
+
+    if (startTS.isDefined) {
+      partitionedTables((conn.getName, locationInfo.getPath(true), startTS.get))
     } else {
-      unpartitionedTables((conn.getName, locationInfo.getFormat))
+      unpartitionedTables((conn.getName, locationInfo.getPath(true)))
     }
   }
 
   override def writeDataFrame(frame: DataFrame, conn: Connection, locationTargetInfo: Target, locationTableInfo: Table, startTS: Option[LocalDateTime]): Unit = {
     assert(conn.getName == locationTargetInfo.getConnectionName)
+
+    val fullPath = Paths.get(locationTableInfo.getPath, "format=", locationTargetInfo.getFormat).toString
     if (startTS.isDefined) {
-      partitionedTables((conn.getName, locationTargetInfo.getFormat, startTS.get)) = frame
+      partitionedTables((conn.getName, fullPath, startTS.get)) = frame
     } else {
-      unpartitionedTables((conn.getName, locationTargetInfo.getFormat)) = frame
+      unpartitionedTables((conn.getName, fullPath)) = frame
     }
   }
 
   override def loadMoreBatches(conn: Connection, locationInfo: Dependency, startTS: LocalDateTime, endTSExcl: LocalDateTime, batchDuration: Duration): DataFrame = null // todo implement
+
 }
