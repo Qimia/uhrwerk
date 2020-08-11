@@ -55,7 +55,7 @@ object ConfigProcess {
         if (!connectionNames.contains(d.getConnectionName)) {
           return false
         }
-        if (d.getPath == "") {
+        if (d.getFormat == "") {
           return false
         }
         if (!stepBatchSizeSet &&
@@ -71,7 +71,7 @@ object ConfigProcess {
         if (!connectionNames.contains(s.getConnectionName)) {
           return false
         }
-        if (s.getPath == "") {
+        if (s.getFormat == "") {
           return false
         }
         if (!stepBatchSizeSet && s.getPartitionSize == "") {
@@ -84,11 +84,11 @@ object ConfigProcess {
       if (!connectionNames.contains(t.getConnectionName)) {
         return false
       }
-      if (t.getPath == "") {
+      if (t.getFormat == "") {
         return false
       }
     })
-    if (!stepBatchSizeSet && table.getTargetPartitionSize == "") {
+    if (!stepBatchSizeSet && table.getPartitionSize == "") {
       return false
     }
     true
@@ -104,7 +104,7 @@ object ConfigProcess {
         d.getTypeEnum == DependencyType.AGGREGATE)
       aggDependencies.foreach(ad => {
         val aggSize = ad.getPartitionSize
-        val aggCount = ad.getPartitionCount
+        val aggCount: Int = ad.getPartitionCount
         val sizeSet = aggSize != ""
         val countSet = aggCount != 1
         if (!sizeSet && !countSet) {
@@ -183,8 +183,8 @@ object ConfigProcess {
         }
       })
     }
-    if (in.getTargetPartitionSize == "") {
-      in.setTargetPartitionSize(batchSize)
+    if (in.getPartitionSize == "") {
+      in.setPartitionSize(batchSize)
     }
   }
 

@@ -141,8 +141,8 @@ class MetaStoreUnitTest extends AnyFlatSpec {
     dependencies(1).setVertical("vertical_v")
     dependencies(0).setVersion(1)
     dependencies(1).setVersion(1)
-    dependencies(0).setPath("table_1")
-    dependencies(1).setPath("table_2")
+    dependencies(0).setFormat("table_1")
+    dependencies(1).setFormat("table_2")
     dependencies(0).setPartitionSize("1h")
     dependencies(1).setPartitionSize("1h")
     val res1 = MetaStore.getBatchedDependencies(

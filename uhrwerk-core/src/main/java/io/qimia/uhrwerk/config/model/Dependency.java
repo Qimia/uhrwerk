@@ -5,24 +5,59 @@ import io.qimia.uhrwerk.config.DependencyType;
 import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
-public class Dependency implements TableInput {
+public class Dependency {
+
+    private Long id;
+    private Long cfTableId;
+    private Long dtTargetId;
 
     private String connectionName = "";
-    private String path = "";
+    private String tableName = "";
+    private String format = "";
     private String area = "";
     private String vertical = "";
-    private int version = 1;
+    private String version = "1";
     private String type = "oneonone";
     private String partitionSize = "";
-    private int partitionCount = 1;
+    private Integer partitionCount = 1;
     private String partitionQuery = "";
     private String partitionColumn = "";
     private String selectQuery = "";
     private String queryColumn = "";
-    private int sparkReaderNumPartitions = 10;
+    private Integer sparkReaderNumPartitions = 10;
+
+    private LocalDateTime createdTS;
+    private LocalDateTime updatedTS;
+
 
     public Dependency() {}
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getCfTableId() {
+        return cfTableId;
+    }
+
+    public void setCfTableId(Long cfTableId) {
+        this.cfTableId = cfTableId;
+    }
+
+    public Long getDtTargetId() {
+        return dtTargetId;
+    }
+
+    public void setDtTargetId(Long dtTargetId) {
+        this.dtTargetId = dtTargetId;
+    }
 
     public String getConnectionName() {
         return connectionName;
@@ -32,12 +67,20 @@ public class Dependency implements TableInput {
         this.connectionName = connectionName;
     }
 
-    public String getPath() {
-        return path;
+    public String getTableName() {
+        return tableName;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
+    public String getFormat() {
+        return format;
+    }
+
+    public void setFormat(String format) {
+        this.format = format;
     }
 
     public String getArea() {
@@ -56,11 +99,11 @@ public class Dependency implements TableInput {
         this.vertical = vertical;
     }
 
-    public int getVersion() {
+    public String getVersion() {
         return version;
     }
 
-    public void setVersion(int version) {
+    public void setVersion(String version) {
         this.version = version;
     }
 
@@ -92,11 +135,11 @@ public class Dependency implements TableInput {
         this.partitionSize = partitionSize;
     }
 
-    public int getPartitionCount() {
+    public Integer getPartitionCount() {
         return partitionCount;
     }
 
-    public void setPartitionCount(int partitionCount) {
+    public void setPartitionCount(Integer partitionCount) {
         this.partitionCount = partitionCount;
     }
 
@@ -132,11 +175,27 @@ public class Dependency implements TableInput {
         this.queryColumn = queryColumn;
     }
 
-    public int getSparkReaderNumPartitions() {
+    public Integer getSparkReaderNumPartitions() {
         return sparkReaderNumPartitions;
     }
 
-    public void setSparkReaderNumPartitions(int sparkReaderNumPartitions) {
+    public void setSparkReaderNumPartitions(Integer sparkReaderNumPartitions) {
         this.sparkReaderNumPartitions = sparkReaderNumPartitions;
+    }
+
+    public LocalDateTime getCreatedTS() {
+        return createdTS;
+    }
+
+    public void setCreatedTS(LocalDateTime createdTS) {
+        this.createdTS = createdTS;
+    }
+
+    public LocalDateTime getUpdatedTS() {
+        return updatedTS;
+    }
+
+    public void setUpdatedTS(LocalDateTime updatedTS) {
+        this.updatedTS = updatedTS;
     }
 }

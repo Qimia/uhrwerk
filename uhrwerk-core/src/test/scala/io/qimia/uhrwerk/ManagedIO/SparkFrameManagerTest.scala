@@ -108,10 +108,10 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     conn.setStartPath("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testSparkFrameManagerWithoutBatches")
-    tar.setPath("testsparkframemanagerwithoutbatches")
+    tar.setFormat("testsparkframemanagerwithoutbatches")
     val tab = new Table
-    tab.setTargetPartitionSize("30m")
-    tab.setTargetVersion(1)
+    tab.setPartitionSize("30m")
+    tab.setVersion(1)
 
     manager.writeDataFrame(df, conn, tar, tab)
 
@@ -137,10 +137,10 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     conn.setStartPath("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testSparkFrameManager")
-    tar.setPath("testsparkframemanager")
+    tar.setFormat("testsparkframemanager")
     val tab = new Table
-    tab.setTargetPartitionSize("30m")
-    tab.setTargetVersion(1)
+    tab.setPartitionSize("30m")
+    tab.setVersion(1)
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
 
     manager.writeDataFrame(df, conn, tar, tab, Option(dateTime))
@@ -166,7 +166,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val source = new Source
     source.setPartitionSize("30m")
     source.setConnectionName("testSparkFrameManager")
-    source.setPath("testsparkframemanager")
+    source.setFormat("testsparkframemanager")
     source.setVersion(1)
     val loadedDFSource = manager.loadDataFrame(conn, source, Option(dateTime)).sort("a", "b", "c")
     val bSource = loadedDF.collect()
@@ -185,10 +185,10 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     conn.setStartPath("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testAggregateDependency")
-    tar.setPath("testaggregatedependency")
+    tar.setFormat("testaggregatedependency")
     val tab = new Table
-    tab.setTargetPartitionSize("15m")
-    tab.setTargetVersion(1)
+    tab.setPartitionSize("15m")
+    tab.setVersion(1)
 
     List(2, 3, 4).foreach(day => List(10, 11).foreach(hour => List(0, 15, 30, 45).foreach(b => {
       val dateTime = LocalDateTime.of(2020, 7, day, hour, b)
@@ -202,7 +202,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     dep.setType("aggregate")
     dep.setPartitionCount(4)
     dep.setConnectionName("testAggregateDependency")
-    dep.setPath("testaggregatedependency")
+    dep.setFormat("testaggregatedependency")
 
     val depDateTime = LocalDateTime.of(2020, 7, 4, 10, 0)
     val loadedDF = manager.loadDataFrame(conn, dep, Option(depDateTime)).cache
@@ -243,10 +243,10 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     conn.setStartPath("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testWindowDependency")
-    tar.setPath("testwindowdependency")
+    tar.setFormat("testwindowdependency")
     val tab = new Table
-    tab.setTargetPartitionSize("15m")
-    tab.setTargetVersion(1)
+    tab.setPartitionSize("15m")
+    tab.setVersion(1)
 
     List(2, 3, 4).foreach(day => List(10, 11).foreach(hour => List(0, 15, 30, 45).foreach(b => {
       val dateTime = LocalDateTime.of(2020, 7, day, hour, b)
@@ -260,7 +260,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     dep.setType("window")
     dep.setPartitionCount(4)
     dep.setConnectionName("testWindowDependency")
-    dep.setPath("testwindowdependency")
+    dep.setFormat("testwindowdependency")
 
     val depDateTime = LocalDateTime.of(2020, 7, 4, 10, 0)
     val loadedDF = manager.loadDataFrame(conn, dep, Option(depDateTime)).cache
@@ -311,10 +311,10 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     conn.setStartPath("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testSparkRange")
-    tar.setPath("testsparkframerange")
+    tar.setFormat("testsparkframerange")
     val tab = new Table
-    tab.setTargetPartitionSize("30m")
-    tab.setTargetVersion(1)
+    tab.setPartitionSize("30m")
+    tab.setVersion(1)
 
     val tarDuration = tab.getTargetPartitionSizeDuration
 
@@ -351,11 +351,11 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val conn = JDBCToolsTest.getJDBCConnection
     val tar = new Target
     tar.setConnectionName("testJDBCConnection")
-    tar.setPath(s"$DATABASE_NAME.testsparkframemanagerwithoutbatches")
+    tar.setFormat(s"$DATABASE_NAME.testsparkframemanagerwithoutbatches")
     val tab = new Table
-    tab.setTargetPartitionSize("30m")
-    tab.setTargetVersion(1)
-    tab.setTargetArea("staging")
+    tab.setPartitionSize("30m")
+    tab.setVersion(1)
+    tab.setArea("staging")
 
     manager.writeDataFrame(df, conn, tar, tab)
 
@@ -376,11 +376,11 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val conn = JDBCToolsTest.getJDBCConnection
     val tar = new Target
     tar.setConnectionName("testJDBCConnection")
-    tar.setPath(s"$DATABASE_NAME.testsparkframemanager")
+    tar.setFormat(s"$DATABASE_NAME.testsparkframemanager")
     val tab = new Table
-    tab.setTargetPartitionSize("30m")
-    tab.setTargetVersion(1)
-    tab.setTargetArea("staging")
+    tab.setPartitionSize("30m")
+    tab.setVersion(1)
+    tab.setArea("staging")
 
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
     manager.writeDataFrame(df, conn, tar, tab, Option(dateTime))

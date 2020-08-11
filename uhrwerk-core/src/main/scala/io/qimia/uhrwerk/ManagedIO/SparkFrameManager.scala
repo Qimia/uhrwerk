@@ -61,10 +61,10 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           val duration = TimeTools.convertDurationToObj(locationInfo.getPartitionSize)
           val date = TimeTools.dateTimeToDate(batchTS.get)
           val batch = TimeTools.dateTimeToPostFix(batchTS.get, duration)
-          SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath, s"date=$date", s"batch=$batch")
+          SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getFormat, s"date=$date", s"batch=$batch")
 
         } else {
-          SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath)
+          SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getFormat)
         }
         sparkSession.read.parquet(fullLocation)
       }
@@ -122,7 +122,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       }
     } else {
       dfReader
-        .option("dbtable", s"${locationInfo.getPath}") // schema.tableName
+        .option("dbtable", s"${locationInfo.getFormat}") // schema.tableName
     }
 
     val df = dfReaderWithQuery
@@ -154,7 +154,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
                       endTSExcl: LocalDateTime,
                       batchDuration: Duration): DataFrame = {
     import sparkSession.implicits._
-    val loc = SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getPath)
+    val loc = SparkFrameManager.concatenatePaths(conn.getStartPath, locationInfo.getFormat)
     val df = sparkSession.read.parquet(loc)
     val startRange = TimeTools.dateTimeToPostFix(startTS, batchDuration)
     val endRange = TimeTools.dateTimeToPostFix(endTSExcl, batchDuration)
@@ -191,12 +191,12 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       writeDFToJDBC(frame, conn, locationTargetInfo, locationTableInfo, batchTS)
     } else {
       val fullLocation = if (batchTS.isDefined) {
-        val duration = TimeTools.convertDurationToObj(locationTableInfo.getTargetPartitionSize)
+        val duration = TimeTools.convertDurationToObj(locationTableInfo.getPartitionSize)
         val date = TimeTools.dateTimeToDate(batchTS.get)
         val batch = TimeTools.dateTimeToPostFix(batchTS.get, duration)
-        SparkFrameManager.concatenatePaths(conn.getStartPath, locationTargetInfo.getPath, s"date=$date", s"batch=$batch")
+        SparkFrameManager.concatenatePaths(conn.getStartPath, locationTargetInfo.getFormat, s"date=$date", s"batch=$batch")
       } else {
-        SparkFrameManager.concatenatePaths(conn.getStartPath, locationTargetInfo.getPath)
+        SparkFrameManager.concatenatePaths(conn.getStartPath, locationTargetInfo.getFormat)
       }
       frame.write.mode(SaveMode.Append).parquet(fullLocation)
     }
@@ -218,7 +218,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     assert(conn.getName == locationTargetInfo.getConnectionName)
 
     val (date: Option[String], batch: Option[String]) = if (batchTS.isDefined) {
-      val duration = TimeTools.convertDurationToObj(locationTableInfo.getTargetPartitionSize)
+      val duration = TimeTools.convertDurationToObj(locationTableInfo.getPartitionSize)
       val date = TimeTools.dateTimeToDate(batchTS.get)
       val batch = TimeTools.dateTimeToPostFix(batchTS.get, duration)
       (Option(date), Option(batch))
@@ -242,7 +242,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       .option("driver", conn.getJdbcDriver)
       .option("user", conn.getUser)
       .option("password", conn.getPass)
-      .option("dbtable", s"${locationTargetInfo.getPath}") // schema.tableName
+      .option("dbtable", s"${locationTargetInfo.getFormat}") // schema.tableName
 
     try {
       dfWriter
@@ -251,7 +251,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       case e: Exception =>
         println(e.getLocalizedMessage)
         println("Trying to create the database")
-        JDBCTools.createJDBCDatabase(conn, locationTargetInfo.getPath.split("\\.")(0))
+        JDBCTools.createJDBCDatabase(conn, locationTargetInfo.getFormat.split("\\.")(0))
         dfWriter
           .save()
     }

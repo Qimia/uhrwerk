@@ -23,9 +23,9 @@ class InMemManagerTest extends AnyFlatSpec {
     conn.setName("testinmem")
     val tar = new Target
     tar.setConnectionName("testinmem")
-    tar.setPath("someframeone")
+    tar.setFormat("someframeone")
     val table = new Table
-    table.setTargetPartitionSize("1h")
+    table.setPartitionSize("1h")
 
     val dateTime = LocalDateTime.of(2010, 2, 4, 10, 30)
     manager.writeDataFrame(df, conn, tar, table, Option(dateTime))
@@ -33,7 +33,7 @@ class InMemManagerTest extends AnyFlatSpec {
     val dfUnpartitioned = (1000 to 1200).map(i => (i, "1234qwerty", i - 123)).toDF("x", "y", "z")
     val tarU = new Target
     tarU.setConnectionName("testinmem")
-    tarU.setPath("otherframetwo")
+    tarU.setFormat("otherframetwo")
 
     manager.writeDataFrame(dfUnpartitioned, conn, tarU, table)
 
