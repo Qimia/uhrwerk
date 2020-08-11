@@ -3,8 +3,9 @@ batchSize: "1h"
 
 dependencies:
   - connectionName: "local_filesystem_test"
-    path: "tracked/internal/loc"
+    tableName: "step-a"
+    format: "parquet"
 
 targets:
   - connectionName: "local_filesystem_test"
-    path: "tracked/internal/loc2"
+    format: "parquet"

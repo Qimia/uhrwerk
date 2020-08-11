@@ -10,7 +10,7 @@ public class ConnectionDAO {
         io.qimia.uhrwerk.backend.model.config.Connection backendConnection = new io.qimia.uhrwerk.backend.model.config.Connection();
         backendConnection.setConnectionName(connection.getName());
         backendConnection.setConnectionType(connection.getType());
-        backendConnection.setConnectionUrl(connection.getJdbcUri());
+        backendConnection.setConnectionUrl(connection.getConnectionUrl());
         backendConnection.setVersion(String.valueOf(connection.getVersion()));
 //        backendConnection.setDescription; todo missing
 
