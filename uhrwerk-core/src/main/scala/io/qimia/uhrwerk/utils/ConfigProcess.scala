@@ -93,7 +93,7 @@ object ConfigProcess {
    * Specifically check (and fill in) partition sizes of aggregate dependencies
    */
   def checkAndUpdateAgg(in: Table): Boolean = {
-    val targetPartitionSize = in.getTargetPartitionSizeDuration
+    val targetPartitionSize = in.getPartitionSizeDuration
     if (in.dependenciesSet()) {
       val aggDependencies = in.getDependencies.filter(d =>
         d.getTypeEnum == DependencyType.AGGREGATE)
@@ -188,7 +188,7 @@ object ConfigProcess {
    * Warning: Does not check aggregate dependencies (should be done separately)
    */
   def checkInTableTimes(in: Table): Boolean = {
-    val targetPartitionSize = in.getTargetPartitionSizeDuration
+    val targetPartitionSize = in.getPartitionSizeDuration
     if (in.sourcesSet()) {
       val sources = in.getSources
       sources.foreach(s => {

@@ -1,5 +1,5 @@
 name: "step-b"
-batchSize: "1h"
+partitionSize: "1h"
 
 dependencies:
   - connectionName: "local_filesystem_test"

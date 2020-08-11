@@ -1,5 +1,5 @@
 name: "step-a"
-batchSize: "1h"
+partitionSize: "1h"
 
 sources:
   - connectionName: "local_filesystem_test"

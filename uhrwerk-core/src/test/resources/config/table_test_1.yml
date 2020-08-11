@@ -1,5 +1,4 @@
 name: load_a_table
-batchSize: 6h
 parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
 maxBatches: 12
 area: processing

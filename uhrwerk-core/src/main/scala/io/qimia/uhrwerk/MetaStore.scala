@@ -8,7 +8,6 @@ import java.time.{Duration, LocalDateTime}
 import io.qimia.uhrwerk.MetaStore.{DependencyFailedOld, DependencySuccess, TargetNeededOld}
 import io.qimia.uhrwerk.backend.jpa.{PartitionLog, TaskLog}
 import io.qimia.uhrwerk.config.TaskLogType
-import io.qimia.uhrwerk.config.dao.config.{ConnectionDAO, TableDAO}
 import io.qimia.uhrwerk.config.model._
 import io.qimia.uhrwerk.utils.{ConfigProcess, ConfigReader, JDBCTools, TimeTools}
 import javax.persistence.{EntityManager, Persistence}
@@ -149,7 +148,7 @@ object MetaStore {
         classOf[PartitionLog]
       )
       .setParameter("pathNames", targets.map(_.getFormat))
-      .setParameter("partDur", table.getTargetPartitionSizeDuration)
+      .setParameter("partDur", table.getPartitionSizeDuration)
       .setParameter("partTimes", startTimes.asJava)
       .getResultList
       .asScala
@@ -219,8 +218,6 @@ class MetaStore(globalConf: Global,
 
   // save the configs to the backend
   val backendDb: sql.Connection = MetaStore.createSqlConnectionFromConfig(globalConf)
-  globalConf.getConnections.foreach(c => ConnectionDAO.save(backendDb, c))
-  TableDAO.save(backendDb, tableConf)
 
   val globalConfig: Global = globalConf
   val tableConfig: Table = tableConf
@@ -376,7 +373,7 @@ class MetaStore(globalConf: Global,
       table.getVertical,
       target.getFormat,
       partitionTS,
-      table.getTargetPartitionSizeDuration,
+      table.getPartitionSizeDuration,
       table.getVersion.toInt,
       finishLog,
       0

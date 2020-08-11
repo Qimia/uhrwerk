@@ -316,7 +316,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     tab.setPartitionSize("30m")
     tab.setVersion(1)
 
-    val tarDuration = tab.getTargetPartitionSizeDuration
+    val tarDuration = tab.getPartitionSizeDuration
 
     val batchDates = TimeTools.convertRangeToBatch(
       LocalDateTime.of(2015, 10, 12, 0, 0),

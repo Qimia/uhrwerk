@@ -275,7 +275,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
       val windowSize = dependency.getPartitionCount
       val windowStartTimes = TimeTools.convertToWindowBatchList(
         startTimes,
-        store.tableConfig.getBatchSizeDuration,
+        store.tableConfig.getPartitionSizeDuration,
         windowSize)
 
       val windowedBatchOutcome =
@@ -301,7 +301,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
       // TODO: Doesn't check if the given duration (dep.getPartitionSizeDuration) agrees with this division
       val smallerStartTimes = TimeTools.convertToSmallerBatchList(
         startTimes,
-        store.tableConfig.getBatchSizeDuration,
+        store.tableConfig.getPartitionSizeDuration,
         dependency.getPartitionCount
       )
       val smallBatchOutcome =
@@ -316,7 +316,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
           .toSet
       val foundBigBatches = TimeTools
         .filterBySmallerBatchList(startTimes,
-                                  store.tableConfig.getBatchSizeDuration,
+                                  store.tableConfig.getPartitionSizeDuration,
                                   dependency.getPartitionCount,
                                   foundSmallBatches)
         .toSet

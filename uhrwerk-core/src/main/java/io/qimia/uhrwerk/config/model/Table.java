@@ -114,7 +114,7 @@ public class Table {
         return partitionSize;
     }
 
-    public Duration getTargetPartitionSizeDuration() {
+    public Duration getPartitionSizeDuration() {
         return TimeTools.convertDurationToObj(partitionSize);
     }
 
