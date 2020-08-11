@@ -7,7 +7,7 @@ version: 1
 
 sources:
   - connectionName: connection_name
-    tableName: staging_source_table  # On DB
+    path: staging_source_table  # On DB
     format: "jdbc"
     version: 1
     partitionSize: "6h"

@@ -23,7 +23,6 @@ class ConfigProcessTest extends AnyFlatSpec {
     someTable.setTargets(targets)
     ConfigProcess.autofillStepPartitionSizes(someTable)
 
-    assert(someTable.getPartitionSize == "30m")
     assert(sourceA.getPartitionSize == "30m")
     assert(dependencyA.getPartitionSize == "30m")
     assert(dependencyB.getPartitionSize == "15m")

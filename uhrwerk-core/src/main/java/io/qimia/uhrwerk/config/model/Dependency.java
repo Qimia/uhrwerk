@@ -136,9 +136,11 @@ public class Dependency {
   public void setPartitionSize(String partitionSize) {
     this.partitionSize = partitionSize;
   // Set extra fields for persistence
-        var tuple = TimeTools.convertDurationStrToTuple(partitionSize);
-        this.partitionSizeInt = tuple.count();
-        this.partitionSizeType = tuple.durationUnit();
+        if (partitionSize != "") {
+            var tuple = TimeTools.convertDurationStrToTuple(partitionSize);
+            this.partitionSizeInt = tuple.count();
+            this.partitionSizeType = tuple.durationUnit();
+        }
     }
 
     public Integer getPartitionSizeInt() {
