@@ -199,4 +199,20 @@ public class Dependency {
   public void setUpdatedTS(LocalDateTime updatedTS) {
     this.updatedTS = updatedTS;
   }
+
+  public Integer getPartitionSizeInt() {
+    return partitionSizeInt;
+  }
+
+  public void setPartitionSizeInt(Integer partitionSizeInt) {
+    this.partitionSizeInt = partitionSizeInt;
+  }
+
+  public PartitionTemporalType getPartitionSizeType() {
+    return partitionSizeType;
+  }
+
+  public void setPartitionSizeType(PartitionTemporalType partitionSizeType) {
+    this.partitionSizeType = partitionSizeType;
+  }
 }
