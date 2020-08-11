@@ -5,6 +5,7 @@ import io.qimia.uhrwerk.config.DependencyType;
 import io.qimia.uhrwerk.config.PartitionTemporalType;
 import io.qimia.uhrwerk.utils.TimeTools;
 
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -198,6 +199,32 @@ public class Dependency {
 
   public void setUpdatedTS(LocalDateTime updatedTS) {
     this.updatedTS = updatedTS;
+  }
+
+  /**
+   * Concatenates area, vertical, table, version, and format into a path. Either with slashes for a
+   * file system or with dashes and a dot for jdbc.
+   *
+   * @param fileSystem Whether the path is for a file system or for jdbc.
+   * @return The concatenated path.
+   */
+  public String getPath(Boolean fileSystem) {
+    if (fileSystem) {
+      return Paths.get(
+              "area=",
+              area,
+              "vertical=",
+              vertical,
+              "table=",
+              tableName,
+              "version=",
+              version,
+              "format=",
+              format)
+          .toString();
+    } else { // jdbc
+      return area + "-" + vertical + "." + tableName + "-" + version;
+    }
   }
 
   public Integer getPartitionSizeInt() {

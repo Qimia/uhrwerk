@@ -2,9 +2,9 @@ package io.qimia.uhrwerk.backend.dao.data;
 
 import io.qimia.uhrwerk.backend.dao.config.ConnectionDAO;
 import io.qimia.uhrwerk.backend.dao.config.TableDAO;
-import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
-import io.qimia.uhrwerk.backend.model.config.Table;
-import io.qimia.uhrwerk.backend.model.data.Target;
+import io.qimia.uhrwerk.config.PartitionTemporalType;
+import io.qimia.uhrwerk.config.model.Table;
+import io.qimia.uhrwerk.config.model.Target;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -38,11 +38,11 @@ class TargetDAOTest {
     Table table = new Table();
     table.setArea("test-area");
     table.setVertical("test-vertical");
-    table.setTableName("test-table");
-    table.setBatchTemporalUnit(BatchTemporalUnit.MINUTES);
-    table.setBatchSize(15);
+    table.setName("test-table");
+    table.setPartitionSizeType(PartitionTemporalType.MINUTES);
+    table.setPartitionSizeInt(15);
     table.setParallelism(8);
-    table.setMaxPartitions(96);
+    table.setMaxBatches(96);
     table.setVersion("1.0");
     Long cfTableId = TableDAO.save(db, table);
     assertNotNull(cfTableId);
@@ -58,13 +58,13 @@ class TargetDAOTest {
 
     System.out.println("Wrote Config Table. id :\n" + cfTableId);
 
-    List<Target> targets = new ArrayList<>(2);
+    Target[] targets = new Target[2];
     for (int i = 0; i < 2; i++) {
       Target target = new Target();
-      target.setCfTableId(cfTableId);
-      target.setCfConnectionId(cfConnectionId);
-      target.setPath("test-path-" + i);
-      targets.add(target);
+      target.setTableId(cfTableId);
+      target.setConnectionId(cfConnectionId);
+      target.setFormat("test-path-" + i);
+      targets[i] = target;
     }
     List<Long> targetIds = TargetDAO.save(db, targets);
     assertEquals(2, targetIds.size());

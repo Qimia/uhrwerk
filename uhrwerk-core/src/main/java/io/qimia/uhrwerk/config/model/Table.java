@@ -1,9 +1,9 @@
 package io.qimia.uhrwerk.config.model;
 
-import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
 import io.qimia.uhrwerk.config.PartitionTemporalType;
 import io.qimia.uhrwerk.utils.TimeTools;
 
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -24,8 +24,8 @@ public class Table {
     private PartitionTemporalType partitionSizeType;
     private String version = "1";
 
-    private LocalDateTime createdTS;
-    private LocalDateTime updatedTS;
+    private LocalDateTime createdTs;
+    private LocalDateTime updatedTs;
 
     public Table() {}
 
@@ -130,19 +130,42 @@ public class Table {
         this.version = version;
     }
 
-    public LocalDateTime getCreatedTS() {
-        return createdTS;
+    public LocalDateTime getCreatedTs() {
+        return createdTs;
     }
 
-    public void setCreatedTS(LocalDateTime createdTS) {
-        this.createdTS = createdTS;
+    public void setCreatedTs(LocalDateTime createdTs) {
+        this.createdTs = createdTs;
     }
 
-    public LocalDateTime getUpdatedTS() {
-        return updatedTS;
+    public LocalDateTime getUpdatedTs() {
+        return updatedTs;
     }
 
-    public void setUpdatedTS(LocalDateTime updatedTS) {
-        this.updatedTS = updatedTS;
+    public void setUpdatedTs(LocalDateTime updatedTs) {
+        this.updatedTs = updatedTs;
+    }
+
+    public String getPath() {
+        return Paths.get("area=", area,
+                "vertical=", vertical,
+                "table=", name,
+                "version=", version).toString();
+    }
+
+    public Integer getPartitionSizeInt() {
+        return partitionSizeInt;
+    }
+
+    public void setPartitionSizeInt(Integer partitionSizeInt) {
+        this.partitionSizeInt = partitionSizeInt;
+    }
+
+    public PartitionTemporalType getPartitionSizeType() {
+        return partitionSizeType;
+    }
+
+    public void setPartitionSizeType(PartitionTemporalType partitionSizeType) {
+        this.partitionSizeType = partitionSizeType;
     }
 }

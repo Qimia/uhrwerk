@@ -105,19 +105,19 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val conn = new Connection
     conn.setName("testSparkFrameManagerWithoutBatches")
     conn.setType("fs")
-    conn.setStartPath("src/test/resources/testlake/")
+    conn.setConnectionUrl("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testSparkFrameManagerWithoutBatches")
     tar.setFormat("testsparkframemanagerwithoutbatches")
     val tab = new Table
     tab.setPartitionSize("30m")
-    tab.setVersion(1)
+    tab.setVersion("1")
 
     manager.writeDataFrame(df, conn, tar, tab)
 
     val a = df.collect()
     val dep = Converters.convertTargetToDependency(tar, tab)
-    val loadedWholeDF = manager.loadDataFrame(conn, dep).sort("a", "b", "c")
+    val loadedWholeDF = manager.loadDependencyDataFrame(conn, dep).sort("a", "b", "c")
     val collected = loadedWholeDF.collect()
     assert(a === collected)
 
@@ -134,26 +134,26 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val conn = new Connection
     conn.setName("testSparkFrameManager")
     conn.setType("fs")
-    conn.setStartPath("src/test/resources/testlake/")
+    conn.setConnectionUrl("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testSparkFrameManager")
     tar.setFormat("testsparkframemanager")
     val tab = new Table
     tab.setPartitionSize("30m")
-    tab.setVersion(1)
+    tab.setVersion("1")
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
 
     manager.writeDataFrame(df, conn, tar, tab, Option(dateTime))
 
     val dep = Converters.convertTargetToDependency(tar, tab)
-    val loadedDF = manager.loadDataFrame(conn, dep, Option(dateTime)).sort("a", "b", "c")
+    val loadedDF = manager.loadDependencyDataFrame(conn, dep, Option(dateTime)).sort("a", "b", "c")
 
     val a = df.collect()
     val b = loadedDF.collect()
     assert(a === b)
 
     // loading the whole df without batch info
-    val loadedWholeDF = manager.loadDataFrame(conn, dep).sort("a", "b", "c")
+    val loadedWholeDF = manager.loadDependencyDataFrame(conn, dep).sort("a", "b", "c")
     val collected = loadedWholeDF.drop("date", "batch").collect()
     assert(loadedWholeDF.columns.contains("date") && loadedWholeDF.columns.contains("batch"))
     assert(a === collected)
@@ -167,8 +167,8 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     source.setPartitionSize("30m")
     source.setConnectionName("testSparkFrameManager")
     source.setFormat("testsparkframemanager")
-    source.setVersion(1)
-    val loadedDFSource = manager.loadDataFrame(conn, source, Option(dateTime)).sort("a", "b", "c")
+    source.setVersion("1")
+    val loadedDFSource = manager.loadSourceDataFrame(conn, source, Option(dateTime)).sort("a", "b", "c")
     val bSource = loadedDF.collect()
     assert(a === bSource)
   }
@@ -182,13 +182,13 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val conn = new Connection
     conn.setName("testAggregateDependency")
     conn.setType("fs")
-    conn.setStartPath("src/test/resources/testlake/")
+    conn.setConnectionUrl("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testAggregateDependency")
     tar.setFormat("testaggregatedependency")
     val tab = new Table
     tab.setPartitionSize("15m")
-    tab.setVersion(1)
+    tab.setVersion("1")
 
     List(2, 3, 4).foreach(day => List(10, 11).foreach(hour => List(0, 15, 30, 45).foreach(b => {
       val dateTime = LocalDateTime.of(2020, 7, day, hour, b)
@@ -205,28 +205,28 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     dep.setFormat("testaggregatedependency")
 
     val depDateTime = LocalDateTime.of(2020, 7, 4, 10, 0)
-    val loadedDF = manager.loadDataFrame(conn, dep, Option(depDateTime)).cache
+    val loadedDF = manager.loadDependencyDataFrame(conn, dep, Option(depDateTime)).cache
 
     assert(loadedDF.count === df.count * 4)
     assert(loadedDF.select("batch").distinct().count === 4)
 
     // one day
     dep.setPartitionCount(4 * 24)
-    val loadedDFDay = manager.loadDataFrame(conn, dep, Option(depDateTime)).cache
+    val loadedDFDay = manager.loadDependencyDataFrame(conn, dep, Option(depDateTime)).cache
     assert(loadedDFDay.count === df.count * 4 * 2)
     assert(loadedDFDay.select("batch").distinct().count === 8)
 
     // one day written as 1d
     dep.setPartitionSize("1d")
     dep.setPartitionCount(1)
-    val loadedDFDay2 = manager.loadDataFrame(conn, dep, Option(depDateTime)).cache
+    val loadedDFDay2 = manager.loadDependencyDataFrame(conn, dep, Option(depDateTime)).cache
     assert(loadedDFDay2.count === df.count * 4 * 2)
     assert(loadedDFDay2.select("batch").distinct().count === 8)
 
     // one month
     dep.setPartitionSize("1d")
     dep.setPartitionCount(31)
-    val loadedDFMonth = manager.loadDataFrame(conn, dep, Option(depDateTime)).cache
+    val loadedDFMonth = manager.loadDependencyDataFrame(conn, dep, Option(depDateTime)).cache
     assert(loadedDFMonth.count === df.count * 4 * 2 * 3)
     assert(loadedDFMonth.select("batch").distinct().count === 3 * 2 * 4)
   }
@@ -240,13 +240,13 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val conn = new Connection
     conn.setName("testWindowDependency")
     conn.setType("fs")
-    conn.setStartPath("src/test/resources/testlake/")
+    conn.setConnectionUrl("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testWindowDependency")
     tar.setFormat("testwindowdependency")
     val tab = new Table
     tab.setPartitionSize("15m")
-    tab.setVersion(1)
+    tab.setVersion("1")
 
     List(2, 3, 4).foreach(day => List(10, 11).foreach(hour => List(0, 15, 30, 45).foreach(b => {
       val dateTime = LocalDateTime.of(2020, 7, day, hour, b)
@@ -263,40 +263,40 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     dep.setFormat("testwindowdependency")
 
     val depDateTime = LocalDateTime.of(2020, 7, 4, 10, 0)
-    val loadedDF = manager.loadDataFrame(conn, dep, Option(depDateTime)).cache
+    val loadedDF = manager.loadDependencyDataFrame(conn, dep, Option(depDateTime)).cache
 
     assert(loadedDF.count === df.count)
     assert(loadedDF.select("batch").distinct().count === 1)
 
     val depDateTime2 = LocalDateTime.of(2020, 7, 4, 10, 30)
-    val loadedDF2 = manager.loadDataFrame(conn, dep, Option(depDateTime2)).cache
+    val loadedDF2 = manager.loadDependencyDataFrame(conn, dep, Option(depDateTime2)).cache
 
     assert(loadedDF2.count === df.count * 3)
     assert(loadedDF2.select("batch").distinct().count === 3)
 
     val depDateTime3 = LocalDateTime.of(2020, 7, 4, 11, 15)
-    val loadedDF3 = manager.loadDataFrame(conn, dep, Option(depDateTime3)).cache
+    val loadedDF3 = manager.loadDependencyDataFrame(conn, dep, Option(depDateTime3)).cache
 
     assert(loadedDF3.count === df.count * 4)
     assert(loadedDF3.select("batch").distinct().count === 4)
 
     // one day
     dep.setPartitionCount(4 * 24)
-    val loadedDFDay = manager.loadDataFrame(conn, dep, Option(depDateTime3)).cache
+    val loadedDFDay = manager.loadDependencyDataFrame(conn, dep, Option(depDateTime3)).cache
     assert(loadedDFDay.count === df.count * 8)
     assert(loadedDFDay.select("batch").distinct().count === 8)
 
     // two days
     dep.setPartitionSize("1d")
     dep.setPartitionCount(2)
-    val loadedDFDay2 = manager.loadDataFrame(conn, dep, Option(depDateTime3)).cache
+    val loadedDFDay2 = manager.loadDependencyDataFrame(conn, dep, Option(depDateTime3)).cache
     assert(loadedDFDay2.count === df.count * 16)
     assert(loadedDFDay2.select("batch").distinct().count === 16)
 
     // one month
     dep.setPartitionSize("1d")
     dep.setPartitionCount(31)
-    val loadedDFMonth = manager.loadDataFrame(conn, dep, Option(depDateTime)).cache
+    val loadedDFMonth = manager.loadDependencyDataFrame(conn, dep, Option(depDateTime)).cache
     assert(loadedDFMonth.count === df.count * 4 * 2 * 3)
     assert(loadedDFMonth.select("batch").distinct().count === 3 * 2 * 4)
   }
@@ -308,13 +308,13 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val conn = new Connection
     conn.setName("testSparkRange")
     conn.setType("fs")
-    conn.setStartPath("src/test/resources/testlake/")
+    conn.setConnectionUrl("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testSparkRange")
     tar.setFormat("testsparkframerange")
     val tab = new Table
     tab.setPartitionSize("30m")
-    tab.setVersion(1)
+    tab.setVersion("1")
 
     val tarDuration = tab.getPartitionSizeDuration
 
@@ -354,13 +354,13 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     tar.setFormat(s"$DATABASE_NAME.testsparkframemanagerwithoutbatches")
     val tab = new Table
     tab.setPartitionSize("30m")
-    tab.setVersion(1)
+    tab.setVersion("1")
     tab.setArea("staging")
 
     manager.writeDataFrame(df, conn, tar, tab)
 
     val dep = Converters.convertTargetToDependency(tar, tab)
-    val loadedDF = manager.loadDataFrame(conn, dep).sort("a", "b", "c")
+    val loadedDF = manager.loadDependencyDataFrame(conn, dep).sort("a", "b", "c")
 
     val a = df.collect()
     val b = loadedDF.collect()
@@ -379,21 +379,21 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     tar.setFormat(s"$DATABASE_NAME.testsparkframemanager")
     val tab = new Table
     tab.setPartitionSize("30m")
-    tab.setVersion(1)
+    tab.setVersion("1")
     tab.setArea("staging")
 
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
     manager.writeDataFrame(df, conn, tar, tab, Option(dateTime))
 
     val dep = Converters.convertTargetToDependency(tar, tab)
-    val loadedDF = manager.loadDataFrame(conn, dep, Option(dateTime)).sort("a", "b", "c")
+    val loadedDF = manager.loadDependencyDataFrame(conn, dep, Option(dateTime)).sort("a", "b", "c")
 
     val a = df.collect()
     val b = loadedDF.collect()
     assert(a === b)
 
     // loading the whole df without batch info
-    val loadedWholeDF = manager.loadDataFrame(conn, dep).sort("a", "b", "c")
+    val loadedWholeDF = manager.loadDependencyDataFrame(conn, dep).sort("a", "b", "c")
     val collected = loadedWholeDF.drop("date", "batch").collect()
     assert(loadedWholeDF.columns.contains("date") && loadedWholeDF.columns.contains("batch"))
     assert(a === collected)

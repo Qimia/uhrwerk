@@ -11,10 +11,10 @@ import java.util.List;
 
 public class TargetDAO {
   private static String INSERT =
-      "INSERT INTO DT_TARGET(cf_table_id, cf_connection_id, format) VALUES (?,?,?)";
+      "INSERT INTO TARGET(table_id, connection_id, format) VALUES (?,?,?)";
 
   private static String SELECT_BY_ID =
-      "SELECT id, cf_table_id, cf_connection_id, format, created_ts, updated_ts FROM DT_TARGET WHERE id = ?";
+      "SELECT id, table_id, connection_id, format, created_ts, updated_ts FROM TARGET WHERE id = ?";
 
   public static Long save(java.sql.Connection db, Target target) throws SQLException {
     PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);

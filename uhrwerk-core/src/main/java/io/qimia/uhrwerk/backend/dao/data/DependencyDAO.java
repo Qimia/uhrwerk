@@ -1,7 +1,8 @@
 package io.qimia.uhrwerk.backend.dao.data;
 
-
+import io.qimia.uhrwerk.config.DependencyType;
 import io.qimia.uhrwerk.config.model.Dependency;
+import io.qimia.uhrwerk.config.model.Target;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,6 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class DependencyDAO {
+  private static final String SELECT_BY_ID = "";
   private static String INSERT =
       "INSERT INTO DEPENDENCY(table_id, target_id, partition_transform, batch_temporal_unit, batch_size)  VALUES (?,?,?,?,?)";
 
@@ -28,22 +30,22 @@ public class DependencyDAO {
       throws SQLException {
     insert.setLong(1, dependency.getTableId());
     insert.setLong(2, dependency.getTargetId());
-    insert.setString(3, dependency.getPartitionTransform().name());
+    // FIXME getDependencyType need to be added to the table
+    insert.setString(3, DependencyType.getDependencyType(dependency.getType()).name());
     insert.setString(4, dependency.getBatchTemporalUnit().name());
-    insert.setInt(5, dependency.getBatchSize());
+    insert.setInt(5, dependency.getPartitionSizeInt());
   }
 
-  public static List<Long> save(java.sql.Connection db, List<Dependency> dependencies)
+  public static List<Long> save(java.sql.Connection db, Dependency[] dependencies)
       throws SQLException {
     PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-    for (Iterator<Dependency> iterator = dependencies.iterator(); iterator.hasNext(); ) {
-      Dependency dependency = iterator.next();
-      setInsertParams(dependency, insert);
+    for (int i = 0; i < dependencies.length; i++) {
+      setInsertParams(dependencies[i], insert);
       insert.addBatch();
     }
     insert.executeBatch();
     ResultSet generatedKeys = insert.getGeneratedKeys();
-    List<Long> ids = new ArrayList<>(dependencies.size());
+    List<Long> ids = new ArrayList<>(dependencies.length);
     while (generatedKeys.next()) ids.add(generatedKeys.getLong(1));
     return ids;
   }

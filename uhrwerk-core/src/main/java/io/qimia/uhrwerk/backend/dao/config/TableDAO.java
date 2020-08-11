@@ -3,9 +3,9 @@ package io.qimia.uhrwerk.backend.dao.config;
 import io.qimia.uhrwerk.backend.dao.data.DependencyDAO;
 import io.qimia.uhrwerk.backend.dao.data.SourceDAO;
 import io.qimia.uhrwerk.backend.dao.data.TargetDAO;
-import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
-import io.qimia.uhrwerk.backend.model.data.Dependency;
-import io.qimia.uhrwerk.backend.model.data.Source;
+import io.qimia.uhrwerk.config.PartitionTemporalType;
+import io.qimia.uhrwerk.config.model.Dependency;
+import io.qimia.uhrwerk.config.model.Source;
 import io.qimia.uhrwerk.config.model.Table;
 import io.qimia.uhrwerk.config.model.Target;
 
@@ -28,8 +28,8 @@ public class TableDAO {
     insert.setString(1, table.getArea());
     insert.setString(2, table.getVertical());
     insert.setString(3, table.getName());
-    insert.setString(4, table.getBatchTemporalUnit().name());
-    insert.setInt(5, table.getBatchSizeAsInt());
+    insert.setString(4, table.getPartitionSizeType().name());
+    insert.setInt(5, table.getPartitionSizeInt());
     insert.setInt(6, table.getParallelism());
     insert.setInt(7, table.getMaxBatches());
     insert.setString(8, table.getVersion());
@@ -38,19 +38,20 @@ public class TableDAO {
     if (generatedKeys.next()) tableId = generatedKeys.getLong(1);
 
     if (table.getTargets() != null && table.getTargets().length > 0) {
-      Target[] targets = table.getTargets();
-      for (int i = 0; i < targets.length; i++) {
-        targets[i].setTableId(tableId);
+      for (Target target : table.getTargets()) {
+        target.setTableId(tableId);
       }
-      TargetDAO.save(db, targets);
+      TargetDAO.save(db, table.getTargets());
     }
-    if (table.getDependencies() != null && !table.getDependencies().isEmpty()) {
+    if (table.getDependencies() != null && table.getDependencies().length > 0) {
+      Dependency[] dependencies = table.getDependencies();
       for (Dependency dependency : table.getDependencies()) {
-        dependency.setCfTableId(tableId);
+        dependency.setTableId(tableId);
       }
-      DependencyDAO.save(db, table.getDependencies());
+      DependencyDAO.save(db, dependencies);
     }
-    if (table.getSources() != null && !table.getSources().isEmpty()) {
+    if (table.getSources() != null && table.getSources().length > 0) {
+      Source[] sources = table.getSources();
       for (Source source : table.getSources()) {
         source.setCfTableId(tableId);
       }
@@ -71,14 +72,14 @@ public class TableDAO {
       res.setId(record.getLong(1));
       res.setArea(record.getString(2));
       res.setVertical(record.getString(3));
-      res.setTableName(record.getString(4));
-      res.setBatchTemporalUnit(BatchTemporalUnit.valueOf(record.getString(5)));
-      res.setBatchSize(record.getInt(6));
+      res.setName(record.getString(4));
+      res.setPartitionSizeType(PartitionTemporalType.valueOf(record.getString(5)));
+      res.setPartitionSizeInt(record.getInt(6));
       res.setParallelism(record.getInt(7));
-      res.setMaxPartitions(record.getInt(8));
+      res.setMaxBatches(record.getInt(8));
       res.setVersion(record.getString(9));
-      res.setCreatedTs(record.getTimestamp(10));
-      res.setUpdatedTs(record.getTimestamp(11));
+      res.setCreatedTs(record.getTimestamp(10).toLocalDateTime());
+      res.setUpdatedTs(record.getTimestamp(11).toLocalDateTime());
       return res;
     }
 
