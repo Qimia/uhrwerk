@@ -4,6 +4,7 @@ import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
 import io.qimia.uhrwerk.config.PartitionTemporalType;
 import io.qimia.uhrwerk.utils.TimeTools;
 
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -144,5 +145,12 @@ public class Table {
 
     public void setUpdatedTS(LocalDateTime updatedTS) {
         this.updatedTS = updatedTS;
+    }
+
+    public String getPath() {
+        return Paths.get("area=", area,
+                "vertical=", vertical,
+                "table=", name,
+                "version=", version).toString();
     }
 }
