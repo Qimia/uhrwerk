@@ -38,14 +38,14 @@ class InMemManagerTest extends AnyFlatSpec {
     manager.writeDataFrame(dfUnpartitioned, conn, tarU, table)
 
     val dep = Converters.convertTargetToDependency(tar, table)
-    val loadedDF = manager.loadDataFrame(conn, dep, Option(dateTime))
+    val loadedDF = manager.loadDependencyDataFrame(conn, dep, Option(dateTime))
 
     val a = df.collect()
     val b = loadedDF.collect()
     assert(a === b)
 
     val depU = Converters.convertTargetToDependency(tarU, table)
-    val loadedDF2 = manager.loadDataFrame(conn, depU)
+    val loadedDF2 = manager.loadDependencyDataFrame(conn, depU)
     val in = dfUnpartitioned.collect()
     val out = loadedDF2.collect()
     assert(in === out)

@@ -60,10 +60,6 @@ object ConfigProcess {
         if (d.getFormat == "") {
           return false
         }
-        if ((d.getTypeEnum != DependencyType.AGGREGATE) &&
-          (d.getPartitionSize == "")) {
-          return false
-        }
       })
     }
     if (table.sourcesSet()) {

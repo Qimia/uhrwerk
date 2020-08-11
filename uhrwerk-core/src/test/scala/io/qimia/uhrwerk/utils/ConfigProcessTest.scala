@@ -9,7 +9,7 @@ class ConfigProcessTest extends AnyFlatSpec {
   "given a single batchsize all unknown partitioned tables" should "use the step's batchsize" in {
     val someTable = new Table()
     someTable.setName("some_step")
-    someTable.setBatchSize("30m")
+    someTable.setPartitionSize("30m")
     val sourceA = new Source
     val sources = Array(sourceA)
     someTable.setSources(sources)
@@ -23,7 +23,6 @@ class ConfigProcessTest extends AnyFlatSpec {
     someTable.setTargets(targets)
     ConfigProcess.autofillStepPartitionSizes(someTable)
 
-    assert(someTable.getBatchSize == "30m")
     assert(sourceA.getPartitionSize == "30m")
     assert(dependencyA.getPartitionSize == "30m")
     assert(dependencyB.getPartitionSize == "15m")
@@ -75,7 +74,7 @@ class ConfigProcessTest extends AnyFlatSpec {
 
 
     val goodTable = new Table()
-    goodTable.setBatchSize("30m")
+    goodTable.setPartitionSize("30m")
     val dependencyA = new Dependency()
     dependencyA.setConnectionName("conn1")
     dependencyA.setFormat("parquet")
