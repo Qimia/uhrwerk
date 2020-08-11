@@ -44,6 +44,9 @@ class JDBCToolsTest extends AnyFlatSpec {
     val lowerBound = LocalDateTime.now()
     val upperBound = LocalDateTime.now()
 
+    val partitionQueryTemplateAllExplicit = s"SELECT id FROM ${path} " +
+      s"WHERE created_at \\<= '${TimeTools.convertTSToString(upperBound)}'"
+
     val resultAllShouldBe = s"(SELECT MIN(partition_query_table.$partitionColumn) AS min_id, " +
       s"MAX(partition_query_table.$partitionColumn) AS max_id " +
       s"FROM (SELECT id FROM $path WHERE created_at >= '${TimeTools.convertTSToString(lowerBound)}' " +
@@ -54,14 +57,28 @@ class JDBCToolsTest extends AnyFlatSpec {
       s"FROM (SELECT id FROM $path WHERE created_at = '${TimeTools.convertTSToString(lowerBound)}') " +
       s"AS partition_query_table) AS tmp_table"
 
+    val resultAllExplicitShouldBe = s"(SELECT MIN(partition_query_table.$partitionColumn) AS min_id, " +
+      s"MAX(partition_query_table.$partitionColumn) AS max_id " +
+      s"FROM (SELECT id FROM $path WHERE created_at <= '${TimeTools.convertTSToString(upperBound)}'" +
+      s") AS partition_query_table) AS tmp_table"
+
     val resultAll = JDBCTools.minMaxQuery(Some(lowerBound), Some(upperBound), partitionColumn, partitionQueryTemplate, Some(path))
     val resultPathExplicit = JDBCTools.minMaxQuery(Some(lowerBound), Some(upperBound), partitionColumn, partitionQueryTemplatePathExplicit)
     val resultOnlyLowerBound = JDBCTools.minMaxQuery(Some(lowerBound), Option.empty, partitionColumn, partitionQueryTemplateOnlyLowerBound, Some(path))
+    val resultAllExplicit = JDBCTools.minMaxQuery(Option.empty, Option.empty, partitionColumn, partitionQueryTemplateAllExplicit)
 
     assert(resultAll === resultAllShouldBe)
     assert(resultPathExplicit === resultAllShouldBe)
     assert(resultOnlyLowerBound === resultOnlyLowerBoundShouldBe)
+    assert(resultAllExplicit === resultAllExplicitShouldBe)
   }
+
+  "executeSqlFile" should "connect to a database and execute an SQL file" taggedAs DbTest in {
+    val connection = JDBCToolsTest.getJDBCConnection
+    val sqlfile = "testlake/test.sql"
+    JDBCTools.executeSqlFile(connection, sqlfile) // shouldn't throw an exception
+  }
+
 }
 
 object JDBCToolsTest {
