@@ -6,6 +6,8 @@ import io.qimia.uhrwerk.config.model.Connection
 import io.qimia.uhrwerk.tags.DbTest
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.scalatest.flatspec.AnyFlatSpec
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.sql.{DataFrameReader, SparkSession}
 
 class JDBCToolsTest extends AnyFlatSpec {
   val DATABASE_NAME = "uhrwerk_jdbc_tools_test"
@@ -79,6 +81,31 @@ class JDBCToolsTest extends AnyFlatSpec {
     JDBCTools.executeSqlFile(connection, sqlfile) // shouldn't throw an exception
   }
 
+  "getDbConfig" should "return a DataFrameReader for the Spark Session" taggedAs DbTest in {
+    val connection = JDBCToolsTest.getJDBCConnection
+    val spark = JDBCToolsTest.getSparkSession
+    val reader = JDBCTools.getDbConfig(spark, connection)
+    assertNotNull(reader)
+    assert(reader.isInstanceOf[DataFrameReader])
+  }
+  "queryTable" should "should create a temp table query using the upper and lower bounds" taggedAs DbTest in {
+    val queryTemplateBoth = "SELECT id FROM uhrwerk_queryTable_test.test_table " +
+      "WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'"
+    val queryTemplateLower = "SELECT id FROM uhrwerk_queryTable_test.test_table " +
+      "WHERE created_at >= '<lower_bound>'"
+    val lowerBound = LocalDateTime.now()
+    val upperBound = LocalDateTime.now()
+    val queryBothShouldBe = s"(SELECT id FROM uhrwerk_queryTable_test.test_table WHERE created_at >= " +
+      s"'${TimeTools.convertTSToString(lowerBound)}' and created_at < '${TimeTools.convertTSToString(upperBound)}') " +
+      "AS tmp_table"
+    val queryLowerShouldBe = s"(SELECT id FROM uhrwerk_queryTable_test.test_table WHERE created_at >= " +
+      s"'${TimeTools.convertTSToString(lowerBound)}') AS tmp_table"
+    val resultBoth = JDBCTools.queryTable(queryTemplateBoth, Some(lowerBound), Some(upperBound))
+    val resultLower = JDBCTools.queryTable(queryTemplateLower, Some(lowerBound))
+    assert(queryBothShouldBe === resultBoth)
+    assert(queryLowerShouldBe === resultLower)
+  }
+
 }
 
 object JDBCToolsTest {
@@ -91,6 +118,13 @@ object JDBCToolsTest {
     conn.setUser("root")
     conn.setPass("mysql")
     conn
+  }
+
+  def getSparkSession: SparkSession = {
+    SparkSession.builder()
+      .master("local[1]")
+      .appName("testing")
+      .getOrCreate();
   }
 }
 
