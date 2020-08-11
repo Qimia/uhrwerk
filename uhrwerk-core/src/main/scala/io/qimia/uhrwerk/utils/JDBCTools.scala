@@ -30,15 +30,11 @@ object JDBCTools {
    * @param databaseName Database name
    */
   def createJDBCDatabase(connection: Connection, databaseName: String): Unit = {
-    val url = connection.getJdbcUri
-    val driver = connection.getJdbcDriver
-    val username = connection.getUser
-    val password = connection.getPass
     try {
-      val connection = DriverManager.getConnection(url, username, password)
-      val statement = connection.createStatement
+      val jdbcConnection = getJDBCConnection(connection)
+      val statement = jdbcConnection.createStatement
       statement.execute(s"CREATE DATABASE ${databaseName}")
-      connection.close()
+      jdbcConnection.close()
     } catch {
       case e: Exception => println(e.getLocalizedMessage)
     }
