@@ -126,7 +126,7 @@ public class Dependency {
   }
 
   public Duration getPartitionSizeDuration() {
-    return TimeTools.convertDurationToObj(partitionSize);
+    return TimeTools.convertDurationStrToObj(partitionSize);
   }
 
   public BatchTemporalUnit getBatchTemporalUnit() {
@@ -135,7 +135,19 @@ public class Dependency {
 
   public void setPartitionSize(String partitionSize) {
     this.partitionSize = partitionSize;
-  }
+  // Set extra fields for persistence
+        var tuple = TimeTools.convertDurationStrToTuple(partitionSize);
+        this.partitionSizeInt = tuple.count();
+        this.partitionSizeType = tuple.durationUnit();
+    }
+
+    public Integer getPartitionSizeInt() {
+        return partitionSizeInt;
+    }
+
+    public PartitionTemporalType getPartitionSizeType() {
+        return partitionSizeType;
+    }
 
   public Integer getPartitionCount() {
     return partitionCount;
@@ -227,16 +239,8 @@ public class Dependency {
     }
   }
 
-  public Integer getPartitionSizeInt() {
-    return partitionSizeInt;
-  }
-
   public void setPartitionSizeInt(Integer partitionSizeInt) {
     this.partitionSizeInt = partitionSizeInt;
-  }
-
-  public PartitionTemporalType getPartitionSizeType() {
-    return partitionSizeType;
   }
 
   public void setPartitionSizeType(PartitionTemporalType partitionSizeType) {

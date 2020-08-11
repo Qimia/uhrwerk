@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.backend.dao.config;
 
-import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
-import io.qimia.uhrwerk.backend.model.config.Table;
+import io.qimia.uhrwerk.config.PartitionTemporalType;
+import io.qimia.uhrwerk.config.model.Table;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
@@ -31,11 +31,11 @@ class TableDAOTest {
     Table table = new Table();
     table.setArea("test-area");
     table.setVertical("test-vertical");
-    table.setTableName("test-table");
-    table.setBatchTemporalUnit(BatchTemporalUnit.MINUTES);
-    table.setBatchSize(15);
+    table.setName("test-table");
+    table.setPartitionSizeType(PartitionTemporalType.MINUTES);
+    table.setPartitionSizeInt(15);
     table.setParallelism(8);
-    table.setMaxPartitions(96);
+    table.setMaxBatches(96);
     table.setVersion("1.0");
     Long id = TableDAO.save(db, table);
     assertNotNull(id);

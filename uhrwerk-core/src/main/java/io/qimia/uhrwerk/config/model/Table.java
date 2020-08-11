@@ -115,11 +115,22 @@ public class Table {
     }
 
     public Duration getPartitionSizeDuration() {
-        return TimeTools.convertDurationToObj(partitionSize);
+        return TimeTools.convertDurationStrToObj(partitionSize);
     }
 
     public void setPartitionSize(String partitionSize) {
         this.partitionSize = partitionSize;
+        var tuple = TimeTools.convertDurationStrToTuple(partitionSize);
+        this.partitionSizeInt = tuple.count();
+        this.partitionSizeType = tuple.durationUnit();
+    }
+
+    public Integer getPartitionSizeInt() {
+        return partitionSizeInt;
+    }
+
+    public PartitionTemporalType getPartitionSizeType() {
+        return partitionSizeType;
     }
 
     public String getVersion() {
@@ -153,17 +164,11 @@ public class Table {
                 "version=", version).toString();
     }
 
-    public Integer getPartitionSizeInt() {
-        return partitionSizeInt;
-    }
 
     public void setPartitionSizeInt(Integer partitionSizeInt) {
         this.partitionSizeInt = partitionSizeInt;
     }
 
-    public PartitionTemporalType getPartitionSizeType() {
-        return partitionSizeType;
-    }
 
     public void setPartitionSizeType(PartitionTemporalType partitionSizeType) {
         this.partitionSizeType = partitionSizeType;

@@ -22,7 +22,7 @@ class ConfigReaderTest extends AnyFlatSpec {
     val stepConf = ConfigReader.readStepConfig(confPath)
 
     assert(stepConf.getName === "load_a_table")
-    assert(stepConf.getBatchSize === "6h")
+    assert(stepConf.getPartitionSize === "6h")
     assert(stepConf.getParallelism === 10)
     assert(stepConf.getVersion == 1)  // Check default init
     assert(stepConf.getArea === "processing")
@@ -41,7 +41,7 @@ class ConfigReaderTest extends AnyFlatSpec {
     val stepConf = ConfigReader.readStepConfig(confPath)
 
     assert(stepConf.getName === "dump_a_table")
-    assert(stepConf.getBatchSize === "1h")
+    assert(stepConf.getPartitionSize === "1h")
     assert(stepConf.getParallelism === 1)
     assert(stepConf.getVersion == 1)  // Check default init
     assert(stepConf.getDependencies == null)

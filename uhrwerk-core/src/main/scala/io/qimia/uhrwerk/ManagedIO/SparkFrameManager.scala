@@ -58,7 +58,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
                                           connectionUrl: String,
                                           path: String): DataFrame = {
     val fullLocation = if (startTS.isDefined) {
-      val duration = TimeTools.convertDurationToObj(partitionSize)
+      val duration = TimeTools.convertDurationStrToObj(partitionSize)
       val date = TimeTools.dateTimeToDate(startTS.get)
       val batch = TimeTools.dateTimeToPostFix(startTS.get, duration)
       SparkFrameManager.concatenatePaths(connectionUrl, path, s"date=$date", s"batch=$batch")
@@ -117,7 +117,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     assert(connection.getName == connection.getName)
 
     val (date: Option[String], batch: Option[String]) = if (startTS.isDefined) {
-      val duration = TimeTools.convertDurationToObj(partitionSize)
+      val duration = TimeTools.convertDurationStrToObj(partitionSize)
       val date = TimeTools.dateTimeToDate(startTS.get)
       val batch = TimeTools.dateTimeToPostFix(startTS.get, duration)
       (Option(date), Option(batch))
@@ -220,7 +220,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       writeDFToJDBC(frame, conn, locationTargetInfo, locationTableInfo, startTS)
     } else {
       val fullLocation = if (startTS.isDefined) {
-        val duration = TimeTools.convertDurationToObj(locationTableInfo.getPartitionSize)
+        val duration = TimeTools.convertDurationStrToObj(locationTableInfo.getPartitionSize)
         val date = TimeTools.dateTimeToDate(startTS.get)
         val batch = TimeTools.dateTimeToPostFix(startTS.get, duration)
         SparkFrameManager.concatenatePaths(conn.getConnectionUrl, locationTableInfo.getPath, s"date=$date", s"batch=$batch")
@@ -247,7 +247,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     assert(conn.getName == locationTargetInfo.getConnectionName)
 
     val (date: Option[String], batch: Option[String]) = if (startTS.isDefined) {
-      val duration = TimeTools.convertDurationToObj(locationTableInfo.getPartitionSize)
+      val duration = TimeTools.convertDurationStrToObj(locationTableInfo.getPartitionSize)
       val date = TimeTools.dateTimeToDate(startTS.get)
       val batch = TimeTools.dateTimeToPostFix(startTS.get, duration)
       (Option(date), Option(batch))
