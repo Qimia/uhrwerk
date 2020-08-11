@@ -9,9 +9,15 @@ import org.apache.spark.sql.DataFrame
 trait FrameManager {
   // There could be a spark / iceberg / deltalake / hudi version depending on what the user wants to use
 
-  def loadDataFrame[T <: TableInput](conn: Connection,
-                                     locationInfo: T,
-                                     batchTS: Option[LocalDateTime] = Option.empty): DataFrame
+  def loadSourceDataFrame(
+      conn: Connection,
+      locationInfo: Source,
+      batchTS: Option[LocalDateTime] = Option.empty): DataFrame
+
+  def loadDependencyDataFrame(
+      conn: Connection,
+      locationInfo: Dependency,
+      batchTS: Option[LocalDateTime] = Option.empty): DataFrame
 
   def writeDataFrame(frame: DataFrame,
                      conn: Connection,

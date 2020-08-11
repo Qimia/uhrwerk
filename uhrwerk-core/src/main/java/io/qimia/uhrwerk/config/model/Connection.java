@@ -2,7 +2,11 @@ package io.qimia.uhrwerk.config.model;
 
 import io.qimia.uhrwerk.config.ConnectionType;
 
+import java.time.LocalDateTime;
+
 public class Connection {
+
+    private Long id;
 
     private String name = "";
     private String type = "";
@@ -14,7 +18,10 @@ public class Connection {
     private String cloudPass = "";
     private String cloudRegion = "";
     private String startPath = "";
-    private int version = 1;
+    private String version = "1";
+
+    private LocalDateTime createdTS;
+    private LocalDateTime updatedTS;
 
     @Override
     public String toString() {
@@ -34,6 +41,14 @@ public class Connection {
     }
 
     public Connection() {}
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;
@@ -111,11 +126,11 @@ public class Connection {
         this.startPath = startPath;
     }
 
-    public int getVersion() {
+    public String getVersion() {
         return version;
     }
 
-    public void setVersion(int version) {
+    public void setVersion(String version) {
         this.version = version;
     }
 
@@ -125,5 +140,21 @@ public class Connection {
 
     public void setJdbcDriver(String jdbcDriver) {
         this.jdbcDriver = jdbcDriver;
+    }
+
+    public LocalDateTime getCreatedTS() {
+        return createdTS;
+    }
+
+    public void setCreatedTS(LocalDateTime createdTS) {
+        this.createdTS = createdTS;
+    }
+
+    public LocalDateTime getUpdatedTS() {
+        return updatedTS;
+    }
+
+    public void setUpdatedTS(LocalDateTime updatedTS) {
+        this.updatedTS = updatedTS;
     }
 }

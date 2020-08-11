@@ -63,7 +63,7 @@ object MetaStore {
       val endTime = startTimes.last
 
       def updateStoredPartitions(dep: Dependency): Unit = {
-        val depPathName = dep.getPath // TODO: If Dependencies gets a proper name / key field use that instead
+        val depPathName = dep.getFormat // TODO: If Dependencies gets a proper name / key field use that instead
         val results = store
           .createQuery(
             s"FROM PartitionLog WHERE area = '${dep.getArea}' " +
@@ -88,7 +88,7 @@ object MetaStore {
       batchedDependencies.foreach(updateStoredPartitions)
     } else {
       def updateStoredPartitions(dep: Dependency): Unit = {
-        val depPathName = dep.getPath // TODO: If Dependencies gets a proper name / key field use that instead
+        val depPathName = dep.getFormat // TODO: If Dependencies gets a proper name / key field use that instead
         val results = store
           .createQuery(
             s"FROM PartitionLog WHERE area = '${dep.getArea}' " +
@@ -113,7 +113,7 @@ object MetaStore {
     }
 
     // Translate the resulting dependencies found to if there are any still needed or not
-    val requiredDependencies = batchedDependencies.map(_.getPath).toSet
+    val requiredDependencies = batchedDependencies.map(_.getFormat).toSet
     startTimes
       .map(startTime => {
         val partitionsAvailable = storedPartitions.get(startTime)
@@ -140,15 +140,15 @@ object MetaStore {
 
     val results = store
       .createQuery(
-        s"FROM PartitionLog WHERE area = '${table.getTargetArea}' " +
-          s"AND vertical = '${table.getTargetVertical}' " +
+        s"FROM PartitionLog WHERE area = '${table.getArea}' " +
+          s"AND vertical = '${table.getVertical}' " +
           s"AND path in (:pathNames) " +
-          s"AND version = ${table.getTargetVersion} " +
+          s"AND version = ${table.getVersion} " +
           s"AND partitionDuration = :partDur " +
           s"AND partitionTs IN (:partTimes)",
         classOf[PartitionLog]
       )
-      .setParameter("pathNames", targets.map(_.getPath))
+      .setParameter("pathNames", targets.map(_.getFormat))
       .setParameter("partDur", table.getTargetPartitionSizeDuration)
       .setParameter("partTimes", startTimes.asJava)
       .getResultList
@@ -157,7 +157,7 @@ object MetaStore {
       .foreach(pl => storedPartitions(pl.getPartitionTs) += pl.getPath)
 
     val targetSet = targets.toSet
-    val targetPathSet = targetSet.map(t => t.getPath)
+    val targetPathSet = targetSet.map(t => t.getFormat)
 
     val includingEmptyRes: Seq[TargetNeededOld] = startTimes.map(time =>
       if (!storedPartitions.contains(time)) {
@@ -302,7 +302,7 @@ class MetaStore(globalConf: Global,
     val startLog = new TaskLog(
       tableConfig.getName,
       previousRunNr, // How often did this table run
-      tableConfig.getTargetVersion,
+      tableConfig.getVersion.toInt,
       LocalDateTime.now(),
       Duration.ZERO,
       TaskLogType.START
@@ -340,7 +340,7 @@ class MetaStore(globalConf: Global,
     val finishLog = new TaskLog(
       tableConfig.getName,
       startLog.getRunNumber(),
-      tableConfig.getTargetVersion,
+      tableConfig.getVersion.toInt,
       timeNow,
       Duration.between(startLog.getRunTs, timeNow),
       logType
@@ -372,12 +372,12 @@ class MetaStore(globalConf: Global,
                         partitionTS: LocalDateTime): Unit = {
     // TODO: Check that partition-size and batch-size are correctly set (when loading the config)
     val newPartition = new PartitionLog(
-      table.getTargetArea,
-      table.getTargetVertical,
-      target.getPath,
+      table.getArea,
+      table.getVertical,
+      target.getFormat,
       partitionTS,
       table.getTargetPartitionSizeDuration,
-      table.getTargetVersion,
+      table.getVersion.toInt,
       finishLog,
       0
     )

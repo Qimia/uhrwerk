@@ -17,18 +17,18 @@ class InMemFrameManager extends FrameManager {
   override def loadDataFrame[T <: TableInput](conn: Connection, locationInfo: T, batchTS: Option[LocalDateTime]): DataFrame = {
     assert(conn.getName == locationInfo.getConnectionName)
     if (batchTS.isDefined) {
-      partitionedTables((conn.getName, locationInfo.getPath, batchTS.get))
+      partitionedTables((conn.getName, locationInfo.getFormat, batchTS.get))
     } else {
-      unpartitionedTables((conn.getName, locationInfo.getPath))
+      unpartitionedTables((conn.getName, locationInfo.getFormat))
     }
   }
 
   override def writeDataFrame(frame: DataFrame, conn: Connection, locationTargetInfo: Target, locationTableInfo: Table, startTS: Option[LocalDateTime]): Unit = {
     assert(conn.getName == locationTargetInfo.getConnectionName)
     if (startTS.isDefined) {
-      partitionedTables((conn.getName, locationTargetInfo.getPath, startTS.get)) = frame
+      partitionedTables((conn.getName, locationTargetInfo.getFormat, startTS.get)) = frame
     } else {
-      unpartitionedTables((conn.getName, locationTargetInfo.getPath)) = frame
+      unpartitionedTables((conn.getName, locationTargetInfo.getFormat)) = frame
     }
   }
 

@@ -6,12 +6,12 @@ object Converters {
 
   def convertTargetToDependency(t: Target, tab: Table): Dependency = {
     val d = new Dependency
-    d.setArea(tab.getTargetArea)
+    d.setArea(tab.getArea)
     d.setConnectionName(t.getConnectionName)
-    d.setPartitionSize(tab.getTargetPartitionSize)
-    d.setPath(t.getPath)
-    d.setVersion(tab.getTargetVersion)
-    d.setVertical(tab.getTargetVertical)
+    d.setPartitionSize(tab.getPartitionSize)
+    d.setFormat(t.getFormat)
+    d.setVersion(tab.getVersion)
+    d.setVertical(tab.getVertical)
     d
   }
 

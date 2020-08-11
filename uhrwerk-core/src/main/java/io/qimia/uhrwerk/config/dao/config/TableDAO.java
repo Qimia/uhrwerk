@@ -12,14 +12,14 @@ import java.util.stream.Collectors;
 public class TableDAO {
     public static Long save(java.sql.Connection db, Table table) throws SQLException {
         io.qimia.uhrwerk.backend.model.config.Table backendTable = new io.qimia.uhrwerk.backend.model.config.Table();
-        backendTable.setArea(table.getTargetArea());
-        backendTable.setVertical(table.getTargetVertical());
+        backendTable.setArea(table.getArea());
+        backendTable.setVertical(table.getVertical());
         backendTable.setTableName(table.getName());
         backendTable.setBatchTemporalUnit(table.getBatchTemporalUnit());
         backendTable.setBatchSize(table.getBatchSizeAsInt());
         backendTable.setParallelism(table.getParallelism());
         backendTable.setMaxPartitions(table.getMaxBatches());
-        backendTable.setVersion(String.valueOf(table.getTargetVersion()));
+        backendTable.setVersion(String.valueOf(table.getVersion()));
 
         if (table.getDependencies() != null) {
             backendTable.setDependencies(Arrays.stream(table.getDependencies()).map(DependencyDAO::convertDependencyToBackend).collect(Collectors.toList()));

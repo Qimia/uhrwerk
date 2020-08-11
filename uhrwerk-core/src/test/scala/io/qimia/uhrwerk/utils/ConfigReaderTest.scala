@@ -24,14 +24,14 @@ class ConfigReaderTest extends AnyFlatSpec {
     assert(stepConf.getName === "load_a_table")
     assert(stepConf.getBatchSize === "6h")
     assert(stepConf.getParallelism === 10)
-    assert(stepConf.getTargetVersion == 1)  // Check default init
-    assert(stepConf.getTargetArea === "processing")
-    assert(stepConf.getTargetPartitionSize === "6h")
+    assert(stepConf.getVersion == 1)  // Check default init
+    assert(stepConf.getArea === "processing")
+    assert(stepConf.getPartitionSize === "6h")
     assert(stepConf.getSources == null)
     val deps = stepConf.getDependencies
     val predictedPaths = "schema.table" :: "someplace/other_table" :: Nil
     deps.zip(predictedPaths).foreach((tup) => {
-      assert(tup._1.getPath === tup._2)
+      assert(tup._1.getFormat === tup._2)
       assert(tup._1.getArea === "staging")
     })
   }
@@ -43,10 +43,10 @@ class ConfigReaderTest extends AnyFlatSpec {
     assert(stepConf.getName === "dump_a_table")
     assert(stepConf.getBatchSize === "1h")
     assert(stepConf.getParallelism === 1)
-    assert(stepConf.getTargetVersion == 1)  // Check default init
+    assert(stepConf.getVersion == 1)  // Check default init
     assert(stepConf.getDependencies == null)
     val source = stepConf.getSources.head
-    assert(source.getPath === "schema.staging_source_table")
+    assert(source.getFormat === "schema.staging_source_table")
     assert(source.getPartitionQuery === "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'")
     assert(source.getQueryColumn === "created_at")
     assert(source.getSelectQuery === "SELECT * FROM <path> WHERE created_at >= <lower_bound> AND created_at < <upper_bound>")

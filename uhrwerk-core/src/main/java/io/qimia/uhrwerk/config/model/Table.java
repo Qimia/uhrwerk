@@ -4,8 +4,11 @@ import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
 import io.qimia.uhrwerk.utils.TimeTools;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 
 public class Table {
+
+    private Long id;
 
     private String name;
     private String batchSize;
@@ -14,12 +17,23 @@ public class Table {
     private Dependency[] dependencies;
     private Source[] sources;
     private Target[] targets;
-    private String targetArea = "";
-    private String targetVertical = "";
-    private String targetPartitionSize = "";
-    private int targetVersion = 1;
+    private String area = "";
+    private String vertical = "";
+    private String partitionSize = "";
+    private String version = "1";
+
+    private LocalDateTime createdTS;
+    private LocalDateTime updatedTS;
 
     public Table() {}
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;
@@ -98,39 +112,55 @@ public class Table {
         this.targets = targets;
     }
 
-    public String getTargetArea() {
-        return targetArea;
+    public String getArea() {
+        return area;
     }
 
-    public void setTargetArea(String targetArea) {
-        this.targetArea = targetArea;
+    public void setArea(String area) {
+        this.area = area;
     }
 
-    public String getTargetVertical() {
-        return targetVertical;
+    public String getVertical() {
+        return vertical;
     }
 
-    public void setTargetVertical(String targetVertical) {
-        this.targetVertical = targetVertical;
+    public void setVertical(String vertical) {
+        this.vertical = vertical;
     }
 
-    public String getTargetPartitionSize() {
-        return targetPartitionSize;
+    public String getPartitionSize() {
+        return partitionSize;
     }
 
     public Duration getTargetPartitionSizeDuration() {
-        return TimeTools.convertDurationToObj(targetPartitionSize);
+        return TimeTools.convertDurationToObj(partitionSize);
     }
 
-    public void setTargetPartitionSize(String targetPartitionSize) {
-        this.targetPartitionSize = targetPartitionSize;
+    public void setPartitionSize(String partitionSize) {
+        this.partitionSize = partitionSize;
     }
 
-    public int getTargetVersion() {
-        return targetVersion;
+    public String getVersion() {
+        return version;
     }
 
-    public void setTargetVersion(int targetVersion) {
-        this.targetVersion = targetVersion;
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public LocalDateTime getCreatedTS() {
+        return createdTS;
+    }
+
+    public void setCreatedTS(LocalDateTime createdTS) {
+        this.createdTS = createdTS;
+    }
+
+    public LocalDateTime getUpdatedTS() {
+        return updatedTS;
+    }
+
+    public void setUpdatedTS(LocalDateTime updatedTS) {
+        this.updatedTS = updatedTS;
     }
 }

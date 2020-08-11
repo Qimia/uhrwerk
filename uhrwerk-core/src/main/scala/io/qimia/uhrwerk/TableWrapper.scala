@@ -168,7 +168,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
         // Note: We are responsible for all standard writing of DataFrames
         if (frame.isDefined) {
           store.tableConfig.getTargets
-            .filter(t => targets.contains(t.getPath))
+            .filter(t => targets.contains(t.getFormat))
             .foreach(
               tar =>
                 frameManager.writeDataFrame(
@@ -289,7 +289,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
         TableWrapper.createFilterWithWindowList(booleanOutcome, windowSize)
       val filteredOutcome = TableWrapper.applyWindowFilter(windowedBatchOutcome,
                                                            windowFilter,
-                                                           dependency.getPath)
+                                                           dependency.getFormat)
       // TODO: Change to name in-case we switch from using the paths to using identifiers/names
 
       TimeTools.cleanWindowBatchList(filteredOutcome, windowSize)
@@ -325,7 +325,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
         if (foundBigBatches.contains(datetime)) {
           Right(datetime)
         } else {
-          Left((datetime, Set(dependency.getPath)))
+          Left((datetime, Set(dependency.getFormat)))
       })
     }
 
