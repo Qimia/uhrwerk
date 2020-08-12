@@ -31,7 +31,8 @@ dependencies:
     table: tableOne  # On DB
     format: "jdbc"
     version: "1.0"
-    transform_type: "identity"
+    transform:
+      type: "identity"
   - connection_name: "connection_name"
       area: staging
       vertical: sourcedb_1
@@ -40,7 +41,8 @@ dependencies:
       version: "1.0"
       transform:
         type: "aggregate"
-        size: 4
+        partition:
+          size: 4
   - connection_name: "connection_name"
       area: staging
       vertical: sourcedb_1
@@ -49,7 +51,8 @@ dependencies:
       version: "1.0"
       transform:
         type: "window"
-        size: 4
+        partition:
+          size: 4
   - connection_name: "connection_name" # version 2
       area: staging
       vertical: sourcedb_1
