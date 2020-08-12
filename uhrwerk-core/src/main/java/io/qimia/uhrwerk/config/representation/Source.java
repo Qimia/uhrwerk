@@ -1,17 +1,17 @@
 package io.qimia.uhrwerk.config.representation;
 
 
-public class Sources {
+public class Source {
 
     private String connection_name;
     private String path;
     private String format;
     private String version;
-    private Partition[] partition;
-    private ParallelLoad[] parallel_load;
+    private Partition partition;
+    private ParallelLoad parallel_load;
     private Select[] select;
 
-    public Sources() {}
+    public Source() {}
 
 
     public String getConnection_name() {
@@ -46,19 +46,19 @@ public class Sources {
         this.version = version;
     }
 
-    public Partition[] getPartition() {
+    public Partition getPartition() {
         return partition;
     }
 
-    public void setPartition(Partition[] partition) {
+    public void setPartition(Partition partition) {
         this.partition = partition;
     }
 
-    public ParallelLoad[] getParallel_load() {
+    public ParallelLoad getParallel_load() {
         return parallel_load;
     }
 
-    public void setParallel_load(ParallelLoad[] parallel_load) {
+    public void setParallel_load(ParallelLoad parallel_load) {
         this.parallel_load = parallel_load;
     }
 

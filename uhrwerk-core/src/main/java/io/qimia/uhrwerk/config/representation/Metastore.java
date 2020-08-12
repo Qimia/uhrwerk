@@ -6,11 +6,7 @@ public class Metastore {
     private String user;
     private String pass;
 
-    public Metastore(String jdbc_url, String jdbc_driver, String user, String pass) {
-        this.jdbc_url = jdbc_url;
-        this.jdbc_driver = jdbc_driver;
-        this.user = user;
-        this.pass = pass;
+    public Metastore() {
     }
 
     public String getJdbc_url() {

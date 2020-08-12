@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
 
-public class Tables {
+public class Table {
 
     private String area;
     private String vertical;
@@ -9,13 +9,13 @@ public class Tables {
     private String version;
     private Integer parallelism;
     private Integer max_bulk_size;
-    private Partition[] partition;
-    private Sources[] sources;
-    private Targets[] targets;
-    private Dependencies[] dependencies;
+    private Partition partition;
+    private Source[] sources;
+    private Target[] targets;
+    private Dependency[] dependencies;
 
 
-    public Tables() {}
+    public Table() {}
 
 
     public String getArea() {
@@ -66,35 +66,35 @@ public class Tables {
         this.max_bulk_size = max_bulk_size;
     }
 
-    public Partition[] getPartition() {
+    public Partition getPartition() {
         return partition;
     }
 
-    public void setPartition(Partition[] partition) {
+    public void setPartition(Partition partition) {
         this.partition = partition;
     }
 
-    public Sources[] getSources() {
+    public Source[] getSources() {
         return sources;
     }
 
-    public void setSources(Sources[] sources) {
+    public void setSources(Source[] sources) {
         this.sources = sources;
     }
 
-    public Targets[] getTargets() {
+    public Target[] getTargets() {
         return targets;
     }
 
-    public void setTargets(Targets[] targets) {
+    public void setTargets(Target[] targets) {
         this.targets = targets;
     }
 
-    public Dependencies[] getDependencies() {
+    public Dependency[] getDependencies() {
         return dependencies;
     }
 
-    public void setDependencies(Dependencies[] dependencies) {
+    public void setDependencies(Dependency[] dependencies) {
         this.dependencies = dependencies;
     }
 }

@@ -4,7 +4,7 @@ package io.qimia.uhrwerk.config.representation;
 public class Transform {
 
     private String type;
-    private Partition[] partition;
+    private Partition partition;
 
     public Transform() {}
 
@@ -16,11 +16,11 @@ public class Transform {
         this.type = type;
     }
 
-    public Partition[] getPartition() {
+    public Partition getPartition() {
         return partition;
     }
 
-    public void setPartition(Partition[] partition) {
+    public void setPartition(Partition partition) {
         this.partition = partition;
     }
 

@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
 
-public class Dependencies {
+public class Dependency {
 
     private String connection_name;
     private String area;
@@ -11,7 +11,7 @@ public class Dependencies {
     private String version;
     private Transform[] transform;
 
-    public Dependencies() {}
+    public Dependency() {}
 
     public String getConnection_name() {
         return connection_name;

@@ -1,12 +1,12 @@
 package io.qimia.uhrwerk.config.representation;
 
 
-public class Targets {
+public class Target {
 
     private String connection_name;
     private String format;
 
-    public Targets() {}
+    public Target() {}
 
     public String getConnection_name() {
         return connection_name;
