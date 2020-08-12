@@ -48,6 +48,14 @@ public class DependencyBuilder {
     }
 
     public Dependency build(){
-        return new Dependency();
+        Dependency dependency = new Dependency();
+        dependency.setArea(this.area);
+        dependency.setConnection_name(this.connectionName);
+        dependency.setFormat(this.format);
+        dependency.setTable(this.table);
+        dependency.setTransform(this.transform);
+        dependency.setVersion(this.version);
+        dependency.setVertical(this.vertical);
+        return dependency;
     }
 }

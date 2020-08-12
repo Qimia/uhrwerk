@@ -23,6 +23,10 @@ public class S3Builder {
     }
 
     public S3 build(){
-     return new S3();
+        S3 s3 = new S3();
+        s3.setPath(this.path);
+        s3.setSecret_id(this.secretId);
+        s3.setSecret_key(this.secretKey);
+        return new S3();
     }
 }

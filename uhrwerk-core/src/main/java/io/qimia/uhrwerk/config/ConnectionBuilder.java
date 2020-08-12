@@ -32,6 +32,11 @@ public class ConnectionBuilder {
     }
 
     public Connection build(){
+        Connection connection = new Connection();
+        connection.setFile(this.file);
+        connection.setJdbc(this.jdbc);
+        connection.setName(this.name);
+        connection.setS3(this.s3);
         return new Connection();
     }
 }

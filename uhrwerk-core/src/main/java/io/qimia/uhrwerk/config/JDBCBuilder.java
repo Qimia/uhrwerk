@@ -29,6 +29,11 @@ public class JDBCBuilder {
     }
 
     public JDBC build(){
-        return new JDBC();
+        JDBC jdbc = new JDBC();
+        jdbc.setJdbc_driver(this.jdbcDriver);
+        jdbc.setJdbc_url(this.jdbcUrl);
+        jdbc.setPass(this.pass);
+        jdbc.setUser(this.user);
+        return jdbc;
     }
 }

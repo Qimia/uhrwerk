@@ -17,7 +17,10 @@ public class SelectBuilder {
     }
 
     public Select build() {
-        return new Select();
+        Select select = new Select();
+        select.setColumn(this.column);
+        select.setQuery(this.query);
+        return select;
     }
 }
 

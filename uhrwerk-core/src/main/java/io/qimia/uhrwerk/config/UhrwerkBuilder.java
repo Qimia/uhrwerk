@@ -12,6 +12,8 @@ public class UhrwerkBuilder {
     }
 
     public Uhrwerk build(){
-        return new Uhrwerk();
+        Uhrwerk uhrwerk = new Uhrwerk();
+        uhrwerk.setMetastore(this.metastore);
+        return uhrwerk;
     }
 }

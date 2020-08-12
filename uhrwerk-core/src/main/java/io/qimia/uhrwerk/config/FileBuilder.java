@@ -12,6 +12,8 @@ public class FileBuilder {
     }
 
     public File build(){
-        return new File();
+        File file = new File();
+        file.setPath(this.path);
+        return file;
     }
 }

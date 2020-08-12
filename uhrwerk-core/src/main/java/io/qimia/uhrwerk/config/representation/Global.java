@@ -4,9 +4,7 @@ public class Global {
     private Uhrwerk uhrwerk;
     private Config config;
 
-    public Global(Uhrwerk uhrwerk, Config config) {
-        this.uhrwerk = uhrwerk;
-        this.config = config;
+    public Global() {
     }
 
     public Uhrwerk getUhrwerk() {

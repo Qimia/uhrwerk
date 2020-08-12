@@ -29,6 +29,11 @@ public class MetastoreBuilder {
     }
 
     public Metastore build(){
-        return new Metastore();
+        Metastore metastore = new Metastore();
+        metastore.setJdbc_driver(this.jdbcDriver);
+        metastore.setJdbc_url(this.jdbcUrl);
+        metastore.setPass(this.pass);
+        metastore.setUser(this.user);
+        return metastore;
     }
 }

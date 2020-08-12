@@ -23,6 +23,10 @@ public class ParallelLoadBuilder {
     }
 
     public ParallelLoad build(){
-        return new ParallelLoad();
+        ParallelLoad parallelLoad = new ParallelLoad();
+        parallelLoad.setColumn(this.column);
+        parallelLoad.setNum(this.num);
+        parallelLoad.setQuery(this.query);
+        return parallelLoad;
     }
 }

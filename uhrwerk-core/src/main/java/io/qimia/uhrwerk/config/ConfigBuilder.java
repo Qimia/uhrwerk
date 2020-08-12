@@ -12,6 +12,8 @@ public class ConfigBuilder {
     }
 
     public Config build(){
-        return new Config();
+        Config config = new Config();
+        config.setConnections(this.connections);
+        return config;
     }
 }

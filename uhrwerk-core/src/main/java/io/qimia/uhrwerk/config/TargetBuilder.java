@@ -17,6 +17,9 @@ public class TargetBuilder {
     }
 
     public Target build(){
-        return new Target();
+        Target target = new Target();
+        target.setConnection_name(this.connectionName);
+        target.setFormat(this.format);
+        return target;
     }
 }

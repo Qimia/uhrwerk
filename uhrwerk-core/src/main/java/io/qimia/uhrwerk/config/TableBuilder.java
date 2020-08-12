@@ -10,7 +10,7 @@ public class TableBuilder {
     private Integer parallelism;
     private Integer maxBulkSize;
     private Partition partition;
-    private Source[] source;
+    private Source[] sources;
     private Target[] targets;
     private Dependency[] dependencies;
 
@@ -49,8 +49,8 @@ public class TableBuilder {
         return this;
     }
 
-    public TableBuilder withSource(Source[] source) {
-        this.source = source;
+    public TableBuilder withSource(Source[] sources) {
+        this.sources = sources;
         return this;
     }
 
@@ -65,6 +65,17 @@ public class TableBuilder {
     }
 
     public Table build(){
-        return new Table();
+        Table table = new Table();
+        table.setArea(this.area);
+        table.setDependencies(this.dependencies);
+        table.setMax_bulk_size(this.maxBulkSize);
+        table.setParallelism(this.parallelism);
+        table.setPartition(this.partition);
+        table.setSources(this.sources);
+        table.setTable(this.table);
+        table.setTargets(this.targets);
+        table.setVersion(this.version);
+        table.setVertical(this.vertical);
+        return table;
     }
 }

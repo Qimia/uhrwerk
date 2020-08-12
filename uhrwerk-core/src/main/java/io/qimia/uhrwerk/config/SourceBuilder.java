@@ -1,6 +1,8 @@
 package io.qimia.uhrwerk.config;
 
+import io.qimia.uhrwerk.config.representation.ParallelLoad;
 import io.qimia.uhrwerk.config.representation.Partition;
+import io.qimia.uhrwerk.config.representation.Select;
 import io.qimia.uhrwerk.config.representation.Source;
 
 public class SourceBuilder {
@@ -9,6 +11,8 @@ public class SourceBuilder {
     private String format;
     private String version;
     private Partition partition;
+    private ParallelLoad parallelLoad;
+    private Select select;
 
     public SourceBuilder withConnectionName(String connectionName) {
         this.connectionName = connectionName;
@@ -36,6 +40,14 @@ public class SourceBuilder {
     }
 
     public Source build(){
-        return new Source();
+        Source source = new Source();
+        source.setConnection_name(this.connectionName);
+        source.setFormat(this.format);
+        source.setParallel_load(this.parallelLoad);
+        source.setPartition(this.partition);
+        source.setPath(this.path);
+        source.setSelect(this.select);
+        source.setVersion(this.version);
+        return source;
     }
 }

@@ -9,7 +9,7 @@ public class Source {
     private String version;
     private Partition partition;
     private ParallelLoad parallel_load;
-    private Select[] select;
+    private Select select;
 
     public Source() {}
 
@@ -62,11 +62,11 @@ public class Source {
         this.parallel_load = parallel_load;
     }
 
-    public Select[] getSelect() {
+    public Select getSelect() {
         return select;
     }
 
-    public void setSelect(Select[] select) {
+    public void setSelect(Select select) {
         this.select = select;
     }
 }

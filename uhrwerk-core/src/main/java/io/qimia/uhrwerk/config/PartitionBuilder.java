@@ -17,6 +17,9 @@ public class PartitionBuilder {
     }
 
     public Partition build(){
+        Partition partition = new Partition();
+        partition.setSize(this.size);
+        partition.setUnit(this.unit);
         return new Partition();
     }
 }

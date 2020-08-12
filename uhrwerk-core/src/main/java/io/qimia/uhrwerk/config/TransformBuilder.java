@@ -18,6 +18,9 @@ public class TransformBuilder {
     }
 
     public Transform build(){
-        return new Transform();
+        Transform transform = new Transform();
+        transform.setPartition(this.partition);
+        transform.setType(this.type);
+        return transform;
     }
 }

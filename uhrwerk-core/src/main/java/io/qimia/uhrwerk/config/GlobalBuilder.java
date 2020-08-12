@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.config;
 
-import io.qimia.uhrwerk.config.model.Global;
 import io.qimia.uhrwerk.config.representation.Config;
+import io.qimia.uhrwerk.config.representation.Global;
 import io.qimia.uhrwerk.config.representation.Uhrwerk;
 
 public class GlobalBuilder {
@@ -19,6 +19,9 @@ public class GlobalBuilder {
     }
 
     public Global build(){
-        return new Global();
+        Global global = new Global();
+        global.setConfig(this.config);
+        global.setUhrwerk(this.uhrwerk);
+        return global;
     }
 }
