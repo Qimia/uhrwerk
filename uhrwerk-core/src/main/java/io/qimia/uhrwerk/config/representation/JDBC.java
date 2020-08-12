@@ -1,18 +1,12 @@
 package io.qimia.uhrwerk.config.representation;
 
-public class JDBC extends Connection{
+public class JDBC {
     private String jdbc_url;
     private String jdbc_driver;
     private String user;
     private String pass;
 
-    public JDBC(String name, String jdbc_url, String jdbc_driver, String user, String pass) {
-        super(name);
-        this.jdbc_url = jdbc_url;
-        this.jdbc_driver = jdbc_driver;
-        this.user = user;
-        this.pass = pass;
-    }
+    public JDBC(){}
 
     public String getJdbc_url() {
         return jdbc_url;

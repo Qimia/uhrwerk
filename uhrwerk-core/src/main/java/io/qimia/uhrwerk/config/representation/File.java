@@ -1,16 +1,9 @@
 package io.qimia.uhrwerk.config.representation;
 
 public class File {
-    private String name;
     private String path;
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
+    public File(){}
 
     public String getPath() {
         return path;

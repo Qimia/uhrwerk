@@ -1,16 +1,11 @@
 package io.qimia.uhrwerk.config.representation;
 
-public class S3 extends Connection{
+public class S3 {
     private String path;
     private String secret_id;
     private String secret_key;
 
-    public S3(String name, String path, String secret_id, String secret_key) {
-        super(name);
-        this.path = path;
-        this.secret_id = secret_id;
-        this.secret_key = secret_key;
-    }
+    public S3(){}
 
     public String getPath() {
         return path;
