@@ -1,17 +1,15 @@
 package io.qimia.uhrwerk.config.representation;
 
-public class S3 {
-    private String name;
+public class S3 extends Connection{
     private String path;
     private String secret_id;
-    private String yaya;
+    private String secret_key;
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public S3(String name, String path, String secret_id, String secret_key) {
+        super(name);
+        this.path = path;
+        this.secret_id = secret_id;
+        this.secret_key = secret_key;
     }
 
     public String getPath() {
@@ -30,11 +28,11 @@ public class S3 {
         this.secret_id = secret_id;
     }
 
-    public String getYaya() {
-        return yaya;
+    public String getSecret_key() {
+        return secret_key;
     }
 
-    public void setYaya(String yaya) {
-        this.yaya = yaya;
+    public void setSecret_key(String secret_key) {
+        this.secret_key = secret_key;
     }
 }
