@@ -7,21 +7,21 @@ uhrwerk:
 
 config:
   connections:
-    - jdbc:
-        name: "mysql1"
+    - name: "mysql1"
+      jdbc:
         jdbc_url: 'jdbc:mysql://localhost:3306'
         jdbc_driver: 'com.mysql.jdbc.Driver'
         user: root
         pass: mysql
 
-    - s3:
-        name: s3_test
+    - name: "s3_test"
+      s3:
         path: "s3://bucketname/somesuffix/"
         secret_id: blabla
         secret_key: yaya
 
-    - file:
-        name: local_filesystem_test
+    - name: "local_filesystem_test"
+      file:
         path: '/path/to/local/datalake'
 
 tables:
@@ -69,7 +69,8 @@ tables:
           table: tableOne  # On DB
           format: "jdbc"
           version: "1.0"
-          transform_type: "identity"
+          transform:
+            type: "identity"
         - connection_name: "connection_name"
             area: staging
             vertical: sourcedb_1
@@ -78,7 +79,8 @@ tables:
             version: "1.0"
             transform:
               type: "aggregate"
-              size: 4
+              partition:
+                size: 4
         - connection_name: "connection_name"
             area: staging
             vertical: sourcedb_1
@@ -87,7 +89,8 @@ tables:
             version: "1.0"
             transform:
               type: "window"
-              size: 4
+              partition:
+                size: 4
         - connection_name: "connection_name" # version 2
             area: staging
             vertical: sourcedb_1
