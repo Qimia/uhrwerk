@@ -1,20 +1,25 @@
-connections:
-  - name: mysql_test
-    type: mysql
-    connectionUrl: 'jdbc:mysql://localhost:3306'
-    user: root
-    pass: mysql
-  - name: s3_test
-    type: s3
-    connectionUrl: "s3://bucketname/somesuffix/"
-    cloudId: blabla
-    cloudPass: yaya
-  - name: local_filesystem_test
-    type: filesystem
-    connectionUrl: '/path/to/local/datalake'
-  - name: uhrwerk-backend
-    type: mysql
-    connectionUrl: 'jdbc:mysql://localhost:53306/UHRWERK_METASTORE'
-    jdbcDriver: 'com.mysql.jdbc.Driver'
+uhrwerk:
+  metastore:
+    jdbc_url: 'jdbc:mysql://localhost:53306/UHRWERK_METASTORE'
+    jdbc_driver: 'com.mysql.jdbc.Driver'
     user: UHRWERK_USER
     pass: Xq92vFqEKF7TB8H9
+
+config:
+  connections:
+    - jdbc:
+        name: "mysql1"
+        jdbc_url: 'jdbc:mysql://localhost:3306'
+        jdbc_driver: 'com.mysql.jdbc.Driver'
+        user: root
+        pass: mysql
+
+    - s3:
+        name: s3_test
+        path: "s3://bucketname/somesuffix/"
+        secret_id: blabla
+        secret_key: yaya
+
+    - file:
+        name: local_filesystem_test
+        path: '/path/to/local/datalake'

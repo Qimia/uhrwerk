@@ -1,27 +1,67 @@
-name: load_a_table
-parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
-maxBatches: 12
 area: processing
 vertical: sourcedb_1
-partitionSize: "6h"
-version: 1
+table: load_a_table
+version: "1.0"
+parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
+max_bulk_size: 12
+partition:
+  unit: "hours"
+  size: 4
+
+sources:
+  - connection_name: connection_name
+    path: staging_source_table  # On DB
+    format: "jdbc"
+    version: 1
+    partition:
+      unit: "hours"
+      size: 6
+    parallel_load:
+      query: "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'"
+      column: "id"
+      num: 8
+    select:
+      query: "table_test_2_select_query.sql"
+      column: "created_at"
 
 dependencies:
-  - connectionName: connection_name
-    tableName: tableOne  # On DB
+  - connection_name: "connection_name"
+    area: staging
+    vertical: sourcedb_1
+    table: tableOne  # On DB
     format: "jdbc"
-    area: staging
-    vertical: sourcedb_1
-    version: 1
-    type: "oneOnone"
-  - connectionName: connection_name2
-    tableName: tableTwo  # On FS
-    format: "parquet"
-    area: staging
-    vertical: sourcedb_1
-    version: 1
-    type: "oneOnone"
+    version: "1.0"
+    transform_type: "identity"
+  - connection_name: "connection_name"
+      area: staging
+      vertical: sourcedb_1
+      table: tableOne  # On DB
+      format: "jdbc"
+      version: "1.0"
+      transform:
+        type: "aggregate"
+        size: 4
+  - connection_name: "connection_name"
+      area: staging
+      vertical: sourcedb_1
+      table: tableOne  # On DB
+      format: "jdbc"
+      version: "1.0"
+      transform:
+        type: "window"
+        size: 4
+  - connection_name: "connection_name" # version 2
+      area: staging
+      vertical: sourcedb_1
+      table: tableOne  # On DB
+      format: "jdbc"
+      version: "1.0"
+      transform:
+        type: "temporal_aggregate"
+        partition:
+          unit: "days"
+          size: 1
 
 targets:
-  - connectionName: connection_name2
+  - connection_name: connection_name2
     format: "parquet"
