@@ -9,7 +9,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 class ConfigReaderTest extends AnyFlatSpec {
 
   "Given a complete dag yaml" should "be parsable by the configreader" in {
-    val completePath = Paths.get(getClass.getResource("/config/complete_dag.yml").getPath)
+    val completePath = Paths.get(getClass.getResource("/config/complete_test_dag.yml").getPath)
     val complete = ConfigReader.readComplete(completePath)
 
     val connections = complete.getConfig.getConnections
@@ -18,15 +18,32 @@ class ConfigReaderTest extends AnyFlatSpec {
 
     val predictedConnectionNames = "mysql1" :: "s3_test" :: "local_filesystem_test" :: Nil
     connections.zip(predictedConnectionNames).foreach((tup) => tup._1.getName === tup._2)
-
     assert(metastore.getJdbc_url === "jdbc:mysql://localhost:53306/UHRWERK_METASTORE")
-
     assert(tables.head.getArea === "processing")
+    assert(tables.head.getDependencies() === null)
 
 
   }
 
+  "Given a complete dag yaml with errors" should "throw errors" in {
 
+    //The following should throw an error, because there is a field misspelled (xuser instead of user)
+    assertThrows[org.yaml.snakeyaml.error.YAMLException] {
+      val completePath = Paths.get(getClass.getResource("/config/complete_test_dag_field_misspelled.yml").getPath)
+      val complete = ConfigReader.readComplete(completePath)
+    }
+    //The following should throw an error, because there is a type mismatch (bulk_size is float instead of int)
+    assertThrows[org.yaml.snakeyaml.constructor.ConstructorException] {
+      val completePath = Paths.get(getClass.getResource("/config/complete_test_dag_type_mismatch.yml").getPath)
+      val complete = ConfigReader.readComplete(completePath)
+    }
+    //The following should throw an error, because there is a wrong indent as jdbc_url
+    assertThrows[org.yaml.snakeyaml.parser.ParserException] {
+      val completePath = Paths.get(getClass.getResource("/config/complete_test_dag_wrong_indent.yml").getPath)
+      val complete = ConfigReader.readComplete(completePath)
+    }
+
+  }
 
   "Given a premade global config it" should "be parsable by the configreader" in {
     val confPath = Paths.get(getClass.getResource("/config/global_test_1.yml").getPath)
@@ -66,6 +83,7 @@ class ConfigReaderTest extends AnyFlatSpec {
       assert(tup._1.getTransform.getType === tup._2)
       assert(tup._1.getConnection_name === "connection_name")
     })
+    assert(deps(3).getTransform.getPartition.getSize === 1)
 
   }
 
