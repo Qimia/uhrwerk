@@ -1,6 +1,5 @@
 package io.qimia.uhrwerk.backend;
 
-import io.qimia.uhrwerk.config.model.Dependency;
 import io.qimia.uhrwerk.config.model.Table;
 import io.qimia.uhrwerk.config.model.Target;
 
@@ -26,4 +25,7 @@ public interface DependencyBackend {
      * @return List of partitions which still need one or more targets written
      */
     public List<TargetNeeded> checkTargetNeeded(Table table, List<LocalDateTime> partitionTimes);
+
+    public Map<LocalDateTime,List<Dependency,List<Target>>> processingPartitions(Long tableId, LocalDateTime star, LocalDateTime end);
+
 }

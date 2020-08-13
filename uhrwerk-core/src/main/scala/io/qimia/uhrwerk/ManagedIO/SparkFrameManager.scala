@@ -4,7 +4,7 @@ import java.nio.file.Paths
 import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.config.model._
-import io.qimia.uhrwerk.config.{ConnectionType, DependencyType}
+import io.qimia.uhrwerk.config.{ConnectionType, PartitionTransformType}
 import io.qimia.uhrwerk.utils.{JDBCTools, TimeTools}
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.lit
@@ -50,7 +50,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         source.getPath,
         startTS)
     } else {
-      loadDataFrameFromFileSystem(startTS, source.getPartitionSize, conn.getConnectionUrl,
+      loadDataFrameFromFileSystem(startTS, source.getPartitionSize, conn.getJdbcUrl,
         source.getPath, source.getFormat, dataFrameReaderOptions)
     }
   }
@@ -125,15 +125,15 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     assert(conn.getName == dependency.getConnectionName)
 
     // aggregates
-    if (startTS.isDefined && dependency.getTypeEnum.equals(DependencyType.AGGREGATE)) {
+    if (startTS.isDefined && dependency.getTypeEnum.equals(PartitionTransformType.AGGREGATE)) {
       val (startTSAgg, endTSExcl) = TimeTools.getRangeFromAggregate(startTS.get, dependency.getPartitionSize, dependency.getPartitionCount)
       loadMoreBatches(conn, dependency, startTSAgg, endTSExcl, dependency.getPartitionSizeDuration)
       // windows
-    } else if (startTS.isDefined && dependency.getTypeEnum.equals(DependencyType.WINDOW)) {
+    } else if (startTS.isDefined && dependency.getTypeEnum.equals(PartitionTransformType.WINDOW)) {
       val (startTSWindow, endTSExcl) = TimeTools.getRangeFromWindow(startTS.get, dependency.getPartitionSize, dependency.getPartitionCount)
       loadMoreBatches(conn, dependency, startTSWindow, endTSExcl, dependency.getPartitionSizeDuration)
     } else {
-      loadDataFrameFromFileSystem(startTS, dependency.getPartitionSize, conn.getConnectionUrl,
+      loadDataFrameFromFileSystem(startTS, dependency.getPartitionSize, conn.getJdbcUrl,
         dependency.getPath(true), dependency.getFormat, dataFrameReaderOptions)
     }
   }
@@ -229,7 +229,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
                       endTSExcl: LocalDateTime,
                       batchDuration: Duration): DataFrame = {
     import sparkSession.implicits._
-    val loc = SparkFrameManager.concatenatePaths(conn.getConnectionUrl, dependency.getPath(true))
+    val loc = SparkFrameManager.concatenatePaths(conn.getJdbcUrl, dependency.getPath(true))
     val df = sparkSession.read.parquet(loc)
     val startRange = TimeTools.dateTimeToPostFix(startTS, batchDuration)
     val endRange = TimeTools.dateTimeToPostFix(endTSExcl, batchDuration)
@@ -269,7 +269,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     } else {
       val fullLocation = getFullLocation(startTS,
         locationTableInfo.getPartitionSize,
-        conn.getConnectionUrl,
+        conn.getJdbcUrl,
         locationTableInfo.getPath)
 
       val writer = frame.write.mode(SaveMode.Append).format(locationTargetInfo.getFormat)
@@ -330,7 +330,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     val dfWriter: DataFrameWriter[Row] = dfWriterWithUserOptions
       .mode(SaveMode.Append)
       .format("jdbc")
-      .option("url", conn.getConnectionUrl)
+      .option("url", conn.getJdbcUrl)
       .option("driver", conn.getJdbcDriver)
       .option("user", conn.getUser)
       .option("password", conn.getPass)

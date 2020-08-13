@@ -3,8 +3,7 @@ package io.qimia.uhrwerk.backend.dao.config;
 import io.qimia.uhrwerk.backend.dao.data.DependencyDAO;
 import io.qimia.uhrwerk.backend.dao.data.SourceDAO;
 import io.qimia.uhrwerk.backend.dao.data.TargetDAO;
-import io.qimia.uhrwerk.config.PartitionTemporalType;
-import io.qimia.uhrwerk.config.model.Dependency;
+import io.qimia.uhrwerk.config.PartitionUnit;
 import io.qimia.uhrwerk.config.model.Source;
 import io.qimia.uhrwerk.config.model.Table;
 import io.qimia.uhrwerk.config.model.Target;
@@ -73,7 +72,7 @@ public class TableDAO {
       res.setArea(record.getString(2));
       res.setVertical(record.getString(3));
       res.setName(record.getString(4));
-      res.setPartitionSizeType(PartitionTemporalType.valueOf(record.getString(5)));
+      res.setPartitionSizeType(PartitionUnit.valueOf(record.getString(5)));
       res.setPartitionSizeInt(record.getInt(6));
       res.setParallelism(record.getInt(7));
       res.setMaxBatches(record.getInt(8));

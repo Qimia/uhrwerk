@@ -5,12 +5,12 @@ import java.time.{Duration, LocalDateTime, LocalTime}
 
 import com.mysql.cj.exceptions.WrongArgumentException
 import io.qimia.uhrwerk.backend.model.BatchTemporalUnit
-import io.qimia.uhrwerk.config.PartitionTemporalType
+import io.qimia.uhrwerk.config.PartitionUnit
 
 import scala.collection.mutable.ListBuffer
 
 object TimeTools {
-  case class DurationTuple(count: Int, durationUnit: PartitionTemporalType)
+  case class DurationTuple(count: Int, durationUnit: PartitionUnit)
 
   /**
    * Checks whether the duration size is days.
@@ -144,9 +144,9 @@ object TimeTools {
 
   def convertDurationStrToTuple(duration: String): DurationTuple = {
     val temporalPart = duration.toCharArray.last.toLower match {
-      case 'm' => PartitionTemporalType.MINUTES
-      case 'h' => PartitionTemporalType.HOURS
-      case 'd' => PartitionTemporalType.DAYS
+      case 'm' => PartitionUnit.MINUTES
+      case 'h' => PartitionUnit.HOURS
+      case 'd' => PartitionUnit.DAYS
       case _ => throw new RuntimeException("Unknown duration format")
     }
     val count = duration.substring(0, duration.length() - 1).toInt

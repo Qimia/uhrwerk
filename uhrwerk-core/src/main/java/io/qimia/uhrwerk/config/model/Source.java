@@ -1,174 +1,125 @@
 package io.qimia.uhrwerk.config.model;
 
-import io.qimia.uhrwerk.config.PartitionTemporalType;
-import io.qimia.uhrwerk.utils.TimeTools;
+import io.qimia.uhrwerk.config.PartitionUnit;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.Objects;
 
 public class Source {
+  Connection connection;
+  String path;
+  PartitionUnit partitionUnit;
+  int partitionSize;
+  String parallelLoadQuery;
+  String parallelLoadColumn;
+  int parallelLoadNum;
+  String selectQuery;
+  String selectColumn;
 
-    private Long id;
-    private Long cfTableId;
-    private Long connectionId;
+  public Connection getConnection() {
+    return connection;
+  }
 
-    private String connectionName = "";
-    private String format = "";
-    private String path = "";
-    private String version = "1";
-    private String partitionSize = "";
-    private Integer partitionSizeInt = 0;
-    private PartitionTemporalType partitionSizeType;
-    private String partitionQuery = "";
-    private String partitionColumn = "";
-    private String selectQuery = "";
-    private String queryColumn  = "";
-    private Integer sparkReaderNumPartitions = 10;
+  public void setConnection(Connection connection) {
+    this.connection = connection;
+  }
 
-    private LocalDateTime createdTS;
-    private LocalDateTime updatedTS;
+  public String getPath() {
+    return path;
+  }
 
-    public Source() {}
+  public void setPath(String path) {
+    this.path = path;
+  }
 
-    public Long getId() {
-        return id;
-    }
+  public PartitionUnit getPartitionUnit() {
+    return partitionUnit;
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public void setPartitionUnit(PartitionUnit partitionUnit) {
+    this.partitionUnit = partitionUnit;
+  }
 
-    public Long getCfTableId() {
-        return cfTableId;
-    }
+  public int getPartitionSize() {
+    return partitionSize;
+  }
 
-    public void setCfTableId(Long cfTableId) {
-        this.cfTableId = cfTableId;
-    }
+  public void setPartitionSize(int partitionSize) {
+    this.partitionSize = partitionSize;
+  }
 
-    public Long getConnectionId() {
-        return connectionId;
-    }
+  public String getParallelLoadQuery() {
+    return parallelLoadQuery;
+  }
 
-    public void setConnectionId(Long connectionId) {
-        this.connectionId = connectionId;
-    }
+  public void setParallelLoadQuery(String parallelLoadQuery) {
+    this.parallelLoadQuery = parallelLoadQuery;
+  }
 
-    public String getConnectionName() {
-        return connectionName;
-    }
+  public String getParallelLoadColumn() {
+    return parallelLoadColumn;
+  }
 
-    public void setConnectionName(String connectionName) {
-        this.connectionName = connectionName;
-    }
+  public void setParallelLoadColumn(String parallelLoadColumn) {
+    this.parallelLoadColumn = parallelLoadColumn;
+  }
 
-    public String getFormat() {
-        return format;
-    }
+  public int getParallelLoadNum() {
+    return parallelLoadNum;
+  }
 
-    public void setFormat(String format) {
-        this.format = format;
-    }
+  public void setParallelLoadNum(int parallelLoadNum) {
+    this.parallelLoadNum = parallelLoadNum;
+  }
 
-    public String getVersion() {
-        return version;
-    }
+  public String getSelectQuery() {
+    return selectQuery;
+  }
 
-    public void setVersion(String version) {
-        this.version = version;
-    }
+  public void setSelectQuery(String selectQuery) {
+    this.selectQuery = selectQuery;
+  }
 
-    public String getPath() {
-        return path;
-    }
+  public String getSelectColumn() {
+    return selectColumn;
+  }
 
-    public Optional<String> getOptionalPath() {
-        return Optional.of(path);
-    }
+  public void setSelectColumn(String selectColumn) {
+    this.selectColumn = selectColumn;
+  }
 
-    public void setPath(String path) {
-        this.path = path;
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Source source = (Source) o;
+    return partitionSize == source.partitionSize &&
+            parallelLoadNum == source.parallelLoadNum &&
+            Objects.equals(connection, source.connection) &&
+            Objects.equals(path, source.path) &&
+            partitionUnit == source.partitionUnit &&
+            Objects.equals(parallelLoadQuery, source.parallelLoadQuery) &&
+            Objects.equals(parallelLoadColumn, source.parallelLoadColumn) &&
+            Objects.equals(selectQuery, source.selectQuery) &&
+            Objects.equals(selectColumn, source.selectColumn);
+  }
 
-    public String getPartitionSize() {
-        return partitionSize;
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(connection, path, partitionUnit, partitionSize, parallelLoadQuery, parallelLoadColumn, parallelLoadNum, selectQuery, selectColumn);
+  }
 
-    public void setPartitionSize(String partitionSize) {
-        this.partitionSize = partitionSize;
-        if (!partitionSize.equals("")) {
-            var tuple = TimeTools.convertDurationStrToTuple(partitionSize);
-            this.partitionSizeInt = tuple.count();
-            this.partitionSizeType = tuple.durationUnit();
-        }
-    }
-
-    public Duration getPartitionSizeDuration() {
-        return TimeTools.convertDurationStrToObj(partitionSize);
-    }
-
-    public Integer getPartitionSizeInt() {
-        return partitionSizeInt;
-    }
-
-    public PartitionTemporalType getPartitionSizeType() {
-        return partitionSizeType;
-    }
-
-    public String getPartitionQuery() {
-        return partitionQuery;
-    }
-
-    public void setPartitionQuery(String partitionQuery) {
-        this.partitionQuery = partitionQuery;
-    }
-
-    public String getPartitionColumn() {
-        return partitionColumn;
-    }
-
-    public void setPartitionColumn(String partitionColumn) {
-        this.partitionColumn = partitionColumn;
-    }
-
-    public String getSelectQuery() {
-        return selectQuery;
-    }
-
-    public void setSelectQuery(String selectQuery) {
-        this.selectQuery = selectQuery;
-    }
-
-    public String getQueryColumn() {
-        return queryColumn;
-    }
-
-    public void setQueryColumn(String queryColumn) {
-        this.queryColumn = queryColumn;
-    }
-
-    public Integer getSparkReaderNumPartitions() {
-        return sparkReaderNumPartitions;
-    }
-
-    public void setSparkReaderNumPartitions(Integer sparkReaderNumPartitions) {
-        this.sparkReaderNumPartitions = sparkReaderNumPartitions;
-    }
-
-    public LocalDateTime getCreatedTS() {
-        return createdTS;
-    }
-
-    public void setCreatedTS(LocalDateTime createdTS) {
-        this.createdTS = createdTS;
-    }
-
-    public LocalDateTime getUpdatedTS() {
-        return updatedTS;
-    }
-
-    public void setUpdatedTS(LocalDateTime updatedTS) {
-        this.updatedTS = updatedTS;
-    }
+  @Override
+  public String toString() {
+    return "Source{" +
+            "connection=" + connection +
+            ", path='" + path + '\'' +
+            ", partitionUnit=" + partitionUnit +
+            ", partitionSize=" + partitionSize +
+            ", parallelLoadQuery='" + parallelLoadQuery + '\'' +
+            ", parallelLoadColumn='" + parallelLoadColumn + '\'' +
+            ", parallelLoadNum=" + parallelLoadNum +
+            ", selectQuery='" + selectQuery + '\'' +
+            ", selectColumn='" + selectColumn + '\'' +
+            '}';
+  }
 }

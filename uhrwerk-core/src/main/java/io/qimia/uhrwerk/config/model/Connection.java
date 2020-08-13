@@ -2,149 +2,165 @@ package io.qimia.uhrwerk.config.model;
 
 import io.qimia.uhrwerk.config.ConnectionType;
 
-import java.time.LocalDateTime;
+import java.util.Objects;
 
 public class Connection {
 
-    private Long id;
+  String name;
+  ConnectionType type;
+  String path;
+  String jdbcUrl;
+  String jdbcDriver;
+  String jdbcUser;
+  String jdbcPass;
+  String awsAccessKeyID;
+  String awsSecretAccessKey;
+  String version;
 
-    private String name = "";
-    private String type = "";
-    private String connectionUrl = "";
-    private String jdbcDriver = "";
-    private String user = "";
-    private String pass = "";
-    private String cloudId = "";
-    private String cloudPass = "";
-    private String cloudRegion = "";
-    private String version = "1";
+  public String getName() {
+    return name;
+  }
 
-    private LocalDateTime createdTS;
-    private LocalDateTime updatedTS;
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    @Override
-    public String toString() {
-        return "Connection{" +
-                "name='" + name + '\'' +
-                ", type='" + type + '\'' +
-                ", jdbcUrl='" + connectionUrl + '\'' +
-                ", jdbcDriver='" + jdbcDriver + '\'' +
-                ", user='" + user + '\'' +
-                ", pass='" + pass + '\'' +
-                ", cloudId='" + cloudId + '\'' +
-                ", cloudPass='" + cloudPass + '\'' +
-                ", cloudRegion='" + cloudRegion + '\'' +
-                ", version=" + version +
-                '}';
-    }
+  public ConnectionType getType() {
+    return type;
+  }
 
-    public Connection() {}
+  public void setType(ConnectionType type) {
+    this.type = type;
+  }
 
-    public Long getId() {
-        return id;
-    }
+  public String getJdbcUrl() {
+    return jdbcUrl;
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public void setJdbcUrl(String jdbcUrl) {
+    this.jdbcUrl = jdbcUrl;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getJdbcDriver() {
+    return jdbcDriver;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setJdbcDriver(String jdbcDriver) {
+    this.jdbcDriver = jdbcDriver;
+  }
 
-    public String getType() {
-        return type;
-    }
+  public String getJdbcUser() {
+    return jdbcUser;
+  }
 
-    public ConnectionType getTypeEnum() {
-        return ConnectionType.getConnectionType(type);
-    }
+  public void setJdbcUser(String jdbcUser) {
+    this.jdbcUser = jdbcUser;
+  }
 
-    public void setType(String type) {
-        this.type = type;
-    }
+  public String getJdbcPass() {
+    return jdbcPass;
+  }
 
-    public String getConnectionUrl() {
-        return connectionUrl;
-    }
+  public void setJdbcPass(String jdbcPass) {
+    this.jdbcPass = jdbcPass;
+  }
 
-    public void setConnectionUrl(String connectionUrl) {
-        this.connectionUrl = connectionUrl;
-    }
+  public String getAwsAccessKeyID() {
+    return awsAccessKeyID;
+  }
 
-    public String getUser() {
-        return user;
-    }
+  public void setAwsAccessKeyID(String awsAccessKeyID) {
+    this.awsAccessKeyID = awsAccessKeyID;
+  }
 
-    public void setUser(String user) {
-        this.user = user;
-    }
+  public String getAwsSecretAccessKey() {
+    return awsSecretAccessKey;
+  }
 
-    public String getPass() {
-        return pass;
-    }
+  public void setAwsSecretAccessKey(String awsSecretAccessKey) {
+    this.awsSecretAccessKey = awsSecretAccessKey;
+  }
 
-    public void setPass(String pass) {
-        this.pass = pass;
-    }
+  public String getPath() {
+    return path;
+  }
 
-    public String getCloudId() {
-        return cloudId;
-    }
+  public void setPath(String path) {
+    this.path = path;
+  }
 
-    public void setCloudId(String cloudId) {
-        this.cloudId = cloudId;
-    }
+  public String getVersion() {
+    return version;
+  }
 
-    public String getCloudPass() {
-        return cloudPass;
-    }
+  public void setVersion(String version) {
+    this.version = version;
+  }
 
-    public void setCloudPass(String cloudPass) {
-        this.cloudPass = cloudPass;
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Connection that = (Connection) o;
+    return name.equals(that.name)
+        && type == that.type
+        && Objects.equals(jdbcUrl, that.jdbcUrl)
+        && Objects.equals(jdbcDriver, that.jdbcDriver)
+        && Objects.equals(jdbcUser, that.jdbcUser)
+        && Objects.equals(jdbcPass, that.jdbcPass)
+        && Objects.equals(awsAccessKeyID, that.awsAccessKeyID)
+        && Objects.equals(awsSecretAccessKey, that.awsSecretAccessKey)
+        && path.equals(that.path)
+        && version.equals(that.version);
+  }
 
-    public String getCloudRegion() {
-        return cloudRegion;
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        name,
+        type,
+        jdbcUrl,
+        jdbcDriver,
+        jdbcUser,
+        jdbcPass,
+        awsAccessKeyID,
+        awsSecretAccessKey,
+        path,
+        version);
+  }
 
-    public void setCloudRegion(String cloudRegion) {
-        this.cloudRegion = cloudRegion;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public String getJdbcDriver() {
-        return jdbcDriver;
-    }
-
-    public void setJdbcDriver(String jdbcDriver) {
-        this.jdbcDriver = jdbcDriver;
-    }
-
-    public LocalDateTime getCreatedTS() {
-        return createdTS;
-    }
-
-    public void setCreatedTS(LocalDateTime createdTS) {
-        this.createdTS = createdTS;
-    }
-
-    public LocalDateTime getUpdatedTS() {
-        return updatedTS;
-    }
-
-    public void setUpdatedTS(LocalDateTime updatedTS) {
-        this.updatedTS = updatedTS;
-    }
+  @Override
+  public String toString() {
+    return "Connection{"
+        + "name='"
+        + name
+        + '\''
+        + ", type="
+        + type
+        + ", jdbcUrl='"
+        + jdbcUrl
+        + '\''
+        + ", jdbcDriver='"
+        + jdbcDriver
+        + '\''
+        + ", jdbcUser='"
+        + jdbcUser
+        + '\''
+        + ", jdbcPass='"
+        + jdbcPass
+        + '\''
+        + ", awsAccessKeyID='"
+        + awsAccessKeyID
+        + '\''
+        + ", awsSecretAccessKey='"
+        + awsSecretAccessKey
+        + '\''
+        + ", path='"
+        + path
+        + '\''
+        + ", version='"
+        + version
+        + '\''
+        + '}';
+  }
 }

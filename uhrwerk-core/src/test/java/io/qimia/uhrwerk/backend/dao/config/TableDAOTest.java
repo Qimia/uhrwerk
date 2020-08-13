@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.backend.dao.config;
 
-import io.qimia.uhrwerk.config.PartitionTemporalType;
+import io.qimia.uhrwerk.config.PartitionUnit;
 import io.qimia.uhrwerk.config.model.Table;
 import org.junit.jupiter.api.Test;
 
@@ -32,7 +32,7 @@ class TableDAOTest {
     table.setArea("test-area");
     table.setVertical("test-vertical");
     table.setName("test-table");
-    table.setPartitionSizeType(PartitionTemporalType.MINUTES);
+    table.setPartitionSizeType(PartitionUnit.MINUTES);
     table.setPartitionSizeInt(15);
     table.setParallelism(8);
     table.setMaxBatches(96);

@@ -1,51 +1,17 @@
 package io.qimia.uhrwerk.config.model;
 
-import java.time.LocalDateTime;
+import java.util.Objects;
 
 public class Target {
+  Connection connection;
+  String format;
 
-  private long id;
-  private long tableId;
-  private long connectionId;
-
-  private String connectionName = "";
-  private String format = "";
-
-  private LocalDateTime createdTS;
-  private LocalDateTime updatedTS;
-
-  public Target() {}
-
-  public long getId() {
-    return id;
+  public Connection getConnection() {
+    return connection;
   }
 
-  public void setId(long id) {
-    this.id = id;
-  }
-
-  public long getTableId() {
-    return tableId;
-  }
-
-  public void setTableId(long tableId) {
-    this.tableId = tableId;
-  }
-
-  public long getConnectionId() {
-    return connectionId;
-  }
-
-  public void setConnectionId(long connectionId) {
-    this.connectionId = connectionId;
-  }
-
-  public String getConnectionName() {
-    return connectionName;
-  }
-
-  public void setConnectionName(String connectionName) {
-    this.connectionName = connectionName;
+  public void setConnection(Connection connection) {
+    this.connection = connection;
   }
 
   public String getFormat() {
@@ -56,19 +22,24 @@ public class Target {
     this.format = format;
   }
 
-  public LocalDateTime getCreatedTS() {
-    return createdTS;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Target target = (Target) o;
+    return Objects.equals(connection, target.connection) && Objects.equals(format, target.format);
   }
 
-  public void setCreatedTS(LocalDateTime createdTS) {
-    this.createdTS = createdTS;
+  @Override
+  public int hashCode() {
+    return Objects.hash(connection, format);
   }
 
-  public LocalDateTime getUpdatedTS() {
-    return updatedTS;
-  }
-
-  public void setUpdatedTS(LocalDateTime updatedTS) {
-    this.updatedTS = updatedTS;
+  @Override
+  public String toString() {
+    return "Target{" +
+            "connection=" + connection +
+            ", format='" + format + '\'' +
+            '}';
   }
 }

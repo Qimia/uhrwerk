@@ -1,14 +1,20 @@
 USE UHRWERK_METASTORE;
 CREATE TABLE IF NOT EXISTS CONNECTION
 (
-    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
-    connection_name VARCHAR(256)                        NOT NULL,
-    connection_type VARCHAR(256)                        NOT NULL,
-    connection_url  VARCHAR(512)                        NOT NULL,
-    version         VARCHAR(256)                        NOT NULL,
-    created_ts      TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
-    updated_ts      TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
-    description     VARCHAR(512)                        NULL
+    id                    BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name                  VARCHAR(256)                           NOT NULL,
+    type                  enum ('FS', 'JDBC', 'S3', 'GC', 'ABS') NOT NULL,
+    path                  VARCHAR(512)                           NOT NULL,
+    jdbc_url              VARCHAR(512)                           NOT NULL,
+    jdbc_driver           VARCHAR(512)                           NOT NULL,
+    jdbc_user             VARCHAR(512)                           NOT NULL,
+    jdbc_pass             VARCHAR(512)                           NOT NULL,
+    aws_access_key_id     VARCHAR(512)                           NOT NULL,
+    aws_secret_access_key VARCHAR(512)                           NOT NULL,
+    version               VARCHAR(256)                           NOT NULL,
+    created_ts            TIMESTAMP DEFAULT CURRENT_TIMESTAMP    NULL,
+    updated_ts            TIMESTAMP DEFAULT CURRENT_TIMESTAMP    NULL ON UPDATE CURRENT_TIMESTAMP,
+    description           VARCHAR(512)                           NULL
 );
 
 create table if not exists TABLE_

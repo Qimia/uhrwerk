@@ -1,7 +1,6 @@
 package io.qimia.uhrwerk.backend.dao.data;
 
-import io.qimia.uhrwerk.config.DependencyType;
-import io.qimia.uhrwerk.config.model.Dependency;
+import io.qimia.uhrwerk.config.PartitionTransformType;
 import io.qimia.uhrwerk.config.model.Target;
 
 import java.sql.PreparedStatement;
@@ -9,7 +8,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class DependencyDAO {
@@ -31,7 +29,7 @@ public class DependencyDAO {
     insert.setLong(1, dependency.getTableId());
     insert.setLong(2, dependency.getTargetId());
     // FIXME getDependencyType need to be added to the table
-    insert.setString(3, DependencyType.getDependencyType(dependency.getType()).name());
+    insert.setString(3, PartitionTransformType.valueOf(dependency.getType()).name());
     insert.setString(4, dependency.getBatchTemporalUnit().name());
     insert.setInt(5, dependency.getPartitionSizeInt());
   }

@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.utils
 
 import java.time.temporal.ChronoUnit
 
-import io.qimia.uhrwerk.config.{ConnectionType, DependencyType}
+import io.qimia.uhrwerk.config.{ConnectionType, PartitionTransformType}
 import io.qimia.uhrwerk.config.model.{Global, Table}
 
 object ConfigProcess {
@@ -122,7 +122,7 @@ object ConfigProcess {
     val targetPartitionSize = in.getPartitionSizeDuration
     if (in.dependenciesSet()) {
       val aggDependencies = in.getDependencies.filter(d =>
-        d.getTypeEnum == DependencyType.AGGREGATE)
+        d.getTypeEnum == PartitionTransformType.AGGREGATE)
       aggDependencies.foreach(ad => {
         val aggSize = ad.getPartitionSize
         val aggCount: Int = ad.getPartitionCount
@@ -194,7 +194,7 @@ object ConfigProcess {
       val dependencies = in.getDependencies
       dependencies.foreach(d => {
         val partSize = d.getPartitionSize
-        if (d.getTypeEnum != DependencyType.AGGREGATE) {
+        if (d.getTypeEnum != PartitionTransformType.AGGREGATE) {
           if (partSize == "") {
             d.setPartitionSize(batchSize)
           }
@@ -226,14 +226,14 @@ object ConfigProcess {
       val dependencies = in.getDependencies
       dependencies.foreach(d => {
         d.getTypeEnum match {
-          case DependencyType.ONEONONE => {
+          case PartitionTransformType.ONEONONE => {
             if (d.getPartitionSizeDuration != targetPartitionSize) {
               System.err.println(
                 "Dependency has bad partition size wrt. target partition size")
               return false
             }
           }
-          case DependencyType.WINDOW => {
+          case PartitionTransformType.WINDOW => {
             if (d.getPartitionSizeDuration != targetPartitionSize) {
               System.err.println(
                 "Dependency has bad partition size wrt. target partition size")

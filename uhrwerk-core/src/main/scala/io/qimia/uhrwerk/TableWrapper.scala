@@ -6,7 +6,7 @@ import java.util.concurrent.Executors
 import io.qimia.uhrwerk.ManagedIO.FrameManager
 import io.qimia.uhrwerk.MetaStore.{DependencyFailedOld, DependencySuccess}
 import io.qimia.uhrwerk.TableWrapper.TaskInput
-import io.qimia.uhrwerk.config.{ConnectionType, DependencyType}
+import io.qimia.uhrwerk.config.{ConnectionType, PartitionTransformType}
 import io.qimia.uhrwerk.config.model.{Connection, Dependency}
 import io.qimia.uhrwerk.utils.TimeTools
 import org.apache.spark.sql.DataFrame
@@ -198,7 +198,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
       if (store.tableConfig.dependenciesSet) {
         val dependenciesByVirtual =
           store.tableConfig.getDependencies.groupBy(dep =>
-            dep.getTypeEnum != DependencyType.ONEONONE)
+            dep.getTypeEnum != PartitionTransformType.ONEONONE)
         dependenciesByVirtual
           .map(keyDeps =>
             if (keyDeps._1) {
@@ -330,8 +330,8 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
     }
 
     dependency.getTypeEnum match {
-      case DependencyType.AGGREGATE => checkAggregateStep()
-      case DependencyType.WINDOW    => checkWindowStep()
+      case PartitionTransformType.AGGREGATE => checkAggregateStep()
+      case PartitionTransformType.WINDOW    => checkWindowStep()
       case _ => {
         System.err.println("Error: trying not implemented virtual step")
         throw new NotImplementedError
