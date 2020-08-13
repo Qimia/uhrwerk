@@ -3,6 +3,8 @@ package io.qimia.uhrwerk.backend.dao.config;
 import io.qimia.uhrwerk.backend.dao.data.DependencyDAO;
 import io.qimia.uhrwerk.backend.dao.data.SourceDAO;
 import io.qimia.uhrwerk.backend.dao.data.TargetDAO;
+import io.qimia.uhrwerk.backend.service.dependency.TableDependencyService;
+import io.qimia.uhrwerk.backend.service.dependency.TablePartitionResultSet;
 import io.qimia.uhrwerk.config.PartitionUnit;
 import io.qimia.uhrwerk.config.model.Source;
 import io.qimia.uhrwerk.config.model.Table;
@@ -12,13 +14,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 
-public class TableDAO {
+public class TableDAO implements TableDependencyService {
   private static String INSERT =
-      "INSERT INTO TABLE_(area, vertical, table_name, batch_temporal_unit, batch_size, parallelism, max_partitions, version) VALUES(?,?,?,?,?,?,?,?)";
-
-  private static String SELECT_BY_ID =
-      "SELECT id, area, vertical, table_name, batch_temporal_unit, batch_size, parallelism, max_partitions, version, created_ts, updated_ts FROM TABLE_ WHERE id = ?";
+      "INSERT INTO TABLE_(area, vertical, name, partition_unit, partition_size, parallelism, max_bulk_size, version) VALUES(?,?,?,?,?,?,?,?)";
 
   public static Long save(java.sql.Connection db, Table table) throws SQLException {
     Long tableId = null;
@@ -27,10 +27,10 @@ public class TableDAO {
     insert.setString(1, table.getArea());
     insert.setString(2, table.getVertical());
     insert.setString(3, table.getName());
-    insert.setString(4, table.getPartitionSizeType().name());
-    insert.setInt(5, table.getPartitionSizeInt());
+    insert.setString(4, table.getPartitionUnit().name());
+    insert.setInt(5, table.getPartitionSize());
     insert.setInt(6, table.getParallelism());
-    insert.setInt(7, table.getMaxBatches());
+    insert.setInt(7, table.getMaxBulkSize());
     insert.setString(8, table.getVersion());
     insert.executeUpdate();
     ResultSet generatedKeys = insert.getGeneratedKeys();
@@ -61,7 +61,7 @@ public class TableDAO {
   }
 
   public static Table get(java.sql.Connection db, Long id) throws SQLException {
-    PreparedStatement select = db.prepareStatement(SELECT_BY_ID);
+    PreparedStatement select = db.prepareStatement("SELECT * FROM TABLE_ WHERE id=1");
     select.setLong(1, id);
 
     ResultSet record = select.executeQuery();
@@ -82,6 +82,11 @@ public class TableDAO {
       return res;
     }
 
+    return null;
+  }
+
+  @Override
+  public TablePartitionResultSet processingPartitions(Table table, LocalDateTime[] partitionTs) {
     return null;
   }
 }

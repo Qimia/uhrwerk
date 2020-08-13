@@ -97,7 +97,7 @@ public class ConnectionDAO {
           + "         JOIN CONNECTION cn ON tr.connection_id = cn.id\n"
           + "WHERE tl.area = ?\n"
           + "  AND tl.vertical = ?\n"
-          + "  AND tl.table_name = ?\n"
+          + "  AND tl.name = ?\n"
           + "  AND tl.version = ?\n"
           + "  AND tr.format = ?";
 

@@ -10,17 +10,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TargetDAO {
-  private static String INSERT =
-      "INSERT INTO TARGET(table_id, connection_id, format) VALUES (?,?,?)";
+  private static String INSERT_TMP =
+      "INSERT INTO TARGET (table_id, connection_id, format)\n"
+          + "SELECT %d, cn.id,'%s'\n"
+          + " FROM CONNECTION cn\n"
+          + " WHERE cn.name = ?";
 
   private static String SELECT_BY_ID =
       "SELECT id, table_id, connection_id, format, created_ts, updated_ts FROM TARGET WHERE id = ?";
 
-  public static Long save(java.sql.Connection db, Target target) throws SQLException {
-    PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-    insert.setLong(1, target.getTableId());
-    insert.setLong(2, target.getConnectionId());
-    insert.setString(3, target.getFormat());
+  public static Long save(java.sql.Connection db, Target target, Long tableId) throws SQLException {
+    String insertStr = String.format(INSERT_TMP, tableId, target.getFormat());
+    PreparedStatement insert = db.prepareStatement(insertStr, Statement.RETURN_GENERATED_KEYS);
+    insert.setString(1, target.getConnection().getName());
     insert.executeUpdate();
     ResultSet generatedKeys = insert.getGeneratedKeys();
     if (generatedKeys.next()) return generatedKeys.getLong(1);

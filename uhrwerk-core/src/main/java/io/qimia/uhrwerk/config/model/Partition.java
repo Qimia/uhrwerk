@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.config.model;
 
+import io.qimia.uhrwerk.config.PartitionUnit;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -10,7 +12,8 @@ public class Partition {
   String day;
   String hour;
   String minute;
-  //unit size
+  PartitionUnit partitionUnit;
+  int partitionSize;
 
   public LocalDateTime getPartitionTs() {
     return partitionTs;
@@ -60,21 +63,66 @@ public class Partition {
     this.minute = minute;
   }
 
+  public PartitionUnit getPartitionUnit() {
+    return partitionUnit;
+  }
+
+  public void setPartitionUnit(PartitionUnit partitionUnit) {
+    this.partitionUnit = partitionUnit;
+  }
+
+  public int getPartitionSize() {
+    return partitionSize;
+  }
+
+  public void setPartitionSize(int partitionSize) {
+    this.partitionSize = partitionSize;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Partition partition = (Partition) o;
-    return partitionTs.equals(partition.partitionTs)
+    return partitionSize == partition.partitionSize
+        && Objects.equals(partitionTs, partition.partitionTs)
         && Objects.equals(year, partition.year)
         && Objects.equals(month, partition.month)
         && Objects.equals(day, partition.day)
         && Objects.equals(hour, partition.hour)
-        && Objects.equals(minute, partition.minute);
+        && Objects.equals(minute, partition.minute)
+        && partitionUnit == partition.partitionUnit;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(partitionTs, year, month, day, hour, minute);
+    return Objects.hash(partitionTs, year, month, day, hour, minute, partitionUnit, partitionSize);
+  }
+
+  @Override
+  public String toString() {
+    return "Partition{"
+        + "partitionTs="
+        + partitionTs
+        + ", year='"
+        + year
+        + '\''
+        + ", month='"
+        + month
+        + '\''
+        + ", day='"
+        + day
+        + '\''
+        + ", hour='"
+        + hour
+        + '\''
+        + ", minute='"
+        + minute
+        + '\''
+        + ", partitionUnit="
+        + partitionUnit
+        + ", partitionSize="
+        + partitionSize
+        + '}';
   }
 }
