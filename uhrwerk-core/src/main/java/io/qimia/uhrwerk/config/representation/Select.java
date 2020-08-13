@@ -12,7 +12,7 @@ public class Select {
         return query;
     }
 
-    public void setQuery(String unit) {
+    public void setQuery(String query) {
         this.query = query;
     }
 
@@ -20,7 +20,7 @@ public class Select {
         return column;
     }
 
-    public void setColumn(String columns) {
+    public void setColumn(String column) {
         this.column = column;
     }
 
