@@ -1,22 +1,30 @@
-name: dump_a_table
-parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
 area: staging
 vertical: sourcedb_1
-partitionSize: "6h"
-version: 1
+table: dump_a_table
+version: "1.0"
+parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+max_bulk_size: 12
+partition:
+  unit: "hours"
+  size: 4
 
 sources:
-  - connectionName: connection_name
-    path: staging_source_table  # On DB
-    format: "jdbc"
-    version: 1
-    partitionSize: "6h"
-    partitionQuery: "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'"
-    partitionColumn: "id"
-    selectQuery: "table_test_2_select_query.sql"
-    queryColumn: "created_at"
-    sparkReaderNumPartitions: 40
+- connection_name: connection_name
+  path: staging_source_table  # On DB
+  format: "jdbc"
+  version: 1
+  partition:
+    unit: "hours"
+    size: 6
+  parallel_load:
+    query: "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'"
+    column: "id"
+    num: 40
+  select:
+    query: "table_test_2_select_query.sql"
+    column: "created_at"
+
 
 targets:
-  - connectionName: connection_name2
-    format: "jdbc"
+- connection_name: connection_name2
+  format: "jdbc"

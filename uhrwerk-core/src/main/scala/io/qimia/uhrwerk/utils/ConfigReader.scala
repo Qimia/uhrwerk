@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.utils
 import java.io.{FileInputStream, FileNotFoundException, IOException}
 import java.nio.file.Path
 
-import io.qimia.uhrwerk.config.model.{Global, Table}
+import io.qimia.uhrwerk.config.representation.{Complete, Global, Table}
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.representer.Representer
@@ -12,6 +12,21 @@ import scala.io.{BufferedSource, Source}
 
 
 object ConfigReader {
+
+  /**
+    * Read a complete dag yaml file
+    * @param path path to the yaml file
+    * @return the complete dag object
+    */
+  def readComplete(path: Path): Complete = {
+    val fileStream   = new FileInputStream(path.toFile)
+    val representer = new Representer
+    representer.getPropertyUtils.setSkipMissingProperties(true)
+    val yaml   = new Yaml(new Constructor(classOf[Complete]), representer)
+    val config = yaml.load(fileStream).asInstanceOf[Complete]
+    config
+  }
+
 
   /**
    * Read a global-configuration yaml file
@@ -38,7 +53,7 @@ object ConfigReader {
     representer.getPropertyUtils.setSkipMissingProperties(true)
     val yaml   = new Yaml(new Constructor(classOf[Table]), representer)
     val config = yaml.load(fileStream).asInstanceOf[Table]
-    if (config.sourcesSet()) {
+    /**if (config.sourcesSet()) {
       val sources = config.getSources
       sources.foreach(s => {
         val partQuery = s.getPartitionQuery
@@ -55,7 +70,7 @@ object ConfigReader {
         val selQuery = s.getSelectQuery
         s.setSelectQuery(processQueryConfigString(selQuery, path))
       })
-    }
+    }**/
     config
   }
 
@@ -86,6 +101,7 @@ object ConfigReader {
   /**
    * Retrieve sql if needed or return sql
    */
+
   private[this] def processQueryConfigString(query: String, configPath: Path): String = {
     if (query.endsWith(".sql")) {
       readQueryFile(configPath.resolveSibling(query).toString)
