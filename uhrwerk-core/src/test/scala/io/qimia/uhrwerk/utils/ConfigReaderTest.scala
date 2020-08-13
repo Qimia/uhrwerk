@@ -12,8 +12,8 @@ class ConfigReaderTest extends AnyFlatSpec {
     val completePath = Paths.get(getClass.getResource("/config/complete_test_dag.yml").getPath)
     val complete = ConfigReader.readComplete(completePath)
 
-    val connections = complete.getConfig.getConnections
-    val metastore = complete.getUhrwerk.getMetastore
+    val connections = complete.getGlobal.getConfig.getConnections
+    val metastore = complete.getGlobal.getUhrwerk.getMetastore
     val tables = complete.getTables
 
     val predictedConnectionNames = "mysql1" :: "s3_test" :: "local_filesystem_test" :: Nil
