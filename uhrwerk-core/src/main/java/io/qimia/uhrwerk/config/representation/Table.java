@@ -82,6 +82,10 @@ public class Table extends Representation{
         this.sources = sources;
     }
 
+    public boolean sourcesSet() {
+        return sources != null;
+    }
+
     public Target[] getTargets() {
         return targets;
     }
@@ -97,5 +101,10 @@ public class Table extends Representation{
     public void setDependencies(Dependency[] dependencies) {
         this.dependencies = dependencies;
     }
+
+    public boolean dependenciesSet() {
+        return dependencies != null;
+    }
+
 
 }
