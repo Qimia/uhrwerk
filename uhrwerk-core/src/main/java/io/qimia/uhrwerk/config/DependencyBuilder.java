@@ -10,7 +10,7 @@ public class DependencyBuilder {
     private String table;
     private String format;
     private String version;
-    private Transform[] transform;
+    private Transform transform;
 
     public DependencyBuilder withConnectionName(String connectionName) {
         this.connectionName = connectionName;
@@ -42,7 +42,7 @@ public class DependencyBuilder {
         return this;
     }
 
-    public DependencyBuilder withTransform(Transform[] transform) {
+    public DependencyBuilder withTransform(Transform transform) {
         this.transform = transform;
         return this;
     }

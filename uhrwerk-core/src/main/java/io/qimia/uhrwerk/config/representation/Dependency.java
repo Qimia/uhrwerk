@@ -9,7 +9,7 @@ public class Dependency {
     private String table;
     private String format;
     private String version;
-    private Transform[] transform;
+    private Transform transform;
 
     public Dependency() {}
 
@@ -61,11 +61,11 @@ public class Dependency {
         this.version = version;
     }
 
-    public Transform[] getTransform() {
+    public Transform getTransform() {
         return transform;
     }
 
-    public void setTransform(Transform[] transform) {
+    public void setTransform(Transform transform) {
         this.transform = transform;
     }
 }
