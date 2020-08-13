@@ -1,6 +1,8 @@
 package io.qimia.uhrwerk.config.representation;
 
 
+import io.qimia.uhrwerk.config.ConfigException;
+
 public class Source extends Representation{
 
     private String connection_name;
@@ -12,7 +14,6 @@ public class Source extends Representation{
     private Select select;
 
     public Source() {}
-
 
     public String getConnection_name() {
         return connection_name;
@@ -70,4 +71,38 @@ public class Source extends Representation{
         this.select = select;
     }
 
+    @Override
+    public void validate(String path){
+        path += "source/";
+        if(connection_name == null){
+            throw new ConfigException("Missing field: " + path + "connection_name");
+        }
+        if(this.path == null){
+            throw new ConfigException("Missing field: " + path + "path");
+        }
+        if(format == null){
+            throw new ConfigException("Missing field: " + path + "format");
+        }
+        if(version == null){
+            throw new ConfigException("Missing field: " + path + "version");
+        }
+        if(partition == null){
+            throw new ConfigException("Missing field: " + path + "partition");
+        }
+        else{
+            partition.validate(path);
+        }
+        if(parallel_load == null){
+            throw new ConfigException("Missing field: " + path + "parallel_load");
+        }
+        else{
+            parallel_load.validate(path);
+        }
+        if(select == null){
+            throw new ConfigException("Missing field: " + path + "select");
+        }
+        else{
+            select.validate(path);
+        }
+    }
 }

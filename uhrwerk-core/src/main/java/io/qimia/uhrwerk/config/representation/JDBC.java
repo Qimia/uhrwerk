@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
+import io.qimia.uhrwerk.config.ConfigException;
+
 public class JDBC extends Representation{
     private String jdbc_url;
     private String jdbc_driver;
@@ -38,5 +40,22 @@ public class JDBC extends Representation{
 
     public void setPass(String pass) {
         this.pass = pass;
+    }
+
+    @Override
+    public void validate(String path){
+        path += "jdbc/";
+        if(jdbc_url == null){
+            throw new ConfigException("Missing field: " + path + "jdbc_url");
+        }
+        if(jdbc_driver == null){
+            throw new ConfigException("Missing field: " + path + "jdbc_driver");
+        }
+        if(user == null){
+            throw new ConfigException("Missing field: " + path + "user");
+        }
+        if(pass == null){
+            throw new ConfigException("Missing field: " + path + "pass");
+        }
     }
 }

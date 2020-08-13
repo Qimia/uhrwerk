@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
+import io.qimia.uhrwerk.config.ConfigException;
+
 public class S3 extends Representation{
     private String path;
     private String secret_id;
@@ -29,5 +31,19 @@ public class S3 extends Representation{
 
     public void setSecret_key(String secret_key) {
         this.secret_key = secret_key;
+    }
+
+    @Override
+    public void validate(String path){
+        path += "s3/";
+        if(path == null){
+            throw new ConfigException("Missing field: " + path + "path");
+        }
+        if(secret_id == null){
+            throw new ConfigException("Missing field: " + path + "secret_id");
+        }
+        if(secret_key == null){
+            throw new ConfigException("Missing field: " + path + "secret_key");
+        }
     }
 }

@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
+import io.qimia.uhrwerk.config.ConfigException;
+
 public class Dependency extends Representation{
 
     private String connection_name;
@@ -66,5 +68,34 @@ public class Dependency extends Representation{
 
     public void setTransform(Transform transform) {
         this.transform = transform;
+    }
+
+    @Override
+    public void validate(String path){
+        path += "dependency/";
+        if(connection_name == null){
+            throw new ConfigException("Missing field: " + path + "connection_name");
+        }
+        if(area == null){
+            throw new ConfigException("Missing field: " + path + "area");
+        }
+        if(vertical == null){
+            throw new ConfigException("Missing field: " + path + "vertical");
+        }
+        if(table == null){
+            throw new ConfigException("Missing field: " + path + "table");
+        }
+        if(format == null){
+            throw new ConfigException("Missing field: " + path + "format");
+        }
+        if(version == null){
+            throw new ConfigException("Missing field: " + path + "version");
+        }
+        if(transform == null){
+            throw new ConfigException("Missing field: " + path + "transform");
+        }
+        else {
+            transform.validate(path);
+        }
     }
 }

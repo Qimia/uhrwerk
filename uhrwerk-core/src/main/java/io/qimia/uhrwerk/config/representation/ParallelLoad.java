@@ -1,6 +1,8 @@
 package io.qimia.uhrwerk.config.representation;
 
 
+import io.qimia.uhrwerk.config.ConfigException;
+
 public class ParallelLoad extends Representation{
 
     private String query;
@@ -33,4 +35,17 @@ public class ParallelLoad extends Representation{
         this.num = num;
     }
 
+    @Override
+    public void validate(String path){
+        path += "parallel_load/";
+        if(query == null){
+            throw new ConfigException("Missing field: " + path + "query");
+        }
+        if(column == null){
+            throw new ConfigException("Missing field: " + path + "column");
+        }
+        if(num == 0){
+            throw new ConfigException("Missing field: " + path + "num");
+        }
+    }
 }
