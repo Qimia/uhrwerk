@@ -102,6 +102,8 @@ public class Table extends Representation{
         this.dependencies = dependencies;
     }
 
+    @Override
+    public void validate(String path){
 
-
+    }
 }
