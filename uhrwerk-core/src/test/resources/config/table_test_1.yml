@@ -9,7 +9,21 @@ partition:
   size: 4
 
 sources:
-  - connection_name: connection_name
+  - connection_name: connection_name1
+    path: staging_source_table  # On DB
+    format: "jdbc"
+    version: 1
+    partition:
+      unit: "hours"
+      size: 6
+    parallel_load:
+      query: "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'"
+      column: "id"
+      num: 8
+    select:
+      query: "table_test_2_select_query.sql"
+      column: "created_at"
+  - connection_name: connection_name2
     path: staging_source_table  # On DB
     format: "jdbc"
     version: 1
