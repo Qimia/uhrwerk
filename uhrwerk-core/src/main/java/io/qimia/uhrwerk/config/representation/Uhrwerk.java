@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.config.representation;
 
-public class Uhrwerk {
+public class Uhrwerk extends Representation{
     private Metastore metastore;
 
     public Uhrwerk() {
@@ -13,4 +13,5 @@ public class Uhrwerk {
     public void setMetastore(Metastore metastore) {
         this.metastore = metastore;
     }
+
 }

@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
 
-public class Select {
+public class Select extends Representation{
 
     private String query;
     private String column;

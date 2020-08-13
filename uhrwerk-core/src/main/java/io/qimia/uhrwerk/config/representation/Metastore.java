@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.config.representation;
 
-public class Metastore {
+public class Metastore extends Representation{
     private String jdbc_url;
     private String jdbc_driver;
     private String user;

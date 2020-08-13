@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.config.representation;
 
-public class Connection {
+public class Connection extends Representation{
     private String name;
     private JDBC jdbc;
     private S3 s3;

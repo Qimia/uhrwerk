@@ -1,7 +1,6 @@
 package io.qimia.uhrwerk.config.representation;
 
-
-public class Dependency {
+public class Dependency extends Representation{
 
     private String connection_name;
     private String area;

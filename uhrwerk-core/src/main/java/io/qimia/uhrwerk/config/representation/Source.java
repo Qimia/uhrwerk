@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
 
-public class Source {
+public class Source extends Representation{
 
     private String connection_name;
     private String path;
@@ -69,4 +69,5 @@ public class Source {
     public void setSelect(Select select) {
         this.select = select;
     }
+
 }

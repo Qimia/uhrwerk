@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
 
-public class Transform {
+public class Transform extends Representation{
 
     private String type;
     private Partition partition;

@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.config.representation;
 
-public class S3 {
+public class S3 extends Representation{
     private String path;
     private String secret_id;
     private String secret_key;

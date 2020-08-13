@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
 
-public class Table {
+public class Table extends Representation{
 
     private String area;
     private String vertical;
@@ -97,4 +97,5 @@ public class Table {
     public void setDependencies(Dependency[] dependencies) {
         this.dependencies = dependencies;
     }
+
 }

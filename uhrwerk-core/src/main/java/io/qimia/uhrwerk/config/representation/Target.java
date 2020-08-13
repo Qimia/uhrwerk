@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
 
-public class Target {
+public class Target extends Representation{
 
     private String connection_name;
     private String format;
@@ -23,6 +23,5 @@ public class Target {
     public void setFormat(String format) {
         this.format = format;
     }
-
 
 }

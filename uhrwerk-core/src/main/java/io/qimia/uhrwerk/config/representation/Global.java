@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.config.representation;
 
-public class Global {
+public class Global extends Representation{
     private Uhrwerk uhrwerk;
     private Config config;
 

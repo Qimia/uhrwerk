@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.config.representation;
 
-public class JDBC {
+public class JDBC extends Representation{
     private String jdbc_url;
     private String jdbc_driver;
     private String user;

@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
 
-public class Partition {
+public class Partition extends Representation{
 
     private String unit;
     private Integer size;

@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.config.representation;
 
-public class File {
+public class File extends Representation{
     private String path;
 
     public File(){}

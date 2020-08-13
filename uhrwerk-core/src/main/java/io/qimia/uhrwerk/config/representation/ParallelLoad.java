@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
 
-public class ParallelLoad {
+public class ParallelLoad extends Representation{
 
     private String query;
     private String column;
