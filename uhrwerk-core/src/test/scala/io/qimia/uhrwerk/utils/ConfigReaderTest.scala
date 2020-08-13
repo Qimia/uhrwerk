@@ -103,7 +103,7 @@ class ConfigReaderTest extends AnyFlatSpec {
     assert(source.getPath === "staging_source_table")
     assert(source.getParallel_load.getQuery === "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'")
     assert(source.getSelect.getColumn === "created_at")
-    assert(source.getSelect.getQuery === "table_test_2_select_query.sql")
+    assert(source.getSelect.getQuery === "SELECT * FROM <path> WHERE created_at >= <lower_bound> AND created_at \\< <upper_bound>")
     assert(source.getParallel_load.getNum == 40)
   }
 
