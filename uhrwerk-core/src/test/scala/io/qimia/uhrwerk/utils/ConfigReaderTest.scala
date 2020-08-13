@@ -13,14 +13,19 @@ class ConfigReaderTest extends AnyFlatSpec {
     val complete = ConfigReader.readComplete(completePath)
 
     val connections = complete.getGlobal.getConfig.getConnections
-    val metastore = complete.getGlobal.getUhrwerk.getMetastore
+    val metastore = complete.getGlobal.getUhrwerk
     val tables = complete.getTables
+
+    println(metastore)
 
     val predictedConnectionNames = "mysql1" :: "s3_test" :: "local_filesystem_test" :: Nil
     connections.zip(predictedConnectionNames).foreach((tup) => tup._1.getName === tup._2)
-    assert(metastore.getJdbc_url === "jdbc:mysql://localhost:53306/UHRWERK_METASTORE")
+    //assert(metastore.getJdbc_url === "jdbc:mysql://localhost:53306/UHRWERK_METASTORE")
     assert(tables.head.getArea === "processing")
     assert(tables.head.getDependencies() === null)
+
+    assert(tables(1).getSources === null)
+    assert(tables(1).getDependencies.head.getConnection_name === "connection_name")
 
 
   }
@@ -40,6 +45,12 @@ class ConfigReaderTest extends AnyFlatSpec {
     //The following should throw an error, because there is a wrong indent as jdbc_url
     assertThrows[org.yaml.snakeyaml.parser.ParserException] {
       val completePath = Paths.get(getClass.getResource("/config/complete_test_dag_wrong_indent.yml").getPath)
+      val complete = ConfigReader.readComplete(completePath)
+    }
+
+    //The following should throw an error, because there is no file like that
+    assertThrows[java.lang.NullPointerException] {
+      val completePath = Paths.get(getClass.getResource("/config/not_existing.yml").getPath)
       val complete = ConfigReader.readComplete(completePath)
     }
 
@@ -76,7 +87,7 @@ class ConfigReaderTest extends AnyFlatSpec {
     assert(stepConf.getVersion == "1.0")  // Check default init
     assert(stepConf.getArea === "processing")
     assert(stepConf.getMax_bulk_size === 12)
-    assert(stepConf.getSources()(0).getConnection_name == "connection_name")
+    assert(stepConf.getSources()(0).getConnection_name == "connection_name1")
     val deps = stepConf.getDependencies
     val predictedType = "identity" :: "aggregate" :: "window" :: "temporal_aggregate" :: Nil
     deps.zip(predictedType).foreach((tup) => {
@@ -107,6 +118,13 @@ class ConfigReaderTest extends AnyFlatSpec {
     assert(source.getParallel_load.getNum == 40)
   }
 
+  it should "be parsable with dependencies instead of sources" in {
+    val confPath = Paths.get(getClass.getResource("/config/table_test_3.yml").getPath)
+    val stepConf = ConfigReader.readStepConfig(confPath)
+
+    assert(stepConf.getSources === null)
+    assert(stepConf.getDependencies.head.getTransform.getType === "identity")
+  }
 
   "readQueryFile with a bad input" should "Read nothing and show error" in {
     val out = ConfigReader.readQueryFile("a/b/c/file_not_exists.sql")
@@ -115,7 +133,7 @@ class ConfigReaderTest extends AnyFlatSpec {
 
   "readQueryFile with a valid query file location" should "read and return the given query" in {
     val out = ConfigReader.readQueryFile(getClass.getResource("/config/table_test_2_select_query.sql").getPath)
-    assert (out === "SELECT * FROM <path> WHERE created_at >= <lower_bound> AND created_at < <upper_bound>")
+    assert (out === "SELECT * FROM <path> WHERE created_at >= <lower_bound> AND created_at \\< <upper_bound>")
   }
 
 }
