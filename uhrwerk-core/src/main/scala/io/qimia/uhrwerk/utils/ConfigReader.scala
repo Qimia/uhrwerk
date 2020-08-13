@@ -21,9 +21,17 @@ object ConfigReader {
   def readComplete(path: Path): Complete = {
     val fileStream   = new FileInputStream(path.toFile)
     val representer = new Representer
-    representer.getPropertyUtils.setSkipMissingProperties(true)
-    val yaml   = new Yaml(new Constructor(classOf[Complete]), representer)
+    representer.getPropertyUtils.setSkipMissingProperties(false)
+    val yaml = new Yaml(new Constructor(classOf[Complete]), representer)
     val config = yaml.load(fileStream).asInstanceOf[Complete]
+    if (config.tablesSet()) {
+      val tables = config.getTables
+      tables.foreach(t =>
+      if (t.sourcesSet()) {
+        setQueryStrings(t, path)
+      }
+      )
+    }
     config
   }
 
@@ -36,7 +44,7 @@ object ConfigReader {
   def readGlobalConfig(path: Path): Global = {
     val fileStream   = new FileInputStream(path.toFile)
     val representer = new Representer
-    representer.getPropertyUtils.setSkipMissingProperties(true)
+    representer.getPropertyUtils.setSkipMissingProperties(false)
     val yaml   = new Yaml(new Constructor(classOf[Global]), representer)
     val config = yaml.load(fileStream).asInstanceOf[Global]
     config
@@ -50,29 +58,15 @@ object ConfigReader {
   def readStepConfig(path: Path): Table = {
     val fileStream   = new FileInputStream(path.toFile)
     val representer = new Representer
-    representer.getPropertyUtils.setSkipMissingProperties(true)
+    representer.getPropertyUtils.setSkipMissingProperties(false)
     val yaml   = new Yaml(new Constructor(classOf[Table]), representer)
     val config = yaml.load(fileStream).asInstanceOf[Table]
-    /**if (config.sourcesSet()) {
-      val sources = config.getSources
-      sources.foreach(s => {
-        val partQuery = s.getPartitionQuery
-        s.setPartitionQuery(processQueryConfigString(partQuery, path))
-        val selQuery = s.getSelectQuery
-        s.setSelectQuery(processQueryConfigString(selQuery, path))
-      })
+    if (config.sourcesSet()) {
+      setQueryStrings(config, path)
     }
-    if (config.dependenciesSet()) {
-      val dependencies = config.getDependencies
-      dependencies.foreach(s => {
-        val partQuery = s.getPartitionQuery
-        s.setPartitionQuery(processQueryConfigString(partQuery, path))
-        val selQuery = s.getSelectQuery
-        s.setSelectQuery(processQueryConfigString(selQuery, path))
-      })
-    }**/
     config
   }
+
 
   /**
    * Read a query string from an accompanying sql-file
@@ -108,6 +102,22 @@ object ConfigReader {
     } else {
       query
     }
+  }
+
+  /**
+    * Read a table object and set the select and parallel_load query.
+    * @param path String with the path to the sql-file
+    * @param table the table object in which the queries should be set.
+    */
+  def setQueryStrings(table: Table, configPath: Path) = {
+    val sources = table.getSources
+    sources.foreach(s => {
+      val partQuery = s.getParallel_load.getQuery
+      s.getParallel_load.setQuery(processQueryConfigString(partQuery, configPath))
+      val selQuery = s.getSelect.getQuery
+      s.getSelect.setQuery(processQueryConfigString(selQuery, configPath))
+    })
+
   }
 
 }

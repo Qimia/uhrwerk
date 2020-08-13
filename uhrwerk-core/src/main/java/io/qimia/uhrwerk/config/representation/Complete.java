@@ -21,6 +21,10 @@ public class Complete extends Representation{
 
     public void setGlobal(Global global) { this.global = global; }
 
+    public boolean tablesSet() {
+        return tables != null;
+    }
+
     @Override
     public ValidationResult validate() {
         Boolean valid = true;

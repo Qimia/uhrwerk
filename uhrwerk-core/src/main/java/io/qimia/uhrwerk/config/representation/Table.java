@@ -102,9 +102,6 @@ public class Table extends Representation{
         this.dependencies = dependencies;
     }
 
-    public boolean dependenciesSet() {
-        return dependencies != null;
-    }
 
 
 }
