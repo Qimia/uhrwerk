@@ -3,27 +3,10 @@ package io.qimia.uhrwerk.config.representation;
 import java.util.ArrayList;
 
 public class Complete extends Representation{
-    private Uhrwerk uhrwerk;
-    private Config config;
+    private Global global;
     private Table[] tables;
 
     public Complete() {
-    }
-
-    public Uhrwerk getUhrwerk() {
-        return uhrwerk;
-    }
-
-    public void setUhrwerk(Uhrwerk uhrwerk) {
-        this.uhrwerk = uhrwerk;
-    }
-
-    public Config getConfig() {
-        return config;
-    }
-
-    public void setConfig(Config config) {
-        this.config = config;
     }
 
     public Table[] getTables() {
@@ -34,31 +17,42 @@ public class Complete extends Representation{
         this.tables = tables;
     }
 
+    public Global getGlobal() { return global; }
+
+    public void setGlobal(Global global) { this.global = global; }
+
     @Override
     public ValidationResult validate() {
         Boolean valid = true;
         String fieldName = "";
-        ValidationResult uhrwerkValidation = uhrwerk.validate();
-        ValidationResult configValidation = config.validate();
-        ArrayList<ValidationResult> tableResults = new ArrayList<ValidationResult>();
-        for (Table t: tables){
-            ValidationResult v = t.validate();
-            if (!v.valid){
-                tableResults.add(v);
+        if (global != null){
+            ValidationResult globalValidation = global.validate();
+            if(!globalValidation.valid){
+                valid = false;
+                fieldName = "global>" + globalValidation.fieldName + ";";
             }
         }
-        if(!uhrwerkValidation.valid){
+        else{
             valid = false;
-            fieldName = "uhrwerk>" + uhrwerkValidation.fieldName + ";";
+            fieldName = "global";
         }
-        if(!configValidation.valid){
-            valid = false;
-            fieldName = fieldName + "config>" + configValidation.fieldName + ";";
+        if (tables.length>0) {
+            ArrayList<ValidationResult> tableResults = new ArrayList<ValidationResult>();
+            for (Table t : tables) {
+                ValidationResult v = t.validate();
+                if (!v.valid) {
+                    tableResults.add(v);
+                }
+            }
+            for (ValidationResult v : tableResults) {
+                valid = false;
+                fieldName = fieldName + "table>" + v.fieldName + ";";
+            }
         }
-        for(ValidationResult v: tableResults){
+        else{
             valid = false;
-            fieldName = fieldName + "table>" + v.fieldName + ";";
-         }
+            fieldName = "tables";
+        }
         ValidationResult v = new ValidationResult();
         v.valid=valid;
         v.fieldName=fieldName;

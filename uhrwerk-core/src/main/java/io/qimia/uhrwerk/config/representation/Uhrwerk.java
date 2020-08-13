@@ -14,4 +14,24 @@ public class Uhrwerk extends Representation{
         this.metastore = metastore;
     }
 
+    @Override
+    public ValidationResult validate(){
+        Boolean valid = true;
+        String fieldName = "";
+        if(metastore != null){
+            ValidationResult metastoreValidation = metastore.validate();
+            if (!metastoreValidation.valid){
+                valid = true;
+                fieldName = "metastore>" + metastoreValidation.fieldName;
+            }
+        }
+        else{
+            valid = false;
+            fieldName = "metastore";
+        }
+        ValidationResult v = new ValidationResult();
+        v.valid = valid;
+        v.fieldName = fieldName;
+        return v;
+    }
 }
