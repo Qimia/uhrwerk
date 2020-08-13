@@ -1,7 +1,6 @@
 package io.qimia.uhrwerk.backend.dao.data;
 
-import io.qimia.uhrwerk.config.PartitionTransformType;
-import io.qimia.uhrwerk.config.model.Target;
+import io.qimia.uhrwerk.config.model.Dependency;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,32 +12,27 @@ import java.util.List;
 public class DependencyDAO {
   private static final String SELECT_BY_ID = "";
   private static String INSERT =
-      "INSERT INTO DEPENDENCY(table_id, target_id, partition_transform, batch_temporal_unit, batch_size)  VALUES (?,?,?,?,?)";
+      "INSERT INTO "
+          + "DEPENDENCY(table_id, target_id, transform_type, transform_partition_unit, transform_partition_size)"
+          + " VALUES (?,?,?,?,?)";
 
-  public static Long save(java.sql.Connection db, Dependency dependency) throws SQLException {
+  public static Long save(
+      java.sql.Connection db, Dependency dependency, Long tableId, Long targetId)
+      throws SQLException {
     PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-    setInsertParams(dependency, insert);
+    setInsertParams(dependency, tableId, targetId, insert);
     insert.executeUpdate();
     ResultSet generatedKeys = insert.getGeneratedKeys();
     if (generatedKeys.next()) return generatedKeys.getLong(1);
     return null;
   }
 
-  private static void setInsertParams(Dependency dependency, PreparedStatement insert)
-      throws SQLException {
-    insert.setLong(1, dependency.getTableId());
-    insert.setLong(2, dependency.getTargetId());
-    // FIXME getDependencyType need to be added to the table
-    insert.setString(3, PartitionTransformType.valueOf(dependency.getType()).name());
-    insert.setString(4, dependency.getBatchTemporalUnit().name());
-    insert.setInt(5, dependency.getPartitionSizeInt());
-  }
-
-  public static List<Long> save(java.sql.Connection db, Dependency[] dependencies)
+  public static List<Long> save(
+      java.sql.Connection db, Dependency[] dependencies, Long tableId, Long targetId)
       throws SQLException {
     PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
     for (int i = 0; i < dependencies.length; i++) {
-      setInsertParams(dependencies[i], insert);
+      setInsertParams(dependencies[i], tableId, targetId, insert);
       insert.addBatch();
     }
     insert.executeBatch();
@@ -48,16 +42,13 @@ public class DependencyDAO {
     return ids;
   }
 
-  public static Target get(java.sql.Connection db, Long id) throws SQLException {
-    PreparedStatement select = db.prepareStatement(SELECT_BY_ID);
-    select.setLong(1, id);
-
-    ResultSet record = select.executeQuery();
-
-    if (record.next()) {
-      return null;
-    }
-
-    return null;
+  private static void setInsertParams(
+      Dependency dependency, Long tableId, Long targetId, PreparedStatement insert)
+      throws SQLException {
+    insert.setLong(1, tableId);
+    insert.setLong(2, targetId);
+    insert.setString(3, dependency.getTransformType().name());
+    insert.setString(4, dependency.getTransformPartitionUnit().name());
+    insert.setInt(5, dependency.getTransformPartitionSize());
   }
 }

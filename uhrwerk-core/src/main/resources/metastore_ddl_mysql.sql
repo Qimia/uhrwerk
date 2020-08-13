@@ -4,17 +4,18 @@ CREATE TABLE IF NOT EXISTS CONNECTION
     id                    BIGINT AUTO_INCREMENT PRIMARY KEY,
     name                  VARCHAR(256)                           NOT NULL,
     type                  enum ('FS', 'JDBC', 'S3', 'GC', 'ABS') NOT NULL,
-    path                  VARCHAR(512)                           NOT NULL,
-    jdbc_url              VARCHAR(512)                           NOT NULL,
-    jdbc_driver           VARCHAR(512)                           NOT NULL,
-    jdbc_user             VARCHAR(512)                           NOT NULL,
-    jdbc_pass             VARCHAR(512)                           NOT NULL,
-    aws_access_key_id     VARCHAR(512)                           NOT NULL,
-    aws_secret_access_key VARCHAR(512)                           NOT NULL,
+    path                  VARCHAR(512),
+    jdbc_url              VARCHAR(512),
+    jdbc_driver           VARCHAR(512),
+    jdbc_user             VARCHAR(512),
+    jdbc_pass             VARCHAR(512),
+    aws_access_key_id     VARCHAR(512),
+    aws_secret_access_key VARCHAR(512),
     version               VARCHAR(256)                           NOT NULL,
     created_ts            TIMESTAMP DEFAULT CURRENT_TIMESTAMP    NULL,
     updated_ts            TIMESTAMP DEFAULT CURRENT_TIMESTAMP    NULL ON UPDATE CURRENT_TIMESTAMP,
-    description           VARCHAR(512)                           NULL
+    description           VARCHAR(512)                           NULL,
+    UNIQUE (name, version)
 );
 
 create table if not exists TABLE_
@@ -49,15 +50,15 @@ create table if not exists TARGET
 
 create table if not exists DEPENDENCY
 (
-    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    table_id            BIGINT                                                        NOT NULL,
-    target_id           BIGINT                                                        NOT NULL,
-    partition_transform enum ('AGGREGATE', 'WINDOW', 'ONEONONE')                      NOT NULL,
-    batch_temporal_unit enum ('YEARS', 'MONTHS', 'WEEKS', 'DAYS', 'HOURS', 'MINUTES') NOT NULL,
-    batch_size          int                                                           NOT NULL,
-    created_ts          TIMESTAMP DEFAULT CURRENT_TIMESTAMP                           NULL,
-    updated_ts          TIMESTAMP DEFAULT CURRENT_TIMESTAMP                           NULL ON UPDATE CURRENT_TIMESTAMP,
-    description         VARCHAR(512)                                                  NULL,
+    id                       BIGINT AUTO_INCREMENT PRIMARY KEY,
+    table_id                 BIGINT                                                        NOT NULL,
+    target_id                BIGINT                                                        NOT NULL,
+    transform_type           enum ('AGGREGATE', 'WINDOW', 'IDENTITY')                      NOT NULL,
+    transform_partition_unit enum ('YEARS', 'MONTHS', 'WEEKS', 'DAYS', 'HOURS', 'MINUTES') NOT NULL,
+    transform_partition_size int                                                           NOT NULL,
+    created_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP                           NULL,
+    updated_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP                           NULL ON UPDATE CURRENT_TIMESTAMP,
+    description              VARCHAR(512)                                                  NULL,
     FOREIGN KEY (target_id) REFERENCES TARGET (id),
     FOREIGN KEY (table_id) REFERENCES TABLE_ (id)
 );
