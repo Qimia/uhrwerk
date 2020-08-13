@@ -3,11 +3,13 @@ package io.qimia.uhrwerk.ManagedIO
 import java.nio.file.Paths
 import java.time.{Duration, LocalDateTime}
 
+import io.qimia.uhrwerk.ManagedIO.SparkFrameManager.concatenatePaths
+import io.qimia.uhrwerk.backend.service.dependency.DependencyResult
+import io.qimia.uhrwerk.config.ConnectionType
 import io.qimia.uhrwerk.config.model._
-import io.qimia.uhrwerk.config.{ConnectionType, PartitionTransformType}
 import io.qimia.uhrwerk.utils.{JDBCTools, TimeTools}
 import org.apache.spark.sql._
-import org.apache.spark.sql.functions.lit
+import org.apache.spark.sql.functions.{col, lit}
 
 object SparkFrameManager {
   /**
@@ -29,26 +31,18 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   /**
    * Loads a source dataframe. Either one batch or the full path.
    *
-   * @param conn                   Connection
    * @param source                 Source
    * @param startTS                Batch Timestamp. If not defined, load the full path.
+   * @param endTSExcl              End Timestamp exclusive
    * @param dataFrameReaderOptions Optional Spark reading options.
    * @return DataFrame
    */
-  override def loadSourceDataFrame(conn: Connection,
-                                   source: Source,
+  override def loadSourceDataFrame(source: Source,
                                    startTS: Option[LocalDateTime] = Option.empty,
+                                   endTSExcl: Option[LocalDateTime] = Option.empty,
                                    dataFrameReaderOptions: Option[Map[String, String]] = Option.empty): DataFrame = {
-    assert(conn.getName == source.getConnectionName)
-
-    if (conn.getTypeEnum.equals(ConnectionType.JDBC)) {
-      loadDFFromJDBC(conn,
-        source.getPartitionSize,
-        source.getSelectQuery,
-        source.getPartitionQuery,
-        source.getPartitionColumn,
-        source.getPath,
-        startTS)
+    if (source.getConnection.getType.equals(ConnectionType.JDBC)) {
+      loadSourceFromJDBC(source, startTS, endTSExcl, dataFrameReaderOptions)
     } else {
       loadDataFrameFromFileSystem(startTS, source.getPartitionSize, conn.getJdbcUrl,
         source.getPath, source.getFormat, dataFrameReaderOptions)
@@ -110,32 +104,56 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   }
 
   /**
-   * Loads a dependency dataframe. Either one batch or the full path.
+   * Loads all partitions from the succeeded partitions of the DependencyResult
    *
-   * @param conn                   Connection
-   * @param dependency             Dependency
-   * @param startTS                Batch Timestamp. If not defined, load the full path.
+   * @param dependencyResult       DependencyResult
    * @param dataFrameReaderOptions Optional Spark reading options.
    * @return DataFrame
    */
-  override def loadDependencyDataFrame(conn: Connection,
-                                       dependency: Dependency,
-                                       startTS: Option[LocalDateTime],
+  override def loadDependencyDataFrame(dependencyResult: DependencyResult,
                                        dataFrameReaderOptions: Option[Map[String, String]] = Option.empty): DataFrame = {
-    assert(conn.getName == dependency.getConnectionName)
+    assert(dependencyResult.getSucceeded.nonEmpty)
 
-    // aggregates
-    if (startTS.isDefined && dependency.getTypeEnum.equals(PartitionTransformType.AGGREGATE)) {
-      val (startTSAgg, endTSExcl) = TimeTools.getRangeFromAggregate(startTS.get, dependency.getPartitionSize, dependency.getPartitionCount)
-      loadMoreBatches(conn, dependency, startTSAgg, endTSExcl, dependency.getPartitionSizeDuration)
-      // windows
-    } else if (startTS.isDefined && dependency.getTypeEnum.equals(PartitionTransformType.WINDOW)) {
-      val (startTSWindow, endTSExcl) = TimeTools.getRangeFromWindow(startTS.get, dependency.getPartitionSize, dependency.getPartitionCount)
-      loadMoreBatches(conn, dependency, startTSWindow, endTSExcl, dependency.getPartitionSizeDuration)
+    val filter: Column = dependencyResult
+      .getSucceeded
+      .map(p => p match {
+        case p.getMinute != null => col("minute") === p.getMinute
+        case p.getHour != null => col("hour") === p.getHour
+        case p.getDay != null => col("day") === p.getDay
+        case p.getMonth != null => col("month") === p.getMonth
+        case p.getYear != null => col("year") === p.getYear
+        case _ => throw new Exception("SparkFrameManager received an empty partition")
+      })
+      .reduce((a, b) => a || b)
+
+    val dfReader = sparkSession
+      .read
+      .format(dependencyResult.getDependency.getFormat)
+
+    val dfReaderWithUserOptions = if (dataFrameReaderOptions.isDefined) {
+      dfReader
+        .options(dataFrameReaderOptions.get)
     } else {
-      loadDataFrameFromFileSystem(startTS, dependency.getPartitionSize, conn.getJdbcUrl,
-        dependency.getPath(true), dependency.getFormat, dataFrameReaderOptions)
+      dfReader
     }
+
+    val df = if (dependencyResult.getConnection.getType.equals(ConnectionType.JDBC)) {
+      dfReaderWithUserOptions
+        .option("url", dependencyResult.getConnection.getJdbcUrl)
+        .option("driver", dependencyResult.getConnection.getJdbcDriver)
+        .option("user", dependencyResult.getConnection.getJdbcUser)
+        .option("password", dependencyResult.getConnection.getJdbcPass)
+        .option("dbtable", dependencyResult.getDependency.getPath(false))
+        .load()
+    } else {
+      dfReaderWithUserOptions
+        .load(
+          concatenatePaths(dependencyResult.getConnection.getPath,
+            dependencyResult.getDependency.getPath(true)))
+    }
+
+    df
+      .filter(filter)
   }
 
   /**
@@ -143,74 +161,57 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * If the selectQuery is set, it uses that instead of the path.
    * If the partitionQuery is set, it first runs this to get the partition boundaries.
    *
-   * @param connection      Connection
-   * @param partitionSize   Partition size, e.g. 30m.
-   * @param selectQuery     Select query.
-   * @param partitionQuery  Partition query.
-   * @param partitionColumn Partition column.
-   * @param path            Path (schema + table name)
-   * @param startTS         Batch Timestamp. If not defined, load the full path.
+   * @param source                 Source
+   * @param startTS                Batch Timestamp. If not defined, load the full path.
+   * @param endTSExcl              End Timestamp exclusive
+   * @param dataFrameReaderOptions Optional Spark reading options.
    * @return DataFrame
    */
-  private def loadDFFromJDBC(connection: Connection,
-                             partitionSize: String,
-                             selectQuery: String,
-                             partitionQuery: String,
-                             partitionColumn: String,
-                             path: String,
-                             startTS: Option[LocalDateTime]): DataFrame = {
-    import sparkSession.implicits._
-    assert(connection.getName == connection.getName)
+  private def loadSourceFromJDBC(source: Source,
+                                 startTS: Option[LocalDateTime] = Option.empty,
+                                 endTSExcl: Option[LocalDateTime] = Option.empty,
+                                 dataFrameReaderOptions: Option[Map[String, String]] = Option.empty): DataFrame = {
 
-    val (date: Option[String], batch: Option[String]) = if (startTS.isDefined) {
-      val duration = TimeTools.convertDurationStrToObj(partitionSize)
-      val date = TimeTools.dateTimeToDate(startTS.get)
-      val batch = TimeTools.dateTimeToPostFix(startTS.get, duration)
-      (Option(date), Option(batch))
+    val dfReader: DataFrameReader = JDBCTools.getDbConfig(sparkSession, source.getConnection)
+    val dfReaderWithUserOptions = if (dataFrameReaderOptions.isDefined) {
+      dfReader
+        .options(dataFrameReaderOptions.get)
     } else {
-      (Option.empty, Option.empty)
+      dfReader
     }
 
-    val dfReader: DataFrameReader = JDBCTools.getDbConfig(sparkSession, connection)
-
-    val dfReaderWithQuery: DataFrameReader = if (selectQuery.nonEmpty) {
+    val dfReaderWithQuery: DataFrameReader = if (source.getSelectQuery.nonEmpty) {
       val query: String =
-        JDBCTools.queryTable(selectQuery, startTS)
+        JDBCTools.queryTable(source.getSelectQuery, startTS, endTSExcl)
 
-      val dfReaderWithQuery = dfReader
+      val dfReaderWithQuery = dfReaderWithUserOptions
         .option("dbtable", query)
-      //        .option("numPartitions", locationInfo.getNumPartitions) todo add
+        .option("numPartitions", source.getParallelLoadNum) // todo is this what I think it is?
 
-      if (partitionQuery.nonEmpty) {
+      if (source.getParallelLoadQuery.nonEmpty) {
         val (minId, maxId) = JDBCTools.minMaxQueryIds(sparkSession,
-          connection,
-          partitionColumn,
-          partitionQuery,
-          startTS)
+          source.getConnection,
+          source.getParallelLoadColumn,
+          source.getParallelLoadQuery,
+          startTS,
+          endTSExcl)
 
         dfReaderWithQuery
-          .option("partitionColumn", partitionColumn)
+          .option("partitionColumn", source.getParallelLoadColumn)
           .option("lowerBound", minId)
           .option("upperBound", maxId)
       } else {
-        dfReaderWithQuery
+        dfReaderWithQuery // todo add partitionColumn as source.selectColumn
       }
     } else {
       dfReader
-        .option("dbtable", path) // area-vertical.tableName-version
+        .option("dbtable", source.getPath) // area-vertical.tableName-version
     }
 
-    val df = dfReaderWithQuery
+    val df: DataFrame = dfReaderWithQuery
       .load()
 
-    if (date.isDefined && batch.isDefined) {
-      df
-        .where($"date" === date.get)
-        .where($"batch" === batch.get)
-        .drop("date", "batch")
-    } else {
-      df
-    }
+    df
   }
 
   /**

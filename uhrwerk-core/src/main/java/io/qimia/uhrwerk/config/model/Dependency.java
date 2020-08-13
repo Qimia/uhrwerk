@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.config.model;
 
+import java.nio.file.Paths;
 import java.util.Objects;
 
 public class Dependency {
@@ -51,15 +52,34 @@ public class Dependency {
     this.version = version;
   }
 
+  /**
+   * Concatenates area, vertical, table, version, and format into a path.
+   * Either with slashes for a file system or with dashes and a dot for jdbc.
+   *
+   * @param fileSystem Whether the path is for a file system or for jdbc.
+   * @return The concatenated path.
+   */
+  public String getPath(Boolean fileSystem) {
+    if (fileSystem) {
+      return Paths.get("area=", area,
+              "vertical=", vertical,
+              "table=", tableName,
+              "version=", version,
+              "format=", format).toString();
+    } else { // jdbc
+      return area + "-" + vertical + "." + tableName + "-" + version;
+    }
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Dependency that = (Dependency) o;
     return Objects.equals(area, that.area)
-        && Objects.equals(vertical, that.vertical)
-        && Objects.equals(tableName, that.tableName)
-        && Objects.equals(format, that.format)
+            && Objects.equals(vertical, that.vertical)
+            && Objects.equals(tableName, that.tableName)
+            && Objects.equals(format, that.format)
         && Objects.equals(version, that.version);
   }
 
