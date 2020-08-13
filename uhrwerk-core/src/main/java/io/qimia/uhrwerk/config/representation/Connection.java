@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
+import io.qimia.uhrwerk.config.ConfigException;
+
 public class Connection extends Representation{
     private String name;
     private JDBC jdbc;
@@ -41,7 +43,25 @@ public class Connection extends Representation{
     }
 
     @Override
-    public void validate(){
-
+    public void validate(String path){
+        path += "connection/";
+        if(name == null){
+            throw new ConfigException("Missing field: " + path + "name");
+        }
+        if(jdbc == null && s3 == null && file == null){
+            throw new ConfigException("Missing connection format: choose either jdbc/s3/file under path: " + path);
+        }
+        if(jdbc != null && s3 != null && file != null){
+            throw new ConfigException("Only one connection format at the same time: jdbc/s3/file under path: " + path);
+        }
+        if(jdbc != null && s3 != null){
+            throw new ConfigException("Only one connection format at the same time: jdbc/s3/file under path: " + path);
+        }
+        if(jdbc != null && file != null){
+            throw new ConfigException("Only one connection format at the same time: jdbc/s3/file under path: " + path);
+        }
+        if(s3 != null && file != null){
+            throw new ConfigException("Only one connection format at the same time: jdbc/s3/file under path: " + path);
+        }
     }
 }

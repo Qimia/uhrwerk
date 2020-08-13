@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.config.representation;
 
-import java.util.ArrayList;
+import io.qimia.uhrwerk.config.ConfigException;
 
 public class Complete extends Representation{
     private Global global;
@@ -26,40 +26,21 @@ public class Complete extends Representation{
     }
 
     @Override
-    public ValidationResult validate() {
-        Boolean valid = true;
-        String fieldName = "";
-        if (global != null){
-            ValidationResult globalValidation = global.validate();
-            if(!globalValidation.valid){
-                valid = false;
-                fieldName = "global>" + globalValidation.fieldName + ";";
-            }
+    public void validate(String path) {
+        path += "/";
+        if(global==null){
+            throw new ConfigException("Missing field:" + path + "global");
         }
         else{
-            valid = false;
-            fieldName = "global";
+            global.validate(path);
         }
-        if (tables.length>0) {
-            ArrayList<ValidationResult> tableResults = new ArrayList<ValidationResult>();
-            for (Table t : tables) {
-                ValidationResult v = t.validate();
-                if (!v.valid) {
-                    tableResults.add(v);
-                }
-            }
-            for (ValidationResult v : tableResults) {
-                valid = false;
-                fieldName = fieldName + "table>" + v.fieldName + ";";
-            }
+        if(tables.length==0){
+            throw new ConfigException("Missing field:" + path + "tables");
         }
         else{
-            valid = false;
-            fieldName = "tables";
+            for (Table t: tables){
+                t.validate(path);
+            }
         }
-        ValidationResult v = new ValidationResult();
-        v.valid=valid;
-        v.fieldName=fieldName;
-        return v;
     }
 }

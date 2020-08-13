@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
+import io.qimia.uhrwerk.config.ConfigException;
+
 public class Uhrwerk extends Representation{
     private Metastore metastore;
 
@@ -15,7 +17,13 @@ public class Uhrwerk extends Representation{
     }
 
     @Override
-    public void validate(){
-
+    public void validate(String path){
+        path += "metastore/";
+        if(metastore == null){
+            throw new ConfigException("Missing field: " + path + "metastore");
+        }
+        else {
+            metastore.validate(path);
+        }
     }
 }
