@@ -408,4 +408,29 @@ class TimeToolsTest extends AnyFlatSpec {
     val res2 = TimeTools.checkIsSequentialIncreasing(dateTimes2, dur2)
     assert(!res2)
   }
+
+  "grouping datetimes in sequential groups" should "result in correct groups" in {
+    // basic test limited by maxSize
+    val someSeq = TimeTools.convertRangeToBatch(
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 0, 0),
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 12, 0, 0),
+      Duration.ofMinutes(10)
+    )
+    val grouped = TimeTools.groupSequentialIncreasing(someSeq, Duration.ofMinutes(10), 3)
+    assertResult(Array(3, 3, 3, 3))(grouped)
+
+    // One with some natural gaps
+    val anotherSeq = Seq(
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 0, 0),  // 1
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 30, 0),
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 45, 0), // 2
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 12, 0, 0),  // 1
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 0, 0),
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 15, 0),
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 30, 0), // 3 (max)
+      LocalDateTime.of(2020, Month.FEBRUARY, 5, 10, 45, 0)  // 1
+    )
+    val groupedToo = TimeTools.groupSequentialIncreasing(anotherSeq, Duration.ofMinutes(15), 3)
+    assertResult(Array(1,2,1,3,1))(groupedToo)
+  }
 }
