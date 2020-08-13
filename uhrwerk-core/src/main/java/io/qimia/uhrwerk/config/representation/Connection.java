@@ -39,4 +39,9 @@ public class Connection extends Representation{
     public void setName(String name) {
         this.name = name;
     }
+
+    @Override
+    public void validate(){
+
+    }
 }

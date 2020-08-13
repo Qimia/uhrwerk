@@ -16,23 +16,7 @@ public class Config extends Representation{
     }
 
     @Override
-    public ValidationResult validate(){
-        Boolean valid = true;
-        String fieldName = "";
-        ArrayList<ValidationResult> connectionResults = new ArrayList<ValidationResult>();
-        for (Connection c: connections){
-            ValidationResult v = c.validate();
-            if (!v.valid){
-                connectionResults.add(v);
-            }
-        }
-        for (ValidationResult v: connectionResults){
-            valid = false;
-            fieldName = "table>" + v.fieldName + ";";
-        }
-        ValidationResult v = new ValidationResult();
-        v.valid=valid;
-        v.fieldName=fieldName;
-        return v;
+    public void validate(){
+
     }
 }
