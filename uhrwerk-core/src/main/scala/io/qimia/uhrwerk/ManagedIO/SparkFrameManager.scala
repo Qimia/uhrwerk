@@ -4,7 +4,7 @@ import java.nio.file.Paths
 import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.ManagedIO.SparkFrameManager.concatenatePaths
-import io.qimia.uhrwerk.backend.service.dependency.DependencyResult
+import io.qimia.uhrwerk.backend.service.dependency.BulkDependencyResult
 import io.qimia.uhrwerk.config.ConnectionType
 import io.qimia.uhrwerk.config.model._
 import io.qimia.uhrwerk.utils.{JDBCTools, TimeTools}
@@ -110,7 +110,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @param dataFrameReaderOptions Optional Spark reading options.
    * @return DataFrame
    */
-  override def loadDependencyDataFrame(dependencyResult: DependencyResult,
+  override def loadDependencyDataFrame(dependencyResult: BulkDependencyResult,
                                        dataFrameReaderOptions: Option[Map[String, String]] = Option.empty): DataFrame = {
     assert(dependencyResult.getSucceeded.nonEmpty)
 

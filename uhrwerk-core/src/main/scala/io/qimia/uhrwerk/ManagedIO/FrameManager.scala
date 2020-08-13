@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.ManagedIO
 
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.backend.service.dependency.DependencyResult
+import io.qimia.uhrwerk.backend.service.dependency.BulkDependencyResult
 import io.qimia.uhrwerk.config.model._
 import org.apache.spark.sql.DataFrame
 
@@ -15,7 +15,7 @@ trait FrameManager {
                           endTSExcl: Option[LocalDateTime] = Option.empty,
                           dataFrameReaderOptions: Option[Map[String, String]] = Option.empty): DataFrame
 
-  def loadDependencyDataFrame(dependencyResult: DependencyResult,
+  def loadDependencyDataFrame(dependencyResult: BulkDependencyResult,
                               dataFrameReaderOptions: Option[Map[String, String]] = Option.empty): DataFrame
 
   def writeDataFrame(frame: DataFrame,
