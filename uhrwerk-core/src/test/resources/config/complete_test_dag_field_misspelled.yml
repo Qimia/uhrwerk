@@ -1,0 +1,6 @@
+uhrwerk:
+  metastore:
+    jdbc_url: 'jdbc:mysql://localhost:53306/UHRWERK_METASTORE'
+    jdbc_driver: 'com.mysql.jdbc.Driver'
+    xuser: UHRWERK_USER
+    pass: Xq92vFqEKF7TB8H9

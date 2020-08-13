@@ -58,7 +58,7 @@ dependencies:
     vertical: sourcedb_1
     table: tableOne  # On DB
     format: "jdbc"
-    version: "1.0"
+    version : "1.0"
     transform:
       type: "temporal_aggregate"
       partition:
