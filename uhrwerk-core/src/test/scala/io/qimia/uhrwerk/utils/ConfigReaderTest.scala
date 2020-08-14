@@ -9,7 +9,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 class ConfigReaderTest extends AnyFlatSpec {
 
   "Given a complete dag yaml" should "be parsable by the configreader" in {
-    val completePath = Paths.get(getClass.getResource("/config/complete_test_dag.yml").getPath)
+    val completePath = Paths.get(getClass.getResource("/config/test_yml/complete_test_dag.yml").getPath)
     val complete = ConfigReader.readComplete(completePath)
 
     val connections = complete.getGlobal.getConfig.getConnections
@@ -34,30 +34,41 @@ class ConfigReaderTest extends AnyFlatSpec {
 
     //The following should throw an error, because there is a field misspelled (xuser instead of user)
     assertThrows[org.yaml.snakeyaml.error.YAMLException] {
-      val completePath = Paths.get(getClass.getResource("/config/complete_test_dag_field_misspelled.yml").getPath)
+      val completePath = Paths.get(getClass.getResource("/config/test_yml/complete_test_dag_field_misspelled.yml").getPath)
       val complete = ConfigReader.readComplete(completePath)
     }
     //The following should throw an error, because there is a type mismatch (bulk_size is float instead of int)
     assertThrows[org.yaml.snakeyaml.constructor.ConstructorException] {
-      val completePath = Paths.get(getClass.getResource("/config/complete_test_dag_type_mismatch.yml").getPath)
+      val completePath = Paths.get(getClass.getResource("/config/test_yml/complete_test_dag_type_mismatch.yml").getPath)
       val complete = ConfigReader.readComplete(completePath)
     }
     //The following should throw an error, because there is a wrong indent as jdbc_url
     assertThrows[org.yaml.snakeyaml.parser.ParserException] {
-      val completePath = Paths.get(getClass.getResource("/config/complete_test_dag_wrong_indent.yml").getPath)
+      val completePath = Paths.get(getClass.getResource("/config/test_yml/complete_test_dag_wrong_indent.yml").getPath)
       val complete = ConfigReader.readComplete(completePath)
     }
 
     //The following should throw an error, because there is no file like that
     assertThrows[java.lang.NullPointerException] {
-      val completePath = Paths.get(getClass.getResource("/config/not_existing.yml").getPath)
+      val completePath = Paths.get(getClass.getResource("/config/test_yml/not_existing.yml").getPath)
       val complete = ConfigReader.readComplete(completePath)
     }
 
+    //The following should throw an error, because there is the config entry missing
+    assertThrows[io.qimia.uhrwerk.config.ConfigException] {
+      val completePath = Paths.get(getClass.getResource("/config/test_yml/complete_test_dag_missing_fields.yml").getPath)
+      val complete = ConfigReader.readComplete(completePath)
+    }
+
+    //The following should throw an error, because there is no source and no dependency defined
+    //assertThrows[io.qimia.uhrwerk.config.ConfigException] {
+    //  val confPath = Paths.get(getClass.getResource("/config/test_yml/table_test_4_no_source_dep.yml").getPath)
+    //  val stepConf = ConfigReader.readStepConfig(confPath)
+    //}
   }
 
   "Given a premade global config it" should "be parsable by the configreader" in {
-    val confPath = Paths.get(getClass.getResource("/config/global_test_1.yml").getPath)
+    val confPath = Paths.get(getClass.getResource("/config/test_yml/global_test_1.yml").getPath)
     val gconf = ConfigReader.readGlobalConfig(confPath)
 
     val connections = gconf.getConfig().getConnections()
@@ -79,7 +90,7 @@ class ConfigReaderTest extends AnyFlatSpec {
   }
 
   "Given a premade step config it" should "be parsable by the configreader" in {
-    val confPath = Paths.get(getClass.getResource("/config/table_test_1.yml").getPath)
+    val confPath = Paths.get(getClass.getResource("/config/test_yml/table_test_1.yml").getPath)
     val stepConf = ConfigReader.readStepConfig(confPath)
 
     assert(stepConf.getTable === "load_a_table")
@@ -100,7 +111,7 @@ class ConfigReaderTest extends AnyFlatSpec {
 
 
   it should "be parsable with sources instead of dependencies" in {
-    val confPath = Paths.get(getClass.getResource("/config/table_test_2.yml").getPath)
+    val confPath = Paths.get(getClass.getResource("/config/test_yml/table_test_2_no_dependency.yml").getPath)
     val stepConf = ConfigReader.readStepConfig(confPath)
 
     assert(stepConf.getTable === "dump_a_table")
@@ -119,7 +130,7 @@ class ConfigReaderTest extends AnyFlatSpec {
   }
 
   it should "be parsable with dependencies instead of sources" in {
-    val confPath = Paths.get(getClass.getResource("/config/table_test_3.yml").getPath)
+    val confPath = Paths.get(getClass.getResource("/config/test_yml/table_test_3_no_source.yml").getPath)
     val stepConf = ConfigReader.readStepConfig(confPath)
 
     assert(stepConf.getSources === null)
@@ -132,7 +143,7 @@ class ConfigReaderTest extends AnyFlatSpec {
   }
 
   "readQueryFile with a valid query file location" should "read and return the given query" in {
-    val out = ConfigReader.readQueryFile(getClass.getResource("/config/table_test_2_select_query.sql").getPath)
+    val out = ConfigReader.readQueryFile(getClass.getResource("/config/test_yml/table_test_2_select_query.sql").getPath)
     assert (out === "SELECT * FROM <path> WHERE created_at >= <lower_bound> AND created_at \\< <upper_bound>")
   }
 

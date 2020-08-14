@@ -32,6 +32,7 @@ object ConfigReader {
       }
       )
     }
+    config.validate("")
     config
   }
 
@@ -47,6 +48,7 @@ object ConfigReader {
     representer.getPropertyUtils.setSkipMissingProperties(false)
     val yaml   = new Yaml(new Constructor(classOf[Global]), representer)
     val config = yaml.load(fileStream).asInstanceOf[Global]
+    config.validate("")
     config
   }
 
@@ -64,6 +66,7 @@ object ConfigReader {
     if (config.sourcesSet()) {
       setQueryStrings(config, path)
     }
+    config.validate("")
     config
   }
 

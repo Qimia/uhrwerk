@@ -120,7 +120,7 @@ public class Table extends Representation{
             throw new ConfigException("Missing field: " + path + "version");
         }
         if(parallelism == 0){
-            throw new ConfigException("Missing field: " + path + "parllelism");
+            throw new ConfigException("Missing field: " + path + "parallelism");
         }
         if(max_bulk_size == 0){
             throw new ConfigException("Missing field: " + path + "max_bulk_size");
@@ -135,7 +135,8 @@ public class Table extends Representation{
             throw new ConfigException("Missing field: " + path + "sources");
         }
         else{
-            partition.validate(path);
+            for(Source s: sources){
+                s.validate(path);
         }
         if(targets.length==0){
             throw new ConfigException("Missing field: " + path + "targets");

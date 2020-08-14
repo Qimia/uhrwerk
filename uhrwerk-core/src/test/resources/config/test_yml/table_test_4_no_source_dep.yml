@@ -1,0 +1,17 @@
+area: staging
+vertical: sourcedb_1
+table: dump_a_table
+version: "1.0"
+parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+max_bulk_size: 12
+partition:
+  unit: "hours"
+  size: 4
+
+dependencies:
+
+sources:
+
+targets:
+- connection_name: connection_name2
+  format: "jdbc"
