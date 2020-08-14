@@ -135,8 +135,9 @@ public class Table extends Representation{
             throw new ConfigException("Missing field: " + path + "sources");
         }
         else{
-            for(Source s: sources){
+            for(Source s: sources) {
                 s.validate(path);
+            }
         }
         if(targets.length==0){
             throw new ConfigException("Missing field: " + path + "targets");
