@@ -61,10 +61,10 @@ class ConfigReaderTest extends AnyFlatSpec {
     }
 
     //The following should throw an error, because there is no source and no dependency defined
-    //assertThrows[io.qimia.uhrwerk.config.ConfigException] {
-    //  val confPath = Paths.get(getClass.getResource("/config/test_yml/table_test_4_no_source_dep.yml").getPath)
-    //  val stepConf = ConfigReader.readStepConfig(confPath)
-    //}
+    assertThrows[io.qimia.uhrwerk.config.ConfigException] {
+      val confPath = Paths.get(getClass.getResource("/config/test_yml/table_test_4_no_source_dep.yml").getPath)
+      val stepConf = ConfigReader.readStepConfig(confPath)
+    }
   }
 
   "Given a premade global config it" should "be parsable by the configreader" in {
