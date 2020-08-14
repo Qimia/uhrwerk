@@ -6,6 +6,7 @@ import java.util.concurrent.Executors
 import io.qimia.uhrwerk.ManagedIO.FrameManager
 import io.qimia.uhrwerk.MetaStore.{DependencyFailedOld, DependencySuccess}
 import io.qimia.uhrwerk.TableWrapper.TaskInput
+import io.qimia.uhrwerk.backend.service.dependency.{BulkDependencyResult, TablePartitionResult, TablePartitionResultSet}
 import io.qimia.uhrwerk.config.{ConnectionType, PartitionTransformType}
 import io.qimia.uhrwerk.config.model.{Connection, Dependency, Table}
 import io.qimia.uhrwerk.utils.TimeTools
@@ -21,8 +22,6 @@ object TableWrapper {
   case class TableIdent(area: String, vertical: String, name: String, version: String)
 
   case class TaskInput(inputFrames: Map[TableIdent, DataFrame], partitionTS: LocalDateTime, partitionSize: Duration)
-
-  def getVirtualDependency() = {} // If we know it's there we can create the dataframe with a function
 
   /**
     * Combine different dependency checking outputs. Important when combining virtual-steps with one on one dependencies
@@ -109,6 +108,53 @@ object TableWrapper {
           }
         }
       })
+  }
+
+  /**
+   * Group together continuous sequential groups of TablePartitionResult
+   * @param in
+   * @param maxSize
+   * @return
+   */
+  def createTablePartitionResultGroups(in: TablePartitionResultSet, partitionSize: Duration, maxSize: Int): List[Array[TablePartitionResult]] = {
+    val groups = TimeTools.groupSequentialIncreasing(in.getResolvedTs, partitionSize, maxSize)
+    var queue = in.getProcessed
+    val res: ListBuffer[Array[TablePartitionResult]] = new ListBuffer
+    groups.foreach(num => {
+      val (group, rest) = queue.splitAt(num)
+      res += group
+      queue = rest
+    })
+    res.toList
+  }
+
+  /**
+   * Go from a TablePartitionResult for a list of partitions, to a BulkDependencyResult for a list of Dependencies
+   * (facilitating grouping multiple batches for each dependency)
+   * @param partitionResults
+   * @return
+   */
+  def extractBulkDependencyResult(partitionResults: Array[TablePartitionResult]): List[BulkDependencyResult] = {
+    val lbuffer = new ListBuffer[BulkDependencyResult]
+
+    val firstResultDependencies = partitionResults.head.getResolvedDependencies
+    val numDependencies = firstResultDependencies.size
+    for (i <- 0 until numDependencies) {
+      val newBulk = new BulkDependencyResult
+      newBulk.setDependency(firstResultDependencies(i).getDependency)
+      newBulk.setConnection(firstResultDependencies(i).getConnection)
+
+      val tsAndPartitions = partitionResults.map(res => {
+        val partTS = res.getPartitionTs
+        val depRes = res.getResolvedDependencies()(i)
+        val partitions = depRes.getSucceeded
+        (partTS, partitions)
+      })
+      newBulk.setPartitionTimestamps(tsAndPartitions.map(_._1))
+      newBulk.setSucceeded(tsAndPartitions.flatMap(_._2))  // Flat map assumes that partition arrays do not overlap
+      lbuffer += newBulk
+    }
+    lbuffer.toList
   }
 }
 

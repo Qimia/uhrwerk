@@ -26,8 +26,6 @@ object SparkFrameManager {
 
 class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
-  // TODO: This more of a rough sketch than the actual full FrameManager. We will need to handle different batch sizes
-
   /**
    * Loads a source dataframe. Either one batch or the full path.
    *
@@ -127,6 +125,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       })
       .reduce((a, b) => a || b)
 
+    // todo speedup when full year/month/day..
+
     val dfReader = sparkSession
       .read
       .format(dependencyResult.getDependency.getFormat)
@@ -201,8 +201,13 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           .option("partitionColumn", source.getParallelLoadColumn)
           .option("lowerBound", minId)
           .option("upperBound", maxId)
+      } else if (source.getSelectColumn.nonEmpty && startTS.isDefined && endTSExcl.isDefined) {
+        dfReaderWithQuery
+          .option("partitionColumn", source.getSelectColumn)
+          .option("lowerBound", TimeTools.convertTSToString(startTS.get))
+          .option("upperBound", TimeTools.convertTSToString(endTSExcl.get))
       } else {
-        dfReaderWithQuery // todo add partitionColumn as source.selectColumn
+        dfReaderWithQuery
       }
     } else {
       dfReader
