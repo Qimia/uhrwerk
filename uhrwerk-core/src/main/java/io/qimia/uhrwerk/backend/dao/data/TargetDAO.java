@@ -6,40 +6,39 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
 
 public class TargetDAO {
-  private static String INSERT =
-      "INSERT INTO TARGET(table_id, connection_id, format) VALUES (?,?,?)";
+  private static String INSERT_TMP =
+      "INSERT INTO TARGET (table_id, connection_id, format)\n"
+          + "SELECT %d, cn.id,'%s'\n"
+          + " FROM CONNECTION cn\n"
+          + " WHERE cn.name = '%s'";
 
   private static String SELECT_BY_ID =
       "SELECT id, table_id, connection_id, format, created_ts, updated_ts FROM TARGET WHERE id = ?";
 
-  public static Long save(java.sql.Connection db, Target target) throws SQLException {
-    PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-    insert.setLong(1, target.getTableId());
-    insert.setLong(2, target.getConnectionId());
-    insert.setString(3, target.getFormat());
+  public static Long save(java.sql.Connection db, Target target, Long tableId) throws SQLException {
+    String insertStr =
+        String.format(INSERT_TMP, tableId, target.getFormat(), target.getConnection().getName());
+    PreparedStatement insert = db.prepareStatement(insertStr, Statement.RETURN_GENERATED_KEYS);
     insert.executeUpdate();
     ResultSet generatedKeys = insert.getGeneratedKeys();
     if (generatedKeys.next()) return generatedKeys.getLong(1);
     return null;
   }
 
-  public static List<Long> save(java.sql.Connection db, Target[] targets) throws SQLException {
-    PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-    for (int i = 0; i < targets.length; i++) {
-      insert.setLong(1, targets[i].getTableId());
-      insert.setLong(2, targets[i].getConnectionId());
-      insert.setString(3, targets[i].getFormat());
-      insert.addBatch();
+  public static Long save(java.sql.Connection db, Target[] targets, Long tableId)
+      throws SQLException {
+    Statement statement = db.createStatement();
+    for (Target target : targets) {
+      String insert =
+          String.format(INSERT_TMP, tableId, target.getFormat(), target.getConnection().getName());
+      statement.addBatch(insert);
     }
-    insert.executeBatch();
-    ResultSet generatedKeys = insert.getGeneratedKeys();
-    List<Long> ids = new ArrayList<>(targets.length);
-    while (generatedKeys.next()) ids.add(generatedKeys.getLong(1));
-    return ids;
+    statement.executeBatch();
+    ResultSet generatedKeys = statement.getGeneratedKeys();
+    if (generatedKeys.next()) return generatedKeys.getLong(1);
+    return null;
   }
 
   public static Target get(java.sql.Connection db, Long id) throws SQLException {

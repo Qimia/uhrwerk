@@ -3,7 +3,10 @@ package io.qimia.uhrwerk.backend.dao.config;
 import io.qimia.uhrwerk.backend.dao.data.DependencyDAO;
 import io.qimia.uhrwerk.backend.dao.data.SourceDAO;
 import io.qimia.uhrwerk.backend.dao.data.TargetDAO;
+import io.qimia.uhrwerk.backend.service.dependency.TableDependencyService;
+import io.qimia.uhrwerk.backend.service.dependency.TablePartitionResultSet;
 import io.qimia.uhrwerk.config.PartitionUnit;
+import io.qimia.uhrwerk.config.model.Dependency;
 import io.qimia.uhrwerk.config.model.Source;
 import io.qimia.uhrwerk.config.model.Table;
 import io.qimia.uhrwerk.config.model.Target;
@@ -12,13 +15,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 
-public class TableDAO {
+public class TableDAO implements TableDependencyService {
   private static String INSERT =
-      "INSERT INTO TABLE_(area, vertical, table_name, batch_temporal_unit, batch_size, parallelism, max_partitions, version) VALUES(?,?,?,?,?,?,?,?)";
-
-  private static String SELECT_BY_ID =
-      "SELECT id, area, vertical, table_name, batch_temporal_unit, batch_size, parallelism, max_partitions, version, created_ts, updated_ts FROM TABLE_ WHERE id = ?";
+      "INSERT INTO TABLE_(area, vertical, name, partition_unit, partition_size, parallelism, max_bulk_size, version) VALUES(?,?,?,?,?,?,?,?)";
 
   public static Long save(java.sql.Connection db, Table table) throws SQLException {
     Long tableId = null;
@@ -27,10 +28,10 @@ public class TableDAO {
     insert.setString(1, table.getArea());
     insert.setString(2, table.getVertical());
     insert.setString(3, table.getName());
-    insert.setString(4, table.getPartitionSizeType().name());
-    insert.setInt(5, table.getPartitionSizeInt());
+    insert.setString(4, table.getPartitionUnit().name());
+    insert.setInt(5, table.getPartitionSize());
     insert.setInt(6, table.getParallelism());
-    insert.setInt(7, table.getMaxBatches());
+    insert.setInt(7, table.getMaxBulkSize());
     insert.setString(8, table.getVersion());
     insert.executeUpdate();
     ResultSet generatedKeys = insert.getGeneratedKeys();
@@ -38,50 +39,26 @@ public class TableDAO {
 
     if (table.getTargets() != null && table.getTargets().length > 0) {
       for (Target target : table.getTargets()) {
-        target.setTableId(tableId);
+        TargetDAO.save(db, target, tableId);
       }
-      TargetDAO.save(db, table.getTargets());
     }
     if (table.getDependencies() != null && table.getDependencies().length > 0) {
-      Dependency[] dependencies = table.getDependencies();
-      for (Dependency dependency : table.getDependencies()) {
-        dependency.setTableId(tableId);
-      }
-      DependencyDAO.save(db, dependencies);
+      DependencyDAO.save(db, table.getDependencies(), tableId);
     }
     if (table.getSources() != null && table.getSources().length > 0) {
-      Source[] sources = table.getSources();
-      for (Source source : table.getSources()) {
-        source.setCfTableId(tableId);
-      }
-      SourceDAO.save(db, table.getSources());
+      SourceDAO.save(db, table.getSources(), tableId);
     }
     db.commit();
     return tableId;
   }
 
   public static Table get(java.sql.Connection db, Long id) throws SQLException {
-    PreparedStatement select = db.prepareStatement(SELECT_BY_ID);
-    select.setLong(1, id);
+    PreparedStatement select = db.prepareStatement("SELECT * FROM TABLE_ WHERE id=1");
+    return null;
+  }
 
-    ResultSet record = select.executeQuery();
-
-    if (record.next()) {
-      Table res = new Table();
-      res.setId(record.getLong(1));
-      res.setArea(record.getString(2));
-      res.setVertical(record.getString(3));
-      res.setName(record.getString(4));
-      res.setPartitionSizeType(PartitionUnit.valueOf(record.getString(5)));
-      res.setPartitionSizeInt(record.getInt(6));
-      res.setParallelism(record.getInt(7));
-      res.setMaxBatches(record.getInt(8));
-      res.setVersion(record.getString(9));
-      res.setCreatedTs(record.getTimestamp(10).toLocalDateTime());
-      res.setUpdatedTs(record.getTimestamp(11).toLocalDateTime());
-      return res;
-    }
-
+  @Override
+  public TablePartitionResultSet processingPartitions(Table table, LocalDateTime[] partitionTs) {
     return null;
   }
 }
