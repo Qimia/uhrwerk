@@ -1,6 +1,7 @@
 package dao;
 
-import dao.JdbcBackendUtils;
+import io.qimia.uhrwerk.common.metastore.config.ConnectionResult;
+import io.qimia.uhrwerk.common.metastore.config.ConnectionService;
 import io.qimia.uhrwerk.common.model.Connection;
 import io.qimia.uhrwerk.common.model.ConnectionType;
 import io.qimia.uhrwerk.common.model.Dependency;
@@ -10,7 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class ConnectionDAO {
+public class ConnectionDAO implements ConnectionService {
 
   private static final String INSERT_JDBC_CONN =
       "INSERT INTO CONNECTION(name, type, path, version,jdbc_url, jdbc_driver, jdbc_user, jdbc_pass)\n"
@@ -81,6 +82,26 @@ public class ConnectionDAO {
     return getConnection(select);
   }
 
+  private static final String SELECT_BY_NAME =
+      "SELECT name,\n"
+          + "       type,\n"
+          + "       path,\n"
+          + "       version,\n"
+          + "       jdbc_url,\n"
+          + "       jdbc_driver,\n"
+          + "       jdbc_user,\n"
+          + "       jdbc_pass,\n"
+          + "       aws_access_key_id,\n"
+          + "       aws_secret_access_key\n"
+          + "FROM CONNECTION\n"
+          + "WHERE name =?\n";
+
+  public static Connection getByName(java.sql.Connection db, String name) throws SQLException {
+    PreparedStatement select = db.prepareStatement(SELECT_BY_NAME);
+    select.setString(1, name);
+    return getConnection(select);
+  }
+
   private static final String SELECT_DEPENDENCY_CONN =
       "SELECT cn.name,\n"
           + "       cn.type,\n"
@@ -129,5 +150,47 @@ public class ConnectionDAO {
       return res;
     }
     return null;
+  }
+
+  @Override
+  public ConnectionResult save(java.sql.Connection db, Connection connection, boolean overwrite) {
+    ConnectionResult result = new ConnectionResult();
+    result.setNewConnection(connection);
+    try {
+      if (!overwrite) {
+        Connection oldConnection = getByName(db, connection.getName());
+        if (oldConnection != null) {
+          result.setOldConnection(oldConnection);
+          result.setMessage(
+              String.format(
+                  "A Connection with name=%s already exists in the Metastore.",
+                  connection.getName()));
+          return result;
+        }
+      }
+      Long id = null;
+      switch (connection.getType()) {
+        case FS:
+          id = saveFS(db, connection);
+          break;
+        case JDBC:
+          id = saveJdbc(db, connection);
+          break;
+        case S3:
+          id = saveAWS(db, connection);
+          break;
+        case GC:
+        case ABS:
+          break;
+      }
+      connection.setId(id);
+      result.setSuccess(true);
+      result.setOldConnection(connection);
+    } catch (SQLException e) {
+      result.setError(true);
+      result.setException(e);
+      result.setMessage(e.getMessage());
+    }
+    return result;
   }
 }

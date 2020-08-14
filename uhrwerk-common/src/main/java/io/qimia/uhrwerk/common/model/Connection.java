@@ -16,6 +16,14 @@ public class Connection {
   String awsSecretAccessKey;
   String version;
 
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
   public String getName() {
     return name;
   }
@@ -101,65 +109,38 @@ public class Connection {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Connection that = (Connection) o;
-    return name.equals(that.name)
-        && type == that.type
-        && Objects.equals(jdbcUrl, that.jdbcUrl)
-        && Objects.equals(jdbcDriver, that.jdbcDriver)
-        && Objects.equals(jdbcUser, that.jdbcUser)
-        && Objects.equals(jdbcPass, that.jdbcPass)
-        && Objects.equals(awsAccessKeyID, that.awsAccessKeyID)
-        && Objects.equals(awsSecretAccessKey, that.awsSecretAccessKey)
-        && path.equals(that.path)
-        && version.equals(that.version);
+    return Objects.equals(id, that.id) &&
+            Objects.equals(name, that.name) &&
+            type == that.type &&
+            Objects.equals(path, that.path) &&
+            Objects.equals(jdbcUrl, that.jdbcUrl) &&
+            Objects.equals(jdbcDriver, that.jdbcDriver) &&
+            Objects.equals(jdbcUser, that.jdbcUser) &&
+            Objects.equals(jdbcPass, that.jdbcPass) &&
+            Objects.equals(awsAccessKeyID, that.awsAccessKeyID) &&
+            Objects.equals(awsSecretAccessKey, that.awsSecretAccessKey) &&
+            Objects.equals(version, that.version);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(
-        name,
-        type,
-        jdbcUrl,
-        jdbcDriver,
-        jdbcUser,
-        jdbcPass,
-        awsAccessKeyID,
-        awsSecretAccessKey,
-        path,
-        version);
+    return Objects.hash(id, name, type, path, jdbcUrl, jdbcDriver, jdbcUser, jdbcPass, awsAccessKeyID, awsSecretAccessKey, version);
   }
 
   @Override
   public String toString() {
-    return "Connection{"
-        + "name='"
-        + name
-        + '\''
-        + ", type="
-        + type
-        + ", jdbcUrl='"
-        + jdbcUrl
-        + '\''
-        + ", jdbcDriver='"
-        + jdbcDriver
-        + '\''
-        + ", jdbcUser='"
-        + jdbcUser
-        + '\''
-        + ", jdbcPass='"
-        + jdbcPass
-        + '\''
-        + ", awsAccessKeyID='"
-        + awsAccessKeyID
-        + '\''
-        + ", awsSecretAccessKey='"
-        + awsSecretAccessKey
-        + '\''
-        + ", path='"
-        + path
-        + '\''
-        + ", version='"
-        + version
-        + '\''
-        + '}';
+    return "Connection{" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", type=" + type +
+            ", path='" + path + '\'' +
+            ", jdbcUrl='" + jdbcUrl + '\'' +
+            ", jdbcDriver='" + jdbcDriver + '\'' +
+            ", jdbcUser='" + jdbcUser + '\'' +
+            ", jdbcPass='" + jdbcPass + '\'' +
+            ", awsAccessKeyID='" + awsAccessKeyID + '\'' +
+            ", awsSecretAccessKey='" + awsSecretAccessKey + '\'' +
+            ", version='" + version + '\'' +
+            '}';
   }
 }
