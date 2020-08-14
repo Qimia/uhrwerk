@@ -4,9 +4,11 @@ import io.qimia.uhrwerk.config.PartitionUnit;
 
 import java.util.Objects;
 
+
 public class Source {
   Connection connection;
   String path;
+  String format;
   PartitionUnit partitionUnit;
   int partitionSize;
   String parallelLoadQuery;
@@ -29,6 +31,14 @@ public class Source {
 
   public void setPath(String path) {
     this.path = path;
+  }
+
+  public String getFormat() {
+    return format;
+  }
+
+  public void setFormat(String format) {
+    this.format = format;
   }
 
   public PartitionUnit getPartitionUnit() {
@@ -96,6 +106,7 @@ public class Source {
             parallelLoadNum == source.parallelLoadNum &&
             Objects.equals(connection, source.connection) &&
             Objects.equals(path, source.path) &&
+            Objects.equals(format, source.format) &&
             partitionUnit == source.partitionUnit &&
             Objects.equals(parallelLoadQuery, source.parallelLoadQuery) &&
             Objects.equals(parallelLoadColumn, source.parallelLoadColumn) &&
@@ -105,7 +116,7 @@ public class Source {
 
   @Override
   public int hashCode() {
-    return Objects.hash(connection, path, partitionUnit, partitionSize, parallelLoadQuery, parallelLoadColumn, parallelLoadNum, selectQuery, selectColumn);
+    return Objects.hash(connection, path, format, partitionUnit, partitionSize, parallelLoadQuery, parallelLoadColumn, parallelLoadNum, selectQuery, selectColumn);
   }
 
   @Override
@@ -113,6 +124,7 @@ public class Source {
     return "Source{" +
             "connection=" + connection +
             ", path='" + path + '\'' +
+            ", format='" + format + '\'' +
             ", partitionUnit=" + partitionUnit +
             ", partitionSize=" + partitionSize +
             ", parallelLoadQuery='" + parallelLoadQuery + '\'' +

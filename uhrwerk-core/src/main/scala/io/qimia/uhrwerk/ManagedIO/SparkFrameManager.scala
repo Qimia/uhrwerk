@@ -5,7 +5,7 @@ import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.ManagedIO.SparkFrameManager.concatenatePaths
 import io.qimia.uhrwerk.backend.service.dependency.BulkDependencyResult
-import io.qimia.uhrwerk.config.ConnectionType
+import io.qimia.uhrwerk.config.{ConnectionType, PartitionUnit}
 import io.qimia.uhrwerk.config.model._
 import io.qimia.uhrwerk.utils.{JDBCTools, TimeTools}
 import org.apache.spark.sql._
@@ -44,7 +44,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     if (source.getConnection.getType.equals(ConnectionType.JDBC)) {
       loadSourceFromJDBC(source, startTS, endTSExcl, dataFrameReaderOptions)
     } else {
-      loadDataFrameFromFileSystem(startTS, source.getPartitionSize, conn.getJdbcUrl,
+      loadDataFrameFromFileSystem(startTS, source.getPartitionSize, source.getConnection.getJdbcUrl,
         source.getPath, source.getFormat, dataFrameReaderOptions)
     }
   }
@@ -59,11 +59,12 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @return Full location.
    */
   def getFullLocation(startTS: Option[LocalDateTime],
-                      partitionSize: String,
+                      partitionSize: Int,
+                      partitionUnit: PartitionUnit,
                       connectionUrl: String,
                       path: String): String = {
     if (startTS.isDefined) {
-      val duration = TimeTools.convertDurationStrToObj(partitionSize)
+      val duration = TimeTools.convertDurationStrToObj(partitionUnit, partitionSize)
       val date = TimeTools.dateTimeToDate(startTS.get)
       val batch = TimeTools.dateTimeToPostFix(startTS.get, duration)
       SparkFrameManager.concatenatePaths(connectionUrl, path, s"date=$date", s"batch=$batch")
@@ -84,7 +85,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @return Loaded DataFrame.
    */
   private def loadDataFrameFromFileSystem(startTS: Option[LocalDateTime],
-                                          partitionSize: String,
+                                          partitionSize: Int,
                                           connectionUrl: String,
                                           path: String,
                                           format: String,
@@ -263,9 +264,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
                               locationTableInfo: Table,
                               startTS: Option[LocalDateTime] = Option.empty,
                               dataFrameWriterOptions: Option[Map[String, String]] = Option.empty): Unit = {
-    assert(conn.getName == locationTargetInfo.getConnectionName)
+    assert(conn.getName == locationTargetInfo.getConnection.getName)
 
-    if (conn.getTypeEnum.equals(ConnectionType.JDBC)) {
+    if (conn.getType.equals(ConnectionType.JDBC)) {
       writeDataFrameToJDBC(frame, conn, locationTargetInfo, locationTableInfo, startTS, dataFrameWriterOptions)
     } else {
       val fullLocation = getFullLocation(startTS,
