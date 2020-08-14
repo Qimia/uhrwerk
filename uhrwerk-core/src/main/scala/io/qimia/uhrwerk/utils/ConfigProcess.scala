@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.utils
 
 import java.time.temporal.ChronoUnit
 
-import io.qimia.uhrwerk.config.{ConnectionType, PartitionTransformType}
+import io.qimia.uhrwerk.config.PartitionTransformType
 import io.qimia.uhrwerk.config.model.{Global, Table}
 
 object ConfigProcess {

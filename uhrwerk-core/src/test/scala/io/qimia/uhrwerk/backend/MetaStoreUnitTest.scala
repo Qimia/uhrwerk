@@ -5,7 +5,6 @@ import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.MetaStore
 import io.qimia.uhrwerk.backend.jpa.{PartitionLog, TaskLog}
-import io.qimia.uhrwerk.config.TaskLogType
 import io.qimia.uhrwerk.config.model.Dependency
 import javax.persistence.{EntityManagerFactory, Persistence}
 import org.scalatest.flatspec.AnyFlatSpec

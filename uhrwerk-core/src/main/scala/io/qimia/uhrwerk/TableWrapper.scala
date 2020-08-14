@@ -6,8 +6,8 @@ import java.util.concurrent.Executors
 import io.qimia.uhrwerk.ManagedIO.FrameManager
 import io.qimia.uhrwerk.MetaStore.{DependencyFailedOld, DependencySuccess}
 import io.qimia.uhrwerk.TableWrapper.TaskInput
-import io.qimia.uhrwerk.backend.service.dependency.{BulkDependencyResult, TablePartitionResult, TablePartitionResultSet}
-import io.qimia.uhrwerk.config.{ConnectionType, PartitionTransformType}
+import io.qimia.uhrwerk.backend.service.dependency.TablePartitionResultSet
+import io.qimia.uhrwerk.config.PartitionTransformType
 import io.qimia.uhrwerk.config.model.{Connection, Dependency, Table}
 import io.qimia.uhrwerk.utils.TimeTools
 import org.apache.spark.sql.DataFrame

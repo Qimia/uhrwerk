@@ -6,7 +6,6 @@ import java.time.{Duration, LocalDateTime, LocalTime}
 
 import com.mysql.cj.exceptions.WrongArgumentException
 import io.qimia.uhrwerk.backend.model.BatchTemporalUnit
-import io.qimia.uhrwerk.config.PartitionUnit
 
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}

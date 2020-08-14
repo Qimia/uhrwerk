@@ -4,8 +4,7 @@ import java.nio.file.Paths
 import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.ManagedIO.SparkFrameManager.concatenatePaths
-import io.qimia.uhrwerk.backend.service.dependency.BulkDependencyResult
-import io.qimia.uhrwerk.config.{ConnectionType, PartitionUnit}
+import io.qimia.uhrwerk.config.PartitionUnit
 import io.qimia.uhrwerk.config.model._
 import io.qimia.uhrwerk.utils.{JDBCTools, TimeTools}
 import org.apache.spark.sql._

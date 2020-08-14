@@ -7,7 +7,6 @@ import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.MetaStore.{DependencyFailedOld, DependencySuccess, TargetNeededOld}
 import io.qimia.uhrwerk.backend.jpa.{PartitionLog, TaskLog}
-import io.qimia.uhrwerk.config.TaskLogType
 import io.qimia.uhrwerk.config.model._
 import io.qimia.uhrwerk.utils.{ConfigProcess, ConfigReader, JDBCTools, TimeTools}
 import javax.persistence.{EntityManager, Persistence}

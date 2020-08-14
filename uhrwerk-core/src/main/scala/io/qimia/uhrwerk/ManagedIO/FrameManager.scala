@@ -2,7 +2,6 @@ package io.qimia.uhrwerk.ManagedIO
 
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.backend.service.dependency.BulkDependencyResult
 import io.qimia.uhrwerk.config.model._
 import org.apache.spark.sql.DataFrame
 

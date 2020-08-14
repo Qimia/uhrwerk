@@ -3,7 +3,6 @@ package io.qimia.uhrwerk.backend.jpa
 import java.time.{Duration, LocalDateTime}
 import java.util.Date
 
-import io.qimia.uhrwerk.config.TaskLogType
 import javax.persistence.{EntityManagerFactory, Persistence}
 import org.scalatest.flatspec.AnyFlatSpec
 
