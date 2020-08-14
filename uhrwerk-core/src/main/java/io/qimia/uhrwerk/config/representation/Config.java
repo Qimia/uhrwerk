@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
-public class Config extends Representation{
+public class Config{
     private Connection[] connections;
 
     public Config(){}
@@ -15,10 +15,9 @@ public class Config extends Representation{
         this.connections = connections;
     }
 
-    @Override
     public void validate(String path){
         path+="config/";
-        if(connections.length==0){
+        if(connections==null){
             throw new ConfigException("Missing field: " + path + "connections");
         }
         else {

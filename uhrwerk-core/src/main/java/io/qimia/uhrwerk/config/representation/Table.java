@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
-public class Table extends Representation{
+public class Table{
 
     private String area;
     private String vertical;
@@ -104,7 +104,6 @@ public class Table extends Representation{
         this.dependencies = dependencies;
     }
 
-    @Override
     public void validate(String path){
         path += "table/";
         if(area == null){
@@ -131,28 +130,27 @@ public class Table extends Representation{
         else{
             partition.validate(path);
         }
-        if(sources.length==0){
-            throw new ConfigException("Missing field: " + path + "sources");
+        if(sources==null && dependencies==null){
+            throw new ConfigException("Missing field: " + path + "sources or dependencies");
         }
-        else{
-            for(Source s: sources) {
-                s.validate(path);
+        else {
+            if(dependencies!=null){
+                for(Dependency d: dependencies){
+                    d.validate(path);
+                }
+            }
+            if(sources!=null){
+                for(Source s: sources){
+                    s.validate(path);
+                }
             }
         }
-        if(targets.length==0){
+        if(targets==null){
             throw new ConfigException("Missing field: " + path + "targets");
         }
         else{
             for(Target t: targets){
                 t.validate(path);
-            }
-        }
-        if(dependencies.length==0){
-            throw new ConfigException("Missing field: " + path + "dependencies");
-        }
-        else{
-            for(Dependency d: dependencies){
-                d.validate(path);
             }
         }
     }

@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
-public class JDBC extends Representation{
+public class JDBC{
     private String jdbc_url;
     private String jdbc_driver;
     private String user;
@@ -42,7 +42,6 @@ public class JDBC extends Representation{
         this.pass = pass;
     }
 
-    @Override
     public void validate(String path){
         path += "jdbc/";
         if(jdbc_url == null){

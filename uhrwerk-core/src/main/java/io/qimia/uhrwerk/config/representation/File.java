@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
-public class File extends Representation{
+public class File{
     private String path;
 
     public File(){}
@@ -15,9 +15,8 @@ public class File extends Representation{
         this.path = path;
     }
 
-    @Override
     public void validate(String path){
-        if(path==null){
+        if(this.path==null){
             throw new ConfigException("Missing field: " + path + "path");
         }
     }

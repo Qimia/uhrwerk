@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
-public class Dependency extends Representation{
+public class Dependency{
 
     private String connection_name;
     private String area;
@@ -70,7 +70,6 @@ public class Dependency extends Representation{
         this.transform = transform;
     }
 
-    @Override
     public void validate(String path){
         path += "dependency/";
         if(connection_name == null){

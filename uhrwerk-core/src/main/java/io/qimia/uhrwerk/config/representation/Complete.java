@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
-public class Complete extends Representation{
+public class Complete{
     private Global global;
     private Table[] tables;
 
@@ -25,7 +25,6 @@ public class Complete extends Representation{
         return tables != null;
     }
 
-    @Override
     public void validate(String path) {
         path += "/";
         if(global==null){
@@ -34,7 +33,7 @@ public class Complete extends Representation{
         else{
             global.validate(path);
         }
-        if(tables.length==0){
+        if(tables==null){
             throw new ConfigException("Missing field:" + path + "tables");
         }
         else{

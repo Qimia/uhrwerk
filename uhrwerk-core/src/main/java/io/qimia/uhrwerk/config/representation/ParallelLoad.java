@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
-public class ParallelLoad extends Representation{
+public class ParallelLoad{
 
     private String query;
     private String column;
@@ -35,7 +35,6 @@ public class ParallelLoad extends Representation{
         this.num = num;
     }
 
-    @Override
     public void validate(String path){
         path += "parallel_load/";
         if(query == null){

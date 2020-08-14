@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
-public class Source extends Representation{
+public class Source{
 
     private String connection_name;
     private String path;
@@ -71,7 +71,6 @@ public class Source extends Representation{
         this.select = select;
     }
 
-    @Override
     public void validate(String path){
         path += "source/";
         if(connection_name == null){

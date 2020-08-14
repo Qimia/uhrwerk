@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
-public class Metastore extends Representation{
+public class Metastore{
     private String jdbc_url;
     private String jdbc_driver;
     private String user;
@@ -43,7 +43,6 @@ public class Metastore extends Representation{
         this.pass = pass;
     }
 
-    @Override
     public void validate(String path){
         path += "metastore/";
         if(jdbc_url == null){

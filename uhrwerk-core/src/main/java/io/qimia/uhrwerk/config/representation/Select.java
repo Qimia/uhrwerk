@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
-public class Select extends Representation{
+public class Select{
 
     private String query;
     private String column;
@@ -26,7 +26,6 @@ public class Select extends Representation{
         this.column = column;
     }
 
-    @Override
     public void validate(String path){
         path += "select/";
         if(query == null){

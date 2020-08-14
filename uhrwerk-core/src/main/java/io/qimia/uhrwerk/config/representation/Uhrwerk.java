@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
-public class Uhrwerk extends Representation{
+public class Uhrwerk{
     private Metastore metastore;
 
     public Uhrwerk() {
@@ -16,7 +16,6 @@ public class Uhrwerk extends Representation{
         this.metastore = metastore;
     }
 
-    @Override
     public void validate(String path){
         path += "metastore/";
         if(metastore == null){

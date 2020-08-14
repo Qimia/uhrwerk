@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
-public class Global extends Representation{
+public class Global{
     private Uhrwerk uhrwerk;
     private Config config;
 
@@ -25,7 +25,6 @@ public class Global extends Representation{
         this.config = config;
     }
 
-    @Override
     public void validate(String path){
         path += "global/";
         if(uhrwerk==null){
