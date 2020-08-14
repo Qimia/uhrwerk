@@ -26,6 +26,16 @@ public class Partition{
         this.size = size;
     }
 
+    public void validate(String path){
+        path += "partition/";
+        if(unit == null){
+            throw new ConfigException("Missing field: " + path + "unit");
+        }
+        if(size == 0){
+            throw new ConfigException("Missing field: " + path + "size");
+        }
+    }
+
     public void validate(String path, String type){
         path += "partition/";
         if(type=="temporal_aggregate"){
