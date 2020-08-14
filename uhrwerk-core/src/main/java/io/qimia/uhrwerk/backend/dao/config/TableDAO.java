@@ -6,6 +6,7 @@ import io.qimia.uhrwerk.backend.dao.data.TargetDAO;
 import io.qimia.uhrwerk.backend.service.dependency.TableDependencyService;
 import io.qimia.uhrwerk.backend.service.dependency.TablePartitionResultSet;
 import io.qimia.uhrwerk.config.PartitionUnit;
+import io.qimia.uhrwerk.config.model.Dependency;
 import io.qimia.uhrwerk.config.model.Source;
 import io.qimia.uhrwerk.config.model.Table;
 import io.qimia.uhrwerk.config.model.Target;
@@ -38,23 +39,14 @@ public class TableDAO implements TableDependencyService {
 
     if (table.getTargets() != null && table.getTargets().length > 0) {
       for (Target target : table.getTargets()) {
-        target.setTableId(tableId);
+        TargetDAO.save(db, target, tableId);
       }
-      TargetDAO.save(db, table.getTargets());
     }
     if (table.getDependencies() != null && table.getDependencies().length > 0) {
-      Dependency[] dependencies = table.getDependencies();
-      for (Dependency dependency : table.getDependencies()) {
-        dependency.setTableId(tableId);
-      }
-      DependencyDAO.save(db, dependencies);
+      DependencyDAO.save(db, table.getDependencies(), tableId);
     }
     if (table.getSources() != null && table.getSources().length > 0) {
-      Source[] sources = table.getSources();
-      for (Source source : table.getSources()) {
-        source.setCfTableId(tableId);
-      }
-      SourceDAO.save(db, table.getSources());
+      SourceDAO.save(db, table.getSources(), tableId);
     }
     db.commit();
     return tableId;
@@ -62,26 +54,6 @@ public class TableDAO implements TableDependencyService {
 
   public static Table get(java.sql.Connection db, Long id) throws SQLException {
     PreparedStatement select = db.prepareStatement("SELECT * FROM TABLE_ WHERE id=1");
-    select.setLong(1, id);
-
-    ResultSet record = select.executeQuery();
-
-    if (record.next()) {
-      Table res = new Table();
-      res.setId(record.getLong(1));
-      res.setArea(record.getString(2));
-      res.setVertical(record.getString(3));
-      res.setName(record.getString(4));
-      res.setPartitionSizeType(PartitionUnit.valueOf(record.getString(5)));
-      res.setPartitionSizeInt(record.getInt(6));
-      res.setParallelism(record.getInt(7));
-      res.setMaxBatches(record.getInt(8));
-      res.setVersion(record.getString(9));
-      res.setCreatedTs(record.getTimestamp(10).toLocalDateTime());
-      res.setUpdatedTs(record.getTimestamp(11).toLocalDateTime());
-      return res;
-    }
-
     return null;
   }
 

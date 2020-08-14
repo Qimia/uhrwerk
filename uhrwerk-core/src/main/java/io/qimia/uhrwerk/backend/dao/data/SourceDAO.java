@@ -10,53 +10,45 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SourceDAO {
-  private static String INSERT =
-      "INSERT INTO SOURCE(table_id, connection_id, sql_select_query, sql_partition_query, partition_column, query_column)  VALUES (?,?,?,?,?,?,?,?)";
+  private static String INSERT_STR =
+      "INSERT INTO SOURCE(table_id, connection_id, path, sql_select_query, sql_partition_query, partition_column, query_column, partition_num,partition_unit,partition_size )\n"
+          + "SELECT %d,cn.id,%s,%s,%s,%s,%s,%d,%s,%d FROM CONNECTION cn\n"
+          + "WHERE cn.name = '%s'";
 
-  private static String SELECT_BY_ID =
-      "SELECT id, table_id, connection_id, format, created_ts, updated_ts FROM TARGET WHERE id = ?";
-
-  public static Long save(java.sql.Connection db, Source source) throws SQLException {
-    PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
-    setInsertParams(source, insert);
+  public static Long save(java.sql.Connection db, Source source, Long tableId) throws SQLException {
+    String insertStr = setInsertParams(source, tableId);
+    PreparedStatement insert = db.prepareStatement(insertStr, Statement.RETURN_GENERATED_KEYS);
     insert.executeUpdate();
     ResultSet generatedKeys = insert.getGeneratedKeys();
     if (generatedKeys.next()) return generatedKeys.getLong(1);
     return null;
   }
 
-  private static void setInsertParams(Source source, PreparedStatement insert) throws SQLException {
-    insert.setLong(1, source.getCfTableId());
-    insert.setLong(2, source.getConnectionId());
-    insert.setString(3, source.getSelectQuery());
-    insert.setString(4, source.getPartitionQuery());
-    insert.setString(5, source.getPartitionColumn());
-    insert.setString(6, source.getQueryColumn());
+  private static String setInsertParams(Source source, Long tableId) throws SQLException {
+    return String.format(
+        INSERT_STR,
+        tableId,
+        source.getPath(),
+        source.getSelectQuery(),
+        source.getParallelLoadQuery(),
+        source.getParallelLoadColumn(),
+        source.getSelectColumn(),
+        source.getParallelLoadNum(),
+        source.getPartitionUnit().name(),
+        source.getPartitionSize());
   }
 
-  public static List<Long> save(java.sql.Connection db, Source[] sources) throws SQLException {
-    PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
+  public static List<Long> save(java.sql.Connection db, Source[] sources, Long tableId)
+      throws SQLException {
+    Statement statement = db.createStatement();
     for (Source source : sources) {
-      setInsertParams(source, insert);
-      insert.addBatch();
+      String insertStr = setInsertParams(source, tableId);
+      statement.addBatch(insertStr);
     }
-    insert.executeBatch();
-    ResultSet generatedKeys = insert.getGeneratedKeys();
+    statement.executeBatch();
+    ResultSet generatedKeys = statement.getGeneratedKeys();
     List<Long> ids = new ArrayList<>(sources.length);
     while (generatedKeys.next()) ids.add(generatedKeys.getLong(1));
     return ids;
-  }
-
-  public static Source get(java.sql.Connection db, Long id) throws SQLException {
-    PreparedStatement select = db.prepareStatement(SELECT_BY_ID);
-    select.setLong(1, id);
-
-    ResultSet record = select.executeQuery();
-
-    if (record.next()) {
-      return null;
-    }
-
-    return null;
   }
 }
