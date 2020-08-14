@@ -8,22 +8,22 @@ global:
 
   config:
     connections:
-      - name: "mysql1"
-        jdbc:
-          jdbc_url: 'jdbc:mysql://localhost:3306'
-          jdbc_driver: 'com.mysql.jdbc.Driver'
-          user: root
-          pass: mysql
+    - name: "mysql1"
+      jdbc:
+        jdbc_url: 'jdbc:mysql://localhost:3306'
+        jdbc_driver: 'com.mysql.jdbc.Driver'
+        user: root
+        pass: mysql
 
-      - name: "s3_test"
-        s3:
-          path: "s3://bucketname/somesuffix/"
-          secret_id: blabla
-          secret_key: yaya
+    - name: "s3_test"
+      s3:
+        path: "s3://bucketname/somesuffix/"
+        secret_id: blabla
+        secret_key: yaya
 
-      - name: "local_filesystem_test"
-        file:
-          path: '/path/to/local/datalake'
+    - name: "local_filesystem_test"
+      file:
+        path: '/path/to/local/datalake'
 
 tables:
   - area: processing

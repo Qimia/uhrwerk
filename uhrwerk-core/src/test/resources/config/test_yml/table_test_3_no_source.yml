@@ -1,0 +1,55 @@
+area: staging
+vertical: sourcedb_1
+table: dump_a_table
+version: "1.0"
+parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+max_bulk_size: 12
+partition:
+  unit: "hours"
+  size: 4
+
+dependencies:
+- connection_name: "connection_name"
+  area: staging
+  vertical: sourcedb_1
+  table: tableOne  # On DB
+  format: "jdbc"
+  version: "1.0"
+  transform:
+    type: "identity"
+- connection_name: "connection_name"
+  area: staging
+  vertical: sourcedb_1
+  table: tableOne  # On DB
+  format: "jdbc"
+  version: "1.0"
+  transform:
+    type: "aggregate"
+    partition:
+      size: 4
+- connection_name: "connection_name"
+  area: staging
+  vertical: sourcedb_1
+  table: tableOne  # On DB
+  format: "jdbc"
+  version: "1.0"
+  transform:
+    type: "window"
+    partition:
+      size: 4
+- connection_name: "connection_name" # version 2
+  area: staging
+  vertical: sourcedb_1
+  table: tableOne  # On DB
+  format: "jdbc"
+  version : "1.0"
+  transform:
+    type: "temporal_aggregate"
+    partition:
+      unit: "days"
+      size: 1
+
+
+targets:
+- connection_name: connection_name2
+  format: "jdbc"
