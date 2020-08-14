@@ -9,7 +9,6 @@ import io.qimia.uhrwerk.backend.model.BatchTemporalUnit
 import io.qimia.uhrwerk.config.PartitionUnit
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuilder.ofRef
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object TimeTools {
