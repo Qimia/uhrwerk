@@ -93,6 +93,8 @@ class ConfigReaderTest extends AnyFlatSpec {
     val confPath = Paths.get(getClass.getResource("/config/test_yml/table_test_1.yml").getPath)
     val stepConf = ConfigReader.readStepConfig(confPath)
 
+    println(stepConf.getSources)
+
     assert(stepConf.getTable === "load_a_table")
     assert(stepConf.getParallelism === 10)
     assert(stepConf.getVersion == "1.0")  // Check default init
