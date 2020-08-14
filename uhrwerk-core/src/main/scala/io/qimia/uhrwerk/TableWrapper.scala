@@ -7,7 +7,7 @@ import io.qimia.uhrwerk.ManagedIO.FrameManager
 import io.qimia.uhrwerk.MetaStore.{DependencyFailedOld, DependencySuccess}
 import io.qimia.uhrwerk.TableWrapper.TaskInput
 import io.qimia.uhrwerk.config.{ConnectionType, PartitionTransformType}
-import io.qimia.uhrwerk.config.model.{Connection, Dependency}
+import io.qimia.uhrwerk.config.model.{Connection, Dependency, Table}
 import io.qimia.uhrwerk.utils.TimeTools
 import org.apache.spark.sql.DataFrame
 
@@ -18,9 +18,9 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 object TableWrapper {
 
-  case class TaskInput(connections: Map[String, Connection],
-                       startTS: LocalDateTime,
-                       frameIn: List[DataFrame])
+  case class TableIdent(area: String, vertical: String, name: String, version: String)
+
+  case class TaskInput(inputFrames: Map[TableIdent, DataFrame], partitionTS: LocalDateTime, partitionSize: Duration)
 
   def getVirtualDependency() = {} // If we know it's there we can create the dataframe with a function
 
@@ -112,7 +112,11 @@ object TableWrapper {
   }
 }
 
-class TableWrapper(store: MetaStore, frameManager: FrameManager) {
+
+
+class TableWrapper(table: Table, store: MetaStoreInt, frameManager: FrameManager) {
+
+  // TODO: Build a Setup class to handle setup steps and create this object
 
   /**
     * Process a single table for a list for partitionTS
@@ -121,15 +125,15 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
     * @param ex context on which the futures run for the different batches
     * @return a list of futures containing the batch partition times
     */
-  def runTasks(TableFunction: TaskInput => Option[DataFrame],
-               startTimes: Seq[LocalDateTime])(
+  def runTasks(TableFunction: TaskInput => DataFrame,
+               startTimes: Array[LocalDateTime])(
       implicit ex: ExecutionContext): List[Future[LocalDateTime]] = {
 
     // Run a Table for a single partition (denoted by starting-time)
     def runSingleTask(time: LocalDateTime, targets: Set[String]): Unit = {
       val startLog = store.logStartTask()
 
-      // Use configured frameManager to read dataframes
+      //!> Use configured frameManager to read dataframes (both DependencyResult and Sources)
       // TODO: Read the proper DF here and get the right connection/time params for it
       // Note that *we are responsible* for all (standard) loading of DataFrames!
       val inputDepDFs: List[DataFrame] =
@@ -162,6 +166,8 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
       val taskInput =
         TaskInput(store.connections, time, inputDepDFs ::: inputSourceDFs)
 
+      //!> Report result to metastore +
+
       val success = try {
         val frame = TableFunction(taskInput)
         // TODO error checking: if target should be on datalake but no frame is given
@@ -191,28 +197,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
       store.logFinishTask(startLog, time, success)
     }
 
-    val targetsNeeded = store.checkTargets(startTimes)
-    val partitionsNeeded = targetsNeeded.map(_._1)
-
-    val checkResult: List[Either[DependencyFailedOld, DependencySuccess]] =
-      if (store.tableConfig.dependenciesSet) {
-        val dependenciesByVirtual =
-          store.tableConfig.getDependencies.groupBy(dep =>
-            dep.getTypeEnum != PartitionTransformType.ONEONONE)
-        dependenciesByVirtual
-          .map(keyDeps =>
-            if (keyDeps._1) {
-              val individualVirtOutcomes =
-                keyDeps._2.map(checkVirtualStep(_, partitionsNeeded))
-              individualVirtOutcomes.reduce(
-                TableWrapper.combineDependencyChecks)
-            } else {
-              store.checkDependencies(keyDeps._2, partitionsNeeded)
-          })
-          .reduce(TableWrapper.combineDependencyChecks)
-      } else {
-        startTimes.map(Right(_)).toList
-      }
+    val dependencyResult = store.processingPartitions(table, startTimes)
 
     val tasks: mutable.ListBuffer[Future[LocalDateTime]] =
       new mutable.ListBuffer

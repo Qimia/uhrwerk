@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.config.model;
 
+import java.nio.file.Paths;
 import io.qimia.uhrwerk.config.PartitionTransformType;
 import io.qimia.uhrwerk.config.PartitionUnit;
 
@@ -53,6 +54,25 @@ public class Dependency {
 
   public void setVersion(String version) {
     this.version = version;
+  }
+
+  /**
+   * Concatenates area, vertical, table, version, and format into a path.
+   * Either with slashes for a file system or with dashes and a dot for jdbc.
+   *
+   * @param fileSystem Whether the path is for a file system or for jdbc.
+   * @return The concatenated path.
+   */
+  public String getPath(Boolean fileSystem) {
+    if (fileSystem) {
+      return Paths.get("area=", area,
+              "vertical=", vertical,
+              "table=", tableName,
+              "version=", version,
+              "format=", format).toString();
+    } else { // jdbc
+      return area + "-" + vertical + "." + tableName + "-" + version;
+    }
   }
 
   public PartitionTransformType getTransformType() {
