@@ -1,178 +1,170 @@
 package io.qimia.uhrwerk.config.model;
 
-import io.qimia.uhrwerk.config.PartitionTemporalType;
-import io.qimia.uhrwerk.utils.TimeTools;
+import io.qimia.uhrwerk.config.PartitionUnit;
 
-import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class Table {
 
-    private Long id;
+  String area;
+  String vertical;
+  String name;
+  String version;
+  int parallelism;
+  int maxBulkSize;
+  PartitionUnit partitionUnit;
+  int partitionSize;
+  Dependency[] dependencies;
+  Source[] sources;
+  Target[] targets;
 
-    private String name;
-    private int parallelism = 1;
-    private int maxBatches = 0;
-    private Dependency[] dependencies;
-    private Source[] sources;
-    private Target[] targets;
-    private String area = "";
-    private String vertical = "";
-    private String partitionSize = "";
-    private Integer partitionSizeInt = 0;
-    private PartitionTemporalType partitionSizeType;
-    private String version = "1";
+  public String getArea() {
+    return area;
+  }
 
-    private LocalDateTime createdTs;
-    private LocalDateTime updatedTs;
+  public void setArea(String area) {
+    this.area = area;
+  }
 
-    public Table() {}
+  public String getVertical() {
+    return vertical;
+  }
 
-    public Long getId() {
-        return id;
-    }
+  public void setVertical(String vertical) {
+    this.vertical = vertical;
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public String getVersion() {
+    return version;
+  }
 
-    public int getParallelism() {
-        return parallelism;
-    }
+  public void setVersion(String version) {
+    this.version = version;
+  }
 
-    public void setParallelism(int parallelism) {
-        this.parallelism = parallelism;
-    }
+  public int getParallelism() {
+    return parallelism;
+  }
 
-    public int getMaxBatches() {
-        return maxBatches;
-    }
+  public void setParallelism(int parallelism) {
+    this.parallelism = parallelism;
+  }
 
-    public void setMaxBatches(int maxBatches) {
-        this.maxBatches = maxBatches;
-    }
+  public int getMaxBulkSize() {
+    return maxBulkSize;
+  }
 
+  public void setMaxBulkSize(int maxBulkSize) {
+    this.maxBulkSize = maxBulkSize;
+  }
 
-    public boolean dependenciesSet() {
-        return dependencies != null;
-    }
+  public PartitionUnit getPartitionUnit() {
+    return partitionUnit;
+  }
 
-    public Dependency[] getDependencies() {
-        return dependencies;
-    }
+  public void setPartitionUnit(PartitionUnit partitionUnit) {
+    this.partitionUnit = partitionUnit;
+  }
 
-    public void setDependencies(Dependency[] dependencies) {
-        this.dependencies = dependencies;
-    }
+  public int getPartitionSize() {
+    return partitionSize;
+  }
 
-    public boolean sourcesSet() {
-        return sources != null;
-    }
+  public void setPartitionSize(int partitionSize) {
+    this.partitionSize = partitionSize;
+  }
 
-    public Source[] getSources() {
-        return sources;
-    }
+  public Dependency[] getDependencies() {
+    return dependencies;
+  }
 
-    public void setSources(Source[] sources) {
-        this.sources = sources;
-    }
+  public void setDependencies(Dependency[] dependencies) {
+    this.dependencies = dependencies;
+  }
 
-    public Target[] getTargets() {
-        return targets;
-    }
+  public Source[] getSources() {
+    return sources;
+  }
 
-    public void setTargets(Target[] targets) {
-        this.targets = targets;
-    }
+  public void setSources(Source[] sources) {
+    this.sources = sources;
+  }
 
-    public String getArea() {
-        return area;
-    }
+  public Target[] getTargets() {
+    return targets;
+  }
 
-    public void setArea(String area) {
-        this.area = area;
-    }
+  public void setTargets(Target[] targets) {
+    this.targets = targets;
+  }
 
-    public String getVertical() {
-        return vertical;
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Table table = (Table) o;
+    return parallelism == table.parallelism
+        && maxBulkSize == table.maxBulkSize
+        && partitionSize == table.partitionSize
+        && Objects.equals(area, table.area)
+        && Objects.equals(vertical, table.vertical)
+        && Objects.equals(name, table.name)
+        && Objects.equals(version, table.version)
+        && partitionUnit == table.partitionUnit
+        && Arrays.equals(dependencies, table.dependencies)
+        && Arrays.equals(sources, table.sources)
+        && Arrays.equals(targets, table.targets);
+  }
 
-    public void setVertical(String vertical) {
-        this.vertical = vertical;
-    }
+  @Override
+  public int hashCode() {
+    int result =
+        Objects.hash(
+            area, vertical, name, version, parallelism, maxBulkSize, partitionUnit, partitionSize);
+    result = 31 * result + Arrays.hashCode(dependencies);
+    result = 31 * result + Arrays.hashCode(sources);
+    result = 31 * result + Arrays.hashCode(targets);
+    return result;
+  }
 
-    public String getPartitionSize() {
-        return partitionSize;
-    }
-
-    public Duration getPartitionSizeDuration() {
-        return TimeTools.convertDurationStrToObj(partitionSize);
-    }
-
-    public void setPartitionSize(String partitionSize) {
-        this.partitionSize = partitionSize;
-        if (!partitionSize.equals("")) {
-            var tuple = TimeTools.convertDurationStrToTuple(partitionSize);
-            this.partitionSizeInt = tuple.count();
-            this.partitionSizeType = tuple.durationUnit();
-        }
-    }
-
-    public Integer getPartitionSizeInt() {
-        return partitionSizeInt;
-    }
-
-    public PartitionTemporalType getPartitionSizeType() {
-        return partitionSizeType;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public LocalDateTime getCreatedTs() {
-        return createdTs;
-    }
-
-    public void setCreatedTs(LocalDateTime createdTs) {
-        this.createdTs = createdTs;
-    }
-
-    public LocalDateTime getUpdatedTs() {
-        return updatedTs;
-    }
-
-    public void setUpdatedTs(LocalDateTime updatedTs) {
-        this.updatedTs = updatedTs;
-    }
-
-    public String getPath() {
-        return Paths.get("area=", area,
-                "vertical=", vertical,
-                "table=", name,
-                "version=", version).toString();
-    }
-
-
-    public void setPartitionSizeInt(Integer partitionSizeInt) {
-        this.partitionSizeInt = partitionSizeInt;
-    }
-
-
-    public void setPartitionSizeType(PartitionTemporalType partitionSizeType) {
-        this.partitionSizeType = partitionSizeType;
-    }
+  @Override
+  public String toString() {
+    return "Table{"
+        + "area='"
+        + area
+        + '\''
+        + ", vertical='"
+        + vertical
+        + '\''
+        + ", name='"
+        + name
+        + '\''
+        + ", version='"
+        + version
+        + '\''
+        + ", parallelism="
+        + parallelism
+        + ", maxBulkSize="
+        + maxBulkSize
+        + ", partitionUnit="
+        + partitionUnit
+        + ", partitionSize="
+        + partitionSize
+        + ", dependencies="
+        + Arrays.toString(dependencies)
+        + ", sources="
+        + Arrays.toString(sources)
+        + ", targets="
+        + Arrays.toString(targets)
+        + '}';
+  }
 }

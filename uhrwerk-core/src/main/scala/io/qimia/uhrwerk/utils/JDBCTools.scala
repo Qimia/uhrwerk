@@ -47,7 +47,7 @@ object JDBCTools {
    * @return The created SQL connection
    */
   def getJDBCConnection(connection: Connection): sql.Connection = {
-    val url = connection.getConnectionUrl
+    val url = connection.getJdbcUrl
     val driver = connection.getJdbcDriver
     val username = connection.getUser
     val password = connection.getPass
@@ -147,7 +147,7 @@ object JDBCTools {
     sparkSession
       .read
       .format("jdbc")
-      .option("url", connection.getConnectionUrl)
+      .option("url", connection.getJdbcUrl)
       .option("driver", connection.getJdbcDriver)
       .option("user", connection.getUser)
       .option("password", connection.getPass)

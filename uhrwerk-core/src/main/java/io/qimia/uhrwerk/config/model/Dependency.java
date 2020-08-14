@@ -1,72 +1,35 @@
 package io.qimia.uhrwerk.config.model;
 
-import io.qimia.uhrwerk.backend.model.BatchTemporalUnit;
-import io.qimia.uhrwerk.config.DependencyType;
-import io.qimia.uhrwerk.config.PartitionTemporalType;
-import io.qimia.uhrwerk.utils.TimeTools;
-
 import java.nio.file.Paths;
-import java.time.Duration;
-import java.time.LocalDateTime;
+import io.qimia.uhrwerk.config.PartitionTransformType;
+import io.qimia.uhrwerk.config.PartitionUnit;
+
+import java.util.Objects;
 
 public class Dependency {
+  String area;
+  String vertical;
+  String tableName;
+  String format;
+  String version;
+  PartitionTransformType transformType;
+  PartitionUnit transformPartitionUnit;
+  int transformPartitionSize;
 
-  private Long id;
-  private Long tableId;
-  private Long targetId;
-
-  private String connectionName = "";
-  private String tableName = "";
-  private String format = "";
-  private String area = "";
-  private String vertical = "";
-  private String version = "1";
-  private String type = "oneonone";
-  private String partitionSize = "";  // Leave out of yaml-pojo
-  private Integer partitionSizeInt = 0;
-  private PartitionTemporalType partitionSizeType;
-  private Integer partitionCount = 1;
-  private String partitionQuery = "";
-  private String partitionColumn = "";
-  private String selectQuery = "";
-  private String queryColumn = "";
-  private Integer sparkReaderNumPartitions = 10;
-
-  private LocalDateTime createdTS;
-  private LocalDateTime updatedTS;
-
-  public Dependency() {}
-
-  public Long getId() {
-    return id;
+  public String getArea() {
+    return area;
   }
 
-  public void setId(Long id) {
-    this.id = id;
+  public void setArea(String area) {
+    this.area = area;
   }
 
-  public Long getTableId() {
-    return tableId;
+  public String getVertical() {
+    return vertical;
   }
 
-  public void setTableId(Long tableId) {
-    this.tableId = tableId;
-  }
-
-  public Long getTargetId() {
-    return targetId;
-  }
-
-  public void setTargetId(Long targetId) {
-    this.targetId = targetId;
-  }
-
-  public String getConnectionName() {
-    return connectionName;
-  }
-
-  public void setConnectionName(String connectionName) {
-    this.connectionName = connectionName;
+  public void setVertical(String vertical) {
+    this.vertical = vertical;
   }
 
   public String getTableName() {
@@ -85,22 +48,6 @@ public class Dependency {
     this.format = format;
   }
 
-  public String getArea() {
-    return area;
-  }
-
-  public void setArea(String area) {
-    this.area = area;
-  }
-
-  public String getVertical() {
-    return vertical;
-  }
-
-  public void setVertical(String vertical) {
-    this.vertical = vertical;
-  }
-
   public String getVersion() {
     return version;
   }
@@ -109,143 +56,101 @@ public class Dependency {
     this.version = version;
   }
 
-  public String getType() {
-    return type;
-  }
-
-  public DependencyType getTypeEnum() {
-    return DependencyType.getDependencyType(type);
-  }
-
-  public void setType(String type) {
-    this.type = type;
-  }
-
-  public String getPartitionSize() {
-    return partitionSize;
-  }
-
-  public Duration getPartitionSizeDuration() {
-    return TimeTools.convertDurationStrToObj(partitionSize);
-  }
-
-  public BatchTemporalUnit getBatchTemporalUnit() {
-    return TimeTools.convertDurationToBatchTemporalUnit(getPartitionSizeDuration()).getOrElse(null);
-  }
-
-  public void setPartitionSize(String partitionSize) {
-    this.partitionSize = partitionSize;
-  // Set extra fields for persistence
-        if (!partitionSize.equals("")) {
-            var tuple = TimeTools.convertDurationStrToTuple(partitionSize);
-            this.partitionSizeInt = tuple.count();
-            this.partitionSizeType = tuple.durationUnit();
-        }
-    }
-
-    public Integer getPartitionSizeInt() {
-        return partitionSizeInt;
-    }
-
-    public PartitionTemporalType getPartitionSizeType() {
-        return partitionSizeType;
-    }
-
-  public Integer getPartitionCount() {
-    return partitionCount;
-  }
-
-  public void setPartitionCount(Integer partitionCount) {
-    this.partitionCount = partitionCount;
-  }
-
-  public String getPartitionQuery() {
-    return partitionQuery;
-  }
-
-  public void setPartitionQuery(String partitionQuery) {
-    this.partitionQuery = partitionQuery;
-  }
-
-  public String getPartitionColumn() {
-    return partitionColumn;
-  }
-
-  public void setPartitionColumn(String partitionColumn) {
-    this.partitionColumn = partitionColumn;
-  }
-
-  public String getSelectQuery() {
-    return selectQuery;
-  }
-
-  public void setSelectQuery(String selectQuery) {
-    this.selectQuery = selectQuery;
-  }
-
-  public String getQueryColumn() {
-    return queryColumn;
-  }
-
-  public void setQueryColumn(String queryColumn) {
-    this.queryColumn = queryColumn;
-  }
-
-  public Integer getSparkReaderNumPartitions() {
-    return sparkReaderNumPartitions;
-  }
-
-  public void setSparkReaderNumPartitions(Integer sparkReaderNumPartitions) {
-    this.sparkReaderNumPartitions = sparkReaderNumPartitions;
-  }
-
-  public LocalDateTime getCreatedTS() {
-    return createdTS;
-  }
-
-  public void setCreatedTS(LocalDateTime createdTS) {
-    this.createdTS = createdTS;
-  }
-
-  public LocalDateTime getUpdatedTS() {
-    return updatedTS;
-  }
-
-  public void setUpdatedTS(LocalDateTime updatedTS) {
-    this.updatedTS = updatedTS;
-  }
-
   /**
-   * Concatenates area, vertical, table, version, and format into a path. Either with slashes for a
-   * file system or with dashes and a dot for jdbc.
+   * Concatenates area, vertical, table, version, and format into a path.
+   * Either with slashes for a file system or with dashes and a dot for jdbc.
    *
    * @param fileSystem Whether the path is for a file system or for jdbc.
    * @return The concatenated path.
    */
   public String getPath(Boolean fileSystem) {
     if (fileSystem) {
-      return Paths.get(
-              "area=",
-              area,
-              "vertical=",
-              vertical,
-              "table=",
-              tableName,
-              "version=",
-              version,
-              "format=",
-              format)
-          .toString();
+      return Paths.get("area=", area,
+              "vertical=", vertical,
+              "table=", tableName,
+              "version=", version,
+              "format=", format).toString();
     } else { // jdbc
       return area + "-" + vertical + "." + tableName + "-" + version;
     }
   }
 
-  public void setPartitionSizeInt(Integer partitionSizeInt) {
-    this.partitionSizeInt = partitionSizeInt;
+  public PartitionTransformType getTransformType() {
+    return transformType;
   }
 
-  public void setPartitionSizeType(PartitionTemporalType partitionSizeType) {
-    this.partitionSizeType = partitionSizeType;
+  public void setTransformType(PartitionTransformType transformType) {
+    this.transformType = transformType;
+  }
+
+  public PartitionUnit getTransformPartitionUnit() {
+    return transformPartitionUnit;
+  }
+
+  public void setTransformPartitionUnit(PartitionUnit transformPartitionUnit) {
+    this.transformPartitionUnit = transformPartitionUnit;
+  }
+
+  public int getTransformPartitionSize() {
+    return transformPartitionSize;
+  }
+
+  public void setTransformPartitionSize(int transformPartitionSize) {
+    this.transformPartitionSize = transformPartitionSize;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Dependency that = (Dependency) o;
+    return transformPartitionSize == that.transformPartitionSize
+        && Objects.equals(area, that.area)
+        && Objects.equals(vertical, that.vertical)
+        && Objects.equals(tableName, that.tableName)
+        && Objects.equals(format, that.format)
+        && Objects.equals(version, that.version)
+        && transformType == that.transformType
+        && transformPartitionUnit == that.transformPartitionUnit;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        area,
+        vertical,
+        tableName,
+        format,
+        version,
+        transformType,
+        transformPartitionUnit,
+        transformPartitionSize);
+  }
+
+  @Override
+  public String toString() {
+    return "Dependency{"
+        + "area='"
+        + area
+        + '\''
+        + ", vertical='"
+        + vertical
+        + '\''
+        + ", tableName='"
+        + tableName
+        + '\''
+        + ", format='"
+        + format
+        + '\''
+        + ", version='"
+        + version
+        + '\''
+        + ", transformType="
+        + transformType
+        + ", transformPartitionUnit="
+        + transformPartitionUnit
+        + ", transformPartitionSize="
+        + transformPartitionSize
+        + '}';
   }
 }

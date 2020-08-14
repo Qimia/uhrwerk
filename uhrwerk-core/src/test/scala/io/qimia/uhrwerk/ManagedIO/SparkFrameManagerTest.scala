@@ -105,7 +105,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val conn = new Connection
     conn.setName("testSparkFrameManagerWithoutBatches")
     conn.setType("fs")
-    conn.setConnectionUrl("src/test/resources/testlake/")
+    conn.setJdbcUrl("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testSparkFrameManagerWithoutBatches")
     tar.setFormat("testsparkframemanagerwithoutbatches")
@@ -134,7 +134,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val conn = new Connection
     conn.setName("testSparkFrameManager")
     conn.setType("fs")
-    conn.setConnectionUrl("src/test/resources/testlake/")
+    conn.setJdbcUrl("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testSparkFrameManager")
     tar.setFormat("testsparkframemanager")
@@ -182,7 +182,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val conn = new Connection
     conn.setName("testAggregateDependency")
     conn.setType("fs")
-    conn.setConnectionUrl("src/test/resources/testlake/")
+    conn.setJdbcUrl("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testAggregateDependency")
     tar.setFormat("testaggregatedependency")
@@ -240,7 +240,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val conn = new Connection
     conn.setName("testWindowDependency")
     conn.setType("fs")
-    conn.setConnectionUrl("src/test/resources/testlake/")
+    conn.setJdbcUrl("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testWindowDependency")
     tar.setFormat("testwindowdependency")
@@ -308,7 +308,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val conn = new Connection
     conn.setName("testSparkRange")
     conn.setType("fs")
-    conn.setConnectionUrl("src/test/resources/testlake/")
+    conn.setJdbcUrl("src/test/resources/testlake/")
     val tar = new Target
     tar.setConnectionName("testSparkRange")
     tar.setFormat("testsparkframerange")
@@ -408,6 +408,6 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val conn = new Connection
     conn.setName("testCsvReading")
     conn.setType("fs")
-    conn.setConnectionUrl("src/test/resources/testlake/")
+    conn.setJdbcUrl("src/test/resources/testlake/")
   }
 }

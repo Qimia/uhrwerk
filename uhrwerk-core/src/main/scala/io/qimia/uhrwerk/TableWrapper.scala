@@ -6,8 +6,9 @@ import java.util.concurrent.Executors
 import io.qimia.uhrwerk.ManagedIO.FrameManager
 import io.qimia.uhrwerk.MetaStore.{DependencyFailedOld, DependencySuccess}
 import io.qimia.uhrwerk.TableWrapper.TaskInput
-import io.qimia.uhrwerk.config.{ConnectionType, DependencyType}
-import io.qimia.uhrwerk.config.model.{Connection, Dependency}
+import io.qimia.uhrwerk.backend.service.dependency.{BulkDependencyResult, TablePartitionResult, TablePartitionResultSet}
+import io.qimia.uhrwerk.config.{ConnectionType, PartitionTransformType}
+import io.qimia.uhrwerk.config.model.{Connection, Dependency, Table}
 import io.qimia.uhrwerk.utils.TimeTools
 import org.apache.spark.sql.DataFrame
 
@@ -18,11 +19,9 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 object TableWrapper {
 
-  case class TaskInput(connections: Map[String, Connection],
-                       startTS: LocalDateTime,
-                       frameIn: List[DataFrame])
+  case class TableIdent(area: String, vertical: String, name: String, version: String)
 
-  def getVirtualDependency() = {} // If we know it's there we can create the dataframe with a function
+  case class TaskInput(inputFrames: Map[TableIdent, DataFrame], partitionTS: LocalDateTime, partitionSize: Duration)
 
   /**
     * Combine different dependency checking outputs. Important when combining virtual-steps with one on one dependencies
@@ -110,9 +109,60 @@ object TableWrapper {
         }
       })
   }
+
+  /**
+   * Group together continuous sequential groups of TablePartitionResult
+   * @param in
+   * @param maxSize
+   * @return
+   */
+  def createTablePartitionResultGroups(in: TablePartitionResultSet, partitionSize: Duration, maxSize: Int): List[Array[TablePartitionResult]] = {
+    val groups = TimeTools.groupSequentialIncreasing(in.getResolvedTs, partitionSize, maxSize)
+    var queue = in.getProcessed
+    val res: ListBuffer[Array[TablePartitionResult]] = new ListBuffer
+    groups.foreach(num => {
+      val (group, rest) = queue.splitAt(num)
+      res += group
+      queue = rest
+    })
+    res.toList
+  }
+
+  /**
+   * Go from a TablePartitionResult for a list of partitions, to a BulkDependencyResult for a list of Dependencies
+   * (facilitating grouping multiple batches for each dependency)
+   * @param partitionResults
+   * @return
+   */
+  def extractBulkDependencyResult(partitionResults: Array[TablePartitionResult]): List[BulkDependencyResult] = {
+    val lbuffer = new ListBuffer[BulkDependencyResult]
+
+    val firstResultDependencies = partitionResults.head.getResolvedDependencies
+    val numDependencies = firstResultDependencies.size
+    for (i <- 0 until numDependencies) {
+      val newBulk = new BulkDependencyResult
+      newBulk.setDependency(firstResultDependencies(i).getDependency)
+      newBulk.setConnection(firstResultDependencies(i).getConnection)
+
+      val tsAndPartitions = partitionResults.map(res => {
+        val partTS = res.getPartitionTs
+        val depRes = res.getResolvedDependencies()(i)
+        val partitions = depRes.getSucceeded
+        (partTS, partitions)
+      })
+      newBulk.setPartitionTimestamps(tsAndPartitions.map(_._1))
+      newBulk.setSucceeded(tsAndPartitions.flatMap(_._2))  // Flat map assumes that partition arrays do not overlap
+      lbuffer += newBulk
+    }
+    lbuffer.toList
+  }
 }
 
-class TableWrapper(store: MetaStore, frameManager: FrameManager) {
+
+
+class TableWrapper(table: Table, store: MetaStoreInt, frameManager: FrameManager) {
+
+  // TODO: Build a Setup class to handle setup steps and create this object
 
   /**
     * Process a single table for a list for partitionTS
@@ -121,15 +171,15 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
     * @param ex context on which the futures run for the different batches
     * @return a list of futures containing the batch partition times
     */
-  def runTasks(TableFunction: TaskInput => Option[DataFrame],
-               startTimes: Seq[LocalDateTime])(
+  def runTasks(TableFunction: TaskInput => DataFrame,
+               startTimes: Array[LocalDateTime])(
       implicit ex: ExecutionContext): List[Future[LocalDateTime]] = {
 
     // Run a Table for a single partition (denoted by starting-time)
     def runSingleTask(time: LocalDateTime, targets: Set[String]): Unit = {
       val startLog = store.logStartTask()
 
-      // Use configured frameManager to read dataframes
+      //!> Use configured frameManager to read dataframes (both DependencyResult and Sources)
       // TODO: Read the proper DF here and get the right connection/time params for it
       // Note that *we are responsible* for all (standard) loading of DataFrames!
       val inputDepDFs: List[DataFrame] =
@@ -162,6 +212,8 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
       val taskInput =
         TaskInput(store.connections, time, inputDepDFs ::: inputSourceDFs)
 
+      //!> Report result to metastore +
+
       val success = try {
         val frame = TableFunction(taskInput)
         // TODO error checking: if target should be on datalake but no frame is given
@@ -191,28 +243,7 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
       store.logFinishTask(startLog, time, success)
     }
 
-    val targetsNeeded = store.checkTargets(startTimes)
-    val partitionsNeeded = targetsNeeded.map(_._1)
-
-    val checkResult: List[Either[DependencyFailedOld, DependencySuccess]] =
-      if (store.tableConfig.dependenciesSet) {
-        val dependenciesByVirtual =
-          store.tableConfig.getDependencies.groupBy(dep =>
-            dep.getTypeEnum != DependencyType.ONEONONE)
-        dependenciesByVirtual
-          .map(keyDeps =>
-            if (keyDeps._1) {
-              val individualVirtOutcomes =
-                keyDeps._2.map(checkVirtualStep(_, partitionsNeeded))
-              individualVirtOutcomes.reduce(
-                TableWrapper.combineDependencyChecks)
-            } else {
-              store.checkDependencies(keyDeps._2, partitionsNeeded)
-          })
-          .reduce(TableWrapper.combineDependencyChecks)
-      } else {
-        startTimes.map(Right(_)).toList
-      }
+    val dependencyResult = store.processingPartitions(table, startTimes)
 
     val tasks: mutable.ListBuffer[Future[LocalDateTime]] =
       new mutable.ListBuffer
@@ -330,8 +361,8 @@ class TableWrapper(store: MetaStore, frameManager: FrameManager) {
     }
 
     dependency.getTypeEnum match {
-      case DependencyType.AGGREGATE => checkAggregateStep()
-      case DependencyType.WINDOW    => checkWindowStep()
+      case PartitionTransformType.AGGREGATE => checkAggregateStep()
+      case PartitionTransformType.WINDOW    => checkWindowStep()
       case _ => {
         System.err.println("Error: trying not implemented virtual step")
         throw new NotImplementedError

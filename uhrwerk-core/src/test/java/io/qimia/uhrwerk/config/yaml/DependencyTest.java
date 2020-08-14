@@ -1,12 +1,9 @@
 package io.qimia.uhrwerk.config.yaml;
 
-import io.qimia.uhrwerk.config.model.Dependency;
 import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class DependencyTest {
   @Test
