@@ -1,4 +1,4 @@
-package dao;
+package io.qimia.uhrwerk.dao;
 
 import io.qimia.uhrwerk.common.metastore.config.ConnectionResult;
 import io.qimia.uhrwerk.common.metastore.config.ConnectionService;
@@ -13,13 +13,29 @@ import java.sql.Statement;
 
 public class ConnectionDAO implements ConnectionService {
 
-  private static final String UPSERT_CONN =
-          "INSERT INTO CONNECTION(name, type, path, jdbc_url, jdbc_driver, jdbc_user, jdbc_pass, aws_access_key_id, aws_secret_access_key)\n"
-                  + "VALUES(?,?,?,?,?,?,?,?,?) "
-                  + "ON DUPLICATE KEY UPDATE \n"
-                  + "type=?, path=?, jdbc_url=?, jdbc_driver=?, jdbc_user=?, jdbc_pass=?, aws_access_key_id=?, aws_secret_access_key=?";
+  private java.sql.Connection db;
 
-  public static Long save(java.sql.Connection db, Connection connection) throws SQLException {
+  public ConnectionDAO() {
+  }
+
+  public ConnectionDAO(java.sql.Connection db) {
+    this.db = db;
+  }
+
+  public java.sql.Connection getDb() {
+    return db;
+  }
+  public void setDb(java.sql.Connection db) {
+    this.db = db;
+  }
+
+  private static final String UPSERT_CONN =
+      "INSERT INTO CONNECTION(name, type, path, jdbc_url, jdbc_driver, jdbc_user, jdbc_pass, aws_access_key_id, aws_secret_access_key)\n"
+          + "VALUES(?,?,?,?,?,?,?,?,?) "
+          + "ON DUPLICATE KEY UPDATE \n"
+          + "type=?, path=?, jdbc_url=?, jdbc_driver=?, jdbc_user=?, jdbc_pass=?, aws_access_key_id=?, aws_secret_access_key=?";
+
+  public Long save(Connection connection) throws SQLException {
     PreparedStatement insert = db.prepareStatement(UPSERT_CONN, Statement.RETURN_GENERATED_KEYS);
     // common columns values
     insert.setString(1, connection.getName());
@@ -48,45 +64,44 @@ public class ConnectionDAO implements ConnectionService {
   }
 
   private static final String SELECT_BY_NAME =
-          "SELECT name,\n"
-                  + "       type,\n"
-                  + "       path,\n"
-                  + "       jdbc_url,\n"
-                  + "       jdbc_driver,\n"
-                  + "       jdbc_user,\n"
-                  + "       jdbc_pass,\n"
-                  + "       aws_access_key_id,\n"
-                  + "       aws_secret_access_key\n"
-                  + "FROM CONNECTION\n"
-                  + "WHERE name =?\n";
+      "SELECT name,\n"
+          + "       type,\n"
+          + "       path,\n"
+          + "       jdbc_url,\n"
+          + "       jdbc_driver,\n"
+          + "       jdbc_user,\n"
+          + "       jdbc_pass,\n"
+          + "       aws_access_key_id,\n"
+          + "       aws_secret_access_key\n"
+          + "FROM CONNECTION\n"
+          + "WHERE name =?\n";
 
-  public static Connection getByName(java.sql.Connection db, String name) throws SQLException {
+  public Connection getByName(java.sql.Connection db, String name) throws SQLException {
     PreparedStatement select = db.prepareStatement(SELECT_BY_NAME);
     select.setString(1, name);
     return getConnection(select);
   }
 
   private static final String SELECT_DEPENDENCY_CONN =
-          "SELECT cn.name,\n"
-                  + "       cn.type,\n"
-                  + "       cn.path,\n"
-                  + "       cn.jdbc_url,\n"
-                  + "       cn.jdbc_driver,\n"
-                  + "       cn.jdbc_user,\n"
-                  + "       cn.jdbc_pass,\n"
-                  + "       cn.aws_access_key_id,\n"
-                  + "       cn.aws_secret_access_key\n"
-                  + "FROM TABLE_ AS tl\n"
-                  + "         JOIN TARGET tr ON tl.id = tr.table_id\n"
-                  + "         JOIN CONNECTION cn ON tr.connection_id = cn.id\n"
-                  + "WHERE tl.area = ?\n"
-                  + "  AND tl.vertical = ?\n"
-                  + "  AND tl.name = ?\n"
-                  + "  AND tl.version = ?\n"
-                  + "  AND tr.format = ?";
+      "SELECT cn.name,\n"
+          + "       cn.type,\n"
+          + "       cn.path,\n"
+          + "       cn.jdbc_url,\n"
+          + "       cn.jdbc_driver,\n"
+          + "       cn.jdbc_user,\n"
+          + "       cn.jdbc_pass,\n"
+          + "       cn.aws_access_key_id,\n"
+          + "       cn.aws_secret_access_key\n"
+          + "FROM TABLE_ AS tl\n"
+          + "         JOIN TARGET tr ON tl.id = tr.table_id\n"
+          + "         JOIN CONNECTION cn ON tr.connection_id = cn.id\n"
+          + "WHERE tl.area = ?\n"
+          + "  AND tl.vertical = ?\n"
+          + "  AND tl.name = ?\n"
+          + "  AND tl.version = ?\n"
+          + "  AND tr.format = ?";
 
-  public static Connection getDependencyConnection(java.sql.Connection db, Dependency dependency)
-          throws SQLException {
+  public Connection getDependencyConnection(Dependency dependency) throws SQLException {
     PreparedStatement select = db.prepareStatement(SELECT_DEPENDENCY_CONN);
     select.setString(1, dependency.getArea());
     select.setString(2, dependency.getVertical());
@@ -96,7 +111,7 @@ public class ConnectionDAO implements ConnectionService {
     return getConnection(select);
   }
 
-  private static Connection getConnection(PreparedStatement select) throws SQLException {
+  private Connection getConnection(PreparedStatement select) throws SQLException {
     ResultSet record = select.executeQuery();
     if (record.next()) {
       Connection res = new Connection();
@@ -115,7 +130,7 @@ public class ConnectionDAO implements ConnectionService {
   }
 
   @Override
-  public ConnectionResult save(java.sql.Connection db, Connection connection, boolean overwrite) {
+  public ConnectionResult save(Connection connection, boolean overwrite) {
     ConnectionResult result = new ConnectionResult();
     result.setNewConnection(connection);
     try {
@@ -124,13 +139,13 @@ public class ConnectionDAO implements ConnectionService {
         if (oldConnection != null) {
           result.setOldConnection(oldConnection);
           result.setMessage(
-                  String.format(
-                          "A Connection with name=%s already exists in the Metastore.",
-                          connection.getName()));
+              String.format(
+                  "A Connection with name=%s already exists in the Metastore.",
+                  connection.getName()));
           return result;
         }
       }
-      Long id = save(db, connection);
+      Long id = save(connection);
       connection.setId(id);
       result.setSuccess(true);
       result.setOldConnection(connection);
