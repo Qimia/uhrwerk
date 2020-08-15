@@ -19,32 +19,31 @@ CREATE TABLE IF NOT EXISTS CONNECTION
 create table if not exists TABLE_
 (
     id             BIGINT AUTO_INCREMENT PRIMARY KEY,
-    area           VARCHAR(256)                               NOT NULL,
-    vertical       VARCHAR(256)                               NOT NULL,
-    name           VARCHAR(256)                               NOT NULL,
+    area           VARCHAR(128)                               NOT NULL,
+    vertical       VARCHAR(128)                               NOT NULL,
+    name           VARCHAR(128)                               NOT NULL,
     partition_unit enum ('WEEKS', 'DAYS', 'HOURS', 'MINUTES') NOT NULL,
     partition_size int                                        NOT NULL,
     parallelism    int                                        NOT NULL,
     max_bulk_size  int                                        NOT NULL,
-    version        VARCHAR(256)                               NOT NULL,
+    version        VARCHAR(128)                               NOT NULL,
     created_ts     TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL,
     updated_ts     TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL ON UPDATE CURRENT_TIMESTAMP,
-    description    VARCHAR(512)                               NULL
+    description    VARCHAR(512)                               NULL,
+    UNIQUE (area, vertical, name, version)
 );
-
-CREATE INDEX TABLE_INDX ON TABLE_ (area(128), vertical(128), name(128), version(64));
 
 create table if not exists TARGET
 (
     id            BIGINT AUTO_INCREMENT PRIMARY KEY,
     table_id      BIGINT                              NOT NULL,
-    connection_id BIGINT                              NOT NULL,
+    connection_id BIGINT                              NULL,
     format        VARCHAR(64)                         NOT NULL,
     created_ts    TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
     updated_ts    TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (table_id) REFERENCES TABLE_ (id),
-    FOREIGN KEY (connection_id) REFERENCES CONNECTION (id),
-    index (format)
+    FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE,
+    FOREIGN KEY (connection_id) REFERENCES CONNECTION (id) ON DELETE RESTRICT,
+    UNIQUE (table_id, connection_id, format)
 );
 
 create table if not exists DEPENDENCY
@@ -58,8 +57,8 @@ create table if not exists DEPENDENCY
     created_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL,
     updated_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL ON UPDATE CURRENT_TIMESTAMP,
     description              VARCHAR(512)                               NULL,
-    FOREIGN KEY (target_id) REFERENCES TARGET (id),
-    FOREIGN KEY (table_id) REFERENCES TABLE_ (id)
+    FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE,
+    FOREIGN KEY (target_id) REFERENCES TARGET (id) ON DELETE RESTRICT
 );
 
 create table if not exists PARTITION_
@@ -88,9 +87,9 @@ create table if not exists PARTITION_DEPENDENCY
     created_ts              TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
     updated_ts              TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (partition_id) REFERENCES PARTITION_ (id)
-        on delete cascade,
+        ON DELETE CASCADE,
     FOREIGN KEY (dependency_partition_id) REFERENCES PARTITION_ (id)
-        on delete cascade
+        ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS SOURCE
@@ -110,7 +109,7 @@ CREATE TABLE IF NOT EXISTS SOURCE
     updated_ts          TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     description         VARCHAR(512),
     FOREIGN KEY (table_id)
-        REFERENCES TABLE_ (id),
+        REFERENCES TABLE_ (id) ON DELETE CASCADE,
     FOREIGN KEY (connection_id)
-        REFERENCES CONNECTION (id)
+        REFERENCES CONNECTION (id) ON DELETE RESTRICT
 );
