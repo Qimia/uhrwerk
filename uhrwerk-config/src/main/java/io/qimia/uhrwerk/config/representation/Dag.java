@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
 import java.util.Arrays;
+import io.qimia.uhrwerk.config.ConfigException;
 
 public class Dag {
   private Connection[] connections;
@@ -20,6 +21,26 @@ public class Dag {
 
   public void setTables(Table[] tables) {
     this.tables = tables;
+  }
+
+  public void validate(String path) {
+    path += "/";
+    if(connections==null){
+      throw new ConfigException("Missing field:" + path + "connections");
+    }
+    else{
+      for (Connection c: connections){
+        c.validate(path);
+      }
+    }
+    if(tables==null){
+      throw new ConfigException("Missing field:" + path + "tables");
+    }
+    else{
+      for (Table t: tables){
+        t.validate(path);
+      }
+    }
   }
 
   @Override
