@@ -91,8 +91,7 @@ public class YamlConfigReader {
             dep.setTransformType(PartitionTransformType.WINDOW);
             break;
           case "temporal_aggregate":
-            dep.setTransformType(PartitionTransformType.AGGREGATE);
-            //TODO: define Transform Type for temporal_aggregate
+            dep.setTransformType(PartitionTransformType.TEMPORAL_AGGREGATE);
         }
         dep.setTransformPartitionUnit(getModelPartitionUnit(dependencies[j].getTransform().getPartition().getUnit()));
         dep.setTransformPartitionSize(dependencies[j].getTransform().getPartition().getSize());
