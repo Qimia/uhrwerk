@@ -14,20 +14,42 @@ class ConfigReaderTest extends AnyFlatSpec {
     val complete = ConfigReader.readComplete(completePath)
 
     val connections = complete.getGlobal.getConfig.getConnections
-    val metastore = complete.getGlobal.getUhrwerk
+    val metastore = complete.getGlobal.getUhrwerk.getMetastore
     val tables = complete.getTables
 
-    println(metastore)
+    assert(metastore.getJdbc_url === "jdbc:mysql://localhost:53306/UHRWERK_METASTORE")
+    assert(metastore.getJdbc_driver === "com.mysql.jdbc.Driver")
+    assert(metastore.getUser === "UHRWERK_USER")
+    assert(metastore.getPass === "Xq92vFqEKF7TB8H9")
+
 
     val predictedConnectionNames = "mysql1" :: "s3_test" :: "local_filesystem_test" :: Nil
     connections.zip(predictedConnectionNames).foreach((tup) => tup._1.getName === tup._2)
-    //assert(metastore.getJdbc_url === "jdbc:mysql://localhost:53306/UHRWERK_METASTORE")
-    assert(tables.head.getArea === "processing")
-    assert(tables.head.getDependencies() === null)
 
-    assert(tables(1).getSources === null)
+    assert(connections(0).getJdbc.getJdbc_url === "jdbc:mysql://localhost:3306")
+    assert(connections(0).getS3 === null)
+    assert(connections(0).getFile === null)
+
+    assert(connections(1).getJdbc === null)
+    assert(connections(1).getS3.getPath === "s3://bucketname/somesuffix/")
+    assert(connections(1).getFile === null)
+
+    assert(connections(2).getJdbc === null)
+    assert(connections(2).getS3 === null)
+    assert(connections(2).getFile.getPath === "/path/to/local/datalake")
+
+
+    assert(tables(0).getArea === "processing")
+    assert(tables(0).getVertical === "sourcedb_1")
+    assert(tables(0).getDependencies() === null)
+    assert(tables(0).getSources.head.getConnection_name === "connection_name")
+    assert(tables(0).getTargets.head.getConnection_name === "connection_name2")
+
+    assert(tables(1).getArea === "processing")
+    assert(tables(1).getVertical === "sourcedb_1")
+    assert(tables(1).getSources() === null)
     assert(tables(1).getDependencies.head.getConnection_name === "connection_name")
-
+    assert(tables(1).getTargets.head.getConnection_name === "connection_name2")
 
   }
 
@@ -49,6 +71,12 @@ class ConfigReaderTest extends AnyFlatSpec {
       val complete = ConfigReader.readComplete(completePath)
     }
 
+    //The following should throw an error, because there is no minus in connections
+    assertThrows[io.qimia.uhrwerk.config.ConfigException] {
+      val confPath = Paths.get(getClass.getResource("/config/test_yml/complete_test_dag_no_minus.yml").getPath)
+      val stepConf = ConfigReader.readComplete(confPath)
+    }
+
     //The following should throw an error, because there is no file like that
     assertThrows[java.lang.NullPointerException] {
       val completePath = Paths.get(getClass.getResource("/config/test_yml/not_existing.yml").getPath)
@@ -63,8 +91,14 @@ class ConfigReaderTest extends AnyFlatSpec {
 
     //The following should throw an error, because there is no source and no dependency defined
     assertThrows[io.qimia.uhrwerk.config.ConfigException] {
-      val confPath = Paths.get(getClass.getResource("/config/test_yml/table_test_4_no_source_dep.yml").getPath)
-      val stepConf = ConfigReader.readStepConfig(confPath)
+      val confPath = Paths.get(getClass.getResource("/config/test_yml/complete_test_dag_no_source_no_dep.yml").getPath)
+      val stepConf = ConfigReader.readComplete(confPath)
+    }
+
+    //The following should throw an error, because there is no target defined
+    assertThrows[io.qimia.uhrwerk.config.ConfigException] {
+      val confPath = Paths.get(getClass.getResource("/config/test_yml/complete_test_dag_no_target.yml").getPath)
+      val stepConf = ConfigReader.readComplete(confPath)
     }
   }
 
@@ -75,6 +109,10 @@ class ConfigReaderTest extends AnyFlatSpec {
     val connections = gconf.getConfig().getConnections()
     val metastore = gconf.getUhrwerk().getMetastore()
 
+    assert(metastore.getJdbc_url === "jdbc:mysql://localhost:53306/UHRWERK_METASTORE")
+    assert(metastore.getJdbc_driver === "com.mysql.jdbc.Driver")
+    assert(metastore.getUser === "UHRWERK_USER")
+    assert(metastore.getPass === "Xq92vFqEKF7TB8H9")
 
     val predictedConnectionNames = "mysql1" :: "s3_test" :: "local_filesystem_test" :: Nil
     connections.zip(predictedConnectionNames).foreach((tup) => tup._1.getName === tup._2)
@@ -83,10 +121,50 @@ class ConfigReaderTest extends AnyFlatSpec {
     assert(connections(1).getS3.getSecret_id === "blabla")
     assert(connections(2).getFile.getPath === "/path/to/local/datalake")
 
-    assert(metastore.getJdbc_url === "jdbc:mysql://localhost:53306/UHRWERK_METASTORE")
-    assert(metastore.getJdbc_driver === "com.mysql.jdbc.Driver")
-    assert(metastore.getUser === "UHRWERK_USER")
-    assert(metastore.getPass === "Xq92vFqEKF7TB8H9")
+    assert(connections(0).getJdbc.getJdbc_url === "jdbc:mysql://localhost:3306")
+    assert(connections(0).getJdbc.getJdbc_driver === "com.mysql.jdbc.Driver")
+    assert(connections(0).getJdbc.getUser === "root")
+    assert(connections(0).getJdbc.getPass === "mysql")
+    assert(connections(0).getS3 === null)
+    assert(connections(0).getFile === null)
+
+    assert(connections(1).getJdbc === null)
+    assert(connections(1).getS3.getPath === "s3://bucketname/somesuffix/")
+    assert(connections(1).getS3.getSecret_id === "blabla")
+    assert(connections(1).getS3.getSecret_key === "yaya")
+    assert(connections(1).getFile === null)
+
+    assert(connections(2).getJdbc === null)
+    assert(connections(2).getS3 === null)
+    assert(connections(2).getFile.getPath === "/path/to/local/datalake")
+
+  }
+
+  "Given a premade global config with errors it" should "throw errors" in {
+
+    //Should throw an error because there is no connection like s3, jdbc or file filled
+    assertThrows[org.yaml.snakeyaml.constructor.ConstructorException] {
+      val confPath = Paths.get(getClass.getResource("/config/test_yml/global_test_no_connection.yml").getPath)
+      val gconf = ConfigReader.readGlobalConfig(confPath)
+    }
+
+    //Should throw an error because there is no connection like s3, jdbc or file filled
+    assertThrows[org.yaml.snakeyaml.constructor.ConstructorException] {
+      val confPath = Paths.get(getClass.getResource("/config/test_yml/global_test_no_connection.yml").getPath)
+      val gconf = ConfigReader.readGlobalConfig(confPath)
+    }
+
+    //Should throw an error because there are two connections jdbc and file filled
+    assertThrows[org.yaml.snakeyaml.constructor.ConstructorException] {
+      val confPath = Paths.get(getClass.getResource("/config/test_yml/global_test_several_connections.yml").getPath)
+      val gconf = ConfigReader.readGlobalConfig(confPath)
+    }
+
+    //Should throw an error because there are two connections jdbc and file filled
+    assertThrows[org.yaml.snakeyaml.constructor.ConstructorException] {
+      val confPath = Paths.get(getClass.getResource("/config/test_yml/global_test_several_connections.yml").getPath)
+      val gconf = ConfigReader.readGlobalConfig(confPath)
+    }
 
   }
 

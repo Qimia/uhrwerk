@@ -1,4 +1,4 @@
-package dao;
+package io.qimia.uhrwerk.dao;
 
 
 import io.qimia.uhrwerk.common.model.Source;

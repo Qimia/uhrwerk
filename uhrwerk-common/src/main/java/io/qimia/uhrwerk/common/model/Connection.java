@@ -14,7 +14,6 @@ public class Connection {
   String jdbcPass;
   String awsAccessKeyID;
   String awsSecretAccessKey;
-  String version;
 
   public Long getId() {
     return id;
@@ -96,14 +95,6 @@ public class Connection {
     this.path = path;
   }
 
-  public String getVersion() {
-    return version;
-  }
-
-  public void setVersion(String version) {
-    this.version = version;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -118,13 +109,12 @@ public class Connection {
             Objects.equals(jdbcUser, that.jdbcUser) &&
             Objects.equals(jdbcPass, that.jdbcPass) &&
             Objects.equals(awsAccessKeyID, that.awsAccessKeyID) &&
-            Objects.equals(awsSecretAccessKey, that.awsSecretAccessKey) &&
-            Objects.equals(version, that.version);
+            Objects.equals(awsSecretAccessKey, that.awsSecretAccessKey);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, type, path, jdbcUrl, jdbcDriver, jdbcUser, jdbcPass, awsAccessKeyID, awsSecretAccessKey, version);
+    return Objects.hash(id, name, type, path, jdbcUrl, jdbcDriver, jdbcUser, jdbcPass, awsAccessKeyID, awsSecretAccessKey);
   }
 
   @Override
@@ -140,7 +130,6 @@ public class Connection {
             ", jdbcPass='" + jdbcPass + '\'' +
             ", awsAccessKeyID='" + awsAccessKeyID + '\'' +
             ", awsSecretAccessKey='" + awsSecretAccessKey + '\'' +
-            ", version='" + version + '\'' +
             '}';
   }
 }
