@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.config.representation;
 
+import io.qimia.uhrwerk.config.ConfigException;
+
 import java.util.Objects;
 
 public class Env {
@@ -11,6 +13,13 @@ public class Env {
 
   public void setMetastore(Metastore metastore) {
     this.metastore = metastore;
+  }
+
+  public void validate(String path){
+    path += "env/";
+    if(metastore == null){
+      throw new ConfigException("Missing field: " + path + "metastore");
+    }
   }
 
   @Override
