@@ -1,4 +1,4 @@
-package io.qimia.uhrwerk.backend.model;
+package io.qimia.uhrwerk.common.model;
 
 public enum BatchTemporalUnit {
   YEARS,

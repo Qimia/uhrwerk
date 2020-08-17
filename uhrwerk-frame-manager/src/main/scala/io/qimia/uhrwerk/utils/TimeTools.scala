@@ -1,11 +1,10 @@
 package io.qimia.uhrwerk.utils
 
 import java.time.format.DateTimeFormatter
-import java.time.temporal.{ChronoUnit, TemporalUnit}
+import java.time.temporal.ChronoUnit
 import java.time.{Duration, LocalDateTime, LocalTime}
 
-import com.mysql.cj.exceptions.WrongArgumentException
-import io.qimia.uhrwerk.backend.model.BatchTemporalUnit
+import io.qimia.uhrwerk.common.model.{BatchTemporalUnit, PartitionUnit}
 
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -130,14 +129,14 @@ object TimeTools {
    *                       the {@code duration} is added to create the max timestamp.
    * @param partitionCount The multiplier of the duration.
    * @return A tuple with min and max timestamps of the window.
-   * @throws WrongArgumentException when {@code partitionCount} is not >1 as the function doesn't make sense then.
+   * @throws Exception when {@code partitionCount} is not >1 as the function doesn't make sense then.
    */
   def getRangeFromWindow(
                           ts: LocalDateTime,
                           unit: PartitionUnit, size: Int,
                           partitionCount: Int): (LocalDateTime, LocalDateTime) = {
     if (partitionCount <= 1) {
-      throw new WrongArgumentException("partitionCount must be bigger than 1")
+      throw new Exception("partitionCount must be bigger than 1")
     }
     val durationObj = convertDurationStrToObj(unit, size)
     val multipliedDuration = durationObj.multipliedBy(partitionCount - 1)

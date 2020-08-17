@@ -4,9 +4,8 @@ import java.sql
 import java.sql.DriverManager
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.config.model.Connection
+import io.qimia.uhrwerk.common.model.Connection
 import org.apache.spark.sql.{DataFrameReader, SparkSession}
-import org.stringtemplate.v4.ST
 
 import scala.io.Source
 
@@ -17,7 +16,7 @@ object JDBCTools {
     val statement = jdbcConnection.createStatement
     val sqlCommands = Source.fromResource(fileName).mkString.split(";").map(s => s.trim).filter(s => s.length > 0)
     sqlCommands.foreach(c => {
-//      println(c)
+      //      println(c)
       statement.execute(c)
     })
     jdbcConnection.close()
@@ -49,8 +48,8 @@ object JDBCTools {
   def getJDBCConnection(connection: Connection): sql.Connection = {
     val url = connection.getJdbcUrl
     val driver = connection.getJdbcDriver
-    val username = connection.getUser
-    val password = connection.getPass
+    val username = connection.getJdbcUser
+    val password = connection.getJdbcPass
     DriverManager.getConnection(url, username, password)
   }
 
@@ -86,19 +85,22 @@ object JDBCTools {
                   partitionColumn: String,
                   partitionQueryTemplate: String,
                   path: Option[String] = Option.empty): String = {
-    val query = new ST(partitionQueryTemplate)
-    if (lowerBound.isDefined) {
-      query.add("lower_bound", TimeTools.convertTSToString(lowerBound.get))
-    }
-    if (upperBound.isDefined) {
-      query.add("upper_bound", TimeTools.convertTSToString(upperBound.get))
-    }
-    if (path.isDefined) {
-      query.add("path", path.get)
-    }
-    val partitionQuery = query.render
-    s"(SELECT MIN(partition_query_table.$partitionColumn) AS min_id, MAX(partition_query_table.$partitionColumn) AS max_id " +
-      s"FROM ($partitionQuery) AS partition_query_table) AS tmp_table"
+    //    val query = new ST(partitionQueryTemplate)
+    //    if (lowerBound.isDefined) {
+    //      query.add("lower_bound", TimeTools.convertTSToString(lowerBound.get))
+    //    }
+    //    if (upperBound.isDefined) {
+    //      query.add("upper_bound", TimeTools.convertTSToString(upperBound.get))
+    //    }
+    //    if (path.isDefined) {
+    //      query.add("path", path.get)
+    //    }
+    //    val partitionQuery = query.render
+    //    s"(SELECT MIN(partition_query_table.$partitionColumn) AS min_id, MAX(partition_query_table.$partitionColumn) AS max_id " +
+    //      s"FROM ($partitionQuery) AS partition_query_table) AS tmp_table"
+
+    // todo implement
+    ""
   }
 
   /**
@@ -149,8 +151,8 @@ object JDBCTools {
       .format("jdbc")
       .option("url", connection.getJdbcUrl)
       .option("driver", connection.getJdbcDriver)
-      .option("user", connection.getUser)
-      .option("password", connection.getPass)
+      .option("user", connection.getJdbcUser)
+      .option("password", connection.getJdbcPass)
   }
 
   /**
@@ -164,13 +166,16 @@ object JDBCTools {
   def queryTable(queryTemplate: String,
                  lowerBound: Option[LocalDateTime] = Option.empty,
                  upperBound: Option[LocalDateTime] = Option.empty): String = {
-    val query = new ST(queryTemplate)
-    if (lowerBound.isDefined) {
-      query.add("lower_bound", TimeTools.convertTSToString(lowerBound.get))
-    }
-    if (upperBound.isDefined) {
-      query.add("upper_bound", TimeTools.convertTSToString(upperBound.get))
-    }
-    s"(${query.render}) AS tmp_table"
+    //    val query = new ST(queryTemplate)
+    //    if (lowerBound.isDefined) {
+    //      query.add("lower_bound", TimeTools.convertTSToString(lowerBound.get))
+    //    }
+    //    if (upperBound.isDefined) {
+    //      query.add("upper_bound", TimeTools.convertTSToString(upperBound.get))
+    //    }
+    //    s"(${query.render}) AS tmp_table"
+
+    // todo implement
+    ""
   }
 }
