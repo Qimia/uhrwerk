@@ -39,7 +39,7 @@ public class TableDAO implements TableDependencyService {
 
     if (table.getTargets() != null && table.getTargets().length > 0) {
       for (Target target : table.getTargets()) {
-        TargetDAO.save(db, target, tableId);
+        new TargetDAO(db).save(target, tableId);
       }
     }
     if (table.getDependencies() != null && table.getDependencies().length > 0) {

@@ -6,8 +6,6 @@ import java.util.Objects;
 public class Table {
 
   Long id;
-  Long tableId;
-  Long targetId;
   String area;
   String vertical;
   String name;
