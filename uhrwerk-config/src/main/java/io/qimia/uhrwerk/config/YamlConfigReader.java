@@ -12,7 +12,7 @@ import java.io.InputStream;
 public class YamlConfigReader {
 
   private io.qimia.uhrwerk.common.model.Table[] getModelTables(Table[] tables){
-    int tablesLength = tables.length
+    int tablesLength = tables.length;
     io.qimia.uhrwerk.common.model.Table[] result =
             new io.qimia.uhrwerk.common.model.Table[tablesLength];
     for (int i = 0; i < tablesLength; i++) {
@@ -98,6 +98,7 @@ public class YamlConfigReader {
         dep.setTransformPartitionSize(dependencies[j].getTransform().getPartition().getSize());
 
       }
+      table.setDependencies(resultDependency);
 
     }
     return result;
@@ -136,18 +137,14 @@ public class YamlConfigReader {
     switch (unit) {
       case "minute":
         return PartitionUnit.MINUTES;
-      break;
       case "hour":
         return PartitionUnit.HOURS;
-      break;
       case "day":
         return PartitionUnit.DAYS;
-      break;
       case "week":
         return PartitionUnit.WEEKS;
-      break;
       default:
-        return PartitionUnit.HOURS;
+        return null;
     }
   }
 
