@@ -26,6 +26,7 @@
         <module>uhrwerk-core</module>
         <module>uhrwerk-common</module>
         <module>uhrwerk-backend-mysql</module>
+        <module>uhrwerk-config</module>
     </modules>
 
     <dependencies>

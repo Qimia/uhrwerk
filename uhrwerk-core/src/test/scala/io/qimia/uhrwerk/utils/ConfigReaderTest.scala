@@ -3,7 +3,8 @@ package io.qimia.uhrwerk.utils
 import java.nio.file.Paths
 import java.time.Duration
 
-import io.qimia.uhrwerk.config.representation.{Global, Config, Table, Connection}
+import io.qimia.uhrwerk.config.ConfigReader
+import io.qimia.uhrwerk.config.representation.{Config, Connection, Global, Table}
 import org.scalatest.flatspec.AnyFlatSpec
 
 class ConfigReaderTest extends AnyFlatSpec {
