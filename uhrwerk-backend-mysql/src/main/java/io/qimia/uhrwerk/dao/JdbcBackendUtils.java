@@ -1,4 +1,4 @@
-package dao;
+package io.qimia.uhrwerk.dao;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
