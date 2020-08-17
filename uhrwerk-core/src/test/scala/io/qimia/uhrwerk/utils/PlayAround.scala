@@ -2,6 +2,7 @@ package io.qimia.uhrwerk.utils
 
 import java.nio.file.Paths
 
+import io.qimia.uhrwerk.config.ConfigReader
 import org.scalatest.flatspec.AnyFlatSpec
 
 class PlayAround extends AnyFlatSpec {
