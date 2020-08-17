@@ -6,38 +6,31 @@ import io.qimia.uhrwerk.config.representation.JDBC;
 import io.qimia.uhrwerk.config.representation.S3;
 
 public class ConnectionBuilder {
-    private String name;
-    private JDBC jdbc;
-    private S3 s3;
-    private File file;
+  private Connection connection;
 
-    public ConnectionBuilder withName(String name) {
-        this.name = name;
-        return this;
-    }
+  public ConnectionBuilder() {
+    this.connection = connection;
+  }
 
-    public ConnectionBuilder withJdbc(JDBC jdbc) {
-        this.jdbc = jdbc;
-        return this;
-    }
+  public ConnectionBuilder name(String name) {
+    this.connection.setName(name);
+    return this;
+  }
 
-    public ConnectionBuilder withS3(S3 s3) {
-        this.s3 = s3;
-        return this;
-    }
+  public ConnectionBuilder withJdbc(JDBC jdbc) {
+    return this;
+  }
 
-    public ConnectionBuilder withFile(File file) {
-        this.file = file;
-        return this;
-    }
+  public ConnectionBuilder withS3(S3 s3) {
+    return this;
+  }
 
-    public Connection build(){
-        Connection connection = new Connection();
-        connection.setFile(this.file);
-        connection.setJdbc(this.jdbc);
-        connection.setName(this.name);
-        connection.setS3(this.s3);
-        return new Connection();
-    }
+  public ConnectionBuilder withFile(File file) {
+    return this;
+  }
+
+  public Connection build() {
+    this.connection.validate("");
+    return this.connection;
+  }
 }
-
