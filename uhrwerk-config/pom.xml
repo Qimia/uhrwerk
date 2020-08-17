@@ -12,6 +12,11 @@
     <artifactId>uhrwerk-config</artifactId>
     <dependencies>
         <dependency>
+            <groupId>io.qimia</groupId>
+            <artifactId>uhrwerk-common</artifactId>
+            <version>${version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>1.26</version>
