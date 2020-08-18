@@ -95,8 +95,10 @@ public class YamlConfigReader {
                   new io.qimia.uhrwerk.common.model.Target();
           resultTarget[j] = target;
           conn.setName(targets[j].getConnection_name());
+          conn.setKey();
           target.setConnection(conn);
           target.setFormat(targets[j].getFormat());
+          target.setKey();
         }
         tab.setTargets(resultTarget);
       }
@@ -135,6 +137,7 @@ public class YamlConfigReader {
 
         }
         tab.setDependencies(resultDependency);
+        tab.setKey();
       }
     return result;
   }
@@ -165,6 +168,7 @@ public class YamlConfigReader {
         conn.setType(ConnectionType.FS);
         conn.setPath(connections[i].getFile().getPath());
       }
+      conn.setKey();
     }
     return result;
   }
