@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.common.model;
 
+import net.openhft.hashing.LongHashFunction;
+
 import java.nio.file.Paths;
 import java.util.Objects;
 
@@ -15,6 +17,48 @@ public class Dependency {
   PartitionTransformType transformType;
   PartitionUnit transformPartitionUnit;
   int transformPartitionSize;
+
+  public void setKey() {
+    StringBuilder res =
+        new StringBuilder()
+            .append(this.getArea())
+            .append(this.getVertical())
+            .append(this.getTableName())
+            .append(this.getVersion());
+    long tableId = LongHashFunction.xx().hashChars(res);
+    this.setTableId(tableId);
+    res = res.append(this.getFormat());
+    long id = LongHashFunction.xx().hashChars(res);
+    this.setId(id);
+    StringBuilder res2 =
+        new StringBuilder().append(tableId).append(this.getFormat()).append(this.getVersion());
+    long targetId = LongHashFunction.xx().hashChars(res2);
+    setTargetId(targetId);
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public Long getTableId() {
+    return tableId;
+  }
+
+  public void setTableId(Long tableId) {
+    this.tableId = tableId;
+  }
+
+  public Long getTargetId() {
+    return targetId;
+  }
+
+  public void setTargetId(Long targetId) {
+    this.targetId = targetId;
+  }
 
   public String getArea() {
     return area;

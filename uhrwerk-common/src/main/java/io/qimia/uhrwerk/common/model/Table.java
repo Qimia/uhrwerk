@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.common.model;
 
+import net.openhft.hashing.LongHashFunction;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -17,6 +19,25 @@ public class Table {
   Dependency[] dependencies;
   Source[] sources;
   Target[] targets;
+
+  public void setKey() {
+    StringBuilder res =
+        new StringBuilder()
+            .append(this.getArea())
+            .append(this.getVertical())
+            .append(this.getName())
+            .append(this.getVersion());
+    long tableId = LongHashFunction.xx().hashChars(res);
+    this.setId(tableId);
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
 
   public String getArea() {
     return area;
