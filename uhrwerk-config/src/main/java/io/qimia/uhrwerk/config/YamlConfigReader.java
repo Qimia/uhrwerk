@@ -28,77 +28,82 @@ public class YamlConfigReader {
       table.setPartitionUnit(getModelPartitionUnit(tables[i].getPartition().getUnit()));
       table.setPartitionSize(tables[i].getPartition().getSize());
       Source[] sources = tables[i].getSources();
-      io.qimia.uhrwerk.common.model.Source[] resultSource =
-              new io.qimia.uhrwerk.common.model.Source[sources.length];
-      for (int j = 0; j < sources.length; j++) {
-        io.qimia.uhrwerk.common.model.Connection conn =
-                new io.qimia.uhrwerk.common.model.Connection();
-        io.qimia.uhrwerk.common.model.Source source =
-                new io.qimia.uhrwerk.common.model.Source();
-        resultSource[j] = source;
-        conn.setName(sources[j].getConnection_name());
-        source.setConnection(conn);
-        source.setPath(sources[j].getPath());
-        source.setFormat(sources[j].getFormat());
-        source.setPartitionUnit(getModelPartitionUnit(sources[j].getPartition().getUnit()));
-        source.setPartitionSize(sources[j].getPartition().getSize());
-        source.setParallelLoadQuery(sources[j].getParallel_load().getQuery());
-        //TODO: Partition query file
-        source.setParallelLoadColumn(sources[j].getParallel_load().getColumn());
-        source.setParallelLoadNum(sources[j].getParallel_load().getNum());
-        source.setSelectQuery(sources[j].getSelect().getQuery());
-        //TODO: select query file
-        source.setSelectColumn(sources[j].getSelect().getColumn());
+      if (sources != null) {
+        io.qimia.uhrwerk.common.model.Source[] resultSource =
+                new io.qimia.uhrwerk.common.model.Source[sources.length];
+        for (int j = 0; j < sources.length; j++) {
+          io.qimia.uhrwerk.common.model.Connection conn =
+                  new io.qimia.uhrwerk.common.model.Connection();
+          io.qimia.uhrwerk.common.model.Source source =
+                  new io.qimia.uhrwerk.common.model.Source();
+          resultSource[j] = source;
+          conn.setName(sources[j].getConnection_name());
+          source.setConnection(conn);
+          source.setPath(sources[j].getPath());
+          source.setFormat(sources[j].getFormat());
+          source.setPartitionUnit(getModelPartitionUnit(sources[j].getPartition().getUnit()));
+          source.setPartitionSize(sources[j].getPartition().getSize());
+          source.setParallelLoadQuery(sources[j].getParallel_load().getQuery());
+          //TODO: Partition query file
+          source.setParallelLoadColumn(sources[j].getParallel_load().getColumn());
+          source.setParallelLoadNum(sources[j].getParallel_load().getNum());
+          source.setSelectQuery(sources[j].getSelect().getQuery());
+          //TODO: select query file
+          source.setSelectColumn(sources[j].getSelect().getColumn());
 
+        }
+        table.setSources(resultSource);
       }
-      table.setSources(resultSource);
 
       Target[] targets = tables[i].getTargets();
-      io.qimia.uhrwerk.common.model.Target[] resultTarget =
-              new io.qimia.uhrwerk.common.model.Target[targets.length];
-      for (int j = 0; j < targets.length; j++) {
-        io.qimia.uhrwerk.common.model.Connection conn =
-                new io.qimia.uhrwerk.common.model.Connection();
-        io.qimia.uhrwerk.common.model.Target target =
-                new io.qimia.uhrwerk.common.model.Target();
-        resultTarget[j] = target;
-        conn.setName(targets[j].getConnection_name());
-        target.setConnection(conn);
-        target.setFormat(targets[j].getFormat());
-      }
-      table.setTargets(resultTarget);
-
-      Dependency[] dependencies = tables[i].getDependencies();
-      io.qimia.uhrwerk.common.model.Dependency[] resultDependency =
-              new io.qimia.uhrwerk.common.model.Dependency[dependencies.length];
-      for (int j = 0; j < dependencies.length; j++) {
-        io.qimia.uhrwerk.common.model.Dependency dep =
-                new io.qimia.uhrwerk.common.model.Dependency();
-        resultDependency[j] = dep;
-        dep.setArea(dependencies[j].getArea());
-        dep.setVertical(dependencies[j].getVertical());
-        dep.setTableName(dependencies[j].getTable());
-        dep.setFormat(dependencies[j].getFormat());
-        dep.setVersion(dependencies[j].getVersion());
-        switch (dependencies[j].getTransform().getType()){
-          case "identity":
-            dep.setTransformType(PartitionTransformType.IDENTITY);
-            break;
-          case "aggregate":
-            dep.setTransformType(PartitionTransformType.AGGREGATE);
-            break;
-          case "window":
-            dep.setTransformType(PartitionTransformType.WINDOW);
-            break;
-          case "temporal_aggregate":
-            dep.setTransformType(PartitionTransformType.TEMPORAL_AGGREGATE);
+      if (targets != null) {
+        io.qimia.uhrwerk.common.model.Target[] resultTarget =
+                new io.qimia.uhrwerk.common.model.Target[targets.length];
+        for (int j = 0; j < targets.length; j++) {
+          io.qimia.uhrwerk.common.model.Connection conn =
+                  new io.qimia.uhrwerk.common.model.Connection();
+          io.qimia.uhrwerk.common.model.Target target =
+                  new io.qimia.uhrwerk.common.model.Target();
+          resultTarget[j] = target;
+          conn.setName(targets[j].getConnection_name());
+          target.setConnection(conn);
+          target.setFormat(targets[j].getFormat());
         }
-        dep.setTransformPartitionUnit(getModelPartitionUnit(dependencies[j].getTransform().getPartition().getUnit()));
-        dep.setTransformPartitionSize(dependencies[j].getTransform().getPartition().getSize());
-
+        table.setTargets(resultTarget);
       }
-      table.setDependencies(resultDependency);
+      /**
+      Dependency[] dependencies = tables[i].getDependencies();
+      if (dependencies != null) {
+        io.qimia.uhrwerk.common.model.Dependency[] resultDependency =
+                new io.qimia.uhrwerk.common.model.Dependency[dependencies.length];
+        for (int j = 0; j < dependencies.length; j++) {
+          io.qimia.uhrwerk.common.model.Dependency dep =
+                  new io.qimia.uhrwerk.common.model.Dependency();
+          resultDependency[j] = dep;
+          dep.setArea(dependencies[j].getArea());
+          dep.setVertical(dependencies[j].getVertical());
+          dep.setTableName(dependencies[j].getTable());
+          dep.setFormat(dependencies[j].getFormat());
+          dep.setVersion(dependencies[j].getVersion());
+          switch (dependencies[j].getTransform().getType()) {
+            case "identity":
+              dep.setTransformType(PartitionTransformType.IDENTITY);
+              break;
+            case "aggregate":
+              dep.setTransformType(PartitionTransformType.AGGREGATE);
+              break;
+            case "window":
+              dep.setTransformType(PartitionTransformType.WINDOW);
+              break;
+            case "temporal_aggregate":
+              dep.setTransformType(PartitionTransformType.TEMPORAL_AGGREGATE);
+          }
+          dep.setTransformPartitionUnit(getModelPartitionUnit(dependencies[j].getTransform().getPartition().getUnit()));
+          dep.setTransformPartitionSize(dependencies[j].getTransform().getPartition().getSize());
 
+        }
+        table.setDependencies(resultDependency);
+      }**/
     }
     return result;
   }
@@ -135,12 +140,16 @@ public class YamlConfigReader {
   private io.qimia.uhrwerk.common.model.PartitionUnit getModelPartitionUnit(String unit) {
     switch (unit) {
       case "minute":
+      case "minutes":
         return PartitionUnit.MINUTES;
       case "hour":
+      case "hours":
         return PartitionUnit.HOURS;
       case "day":
+      case "days":
         return PartitionUnit.DAYS;
       case "week":
+      case "weeks":
         return PartitionUnit.WEEKS;
       default:
         return null;
@@ -169,7 +178,6 @@ public class YamlConfigReader {
       result.setConnections(getModelConnections(dag.getConnections()));
       result.setTables(getModelTables(dag.getTables()));
 
-
     return result;
   }
 
@@ -188,13 +196,16 @@ public class YamlConfigReader {
 
   }
 
-  public io.qimia.uhrwerk.common.model.Table[] readTable(String file) {
+  public io.qimia.uhrwerk.common.model.Table[] readTables(String file) {
     Yaml yaml = new Yaml();
     InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
     Table[] tables = yaml.loadAs(stream, Table[].class);
-    io.qimia.uhrwerk.common.model.Table[] result =
-            getModelTables(tables);
-    return result;
+    if (tables != null) {
+      io.qimia.uhrwerk.common.model.Table[] result =
+              getModelTables(tables);
+      return result;
+    }
+    else {return null;}
     }
 
 

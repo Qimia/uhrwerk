@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.config;
 
-import io.qimia.uhrwerk.common.model.Connection;
+import io.qimia.uhrwerk.common.model.*;
 import org.junit.jupiter.api.Test;
 
 class YamlConfigReaderTest {
@@ -12,6 +12,31 @@ class YamlConfigReaderTest {
       System.out.println(conn);
     }
   }
+
+  @Test
+  public void readDagTest() {
+    Dag dag =
+            (new YamlConfigReader()).readDag("config/dag-config.yml");
+      System.out.println(dag);
+  }
+
+  @Test
+  public void readEnvTest() {
+    Metastore metastore =
+            (new YamlConfigReader()).readEnv("config/env-config.yml");
+      System.out.println(metastore);
+  }
+
+  @Test
+  public void readTablesTest() {
+    Table[] tables =
+            (new YamlConfigReader()).readTables("config/table1-config.yml");
+    for (Table tab : tables) {
+      System.out.println(tab);
+    }
+  }
+
+
 
   @Test
   public void yamlArray() {}
