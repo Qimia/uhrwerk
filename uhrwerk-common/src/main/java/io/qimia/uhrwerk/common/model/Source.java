@@ -132,6 +132,8 @@ public class Source {
     Source source = (Source) o;
     return partitionSize == source.partitionSize &&
             parallelLoadNum == source.parallelLoadNum &&
+            Objects.equals(id, source.id) &&
+            Objects.equals(tableId, source.tableId) &&
             Objects.equals(connection, source.connection) &&
             Objects.equals(path, source.path) &&
             Objects.equals(format, source.format) &&
@@ -144,13 +146,15 @@ public class Source {
 
   @Override
   public int hashCode() {
-    return Objects.hash(connection, path, format, partitionUnit, partitionSize, parallelLoadQuery, parallelLoadColumn, parallelLoadNum, selectQuery, selectColumn);
+    return Objects.hash(id, tableId, connection, path, format, partitionUnit, partitionSize, parallelLoadQuery, parallelLoadColumn, parallelLoadNum, selectQuery, selectColumn);
   }
 
   @Override
   public String toString() {
     return "Source{" +
-            "connection=" + connection +
+            "id=" + id +
+            ", tableId=" + tableId +
+            ", connection=" + connection +
             ", path='" + path + '\'' +
             ", format='" + format + '\'' +
             ", partitionUnit=" + partitionUnit +

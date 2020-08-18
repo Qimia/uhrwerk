@@ -94,10 +94,11 @@ create table if not exists PARTITION_DEPENDENCY
 
 CREATE TABLE IF NOT EXISTS SOURCE
 (
-    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id                  BIGINT PRIMARY KEY,
     table_id            BIGINT                                     NOT NULL,
     connection_id       BIGINT                                     NOT NULL,
     path                VARCHAR(512)                               NOT NULL,
+    format        VARCHAR(64)                         NOT NULL,
     partition_unit      enum ('WEEKS', 'DAYS', 'HOURS', 'MINUTES') NOT NULL,
     partition_size      int                                        NOT NULL,
     sql_select_query    VARCHAR(2048) DEFAULT NULL,
