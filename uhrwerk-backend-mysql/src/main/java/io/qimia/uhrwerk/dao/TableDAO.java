@@ -43,7 +43,13 @@ public class TableDAO implements TableDependencyService {
       }
     }
     if (table.getDependencies() != null && table.getDependencies().length > 0) {
-      DependencyDAO.save(db, table.getDependencies(), tableId);
+      new DependencyDAO(db).save(
+              table.getDependencies(),
+              tableId,
+              table.getPartitionUnit(),
+              table.getPartitionSize(),
+              true
+      );
     }
     if (table.getSources() != null && table.getSources().length > 0) {
       new SourceDAO(db).save(table.getSources(), tableId);
