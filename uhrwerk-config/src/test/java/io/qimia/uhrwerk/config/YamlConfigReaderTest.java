@@ -3,6 +3,7 @@ package io.qimia.uhrwerk.config;
 import io.qimia.uhrwerk.common.model.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 class YamlConfigReaderTest {
   @Test
@@ -64,6 +65,11 @@ class YamlConfigReaderTest {
     Table table =
             (new YamlConfigReader()).readTable("config/table1-config.yml");
     System.out.println(table);
+    assertEquals(table.getId()  , table.getSources()[0].getTableId());
+    assertEquals(table.getId()  , table.getTargets()[0].getTableId());
+    assertEquals(table.getId()  , table.getDependencies()[0].getTableId());
+    assertNotEquals(table.getDependencies()[0].getTargetId(),table.getTargets()[0].getId());
+
   }
 
 
