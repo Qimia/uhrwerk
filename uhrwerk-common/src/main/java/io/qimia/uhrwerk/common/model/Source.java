@@ -6,7 +6,6 @@ import java.util.Objects;
 public class Source {
   Long id;
   Long tableId;
-  Long connectionId;
   Connection connection;
   String path;
   String format;
