@@ -8,6 +8,7 @@ import java.util.Objects;
 public class Dependency {
   Long id;
   Long tableId;
+  Long targetId;
   String area;
   String vertical;
   String tableName;
@@ -29,6 +30,10 @@ public class Dependency {
     res = res.append(this.getFormat());
     long id = LongHashFunction.xx().hashChars(res);
     this.setId(id);
+    StringBuilder res2 =
+        new StringBuilder().append(tableId).append(this.getFormat()).append(this.getVersion());
+    long targetId = LongHashFunction.xx().hashChars(res2);
+    setTargetId(targetId);
   }
 
   public Long getId() {
@@ -45,6 +50,14 @@ public class Dependency {
 
   public void setTableId(Long tableId) {
     this.tableId = tableId;
+  }
+
+  public Long getTargetId() {
+    return targetId;
+  }
+
+  public void setTargetId(Long targetId) {
+    this.targetId = targetId;
   }
 
   public String getArea() {
