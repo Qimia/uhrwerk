@@ -46,7 +46,6 @@ public class YamlConfigReader {
   private io.qimia.uhrwerk.common.model.Table getModelTable(Table table){
     io.qimia.uhrwerk.common.model.Table result =
             new io.qimia.uhrwerk.common.model.Table();
-      table.validate("");
       io.qimia.uhrwerk.common.model.Table tab =
               new io.qimia.uhrwerk.common.model.Table();
       result = tab;
@@ -152,6 +151,7 @@ public class YamlConfigReader {
     io.qimia.uhrwerk.common.model.Connection[] result =
             new io.qimia.uhrwerk.common.model.Connection[connections.length];
     for (int i = 0; i < connectionLength; i++) {
+      connections[i].validate("");
       io.qimia.uhrwerk.common.model.Connection conn =
               new io.qimia.uhrwerk.common.model.Connection();
       result[i] = conn;
@@ -211,7 +211,7 @@ public class YamlConfigReader {
     Yaml yaml = new Yaml();
     InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
     Dag dag = yaml.loadAs(stream, Dag.class);
-    //dag.validate("");
+    dag.validate("");
     io.qimia.uhrwerk.common.model.Dag result =
             new io.qimia.uhrwerk.common.model.Dag();
 
@@ -252,6 +252,7 @@ public class YamlConfigReader {
     Yaml yaml = new Yaml();
     InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
     Table table = yaml.loadAs(stream, Table.class);
+    table.validate("");
     if (table != null) {
       io.qimia.uhrwerk.common.model.Table result =
               getModelTable(table);

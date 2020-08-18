@@ -11,6 +11,7 @@
     secret_id: blabla
     secret_key: yaya
 
+
 - name: "local_filesystem_test"
   file:
     path: '/path/to/local/datalake'

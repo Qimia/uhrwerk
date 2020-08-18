@@ -9,7 +9,7 @@ public class Connection{
     private JDBC jdbc;
     private S3 s3;
     private File file;
-    private static String[] allowedFormats = new String[]{"jdbc","s3","file"};
+    //private static String[] allowedFormats = new String[]{"jdbc","s3","file"};
 
     public Connection(){}
 
@@ -45,6 +45,8 @@ public class Connection{
         this.name = name;
     }
 
+
+
     public void validate(String path){
         path += "connection/";
         int containedFormats = 0;
@@ -54,17 +56,16 @@ public class Connection{
         if(jdbc == null && s3 == null && file == null){
             throw new ConfigException("Missing connection format: choose either jdbc/s3/file under path: " + path);
         }
-        for(Field f: getClass().getDeclaredFields()){
-            if(f!=null){
-                for(String s: allowedFormats){
-                    if(s.equals(f.getName())){
-                        containedFormats++;
-                        if(containedFormats==2){
-                            throw new ConfigException("Only one connection format at the same time: jdbc/s3/file under path: " + path);
-                        }
-                    }
-                }
-            }
+
+        if(jdbc != null && s3 != null){
+            throw new ConfigException("Only one connection format at the same time: jdbc/s3/file under path: " + path);
         }
+        if(jdbc != null && file != null){
+            throw new ConfigException("Only one connection format at the same time: jdbc/s3/file under path: " + path);
+        }
+        if(s3 != null && file != null){
+            throw new ConfigException("Only one connection format at the same time: jdbc/s3/file under path: " + path);
+        }
+
     }
 }
