@@ -1,7 +1,7 @@
 USE UHRWERK_METASTORE;
 CREATE TABLE IF NOT EXISTS CONNECTION
 (
-    id                    BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id                    BIGINT  PRIMARY KEY,
     name                  VARCHAR(256) UNIQUE                    NOT NULL,
     type                  enum ('FS', 'JDBC', 'S3', 'GC', 'ABS') NOT NULL,
     path                  VARCHAR(512),
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS CONNECTION
 
 create table if not exists TABLE_
 (
-    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id             BIGINT  PRIMARY KEY,
     area           VARCHAR(128)                               NOT NULL,
     vertical       VARCHAR(128)                               NOT NULL,
     name           VARCHAR(128)                               NOT NULL,
@@ -35,7 +35,7 @@ create table if not exists TABLE_
 
 create table if not exists TARGET
 (
-    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id            BIGINT  PRIMARY KEY,
     table_id      BIGINT                              NOT NULL,
     connection_id BIGINT                              NULL,
     format        VARCHAR(64)                         NOT NULL,
@@ -48,12 +48,12 @@ create table if not exists TARGET
 
 create table if not exists DEPENDENCY
 (
-    id                       BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id                       BIGINT  PRIMARY KEY,
     table_id                 BIGINT                                     NOT NULL,
     target_id                BIGINT                                     NOT NULL,
     transform_type           enum ('AGGREGATE', 'WINDOW', 'IDENTITY')   NOT NULL,
     transform_partition_unit enum ('WEEKS', 'DAYS', 'HOURS', 'MINUTES') NULL,
-    transform_partition_size int                                        DEFAULT 1,
+    transform_partition_size int       DEFAULT 1,
     created_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL,
     updated_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL ON UPDATE CURRENT_TIMESTAMP,
     description              VARCHAR(512)                               NULL,
@@ -63,7 +63,7 @@ create table if not exists DEPENDENCY
 
 create table if not exists PARTITION_
 (
-    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id           BIGINT  PRIMARY KEY,
     target_id    BIGINT                              NOT NULL,
     partition_ts TIMESTAMP                           NOT NULL,
     year         VARCHAR(32)                         NOT NULL,
@@ -81,7 +81,7 @@ create table if not exists PARTITION_
 
 create table if not exists PARTITION_DEPENDENCY
 (
-    id                      BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id                      BIGINT  PRIMARY KEY,
     partition_id            BIGINT                              NOT NULL,
     dependency_partition_id BIGINT                              NOT NULL,
     created_ts              TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
@@ -94,10 +94,11 @@ create table if not exists PARTITION_DEPENDENCY
 
 CREATE TABLE IF NOT EXISTS SOURCE
 (
-    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id                  BIGINT PRIMARY KEY,
     table_id            BIGINT                                     NOT NULL,
     connection_id       BIGINT                                     NOT NULL,
     path                VARCHAR(512)                               NOT NULL,
+    format              VARCHAR(64)                                NOT NULL,
     partition_unit      enum ('WEEKS', 'DAYS', 'HOURS', 'MINUTES') NOT NULL,
     partition_size      int                                        NOT NULL,
     sql_select_query    VARCHAR(2048) DEFAULT NULL,

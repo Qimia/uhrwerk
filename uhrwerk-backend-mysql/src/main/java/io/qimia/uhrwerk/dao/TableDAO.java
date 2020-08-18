@@ -46,7 +46,7 @@ public class TableDAO implements TableDependencyService {
       DependencyDAO.save(db, table.getDependencies(), tableId);
     }
     if (table.getSources() != null && table.getSources().length > 0) {
-      SourceDAO.save(db, table.getSources(), tableId);
+      new SourceDAO(db).save(table.getSources(), tableId);
     }
     db.commit();
     return tableId;
