@@ -9,7 +9,8 @@ import org.junit.jupiter.api.Test;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConnectionDAOTest {
 
@@ -35,6 +36,7 @@ class ConnectionDAOTest {
     conn.setName("Test-Conn1");
     conn.setType(ConnectionType.FS);
     conn.setPath("/some/path/test1");
+    conn.setKey();
     ConnectionResult result = service.save(conn, true);
     assertTrue(result.isSuccess());
     assertNotNull(result.getNewConnection());
@@ -50,6 +52,7 @@ class ConnectionDAOTest {
     conn.setPath("/some/path/updated");
     conn.setAwsAccessKeyID("access-key-id1");
     conn.setAwsSecretAccessKey("secret-access-key1");
+    conn.setKey();
     ConnectionResult result = service.save(conn, true);
     assertTrue(result.isSuccess());
     assertNotNull(result.getNewConnection());

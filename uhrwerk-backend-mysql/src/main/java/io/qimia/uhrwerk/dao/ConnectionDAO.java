@@ -30,36 +30,37 @@ public class ConnectionDAO implements ConnectionService {
   }
 
   private static final String UPSERT_CONN =
-      "INSERT INTO CONNECTION(name, type, path, jdbc_url, jdbc_driver, jdbc_user, jdbc_pass, aws_access_key_id, aws_secret_access_key)\n"
-          + "VALUES(?,?,?,?,?,?,?,?,?) "
-          + "ON DUPLICATE KEY UPDATE \n"
-          + "type=?, path=?, jdbc_url=?, jdbc_driver=?, jdbc_user=?, jdbc_pass=?, aws_access_key_id=?, aws_secret_access_key=?";
+          "INSERT INTO CONNECTION(id, name, type, path, jdbc_url, jdbc_driver, jdbc_user, jdbc_pass, aws_access_key_id, aws_secret_access_key)\n"
+                  + "VALUES(?,?,?,?,?,?,?,?,?,?) "
+                  + "ON DUPLICATE KEY UPDATE \n"
+                  + "type=?, path=?, jdbc_url=?, jdbc_driver=?, jdbc_user=?, jdbc_pass=?, aws_access_key_id=?, aws_secret_access_key=?";
 
   public Long save(Connection connection) throws SQLException {
     PreparedStatement insert = db.prepareStatement(UPSERT_CONN, Statement.RETURN_GENERATED_KEYS);
     // common columns values
-    insert.setString(1, connection.getName());
-    insert.setString(2, connection.getType().name());
-    insert.setString(3, connection.getPath());
+    insert.setLong(1, connection.getId());
+    insert.setString(2, connection.getName());
+    insert.setString(3, connection.getType().name());
+    insert.setString(4, connection.getPath());
     // jdbc columns values
-    insert.setString(4, connection.getJdbcUrl());
-    insert.setString(5, connection.getJdbcDriver());
-    insert.setString(6, connection.getJdbcUser());
-    insert.setString(7, connection.getJdbcPass());
+    insert.setString(5, connection.getJdbcUrl());
+    insert.setString(6, connection.getJdbcDriver());
+    insert.setString(7, connection.getJdbcUser());
+    insert.setString(8, connection.getJdbcPass());
     // aws columns values
-    insert.setString(8, connection.getAwsAccessKeyID());
-    insert.setString(9, connection.getAwsSecretAccessKey());
+    insert.setString(9, connection.getAwsAccessKeyID());
+    insert.setString(10, connection.getAwsSecretAccessKey());
     // common columns assignment_list
-    insert.setString(10, connection.getType().name());
-    insert.setString(11, connection.getPath());
+    insert.setString(11, connection.getType().name());
+    insert.setString(12, connection.getPath());
     // jdbc columns assignment_list
-    insert.setString(12, connection.getJdbcUrl());
-    insert.setString(13, connection.getJdbcDriver());
-    insert.setString(14, connection.getJdbcUser());
-    insert.setString(15, connection.getJdbcPass());
+    insert.setString(13, connection.getJdbcUrl());
+    insert.setString(14, connection.getJdbcDriver());
+    insert.setString(15, connection.getJdbcUser());
+    insert.setString(16, connection.getJdbcPass());
     // aws columns assignment_list
-    insert.setString(16, connection.getAwsAccessKeyID());
-    insert.setString(17, connection.getAwsSecretAccessKey());
+    insert.setString(17, connection.getAwsAccessKeyID());
+    insert.setString(18, connection.getAwsSecretAccessKey());
     return JdbcBackendUtils.singleRowUpdate(insert);
   }
 
@@ -170,7 +171,6 @@ public class ConnectionDAO implements ConnectionService {
         }
       }
       Long id = save(connection);
-      connection.setId(id);
       result.setSuccess(true);
       result.setOldConnection(connection);
     } catch (SQLException e) {

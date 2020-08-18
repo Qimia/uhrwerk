@@ -1,14 +1,11 @@
 package io.qimia.uhrwerk.dao;
 
-import io.qimia.uhrwerk.common.metastore.config.ConnectionService;
 import io.qimia.uhrwerk.common.model.PartitionUnit;
 import io.qimia.uhrwerk.common.model.Table;
 import org.junit.jupiter.api.Test;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class TableDAOTest {
 
@@ -42,6 +39,7 @@ class TableDAOTest {
     table.setParallelism(8);
     table.setMaxBulkSize(96);
     table.setVersion("1.0");
+    table.setKey();
     Long id = service.save(table);
   }
 
