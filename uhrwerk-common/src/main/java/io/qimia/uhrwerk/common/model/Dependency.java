@@ -24,11 +24,11 @@ public class Dependency {
             .append(this.getArea())
             .append(this.getVertical())
             .append(this.getTableName())
-            .append(this.getVersion())
-            .append(this.getFormat());
+            .append(this.getVersion());
+    long depTableId = LongHashFunction.xx().hashChars(res);
+    StringBuilder res2 = new StringBuilder().append(depTableId).append(targetId);
     long targetId = LongHashFunction.xx().hashChars(res);
     setTargetId(targetId);
-    StringBuilder res2 = new StringBuilder().append(this.tableId).append(targetId);
     long id = LongHashFunction.xx().hashChars(res2);
     this.setId(id);
   }
