@@ -27,11 +27,11 @@ public class TableDAO implements TableDependencyService {
   }
 
   private static String UPSERT =
-      "INSERT INTO TABLE_(area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size) "
-          + "VALUES(?,?,?,?,?,?,?,?) "
-          + "ON DUPLICATE KEY UPDATE "
-          + "parallelism=?, "
-          + "max_bulk_size=?";
+          "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size) "
+                  + "VALUES(?,?,?,?,?,?,?,?,?) "
+                  + "ON DUPLICATE KEY UPDATE "
+                  + "parallelism=?, "
+                  + "max_bulk_size=?";
 
   public Long save(Table table) throws SQLException {
     db.setAutoCommit(false);
@@ -54,17 +54,18 @@ public class TableDAO implements TableDependencyService {
 
   public Long saveTable(Table table) throws SQLException {
     PreparedStatement insert = getDb().prepareStatement(UPSERT, Statement.RETURN_GENERATED_KEYS);
-    insert.setString(1, table.getArea());
-    insert.setString(2, table.getVertical());
-    insert.setString(3, table.getName());
-    insert.setString(4, table.getVersion());
-    insert.setString(5, table.getPartitionUnit().name());
-    insert.setInt(6, table.getPartitionSize());
-    insert.setInt(7, table.getParallelism());
-    insert.setInt(8, table.getMaxBulkSize());
+    insert.setLong(1, table.getId());
+    insert.setString(2, table.getArea());
+    insert.setString(3, table.getVertical());
+    insert.setString(4, table.getName());
+    insert.setString(5, table.getVersion());
+    insert.setString(6, table.getPartitionUnit().name());
+    insert.setInt(7, table.getPartitionSize());
+    insert.setInt(8, table.getParallelism());
+    insert.setInt(9, table.getMaxBulkSize());
     // assignment_list
-    insert.setInt(9, table.getParallelism());
-    insert.setInt(10, table.getMaxBulkSize());
+    insert.setInt(10, table.getParallelism());
+    insert.setInt(11, table.getMaxBulkSize());
     insert.executeUpdate();
     ResultSet generatedKeys = insert.getGeneratedKeys();
     if (generatedKeys.next()) return generatedKeys.getLong(1);

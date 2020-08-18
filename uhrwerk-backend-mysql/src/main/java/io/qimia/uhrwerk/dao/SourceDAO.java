@@ -35,7 +35,7 @@ public class SourceDAO implements SourceService {
     private static final String INSERT_SOURCE =
             "INSERT INTO SOURCE(id, table_id, connection_id, path, format, partition_unit, partition_size, sql_select_query, " +
                     "sql_partition_query, partition_column, partition_num, query_column)\n"
-                    + "VALUES(?,?,?,?,?,?,?,?,?,?,?)";
+                    + "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
 
     private static final String SELECT_BY_ID =
             "SELECT id, table_id, connection_id, path, format, partition_unit, partition_size, sql_select_query, " +
@@ -60,7 +60,9 @@ public class SourceDAO implements SourceService {
         insert.setInt(11, source.getParallelLoadNum());
         insert.setString(12, source.getSelectColumn());
 
-        return JdbcBackendUtils.singleRowUpdate(insert);
+        JdbcBackendUtils.singleRowUpdate(insert);
+
+        return source.getId();
     }
 
     private Source getSource(PreparedStatement select) throws SQLException {
@@ -100,7 +102,7 @@ public class SourceDAO implements SourceService {
     }
 
     @Override
-    public SourceResult save(Source source, boolean overwrite, Long tableId) {
+    public SourceResult save(Source source, boolean overwrite) {
         SourceResult result = new SourceResult();
         result.setNewResult(source);
         try {
