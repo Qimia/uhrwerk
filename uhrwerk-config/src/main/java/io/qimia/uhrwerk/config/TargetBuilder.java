@@ -1,25 +1,26 @@
 package io.qimia.uhrwerk.config;
 
-import io.qimia.uhrwerk.config.representation.Target;
+import io.qimia.uhrwerk.common.model.Target;
+import io.qimia.uhrwerk.common.model.Connection;
 
 public class TargetBuilder {
-    private String connectionName;
-    private String format;
+    private Target target;
 
-    public TargetBuilder withConnectionName(String connectionName) {
-        this.connectionName = connectionName;
+    public TargetBuilder() { this.target = new Target(); }
+
+    public TargetBuilder connection(Connection connection) {
+        this.target.setConnection(connection);
         return this;
     }
 
-    public TargetBuilder withFormat(String format) {
-        this.format = format;
+    public TargetBuilder format(String format) {
+        this.target.setFormat(format);
         return this;
     }
 
-    public Target build(){
-        Target target = new Target();
-        target.setConnection_name(this.connectionName);
-        target.setFormat(this.format);
-        return target;
+
+    public Target build() {
+        //this.target.validate("");
+        return this.target;
     }
 }

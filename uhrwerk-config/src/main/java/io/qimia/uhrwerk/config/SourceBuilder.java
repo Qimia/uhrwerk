@@ -1,53 +1,66 @@
 package io.qimia.uhrwerk.config;
 
-import io.qimia.uhrwerk.config.representation.ParallelLoad;
-import io.qimia.uhrwerk.config.representation.Partition;
-import io.qimia.uhrwerk.config.representation.Select;
-import io.qimia.uhrwerk.config.representation.Source;
+import io.qimia.uhrwerk.common.model.*;
 
 public class SourceBuilder {
-    private String connectionName;
-    private String path;
-    private String format;
-    private String version;
-    private Partition partition;
-    private ParallelLoad parallelLoad;
-    private Select select;
+    private Source source;
 
-    public SourceBuilder withConnectionName(String connectionName) {
-        this.connectionName = connectionName;
+    public SourceBuilder(Source source) {
+        this.source = source;
+    }
+
+
+    public SourceBuilder connection(Connection connection){
+        this.source.setConnection(connection);
         return this;
     }
 
-    public SourceBuilder withPath(String path) {
-        this.path = path;
+    public SourceBuilder path(String path){
+        this.source.setPath(path);
         return this;
     }
 
-    public SourceBuilder withFormat(String format) {
-        this.format = format;
+    public SourceBuilder format(String format){
+        this.source.setFormat(format);
         return this;
     }
 
-    public SourceBuilder withVersion(String version) {
-        this.version = version;
+    public SourceBuilder partitionUnit(PartitionUnit partitionUnit){
+        this.source.setPartitionUnit(partitionUnit);
         return this;
     }
 
-    public SourceBuilder withPartition(Partition partition) {
-        this.partition = partition;
+    public SourceBuilder partitionSize(int partitionSize){
+        this.source.setPartitionSize(partitionSize);
+        return this;
+    }
+
+    public SourceBuilder parallelLoadQuery(String parallelLoadQuery){
+        this.source.setParallelLoadQuery(parallelLoadQuery);
+        return this;
+    }
+
+    public SourceBuilder parallelLoadColumn(String parallelLoadColumn){
+        this.source.setParallelLoadColumn(parallelLoadColumn);
+        return this;
+    }
+
+    public SourceBuilder parallelLoadNum(int parallelLoadNum){
+        this.source.setParallelLoadNum(parallelLoadNum);
+        return this;
+    }
+
+    public SourceBuilder selectQuery(String selectQuery){
+        this.source.setSelectQuery(selectQuery);
+        return this;
+    }
+
+    public SourceBuilder selectColumn(String selectColumn){
+        this.source.setSelectColumn(selectColumn);
         return this;
     }
 
     public Source build(){
-        Source source = new Source();
-        source.setConnection_name(this.connectionName);
-        source.setFormat(this.format);
-        source.setParallel_load(this.parallelLoad);
-        source.setPartition(this.partition);
-        source.setPath(this.path);
-        source.setSelect(this.select);
-        source.setVersion(this.version);
-        return source;
+        return this.source;
     }
 }

@@ -1,81 +1,70 @@
 package io.qimia.uhrwerk.config;
 
-import io.qimia.uhrwerk.config.representation.*;
+import io.qimia.uhrwerk.common.model.*;
 
 public class TableBuilder {
-    private String area;
-    private String vertical;
-    private String table;
-    private String version;
-    private Integer parallelism;
-    private Integer maxBulkSize;
-    private Partition partition;
-    private Source[] sources;
-    private Target[] targets;
-    private Dependency[] dependencies;
+    private Table table;
 
-    public TableBuilder withArea(String area) {
-        this.area = area;
-        return this;
-    }
-
-    public TableBuilder withVertical(String vertical) {
-        this.vertical = vertical;
-        return this;
-    }
-
-    public TableBuilder withTable(String table) {
+    public TableBuilder(Table table) {
         this.table = table;
+    }
+
+    public TableBuilder area(String area){
+        this.table.setArea(area);
         return this;
     }
 
-    public TableBuilder withVersion(String version) {
-        this.version = version;
+    public TableBuilder vertical(String vertical){
+        this.table.setVertical(vertical);
         return this;
     }
 
-    public TableBuilder withParallelism(Integer parallelism) {
-        this.parallelism = parallelism;
+    public TableBuilder name(String name){
+        this.table.setName(name);
         return this;
     }
 
-    public TableBuilder withMaxBulkSize(Integer maxBulkSize) {
-        this.maxBulkSize = maxBulkSize;
+    public TableBuilder version(String version){
+        this.table.setVersion(version);
         return this;
     }
 
-    public TableBuilder withPartition(Partition partition) {
-        this.partition = partition;
+    public TableBuilder parallelism(int parallelism){
+        this.table.setParallelism(parallelism);
         return this;
     }
 
-    public TableBuilder withSource(Source[] sources) {
-        this.sources = sources;
+    public TableBuilder maxBulkSize(int maxBulkSize){
+        this.table.setMaxBulkSize(maxBulkSize);
         return this;
     }
 
-    public TableBuilder withTargets(Target[] targets) {
-        this.targets = targets;
+    public TableBuilder partitionUnit(PartitionUnit partitionUnit){
+        this.table.setPartitionUnit(partitionUnit);
         return this;
     }
 
-    public TableBuilder withDependencies(Dependency[] dependencies) {
-        this.dependencies = dependencies;
+    public TableBuilder partitionSize(int partitionSize){
+        this.table.setPartitionSize(partitionSize);
+        return this;
+    }
+
+    public TableBuilder dependencies(Dependency[] dependencies){
+        this.table.setDependencies(dependencies);
+        return this;
+    }
+
+    public TableBuilder targets(Target[] targets){
+        this.table.setTargets(targets);
+        return this;
+    }
+
+    public TableBuilder sources(Source[] sources){
+        this.table.setSources(sources);
         return this;
     }
 
     public Table build(){
-        Table table = new Table();
-        table.setArea(this.area);
-        table.setDependencies(this.dependencies);
-        table.setMax_bulk_size(this.maxBulkSize);
-        table.setParallelism(this.parallelism);
-        table.setPartition(this.partition);
-        table.setSources(this.sources);
-        table.setTable(this.table);
-        table.setTargets(this.targets);
-        table.setVersion(this.version);
-        table.setVertical(this.vertical);
-        return table;
+        return this.table;
     }
 }

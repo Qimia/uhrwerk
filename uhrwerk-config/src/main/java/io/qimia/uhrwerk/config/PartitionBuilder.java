@@ -1,25 +1,60 @@
 package io.qimia.uhrwerk.config;
 
-import io.qimia.uhrwerk.config.representation.Partition;
+import io.qimia.uhrwerk.common.model.Partition;
+import io.qimia.uhrwerk.common.model.PartitionUnit;
+
+import java.time.LocalDateTime;
 
 public class PartitionBuilder {
-    private String unit;
-    private Integer size;
+    private Partition partition;
 
-    public PartitionBuilder withUnit(String unit) {
-        this.unit = unit;
+    public PartitionBuilder(Partition partition) {
+        this.partition = partition;
+    }
+
+
+    public PartitionBuilder partitionTs(LocalDateTime partitionTs){
+        this.partition.setPartitionTs(partitionTs);
         return this;
     }
 
-    public PartitionBuilder withSize(Integer size) {
-        this.size = size;
+    public PartitionBuilder year(String year){
+        this.partition.setYear(year);
         return this;
     }
+
+    public PartitionBuilder month(String month){
+        this.partition.setMonth(month);
+        return this;
+    }
+
+    public PartitionBuilder day(String day){
+        this.partition.setDay(day);
+        return this;
+    }
+
+    public PartitionBuilder hour(String hour){
+        this.partition.setHour(hour);
+        return this;
+    }
+
+    public PartitionBuilder minute(String minute){
+        this.partition.setMinute(minute);
+        return this;
+    }
+
+    public PartitionBuilder partitionUnit(PartitionUnit partitionUnit){
+        this.partition.setPartitionUnit(partitionUnit);
+        return this;
+    }
+
+    public PartitionBuilder partitionSize(int partitionSize){
+        this.partition.setPartitionSize(partitionSize);
+        return this;
+    }
+
 
     public Partition build(){
-        Partition partition = new Partition();
-        partition.setSize(this.size);
-        partition.setUnit(this.unit);
-        return new Partition();
+        return this.partition;
     }
 }

@@ -1,61 +1,57 @@
 package io.qimia.uhrwerk.config;
 
-import io.qimia.uhrwerk.config.representation.Dependency;
-import io.qimia.uhrwerk.config.representation.Transform;
+import io.qimia.uhrwerk.common.model.*;
 
 public class DependencyBuilder {
-    private String connectionName;
-    private String area;
-    private String vertical;
-    private String table;
-    private String format;
-    private String version;
-    private Transform transform;
+    private Dependency dependency;
 
-    public DependencyBuilder withConnectionName(String connectionName) {
-        this.connectionName = connectionName;
+
+    public DependencyBuilder(Dependency dependency) {
+        this.dependency = dependency;
+    }
+
+
+    public DependencyBuilder area(String area){
+        this.dependency.setArea(area);
         return this;
     }
 
-    public DependencyBuilder withArea(String area) {
-        this.area = area;
+    public DependencyBuilder vertical(String vertical){
+        this.dependency.setVertical(vertical);
         return this;
     }
 
-    public DependencyBuilder withVertical(String vertical) {
-        this.vertical = vertical;
+    public DependencyBuilder tableName(String tableName){
+        this.dependency.setTableName(tableName);
         return this;
     }
 
-    public DependencyBuilder withTable(String table) {
-        this.table = table;
+    public DependencyBuilder format(String format){
+        this.dependency.setFormat(format);
         return this;
     }
 
-    public DependencyBuilder withFormat(String format) {
-        this.format = format;
+    public DependencyBuilder version(String version){
+        this.dependency.setVersion(version);
         return this;
     }
 
-    public DependencyBuilder withVersion(String version) {
-        this.version = version;
+    public DependencyBuilder transformType(PartitionTransformType transformType){
+        this.dependency.setTransformType(transformType);
         return this;
     }
 
-    public DependencyBuilder withTransform(Transform transform) {
-        this.transform = transform;
+    public DependencyBuilder transformPartitionUnit(PartitionUnit transformPartitionUnit){
+        this.dependency.setTransformPartitionUnit(transformPartitionUnit);
+        return this;
+    }
+
+    public DependencyBuilder transformPartitionSize(int transformPartitionSize){
+        this.dependency.setTransformPartitionSize(transformPartitionSize);
         return this;
     }
 
     public Dependency build(){
-        Dependency dependency = new Dependency();
-        dependency.setArea(this.area);
-        dependency.setConnection_name(this.connectionName);
-        dependency.setFormat(this.format);
-        dependency.setTable(this.table);
-        dependency.setTransform(this.transform);
-        dependency.setVersion(this.version);
-        dependency.setVertical(this.vertical);
-        return dependency;
+        return this.dependency;
     }
 }
