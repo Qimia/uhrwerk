@@ -58,6 +58,7 @@ public class YamlConfigReader {
       tab.setMaxBulkSize(table.getMax_bulk_size());
       tab.setPartitionUnit(getModelPartitionUnit(table.getPartition().getUnit()));
       tab.setPartitionSize(table.getPartition().getSize());
+      tab.setKey();
       Source[] sources = table.getSources();
       if (sources != null) {
         io.qimia.uhrwerk.common.model.Source[] resultSource =
@@ -68,7 +69,9 @@ public class YamlConfigReader {
           io.qimia.uhrwerk.common.model.Source source =
                   new io.qimia.uhrwerk.common.model.Source();
           resultSource[j] = source;
+          source.setTableId(tab.getId());
           conn.setName(sources[j].getConnection_name());
+          conn.setKey();
           source.setConnection(conn);
           source.setPath(sources[j].getPath());
           source.setFormat(sources[j].getFormat());
@@ -79,6 +82,7 @@ public class YamlConfigReader {
           source.setParallelLoadNum(sources[j].getParallel_load().getNum());
           source.setSelectQuery(readQueryOrFileLines(sources[j].getSelect().getQuery()));
           source.setSelectColumn(sources[j].getSelect().getColumn());
+          source.setKey();
 
         }
         tab.setSources(resultSource);
@@ -94,6 +98,7 @@ public class YamlConfigReader {
           io.qimia.uhrwerk.common.model.Target target =
                   new io.qimia.uhrwerk.common.model.Target();
           resultTarget[j] = target;
+          target.setTableId(tab.getId());
           conn.setName(targets[j].getConnection_name());
           conn.setKey();
           target.setConnection(conn);
@@ -111,6 +116,7 @@ public class YamlConfigReader {
           io.qimia.uhrwerk.common.model.Dependency dep =
                   new io.qimia.uhrwerk.common.model.Dependency();
           resultDependency[j] = dep;
+          dep.setTableId(tab.getId());
           dep.setArea(dependencies[j].getArea());
           dep.setVertical(dependencies[j].getVertical());
           dep.setTableName(dependencies[j].getTable());
@@ -134,10 +140,9 @@ public class YamlConfigReader {
               dep.setTransformPartitionSize(dependencies[j].getTransform().getPartition().getSize());
               break;
           }
-
+          dep.setKey();
         }
         tab.setDependencies(resultDependency);
-        tab.setKey();
       }
     return result;
   }

@@ -35,7 +35,6 @@ class YamlConfigReaderTest {
   }
 
 
-
   @Test
   public void yamlArray() {}
 }
