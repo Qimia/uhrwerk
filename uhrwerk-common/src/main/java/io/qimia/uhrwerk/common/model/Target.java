@@ -1,11 +1,37 @@
 package io.qimia.uhrwerk.common.model;
 
+import net.openhft.hashing.LongHashFunction;
+
 import java.util.Objects;
 
 public class Target {
 
+  Long tableId;
+  Long id;
   Connection connection;
   String format;
+
+  public void setKey() {
+    StringBuilder res = new StringBuilder().append(tableId).append(format);
+    long id = LongHashFunction.xx().hashChars(res);
+    setId(id);
+  }
+
+  public Long getTableId() {
+    return tableId;
+  }
+
+  public void setTableId(Long tableId) {
+    this.tableId = tableId;
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
 
   public Connection getConnection() {
     return connection;
@@ -38,9 +64,6 @@ public class Target {
 
   @Override
   public String toString() {
-    return "Target{" +
-            "connection=" + connection +
-            ", format='" + format + '\'' +
-            '}';
+    return "Target{" + "connection=" + connection + ", format='" + format + '\'' + '}';
   }
 }
