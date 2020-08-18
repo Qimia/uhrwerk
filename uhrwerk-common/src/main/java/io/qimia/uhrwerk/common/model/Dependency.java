@@ -24,16 +24,13 @@ public class Dependency {
             .append(this.getArea())
             .append(this.getVertical())
             .append(this.getTableName())
-            .append(this.getVersion());
-    long tableId = LongHashFunction.xx().hashChars(res);
-    this.setTableId(tableId);
-    res = res.append(this.getFormat());
-    long id = LongHashFunction.xx().hashChars(res);
-    this.setId(id);
-    StringBuilder res2 =
-        new StringBuilder().append(tableId).append(this.getFormat()).append(this.getVersion());
-    long targetId = LongHashFunction.xx().hashChars(res2);
+            .append(this.getVersion())
+            .append(this.getFormat());
+    long targetId = LongHashFunction.xx().hashChars(res);
     setTargetId(targetId);
+    StringBuilder res2 = new StringBuilder().append(this.tableId).append(targetId);
+    long id = LongHashFunction.xx().hashChars(res2);
+    this.setId(id);
   }
 
   public Long getId() {
