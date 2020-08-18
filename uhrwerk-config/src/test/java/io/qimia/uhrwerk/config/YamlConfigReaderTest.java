@@ -29,11 +29,9 @@ class YamlConfigReaderTest {
 
   @Test
   public void readTablesTest() {
-    Table[] tables =
-            (new YamlConfigReader()).readTables("config/table1-config.yml");
-    for (Table tab : tables) {
-      System.out.println(tab);
-    }
+    Table table =
+            (new YamlConfigReader()).readTable("config/table1-config.yml");
+    System.out.println(table);
   }
 
 

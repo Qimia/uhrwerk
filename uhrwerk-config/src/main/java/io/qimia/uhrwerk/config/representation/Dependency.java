@@ -4,7 +4,6 @@ import io.qimia.uhrwerk.config.ConfigException;
 
 public class Dependency{
 
-    private String connection_name;
     private String area;
     private String vertical;
     private String table;
@@ -13,14 +12,6 @@ public class Dependency{
     private Transform transform;
 
     public Dependency() {}
-
-    public String getConnection_name() {
-        return connection_name;
-    }
-
-    public void setConnection_name(String connection_name) {
-        this.connection_name = connection_name;
-    }
 
     public String getArea() {
         return area;
@@ -72,9 +63,6 @@ public class Dependency{
 
     public void validate(String path){
         path += "dependency/";
-        if(connection_name == null){
-            throw new ConfigException("Missing field: " + path + "connection_name");
-        }
         if(area == null){
             throw new ConfigException("Missing field: " + path + "area");
         }

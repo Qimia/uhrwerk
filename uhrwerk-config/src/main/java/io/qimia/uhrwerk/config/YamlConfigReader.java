@@ -5,29 +5,60 @@ import io.qimia.uhrwerk.common.model.PartitionTransformType;
 import io.qimia.uhrwerk.common.model.PartitionUnit;
 import io.qimia.uhrwerk.config.representation.*;
 import org.yaml.snakeyaml.Yaml;
+import java.nio.file.Files;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
 
-import javax.servlet.http.Part;
 import java.io.InputStream;
 
 public class YamlConfigReader {
 
-  private io.qimia.uhrwerk.common.model.Table[] getModelTables(Table[] tables){
-    int tablesLength = tables.length;
-    io.qimia.uhrwerk.common.model.Table[] result =
-            new io.qimia.uhrwerk.common.model.Table[tablesLength];
-    for (int i = 0; i < tablesLength; i++) {
-      //tables[i].validate("");
-      io.qimia.uhrwerk.common.model.Table table =
+  private String readQueryOrFile(String queryOrFile){
+    if (queryOrFile.endsWith(".sql")) {
+      String query = "FILEQUERY FAILED";
+      try {
+        query = new String(Files.readAllBytes(Paths.get(Thread.currentThread().getContextClassLoader().getResource(queryOrFile).getPath())));
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      return query;
+    }
+    else {return queryOrFile;}
+  }
+
+  private String readQueryOrFileLines(String queryOrFile){
+    if (queryOrFile.endsWith(".sql")) {
+      String query = "FILEQUERY FAILED";
+      StringBuilder contentBuilder = new StringBuilder();
+      try (Stream<String> stream = Files.lines( Paths.get( Thread.currentThread().getContextClassLoader().getResource(queryOrFile).getPath() ) )){
+        stream.forEach(s -> contentBuilder.append(s).append(" "));
+      } catch (IOException e) {
+        e.printStackTrace();
+        return query;
+      }
+      return contentBuilder.toString();
+    }
+    else {return queryOrFile;}
+  }
+
+
+  private io.qimia.uhrwerk.common.model.Table getModelTable(Table table){
+    io.qimia.uhrwerk.common.model.Table result =
+            new io.qimia.uhrwerk.common.model.Table();
+      table.validate("");
+      io.qimia.uhrwerk.common.model.Table tab =
               new io.qimia.uhrwerk.common.model.Table();
-      result[i] = table;
-      table.setArea(tables[i].getArea());
-      table.setVertical(tables[i].getVertical());
-      table.setVersion(tables[i].getVersion());
-      table.setParallelism(tables[i].getParallelism());
-      table.setMaxBulkSize(tables[i].getMax_bulk_size());
-      table.setPartitionUnit(getModelPartitionUnit(tables[i].getPartition().getUnit()));
-      table.setPartitionSize(tables[i].getPartition().getSize());
-      Source[] sources = tables[i].getSources();
+      result = tab;
+      tab.setArea(table.getArea());
+      tab.setVertical(table.getVertical());
+      tab.setName(table.getTable());
+      tab.setVersion(table.getVersion());
+      tab.setParallelism(table.getParallelism());
+      tab.setMaxBulkSize(table.getMax_bulk_size());
+      tab.setPartitionUnit(getModelPartitionUnit(table.getPartition().getUnit()));
+      tab.setPartitionSize(table.getPartition().getSize());
+      Source[] sources = table.getSources();
       if (sources != null) {
         io.qimia.uhrwerk.common.model.Source[] resultSource =
                 new io.qimia.uhrwerk.common.model.Source[sources.length];
@@ -43,19 +74,17 @@ public class YamlConfigReader {
           source.setFormat(sources[j].getFormat());
           source.setPartitionUnit(getModelPartitionUnit(sources[j].getPartition().getUnit()));
           source.setPartitionSize(sources[j].getPartition().getSize());
-          source.setParallelLoadQuery(sources[j].getParallel_load().getQuery());
-          //TODO: Partition query file
+          source.setParallelLoadQuery(readQueryOrFileLines(sources[j].getParallel_load().getQuery()));
           source.setParallelLoadColumn(sources[j].getParallel_load().getColumn());
           source.setParallelLoadNum(sources[j].getParallel_load().getNum());
-          source.setSelectQuery(sources[j].getSelect().getQuery());
-          //TODO: select query file
+          source.setSelectQuery(readQueryOrFileLines(sources[j].getSelect().getQuery()));
           source.setSelectColumn(sources[j].getSelect().getColumn());
 
         }
-        table.setSources(resultSource);
+        tab.setSources(resultSource);
       }
 
-      Target[] targets = tables[i].getTargets();
+      Target[] targets = table.getTargets();
       if (targets != null) {
         io.qimia.uhrwerk.common.model.Target[] resultTarget =
                 new io.qimia.uhrwerk.common.model.Target[targets.length];
@@ -69,10 +98,10 @@ public class YamlConfigReader {
           target.setConnection(conn);
           target.setFormat(targets[j].getFormat());
         }
-        table.setTargets(resultTarget);
+        tab.setTargets(resultTarget);
       }
-      /**
-      Dependency[] dependencies = tables[i].getDependencies();
+
+      Dependency[] dependencies = table.getDependencies();
       if (dependencies != null) {
         io.qimia.uhrwerk.common.model.Dependency[] resultDependency =
                 new io.qimia.uhrwerk.common.model.Dependency[dependencies.length];
@@ -91,20 +120,22 @@ public class YamlConfigReader {
               break;
             case "aggregate":
               dep.setTransformType(PartitionTransformType.AGGREGATE);
+              dep.setTransformPartitionSize(dependencies[j].getTransform().getPartition().getSize());
               break;
             case "window":
               dep.setTransformType(PartitionTransformType.WINDOW);
+              dep.setTransformPartitionSize(dependencies[j].getTransform().getPartition().getSize());
               break;
             case "temporal_aggregate":
               dep.setTransformType(PartitionTransformType.TEMPORAL_AGGREGATE);
+              dep.setTransformPartitionUnit(getModelPartitionUnit(dependencies[j].getTransform().getPartition().getUnit()));
+              dep.setTransformPartitionSize(dependencies[j].getTransform().getPartition().getSize());
+              break;
           }
-          dep.setTransformPartitionUnit(getModelPartitionUnit(dependencies[j].getTransform().getPartition().getUnit()));
-          dep.setTransformPartitionSize(dependencies[j].getTransform().getPartition().getSize());
 
         }
-        table.setDependencies(resultDependency);
-      }**/
-    }
+        tab.setDependencies(resultDependency);
+      }
     return result;
   }
 
@@ -126,6 +157,7 @@ public class YamlConfigReader {
       }
       if(connections[i].getS3()!=null){
         conn.setType(ConnectionType.S3);
+        conn.setPath(connections[i].getS3().getPath());
         conn.setAwsAccessKeyID(connections[i].getS3().getSecret_id());
         conn.setAwsSecretAccessKey(connections[i].getS3().getSecret_key());
       }
@@ -157,7 +189,6 @@ public class YamlConfigReader {
   }
 
 
-
   public io.qimia.uhrwerk.common.model.Connection[] readConnections(String file) {
     Yaml yaml = new Yaml();
     InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
@@ -168,15 +199,26 @@ public class YamlConfigReader {
   }
 
   public io.qimia.uhrwerk.common.model.Dag readDag(String file) {
-      Yaml yaml = new Yaml();
-      InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
-      Dag dag = yaml.loadAs(stream, Dag.class);
-      //dag.validate("");
-      io.qimia.uhrwerk.common.model.Dag result =
-              new io.qimia.uhrwerk.common.model.Dag();
+    Yaml yaml = new Yaml();
+    InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
+    Dag dag = yaml.loadAs(stream, Dag.class);
+    //dag.validate("");
+    io.qimia.uhrwerk.common.model.Dag result =
+            new io.qimia.uhrwerk.common.model.Dag();
 
-      result.setConnections(getModelConnections(dag.getConnections()));
-      result.setTables(getModelTables(dag.getTables()));
+    result.setConnections(getModelConnections(dag.getConnections()));
+
+    if (dag.getTables() != null) {
+      Table[] dagTables = dag.getTables();
+      int tableLength = dagTables.length;
+    io.qimia.uhrwerk.common.model.Table[] resultTables =
+            new io.qimia.uhrwerk.common.model.Table[tableLength];
+    for (int j = 0; j < tableLength; j++) {
+      resultTables[j] = getModelTable(dagTables[j]);
+    }
+    result.setTables(resultTables);
+  }
+
 
     return result;
   }
@@ -185,7 +227,7 @@ public class YamlConfigReader {
     Yaml yaml = new Yaml();
     InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
     Metastore metastore = yaml.loadAs(stream, Env.class).getMetastore();
-    //metastore.validate("");
+    metastore.validate("");
     io.qimia.uhrwerk.common.model.Metastore result =
             new io.qimia.uhrwerk.common.model.Metastore();
       result.setJdbc_url(metastore.getJdbc_url());
@@ -196,17 +238,18 @@ public class YamlConfigReader {
 
   }
 
-  public io.qimia.uhrwerk.common.model.Table[] readTables(String file) {
+
+  public io.qimia.uhrwerk.common.model.Table readTable(String file) {
     Yaml yaml = new Yaml();
     InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
-    Table[] tables = yaml.loadAs(stream, Table[].class);
-    if (tables != null) {
-      io.qimia.uhrwerk.common.model.Table[] result =
-              getModelTables(tables);
+    Table table = yaml.loadAs(stream, Table.class);
+    if (table != null) {
+      io.qimia.uhrwerk.common.model.Table result =
+              getModelTable(table);
       return result;
     }
     else {return null;}
-    }
+  }
 
 
   }

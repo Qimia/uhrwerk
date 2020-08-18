@@ -30,7 +30,7 @@ public class Transform{
         if(type == null){
             throw new ConfigException("Missing field: " + path + "type");
         }
-        if(type!="identity"){
+        if(!type.equals("identity")){
             if(partition == null){
                 throw new ConfigException("Missing field: " + path + "partition");
             }

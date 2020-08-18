@@ -21,7 +21,7 @@ sources:
       column: "id"
       num: 8
     select:
-      query: "table_test_2_select_query.sql"
+      query: "config/table_test_2_select_query.sql"
       column: "created_at"
   - connection_name: connection_name2
     path: staging_source_table  # On DB
@@ -35,20 +35,18 @@ sources:
       column: "id"
       num: 8
     select:
-      query: "table_test_2_select_query.sql"
+      query: "config/table_test_2_select_query.sql"
       column: "created_at"
 
 dependencies:
-  - connection_name: "connection_name"
-    area: staging
+  - area: staging
     vertical: sourcedb_1
     table: tableOne  # On DB
     format: "jdbc"
     version: "1.0"
     transform:
       type: "identity"
-  - connection_name: "connection_name"
-    area: staging
+  - area: staging
     vertical: sourcedb_1
     table: tableOne  # On DB
     format: "jdbc"
@@ -57,8 +55,7 @@ dependencies:
       type: "aggregate"
       partition:
         size: 4
-  - connection_name: "connection_name"
-    area: staging
+  - area: staging
     vertical: sourcedb_1
     table: tableOne  # On DB
     format: "jdbc"
@@ -67,8 +64,7 @@ dependencies:
       type: "window"
       partition:
         size: 4
-  - connection_name: "connection_name" # version 2
-    area: staging
+  - area: staging
     vertical: sourcedb_1
     table: tableOne  # On DB
     format: "jdbc"

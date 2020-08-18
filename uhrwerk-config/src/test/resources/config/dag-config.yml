@@ -39,7 +39,7 @@ tables:
           column: "id"
           num: 8
         select:
-          query: "table_test_2_select_query.sql"
+          query: "config/table_test_2_select_query.sql"
           column: "created_at"
     targets:
       - connection_name: connection_name2
@@ -55,16 +55,14 @@ tables:
       size: 4
 
     dependencies:
-      - connection_name: "connection_name"
-        area: staging
+      - area: staging
         vertical: sourcedb_1
         table: tableOne  # On DB
         format: "jdbc"
         version: "1.0"
         transform:
           type: "identity"
-      - connection_name: "connection_name"
-        area: staging
+      - area: staging
         vertical: sourcedb_1
         table: tableOne  # On DB
         format: "jdbc"
@@ -73,8 +71,7 @@ tables:
           type: "aggregate"
           partition:
             size: 4
-      - connection_name: "connection_name"
-        area: staging
+      - area: staging
         vertical: sourcedb_1
         table: tableOne  # On DB
         format: "jdbc"
@@ -83,8 +80,7 @@ tables:
           type: "window"
           partition:
             size: 4
-      - connection_name: "connection_name" # version 2
-        area: staging
+      - area: staging
         vertical: sourcedb_1
         table: tableOne  # On DB
         format: "jdbc"

@@ -57,7 +57,7 @@ public class Connection{
         for(Field f: getClass().getDeclaredFields()){
             if(f!=null){
                 for(String s: allowedFormats){
-                    if(s==f.getName()){
+                    if(s.equals(f.getName())){
                         containedFormats++;
                         if(containedFormats==2){
                             throw new ConfigException("Only one connection format at the same time: jdbc/s3/file under path: " + path);

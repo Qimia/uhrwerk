@@ -38,7 +38,7 @@ public class Partition{
 
     public void validate(String path, String type){
         path += "partition/";
-        if(type=="temporal_aggregate"){
+        if(type.equals("temporal_aggregate")){
             if(unit == null){
                 throw new ConfigException("Missing field: " + path + "unit");
             }
