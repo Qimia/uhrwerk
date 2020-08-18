@@ -73,7 +73,7 @@ public class SourceDAO implements SourceService {
             res.setTableId(record.getLong(2));
 
             ConnectionDAO connectionDAO = new ConnectionDAO(db);
-            Connection connection = connectionDAO.getById(record.getLong(4));
+            Connection connection = connectionDAO.getById(record.getLong(3));
             if (connection == null) {
                 throw new SQLException("There is no connection for an existing source in the Metastore.");
             } else {
@@ -107,20 +107,26 @@ public class SourceDAO implements SourceService {
         result.setNewResult(source);
         try {
             if (!overwrite) {
-                Source oldSource = getById(source.getId());
-                if (oldSource != null) {
-                    result.setOldResult(oldSource);
-                    result.setMessage(
-                            String.format(
-                                    "A Source with id=%d already exists in the Metastore.",
-                                    source.getId()));
+                try {
+                    Source oldSource = getById(source.getId());
+                    if (oldSource != null) {
+                        result.setOldResult(oldSource);
+                        result.setMessage(
+                                String.format(
+                                        "A Source with id=%d already exists in the Metastore.",
+                                        source.getId()));
+                        result.setError(true);
+
+                        return result;
+                    }
+                } catch (SQLException e) {
+                    result.setMessage(e.getMessage());
+                    result.setException(e);
+                    result.setError(true);
                     return result;
                 }
             }
             Long id = saveToDb(source);
-            if (!id.equals(source.getId())) {
-                throw new SQLException("The id in the Metastore is not the same as in the passed object.");
-            }
             result.setSuccess(true);
             result.setOldResult(source);
         } catch (SQLException e) {

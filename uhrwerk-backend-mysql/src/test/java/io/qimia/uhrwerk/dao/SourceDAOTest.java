@@ -99,6 +99,29 @@ public class SourceDAOTest {
         System.out.println(result.getNewResult());
     }
 
+    @Test
+    void returnFailWhenAlreadyExisting() throws SQLException {
+        // first a connection
+        Connection connection = generateConnection();
+
+        ConnectionDAO connectionDAO = new ConnectionDAO(db);
+        connectionDAO.save(connection, true);
+
+        // second a table
+        Table table = generateTable();
+
+        TableDAO tableDAO = new TableDAO(db);
+        tableDAO.saveTable(table);
+
+        Source source = generateSource();
+
+        SourceResult result = service.save(source, false);
+        SourceResult result2 = service.save(source, false);
+        assertTrue(result2.isError());
+        assertNotNull(result2.getNewResult());
+        assert (result2.getOldResult().equals(source));
+    }
+
 //    @Test
 //    void update() {
 //        Connection conn = new Connection();
