@@ -52,7 +52,7 @@ public class TableDAO implements TableDependencyService {
       );
     }
     if (table.getSources() != null && table.getSources().length > 0) {
-      new SourceDAO(db).save(table.getSources(), tableId);
+      new SourceDAO(db).save(table.getSources(), true); // todo pass overwrite
     }
     db.commit();
     return tableId;
