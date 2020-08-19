@@ -36,9 +36,9 @@ public class DependencyDAO implements DependencyStoreService {
 
     private static String insertDependencyQuery(Dependency d) {
         if (d.getTransformType() == PartitionTransformType.IDENTITY) {
-            return String.format(INSERT_DEPENDENCY_IDENTITY, d.getId(), d.getTableId(), d.getTargetId());
+            return String.format(INSERT_DEPENDENCY_IDENTITY, d.getId(), d.getTableId(), d.getDependencyTargetId());
         } else {
-            return String.format(INSERT_DEPENDENCY_VIRTUAL, d.getId(), d.getTableId(), d.getTargetId(),
+            return String.format(INSERT_DEPENDENCY_VIRTUAL, d.getId(), d.getTableId(), d.getDependencyTargetId(),
                     d.getTransformType().toString(), d.getTransformPartitionSize());
         }
     }
@@ -73,7 +73,7 @@ public class DependencyDAO implements DependencyStoreService {
     }
 
     public FindQueryResult findTables(Dependency[] dependencies) throws SQLException, IllegalArgumentException {
-        Long[] targetIds = Arrays.stream(dependencies).map(Dependency::getTargetId).toArray(Long[]::new);
+        Long[] targetIds = Arrays.stream(dependencies).map(Dependency::getDependencyTargetId).toArray(Long[]::new);
         Set<String> namesToFind = Arrays.stream(dependencies).map(Dependency::getTableName).collect(Collectors.toSet());
 
         // TODO: Are tablenames unique in the context of a single table's dependencies
@@ -151,6 +151,7 @@ public class DependencyDAO implements DependencyStoreService {
         if (!tableSearchRes.missingNames.isEmpty()) {
             result.setSuccess(false);
             result.setMessage("Missing tables: " + tableSearchRes.missingNames.toString());
+            return result;
         }
 
         // Check dependency sizes (abort if size does not match)

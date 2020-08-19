@@ -68,7 +68,7 @@ class YamlConfigReaderTest {
     assertEquals(table.getId()  , table.getSources()[0].getTableId());
     assertEquals(table.getId()  , table.getTargets()[0].getTableId());
     assertEquals(table.getId()  , table.getDependencies()[0].getTableId());
-    assertNotEquals(table.getDependencies()[0].getTargetId(),table.getTargets()[0].getId());
+    assertNotEquals(table.getDependencies()[0].getDependencyTargetId(),table.getTargets()[0].getId());
 
   }
 
