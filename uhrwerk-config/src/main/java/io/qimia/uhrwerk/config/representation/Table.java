@@ -9,8 +9,8 @@ public class Table{
     private String vertical;
     private String table;
     private String version;
-    private Integer parallelism;
-    private Integer max_bulk_size;
+    private Integer parallelism=1;
+    private Integer max_bulk_size=1;
     private Partition partition;
     private Source[] sources;
     private Target[] targets;
