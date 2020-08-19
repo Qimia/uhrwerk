@@ -64,6 +64,18 @@ public class Target {
 
   @Override
   public String toString() {
-    return "Target{" + "connection=" + connection + ", format='" + format + '\'' + '}';
+    return "Target{"
+            + "tableId='"
+            + tableId
+            + '\''
+            + ", id='"
+            + id
+            + '\''
+            + ", connection="
+            + connection
+            + ", format='"
+            + format
+            + '\''
+            + '}';
   }
 }

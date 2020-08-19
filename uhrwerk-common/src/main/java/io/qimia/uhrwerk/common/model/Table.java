@@ -159,7 +159,10 @@ public class Table {
   @Override
   public String toString() {
     return "Table{"
-        + "area='"
+        + "id='"
+        + id
+        + '\''
+        + ", area='"
         + area
         + '\''
         + ", vertical='"

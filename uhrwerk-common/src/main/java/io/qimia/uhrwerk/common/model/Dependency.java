@@ -189,7 +189,19 @@ public class Dependency {
   @Override
   public String toString() {
     return "Dependency{"
-        + "area='"
+        + "id='"
+        + id
+        + '\''
+        + ", tableId='"
+        + tableId
+        + '\''
+        + ", targetId='"
+        + targetId
+        + '\''
+        + ", targetTableId='"
+        + targetTableId
+        + '\''
+        + ", area='"
         + area
         + '\''
         + ", vertical='"
