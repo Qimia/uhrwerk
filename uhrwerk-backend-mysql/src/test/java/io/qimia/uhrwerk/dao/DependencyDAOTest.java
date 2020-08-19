@@ -27,6 +27,7 @@ public class DependencyDAOTest {
                 "Xq92vFqEKF7TB8H9"
         );
 
+        // Setup 2 tables to depend on with targets (which have a connection)
         var conn = new Connection();
         conn.setName("a_connection");
         conn.setKey();
@@ -78,6 +79,7 @@ public class DependencyDAOTest {
 
     @org.junit.jupiter.api.AfterEach
     void tearDown() throws SQLException {
+        // WARNING deletes all data as cleanup
         var deleteDependencyStm = db.createStatement();
         deleteDependencyStm.execute("DELETE FROM DEPENDENCY");
         deleteDependencyStm.close();
@@ -96,6 +98,12 @@ public class DependencyDAOTest {
         if (db != null) if (!db.isClosed()) db.close();
     }
 
+    /**
+     * Setup function which creates a new Table (which can be used to attach dependencies to) and inserts this
+     * table already. This should mimic the TableDAO setup before calling DependencyDAO
+     * @return A Table object present in the MetaStore
+     * @throws SQLException
+     */
     Table insertTestTable() throws SQLException {
         var newTable = new Table();
         newTable.setArea("area1");
@@ -112,6 +120,11 @@ public class DependencyDAOTest {
         return newTable;
     }
 
+    /**
+     * Create two dependency objects which are set to the same values as 2 already present tables in the DB
+     * @param tableId Id from the table for which the dependencies will be set
+     * @return array of dependency objects
+     */
     Dependency[] createTwoDependencies(long tableId) {
         var depA = new Dependency();
         depA.setArea("area1");
@@ -260,11 +273,13 @@ public class DependencyDAOTest {
         newTable.setDependencies(dependencies);
 
         DependencyDAO dao = new DependencyDAO(db);
+        // First use normal save method to store dependencies
         var saveRes = dao.save(dependencies, newTable.getId(), newTable.getPartitionUnit(),
                 newTable.getPartitionSize(), true);
         assertTrue(saveRes.isSuccess());
 
         var checkRes = dao.checkExistingDependencies(newTable.getId(), dependencies);
+        // Then see if a ExistingDependencyCheck would find them and say that they are the same
         assertTrue(checkRes.found);
         assertTrue(checkRes.correct);
     }

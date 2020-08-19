@@ -77,6 +77,7 @@ public class PartitionDurationTest {
 
     @Test
     void fullDependencyCheck() {
+        // Does a full test of three dependencies and a target table with different types of transform
         PartitionUnit outTablePU = PartitionUnit.HOURS;
         int outTablePS = 1;
         var depA = new PartitionDurationTester.PartitionTestDependencyInput();
@@ -101,6 +102,7 @@ public class PartitionDurationTest {
                 outTablePU, outTablePS, deps);
         assertTrue(res.success);
 
+        // If we change to 3*15 minutes it should not work anymore
         depC.transformSize = 3;
         var res2 = PartitionDurationTester.checkDependencies(
                 outTablePU, outTablePS, deps);

@@ -81,11 +81,12 @@ public class PartitionDurationTester {
     }
 
     /**
-     *
-     * @param tablePartitionUnit
-     * @param tablePartitionSize
-     * @param dependencies
-     * @return
+     * Check for an array of Dependencies (with included Table partition information) if they are correct for a given
+     * target table's partition size
+     * @param tablePartitionUnit Unit of time for denoting the target table's partition size
+     * @param tablePartitionSize Count denoting how many PartitionUnit makes up the target table's partition size
+     * @param dependencies All the dependencies' transitions + the partition information from their tables
+     * @return result showing if it was correct and if not names the tables which are not agreeing with the table (target)
      */
     public static PartitionTestResult checkDependencies(
             PartitionUnit tablePartitionUnit,
