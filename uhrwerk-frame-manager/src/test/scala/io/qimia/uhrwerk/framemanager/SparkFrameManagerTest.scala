@@ -7,9 +7,11 @@ import java.util.Comparator
 
 import io.qimia.uhrwerk.common.framemanager.BulkDependencyResult
 import io.qimia.uhrwerk.common.model._
+import io.qimia.uhrwerk.tags.Slow
 import io.qimia.uhrwerk.utils.JDBCTools
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{BeforeAndAfterAll, Suite}
@@ -77,19 +79,14 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     spark
   }
 
-  def createMockDataFrame(spark: SparkSession): DataFrame = {
+  def createMockDataFrame(spark: SparkSession, dateTime: Option[LocalDateTime] = Option.empty): DataFrame = {
     import spark.implicits._
-    (1 to 100).map(i => (i, "txt", i * 5)).toDF("a", "b", "c")
-  }
-
-  def generateDF(spark: SparkSession, dateTime: LocalDateTime): DataFrame = {
-    import spark.implicits._
-    val year = dateTime.getYear
-    val month = dateTime.getMonthValue
-    val day = dateTime.getDayOfMonth
-    val hour = dateTime.getHour
-    val batch = dateTime.getMinute
-    (1 to 50).map(i => (i, year, month, day, hour, batch)).toDF("i", "year", "month", "day", "hour", "bInHour")
+    if (dateTime.isDefined) {
+      val (year, month, day, hour, minute) = SparkFrameManager.getTimeValues(dateTime.get)
+      (1 to 100).map(i => (i, "txt", i * 5, year, month, day, hour, minute)).toDF("a", "b", "c", "year", "month", "day", "hour", "minute")
+    } else {
+      (1 to 100).map(i => (i, "txt", i * 5)).toDF("a", "b", "c")
+    }
   }
 
   "concatenatePaths" should "properly concatenate paths" in {
@@ -124,7 +121,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
 
     val datePath = SparkFrameManager.createDatePath(ts)
 
-    assert(datePath === "year=2020/month=2020-2/day=2020-2-4/hour=2020-2-4-10/minute=2020-2-4-10-30")
+    assert(datePath === "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10/minute=2020-02-04-10-30")
   }
 
   "getTablePath" should "create a table path" in {
@@ -156,7 +153,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     assert(tablePathJDBC === "staging-testdb.testsparkframemanager-1")
   }
 
-  "save DF to Lake and load from lake" should "return the same df and create the right folderstructure" in {
+  "save DF to Lake and load from lake" should "return the same df and create the right folderstructure" taggedAs Slow in {
     val spark = getSparkSession
 
     val df = createMockDataFrame(spark)
@@ -200,7 +197,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
 
     assert(
       new File("src/test/resources/testlake/area=staging/vertical=testdb/table=testsparkframemanager/version=1/format=parquet/" +
-        "year=2020/month=2020-2/day=2020-2-4/hour=2020-2-4-10/minute=2020-2-4-10-30").isDirectory)
+        "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10/minute=2020-02-04-10-30").isDirectory)
 
     // loading should work also with a Source class
     val source = new Source
@@ -214,6 +211,17 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       .sort("a", "b", "c")
     val bSource = loadedDFSource.collect()
     assert(a === bSource)
+  }
+
+  "containsTimeColumns" should "return true if all time columns are present" in {
+    val spark = getSparkSession
+    val ts = LocalDateTime.of(2015, 10, 12, 20, 0)
+    val df = createMockDataFrame(spark, Option(ts))
+    val manager = new SparkFrameManager(spark)
+
+    assert(manager.containsTimeColumns(df) === true)
+    assert(manager.containsTimeColumns(df.drop("hour")) === false)
+    assert(manager.containsTimeColumns(df.withColumn("day", lit("03"))) === false)
   }
 
   "load DFs" should "result in quick access to a range of batches" in {
@@ -240,7 +248,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     )
     batchDates.foreach(bd => {
       println(bd)
-      val df = generateDF(spark, bd)
+      val df = createMockDataFrame(spark, Option(bd))
       manager.writeDataFrame(df, table, Option(bd))
     })
 
@@ -261,7 +269,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val bigDF: DataFrame = manager.loadDependencyDataFrame(dependencyResult)
 
     val results = bigDF.agg(min($"minute"), max($"minute")).collect().head
-    assert(results.getAs[String](0) === "2015-10-12-20-0")
+    assert(results.getAs[String](0) === "2015-10-12-20-00")
     assert(results.getAs[String](1) === "2015-10-15-13-45")
 
     // should also work with bigger partitions
@@ -281,56 +289,135 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val bigDF2: DataFrame = manager.loadDependencyDataFrame(dependencyResult2)
 
     val results2 = bigDF2.agg(min($"minute"), max($"minute")).collect().head
-    assert(results2.getAs[String](0) === "2015-10-12-20-0")
+    assert(results2.getAs[String](0) === "2015-10-12-20-00")
     assert(results2.getAs[String](1) === "2015-10-15-13-45")
 
-    //    val partitions3 = batchDates.map(bd => {
-    //      val partition = new Partition
-    //      partition.setYear(bd.getYear.toString)
-    //      partition.setMonth(bd.getMonthValue.toString)
-    //      partition.setDay(bd.getDayOfMonth.toString)
-    //
-    //      partition
-    //    })
-    //
-    //    val dependencyResult3 = BulkDependencyResult(batchDates, dependency, connection, partitions3)
-    //
-    //    val bigDF3: DataFrame = manager.loadDependencyDataFrame(dependencyResult3)
-    //
-    //    val results3 = bigDF3.agg(min($"minute"), max($"minute")).collect().head
-    //    assert(results3.getAs[String](0) === "2015-10-12-20-0")
-    //    assert(results3.getAs[String](1) === "2015-10-15-13-45")
-    //
-    //    val partitions4 = batchDates.slice(0,1).map(bd => {
-    //      val partition = new Partition
-    //      partition.setYear(bd.getYear.toString)
-    //      partition.setMonth(bd.getMonthValue.toString)
-    //
-    //      partition
-    //    })
-    //
-    //    val dependencyResult4 = BulkDependencyResult(batchDates, dependency, connection, partitions4)
-    //
-    //    val bigDF4: DataFrame = manager.loadDependencyDataFrame(dependencyResult4)
-    //
-    //    val results4 = bigDF4.agg(min($"minute"), max($"minute")).collect().head
-    //    assert(results4.getAs[String](0) === "2015-10-12-20-0")
-    //    assert(results4.getAs[String](1) === "2015-10-15-13-45")
-    //
-    //    val partitions5 = batchDates.slice(0,1).map(bd => {
-    //      val partition = new Partition
-    //      partition.setYear(bd.getYear.toString)
-    //
-    //      partition
-    //    })
-    //
-    //    val dependencyResult5 = BulkDependencyResult(batchDates, dependency, connection, partitions5)
-    //
-    //    val bigDF5: DataFrame = manager.loadDependencyDataFrame(dependencyResult5)
-    //
-    //    val results5 = bigDF5.agg(min($"minute"), max($"minute")).collect().head
-    //    assert(results5.getAs[String](0) === "2015-10-12-20-0")
-    //    assert(results5.getAs[String](1) === "2015-10-15-13-45")
+    val partitions3 = batchDates.map(bd => {
+      val partition = new Partition
+      partition.setYear(bd.getYear.toString)
+      partition.setMonth(bd.getMonthValue.toString)
+      partition.setDay(bd.getDayOfMonth.toString)
+
+      partition
+    })
+
+    val dependencyResult3 = BulkDependencyResult(batchDates, dependency, connection, partitions3)
+
+    val bigDF3: DataFrame = manager.loadDependencyDataFrame(dependencyResult3)
+
+    val results3 = bigDF3.agg(min($"minute"), max($"minute")).collect().head
+    assert(results3.getAs[String](0) === "2015-10-12-20-00")
+    assert(results3.getAs[String](1) === "2015-10-15-13-45")
+
+    val partitions4 = batchDates.slice(0, 1).map(bd => {
+      val partition = new Partition
+      partition.setYear(bd.getYear.toString)
+      partition.setMonth(bd.getMonthValue.toString)
+
+      partition
+    })
+
+    val dependencyResult4 = BulkDependencyResult(batchDates, dependency, connection, partitions4)
+
+    val bigDF4: DataFrame = manager.loadDependencyDataFrame(dependencyResult4)
+
+    val results4 = bigDF4.agg(min($"minute"), max($"minute")).collect().head
+    assert(results4.getAs[String](0) === "2015-10-12-20-00")
+    assert(results4.getAs[String](1) === "2015-10-15-13-45")
+
+    val partitions5 = batchDates.slice(0, 1).map(bd => {
+      val partition = new Partition
+      partition.setYear(bd.getYear.toString)
+
+      partition
+    })
+
+    val dependencyResult5 = BulkDependencyResult(batchDates, dependency, connection, partitions5)
+
+    val bigDF5: DataFrame = manager.loadDependencyDataFrame(dependencyResult5)
+
+    val results5 = bigDF5.agg(min($"minute"), max($"minute")).collect().head
+    assert(results5.getAs[String](0) === "2015-10-12-20-00")
+    assert(results5.getAs[String](1) === "2015-10-15-13-45")
+  }
+
+  "loading dependencies with empty partitions" should "fail" in {
+    val spark = getSparkSession
+    val manager = new SparkFrameManager(spark)
+
+    val partitions = Array(new Partition, new Partition)
+    val dependencyResult = BulkDependencyResult(null, null, null, partitions)
+
+    assertThrows[Exception](manager.loadDependencyDataFrame(dependencyResult))
+  }
+
+  "writing and loading with options with time columns" should "work" in {
+    val spark = getSparkSession
+
+    val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
+    val df = createMockDataFrame(spark, Option(dateTime))
+    val manager = new SparkFrameManager(spark)
+
+    val connection = new Connection
+    connection.setName("testSparkFrameManager")
+    connection.setType(ConnectionType.FS)
+    connection.setPath("src/test/resources/testlake/")
+    val target = new Target
+    target.setConnection(connection)
+    target.setFormat("csv")
+    val table = new Table
+    table.setPartitionUnit(PartitionUnit.MINUTES)
+    table.setPartitionSize(30)
+    table.setVersion("1")
+    table.setArea("staging")
+    table.setName("testoptions")
+    table.setVertical("testdb")
+    table.setTargets(Array(target))
+
+    val dataFrameOptions = Map("header" -> "true",
+      "delimiter" -> "?",
+      "inferSchema" -> "true")
+    manager.writeDataFrame(df, table, Option(dateTime), Option(dataFrameOptions))
+
+    val dependency = Converters.convertTargetToDependency(target, table)
+    val partition = new Partition
+    partition.setYear("2020")
+    partition.setMonth("2")
+    partition.setDay("04")
+    partition.setHour("10")
+    partition.setMinute("30")
+    val dependencyResult = BulkDependencyResult(Array(dateTime), dependency, connection, Array(partition))
+    val loadedDF = manager
+      .loadDependencyDataFrame(dependencyResult, Option(dataFrameOptions))
+
+    val a = df
+      .collect()
+    val b = loadedDF
+      .withColumn("year", col("year").cast(StringType))
+      .withColumn("day", col("day").cast(StringType))
+      .sort("a", "b", "c")
+      .collect()
+
+    assert(b === a)
+
+    assert(
+      new File("src/test/resources/testlake/area=staging/vertical=testdb/table=testoptions/version=1/format=csv/" +
+        "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10/minute=2020-02-04-10-30").isDirectory)
+
+    // loading should work also with a Source class
+    val source = new Source
+    source.setPartitionSize(30)
+    source.setPartitionUnit(PartitionUnit.MINUTES)
+    source.setConnection(connection)
+    source.setFormat("csv")
+    source.setPath("area=staging/vertical=testdb/table=testoptions/version=1/format=csv")
+    val loadedDFSource = manager.loadSourceDataFrame(source, dataFrameReaderOptions = Option(dataFrameOptions))
+    val bSource = loadedDFSource
+      .withColumn("year", col("year").cast(StringType))
+      .withColumn("day", col("day").cast(StringType))
+      .sort("a", "b", "c")
+      .collect()
+    assert(a === bSource)
   }
   //
   //  "save DF to jdbc and load from jdbc without batches" should "return the same df and create the table in the db" taggedAs(Slow, DbTest) in {

@@ -8,9 +8,12 @@ import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.framemanager.SparkFrameManager._
 import io.qimia.uhrwerk.utils.{JDBCTools, TimeTools}
 import org.apache.spark.sql._
-import org.apache.spark.sql.functions.{col, lit}
+import org.apache.spark.sql.functions.{col, lit, to_date}
 
 object SparkFrameManager {
+  val timeColumns = List("year", "month", "day", "hour", "minute")
+  val timeColumnsFormats = List("yyyy", "yyyy-MM", "yyyy-MM-dd", "yyyy-MM-dd-HH", "yyyy-MM-dd-HH-mm")
+
   /**
    * Concatenates paths into a single string. Handles properly all trailing slashes
    *
@@ -37,12 +40,18 @@ object SparkFrameManager {
     first + "-" + second
   }
 
-  def createDatePath(startTS: LocalDateTime): String = {
+  def getTimeValues(startTS: LocalDateTime): (String, String, String, String, String) = {
     val year = startTS.getYear.toString
-    val month = concatenateDateParts(year, startTS.getMonthValue.toString)
-    val day = concatenateDateParts(month, startTS.getDayOfMonth.toString)
-    val hour = concatenateDateParts(day, startTS.getHour.toString)
-    val minute = concatenateDateParts(hour, startTS.getMinute.toString)
+    val month = concatenateDateParts(year, TimeTools.leftPad(startTS.getMonthValue.toString))
+    val day = concatenateDateParts(month, TimeTools.leftPad(startTS.getDayOfMonth.toString))
+    val hour = concatenateDateParts(day, TimeTools.leftPad(startTS.getHour.toString))
+    val minute = concatenateDateParts(hour, TimeTools.leftPad(startTS.getMinute.toString))
+
+    (year, month, day, hour, minute)
+  }
+
+  def createDatePath(startTS: LocalDateTime): String = {
+    val (year, month, day, hour, minute) = getTimeValues(startTS)
 
     concatenatePaths(s"year=$year",
       s"month=$month",
@@ -174,10 +183,10 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     val filter: Column = dependencyResult
       .succeeded
       .map(p => p match {
-        case p if p.getMinute != null => col("minute") === s"${p.getYear}-${p.getMonth}-${p.getDay}-${p.getHour}-${p.getMinute}"
-        case p if p.getHour != null => col("hour") === s"${p.getYear}-${p.getMonth}-${p.getDay}-${p.getHour}"
-        case p if p.getDay != null => col("day") === s"${p.getYear}-${p.getMonth}-${p.getDay}"
-        case p if p.getMonth != null => col("month") === s"${p.getYear}-${p.getMonth}"
+        case p if p.getMinute != null => col("minute") === s"${p.getYear}-${TimeTools.leftPad(p.getMonth)}-${TimeTools.leftPad(p.getDay)}-${TimeTools.leftPad(p.getHour)}-${TimeTools.leftPad(p.getMinute)}"
+        case p if p.getHour != null => col("hour") === s"${p.getYear}-${TimeTools.leftPad(p.getMonth)}-${TimeTools.leftPad(p.getDay)}-${TimeTools.leftPad(p.getHour)}"
+        case p if p.getDay != null => col("day") === s"${p.getYear}-${TimeTools.leftPad(p.getMonth)}-${TimeTools.leftPad(p.getDay)}"
+        case p if p.getMonth != null => col("month") === s"${p.getYear}-${TimeTools.leftPad(p.getMonth)}"
         case p if p.getYear != null => col("year") === s"${p.getYear}"
         case _ => throw new Exception("SparkFrameManager received an empty partition")
       })
@@ -277,8 +286,30 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     df
   }
 
+  def containsTimeColumns(df: DataFrame): Boolean = {
+    if (!timeColumns.forall(df.columns.contains(_))) {
+      return false
+    }
+    df.cache()
+
+    if (timeColumns.zip(timeColumnsFormats).forall(p => {
+      df
+        .withColumn(p._1 + "_transformed", to_date(col(p._1), p._2))
+        .filter(col(p._1 + "_transformed").isNull)
+        .count == 0
+    })) {
+      return true
+    }
+    false
+  }
+
   /**
-   * Saves a table to all its targets
+   * Saves a table to all its targets.
+   * Four possible scenarios regarding the timestamp:
+   * 1. startTS is provided and time columns (year, month, day, hour, minute) are in the DF => those columns are dropped
+   * 2. startTS is provided and time columns are not in the DF => the DF is normally saved
+   * 3. startTS is not provided and time columns with a proper format are in the DF => those columns are used as partitioning
+   * 4. startTS is not provided and time columns are not in the DF => no partitioning is used
    *
    * @param frame                  DataFrame to save
    * @param locationTableInfo      Location Info
@@ -293,18 +324,18 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       val isJDBC = target.getConnection.getType.equals(ConnectionType.JDBC)
       val path = getFullLocation(target.getConnection.getPath, getTablePath(locationTableInfo, !isJDBC, target.getFormat))
 
-      val fullPath = if (startTS.isDefined) {
+      val (fullPath, df) = if (startTS.isDefined) {
         val datePath = createDatePath(startTS.get)
 
-        concatenatePaths(path, datePath)
+        (concatenatePaths(path, datePath), frame.drop(timeColumns: _*))
       } else {
-        path
+        (path, frame)
       }
 
       if (isJDBC) {
-        writeDataFrameToJDBC(frame, target.getConnection, target, locationTableInfo, startTS, dataFrameWriterOptions) // todo implement
+        writeDataFrameToJDBC(df, target.getConnection, target, locationTableInfo, startTS, dataFrameWriterOptions) // todo implement
       } else {
-        val writer = frame.write.mode(SaveMode.Append).format(target.getFormat)
+        val writer = df.write.mode(SaveMode.Append).format(target.getFormat)
         val writerWithOptions = if (dataFrameWriterOptions.isDefined) {
           writer
             .options(dataFrameWriterOptions.get)
@@ -312,8 +343,15 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           writer
         }
 
+        val writerWithPartitioning = if (startTS.isEmpty && containsTimeColumns(df)) {
+          writerWithOptions
+            .partitionBy(timeColumns: _*)
+        } else {
+          writerWithOptions
+        }
+
         println(s"Saving DF to $fullPath")
-        writerWithOptions.save(fullPath)
+        writerWithPartitioning.save(fullPath)
       }
     })
   }
