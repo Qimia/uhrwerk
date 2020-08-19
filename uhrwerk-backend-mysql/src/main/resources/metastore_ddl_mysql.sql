@@ -59,7 +59,7 @@ create table if not exists DEPENDENCY
     updated_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL ON UPDATE CURRENT_TIMESTAMP,
     description              VARCHAR(512)                               NULL,
     FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE,
-    FOREIGN KEY (target_id) REFERENCES TARGET (id) ON DELETE RESTRICT
+    FOREIGN KEY (dependency_target_id) REFERENCES TARGET (id) ON DELETE RESTRICT
 );
 
 create table if not exists PARTITION_
