@@ -3,10 +3,10 @@ package io.qimia.uhrwerk.config;
 import io.qimia.uhrwerk.common.model.Metastore;
 
 public class MetastoreBuilder {
-    private Metastore metastore;
+    private io.qimia.uhrwerk.config.representation.Metastore metastore;
 
-    public MetastoreBuilder(Metastore metastore) {
-        this.metastore = metastore;
+    public MetastoreBuilder() {
+        this.metastore = new io.qimia.uhrwerk.config.representation.Metastore();
     }
 
     public MetastoreBuilder jdbc_url(String jdbc_url){
@@ -29,8 +29,8 @@ public class MetastoreBuilder {
         return this;
     }
 
-
     public Metastore build(){
-        return this.metastore;
+        YamlConfigReader configReader = new YamlConfigReader();
+        return configReader.getModelMetastore(this.metastore);
     }
 }

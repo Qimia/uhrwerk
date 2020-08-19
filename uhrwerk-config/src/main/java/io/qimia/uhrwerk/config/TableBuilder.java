@@ -2,11 +2,16 @@ package io.qimia.uhrwerk.config;
 
 import io.qimia.uhrwerk.common.model.*;
 
+import io.qimia.uhrwerk.config.representation.Partition;
+import io.qimia.uhrwerk.config.representation.Source;
+
 public class TableBuilder {
-    private Table table;
+    private io.qimia.uhrwerk.config.representation.Table table;
+    private io.qimia.uhrwerk.config.representation.Partition partition;
+    private io.qimia.uhrwerk.config.representation.Source source;
 
     public TableBuilder(Table table) {
-        this.table = table;
+        this.table = new io.qimia.uhrwerk.config.representation.Table();
     }
 
     public TableBuilder area(String area){
@@ -20,7 +25,7 @@ public class TableBuilder {
     }
 
     public TableBuilder name(String name){
-        this.table.setName(name);
+        this.table.setTable(name);
         return this;
     }
 
@@ -35,36 +40,39 @@ public class TableBuilder {
     }
 
     public TableBuilder maxBulkSize(int maxBulkSize){
-        this.table.setMaxBulkSize(maxBulkSize);
+        this.table.setMax_bulk_size(maxBulkSize);
         return this;
     }
 
-    public TableBuilder partitionUnit(PartitionUnit partitionUnit){
-        this.table.setPartitionUnit(partitionUnit);
+    public TableBuilder partition(Partition partition){
+        this.table.setPartition(partition);
         return this;
     }
 
-    public TableBuilder partitionSize(int partitionSize){
-        this.table.setPartitionSize(partitionSize);
+    public TableBuilder partition_unit(String partition_unit) {
+        if (this.partition == null) {
+            this.partition = new Partition();
+        }
+        this.partition.setUnit(partition_unit);
         return this;
     }
 
-    public TableBuilder dependencies(Dependency[] dependencies){
-        this.table.setDependencies(dependencies);
+    public TableBuilder partition_size(int partition_size) {
+        if (this.partition == null) {
+            this.partition = new Partition();
+        }
+        this.partition.setSize(partition_size);
         return this;
     }
 
-    public TableBuilder targets(Target[] targets){
-        this.table.setTargets(targets);
-        return this;
-    }
-
-    public TableBuilder sources(Source[] sources){
+    public TableBuilder source(Source[] sources){
         this.table.setSources(sources);
         return this;
     }
 
+
+
     public Table build(){
-        return this.table;
+        return new Table();
     }
 }
