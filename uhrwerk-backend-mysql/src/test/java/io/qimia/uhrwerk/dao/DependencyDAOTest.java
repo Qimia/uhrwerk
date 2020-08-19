@@ -120,6 +120,7 @@ public class DependencyDAOTest {
         depA.setVersion("1.0");
         depA.setFormat("parquet");
         depA.setTransformType(PartitionTransformType.IDENTITY);
+        depA.setTransformPartitionSize(1);
         depA.setTableId(tableId);
         depA.setKey();
         var depB = new Dependency();
@@ -143,6 +144,7 @@ public class DependencyDAOTest {
         depA.setVersion("10.x");
         depA.setFormat("jdbc");
         depA.setTransformType(PartitionTransformType.IDENTITY);
+        depA.setTransformPartitionSize(1);
         depA.setTableId(tableId);
         depA.setKey();
         return new Dependency[] {depA};
@@ -264,7 +266,7 @@ public class DependencyDAOTest {
 
         var checkRes = dao.checkExistingDependencies(newTable.getId(), dependencies);
         assertTrue(checkRes.found);
-//        assertTrue(checkRes.correct); TODO: First fix Dependency's transformPartitionSize default db value
+        assertTrue(checkRes.correct);
     }
 
 
@@ -314,6 +316,7 @@ public class DependencyDAOTest {
         depA.setVersion("1.0");
         depA.setFormat("parquet");
         depA.setTransformType(PartitionTransformType.IDENTITY);
+        depA.setTransformPartitionSize(1);
         depA.setTableId(table.getId());
         depA.setKey();
 
@@ -324,6 +327,7 @@ public class DependencyDAOTest {
         depB.setVersion("1.0");
         depB.setFormat("parquet");
         depB.setTransformType(PartitionTransformType.IDENTITY);
+        depB.setTransformPartitionSize(1);
         depB.setTableId(table.getId());
         depB.setKey();
 

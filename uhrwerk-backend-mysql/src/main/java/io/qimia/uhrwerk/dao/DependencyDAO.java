@@ -7,9 +7,7 @@ import io.qimia.uhrwerk.common.model.Dependency;
 import io.qimia.uhrwerk.common.model.PartitionTransformType;
 import io.qimia.uhrwerk.common.model.PartitionUnit;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,37 +21,19 @@ public class DependencyDAO implements DependencyStoreService {
         return String.format(GET_TABLE_N_TARGET, concatIds.substring(1, concatIds.length() - 1));
     }
 
-    private static final String DELETE_DEPENDENCIES = "DELETE FROM DEPENDENCY WHERE table_id = %d";
+    private static final String DELETE_DEPENDENCIES = "DELETE FROM DEPENDENCY WHERE table_id = ?";
 
-    private static String deleteDependenciesQuery(long tableId) {
-        return String.format(DELETE_DEPENDENCIES, tableId);
-    }
+    private static final String INSERT_DEPENDENCY = "INSERT INTO DEPENDENCY " +
+            "(id, table_id, dependency_target_id, dependency_table_id, transform_type, transform_partition_unit, " +
+            "transform_partition_size) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-    private static final String INSERT_DEPENDENCY_IDENTITY = "INSERT INTO DEPENDENCY " +
-            "(id, table_id, dependency_target_id, dependency_table_id, transform_type) " +
-            "VALUES (%d, %d, %d, %d, 'identity')";
-
-    private static final String INSERT_DEPENDENCY_VIRTUAL = "INSERT INTO DEPENDENCY " +
-            "(id, table_id, dependency_target_id, dependency_table_id, transform_type, transform_partition_size) " +
-            "VALUES (%d, %d, %d, %d, '%s', %d)";
-
-    private static String insertDependencyQuery(Dependency d) {
-        if (d.getTransformType() == PartitionTransformType.IDENTITY) {
-            return String.format(INSERT_DEPENDENCY_IDENTITY, d.getId(), d.getTableId(), d.getDependencyTargetId(), d.getDependencyTableId());
-        } else {
-            return String.format(INSERT_DEPENDENCY_VIRTUAL, d.getId(), d.getTableId(), d.getDependencyTargetId(),
-                    d.getDependencyTableId(), d.getTransformType().toString(), d.getTransformPartitionSize());
-        }
-    }
-
-    private static final String GET_DEPENDENCY_TABLE = "SELECT dep.id, dep.table_id, dep.dependency_target_id, " +
+    private static final String GET_DEPENDENCY_BY_TABLE = "SELECT dep.id, dep.table_id, dep.dependency_target_id, " +
             "dep.dependency_table_id, tab.area, tab.vertical, tab.name, tar.format, tab.version, dep.transform_type, " +
-            "dep.transform_partition_size FROM DEPENDENCY dep JOIN TABLE_ tab ON dep.dependency_table_id = tab.id " +
-            "JOIN TARGET tar ON dep.dependency_target_id = tar.id WHERE dep.table_id = %d";
+            "dep.transform_partition_unit, dep.transform_partition_size FROM DEPENDENCY dep " +
+            "JOIN TABLE_ tab ON dep.dependency_table_id = tab.id " +
+            "JOIN TARGET tar ON dep.dependency_target_id = tar.id " +
+            "WHERE dep.table_id = ?";
 
-    private static String getDependencyQuery(Long tableId) {
-        return String.format(GET_DEPENDENCY_TABLE, tableId);
-    }
 
     static class DepCompareRes {
         boolean success;
@@ -138,7 +118,7 @@ public class DependencyDAO implements DependencyStoreService {
             newTest.dependencyTableName = dependency.getTableName();
             newTest.transformType = dependency.getTransformType();
             newTest.transformSize = dependency.getTransformPartitionSize();
-            // TODO: Doesn't support transform-partition-unit for now
+            // TODO: Doesn't support transform-partition-unit (and transforms using that) for now
             newTest.dependencyTablePartitionSize = tableRes.partitionSize;
             newTest.dependencyTablePartitionUnit = tableRes.partitionUnit;
             partitionTestInputs.add(newTest);
@@ -185,7 +165,8 @@ public class DependencyDAO implements DependencyStoreService {
         existingRes.correct = true;
         existingRes.problems = "";
 
-        // WARNING: ASSUMES tableNames are unique for Dependencies
+        // TODO: Assumes tablenames unique in the context of a single table's dependencies
+        // see findTables comment
         HashMap<String, Dependency> storedDepLookup = new HashMap<>();
         for (Dependency storedDep : storedDeps) {
             storedDepLookup.put(storedDep.getTableName(), storedDep);
@@ -233,7 +214,7 @@ public class DependencyDAO implements DependencyStoreService {
         Long[] targetIds = Arrays.stream(dependencies).map(Dependency::getDependencyTargetId).toArray(Long[]::new);
         Set<String> namesToFind = Arrays.stream(dependencies).map(Dependency::getTableName).collect(Collectors.toSet());
 
-        // TODO: Are tablenames unique in the context of a single table's dependencies
+        // TODO: Assumes tablenames unique in the context of a single table's dependencies
         // now assumes yes but in theory could be no -> then we need to map the missing target-ids back to full table info
 
         Statement statement = db.createStatement();
@@ -262,9 +243,9 @@ public class DependencyDAO implements DependencyStoreService {
      * @throws SQLException
      */
     public void deleteAllDependencies(Long tableId) throws SQLException {
-        Statement statement = db.createStatement();
-        String query = DependencyDAO.deleteDependenciesQuery(tableId);
-        statement.executeUpdate(query);
+        PreparedStatement statement = db.prepareStatement(DELETE_DEPENDENCIES);
+        statement.setLong(1, tableId);
+        statement.executeUpdate();
     }
 
     /**
@@ -273,10 +254,21 @@ public class DependencyDAO implements DependencyStoreService {
      * @throws SQLException
      */
     public void insertDependencies(Dependency[] dependencies) throws SQLException {
-        Statement statement = db.createStatement();
+        PreparedStatement statement = db.prepareStatement(INSERT_DEPENDENCY);
         for (Dependency dependency : dependencies) {
-            String insertStr = insertDependencyQuery(dependency);
-            statement.addBatch(insertStr);
+            statement.setLong(1, dependency.getId());
+            statement.setLong(2, dependency.getTableId());
+            statement.setLong(3, dependency.getDependencyTargetId());
+            statement.setLong(4, dependency.getDependencyTableId());
+            statement.setString(5, dependency.getTransformType().toString());
+            statement.setInt(7, dependency.getTransformPartitionSize());
+            var tranformPartitionUnit = dependency.getTransformPartitionUnit();
+            if (tranformPartitionUnit != null) {
+                statement.setString(6, tranformPartitionUnit.toString());
+            } else {
+                statement.setNull(6, Types.VARCHAR);
+            }
+            statement.addBatch();
         }
         statement.executeBatch();
     }
@@ -375,9 +367,9 @@ public class DependencyDAO implements DependencyStoreService {
     public Dependency[] get(Long tableId) {
         ArrayList<Dependency> dependencies = new ArrayList<>();
         try {
-            Statement statement = db.createStatement();
-            String query = DependencyDAO.getDependencyQuery(tableId);
-            ResultSet rs = statement.executeQuery(query);
+            PreparedStatement statement = db.prepareStatement(GET_DEPENDENCY_BY_TABLE);
+            statement.setLong(1, tableId);
+            ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 var singleDep = new Dependency();
                 singleDep.setId(rs.getLong("dep.id"));
@@ -391,7 +383,12 @@ public class DependencyDAO implements DependencyStoreService {
                 singleDep.setVersion(rs.getString("tab.version"));
                 singleDep.setTransformType(PartitionTransformType.valueOf(rs.getString("dep.transform_type").toUpperCase()));
                 singleDep.setTransformPartitionSize(rs.getInt("dep.transform_partition_size"));
-                // TODO: Doesn't load tranform partition unit currently (!!)
+                var transformPartitionUnit = rs.getString("dep.transform_partition_unit");
+                if ((transformPartitionUnit == null) || transformPartitionUnit.equals("")) {
+                    singleDep.setTransformPartitionUnit(null);
+                } else {
+                    singleDep.setTransformPartitionUnit(PartitionUnit.valueOf(transformPartitionUnit));
+                }
                 dependencies.add(singleDep);
             }
         } catch (SQLException e) {
