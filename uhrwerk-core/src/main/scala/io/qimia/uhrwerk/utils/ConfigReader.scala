@@ -3,23 +3,18 @@ package io.qimia.uhrwerk.utils
 import java.io.{FileInputStream, FileNotFoundException, IOException}
 import java.nio.file.Path
 
-import io.qimia.uhrwerk.config.representation.{Complete, Global, Table}
-import org.yaml.snakeyaml.Yaml
-import org.yaml.snakeyaml.constructor.Constructor
-import org.yaml.snakeyaml.representer.Representer
-
 import scala.io.{BufferedSource, Source}
-
 
 object ConfigReader {
 
   /**
-    * Read a complete dag yaml file
-    * @param path path to the yaml file
-    * @return the complete dag object
-    */
+   * Read a complete dag yaml file
+   *
+   * @param path path to the yaml file
+   * @return the complete dag object
+   */
   def readComplete(path: Path): Complete = {
-    val fileStream   = new FileInputStream(path.toFile)
+    val fileStream = new FileInputStream(path.toFile)
     val representer = new Representer
     representer.getPropertyUtils.setSkipMissingProperties(false)
     val yaml = new Yaml(new Constructor(classOf[Complete]), representer)
@@ -27,9 +22,9 @@ object ConfigReader {
     if (config.tablesSet()) {
       val tables = config.getTables
       tables.foreach(t =>
-      if (t.sourcesSet()) {
-        setQueryStrings(t, path)
-      }
+        if (t.sourcesSet()) {
+          setQueryStrings(t, path)
+        }
       )
     }
     config.validate("")
@@ -39,14 +34,15 @@ object ConfigReader {
 
   /**
    * Read a global-configuration yaml file
+   *
    * @param path path to the yaml file
    * @return the global-config object
    */
   def readGlobalConfig(path: Path): Global = {
-    val fileStream   = new FileInputStream(path.toFile)
+    val fileStream = new FileInputStream(path.toFile)
     val representer = new Representer
     representer.getPropertyUtils.setSkipMissingProperties(false)
-    val yaml   = new Yaml(new Constructor(classOf[Global]), representer)
+    val yaml = new Yaml(new Constructor(classOf[Global]), representer)
     val config = yaml.load(fileStream).asInstanceOf[Global]
     config.validate("")
     config
@@ -54,14 +50,15 @@ object ConfigReader {
 
   /**
    * Read a single step-configuration yaml file
+   *
    * @param path path to the yaml file
    * @return the step-config object
    */
   def readStepConfig(path: Path): Table = {
-    val fileStream   = new FileInputStream(path.toFile)
+    val fileStream = new FileInputStream(path.toFile)
     val representer = new Representer
     representer.getPropertyUtils.setSkipMissingProperties(false)
-    val yaml   = new Yaml(new Constructor(classOf[Table]), representer)
+    val yaml = new Yaml(new Constructor(classOf[Table]), representer)
     val config = yaml.load(fileStream).asInstanceOf[Table]
     if (config.sourcesSet()) {
       setQueryStrings(config, path)
@@ -73,6 +70,7 @@ object ConfigReader {
 
   /**
    * Read a query string from an accompanying sql-file
+   *
    * @param path String with the path to the sql-file
    * @return String with the sql query
    */
@@ -108,10 +106,11 @@ object ConfigReader {
   }
 
   /**
-    * Read a table object and set the select and parallel_load query.
-    * @param path String with the path to the sql-file
-    * @param table the table object in which the queries should be set.
-    */
+   * Read a table object and set the select and parallel_load query.
+   *
+   * @param path  String with the path to the sql-file
+   * @param table the table object in which the queries should be set.
+   */
   def setQueryStrings(table: Table, configPath: Path) = {
     val sources = table.getSources
     sources.foreach(s => {

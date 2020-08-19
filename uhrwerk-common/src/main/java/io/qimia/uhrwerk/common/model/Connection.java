@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.common.model;
 
+import net.openhft.hashing.LongHashFunction;
+
 import java.util.Objects;
 
 public class Connection {
@@ -14,6 +16,11 @@ public class Connection {
   String jdbcPass;
   String awsAccessKeyID;
   String awsSecretAccessKey;
+
+  public void setKey() {
+    long id = LongHashFunction.xx().hashChars(name);
+    setId(id);
+  }
 
   public Long getId() {
     return id;
@@ -100,36 +107,64 @@ public class Connection {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Connection that = (Connection) o;
-    return Objects.equals(id, that.id) &&
-            Objects.equals(name, that.name) &&
-            type == that.type &&
-            Objects.equals(path, that.path) &&
-            Objects.equals(jdbcUrl, that.jdbcUrl) &&
-            Objects.equals(jdbcDriver, that.jdbcDriver) &&
-            Objects.equals(jdbcUser, that.jdbcUser) &&
-            Objects.equals(jdbcPass, that.jdbcPass) &&
-            Objects.equals(awsAccessKeyID, that.awsAccessKeyID) &&
-            Objects.equals(awsSecretAccessKey, that.awsSecretAccessKey);
+    return Objects.equals(id, that.id)
+        && Objects.equals(name, that.name)
+        && type == that.type
+        && Objects.equals(path, that.path)
+        && Objects.equals(jdbcUrl, that.jdbcUrl)
+        && Objects.equals(jdbcDriver, that.jdbcDriver)
+        && Objects.equals(jdbcUser, that.jdbcUser)
+        && Objects.equals(jdbcPass, that.jdbcPass)
+        && Objects.equals(awsAccessKeyID, that.awsAccessKeyID)
+        && Objects.equals(awsSecretAccessKey, that.awsSecretAccessKey);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, name, type, path, jdbcUrl, jdbcDriver, jdbcUser, jdbcPass, awsAccessKeyID, awsSecretAccessKey);
+    return Objects.hash(
+        id,
+        name,
+        type,
+        path,
+        jdbcUrl,
+        jdbcDriver,
+        jdbcUser,
+        jdbcPass,
+        awsAccessKeyID,
+        awsSecretAccessKey);
   }
 
   @Override
   public String toString() {
-    return "Connection{" +
-            "id=" + id +
-            ", name='" + name + '\'' +
-            ", type=" + type +
-            ", path='" + path + '\'' +
-            ", jdbcUrl='" + jdbcUrl + '\'' +
-            ", jdbcDriver='" + jdbcDriver + '\'' +
-            ", jdbcUser='" + jdbcUser + '\'' +
-            ", jdbcPass='" + jdbcPass + '\'' +
-            ", awsAccessKeyID='" + awsAccessKeyID + '\'' +
-            ", awsSecretAccessKey='" + awsSecretAccessKey + '\'' +
-            '}';
+    return "Connection{"
+        + "id="
+        + id
+        + ", name='"
+        + name
+        + '\''
+        + ", type="
+        + type
+        + ", path='"
+        + path
+        + '\''
+        + ", jdbcUrl='"
+        + jdbcUrl
+        + '\''
+        + ", jdbcDriver='"
+        + jdbcDriver
+        + '\''
+        + ", jdbcUser='"
+        + jdbcUser
+        + '\''
+        + ", jdbcPass='"
+        + jdbcPass
+        + '\''
+        + ", awsAccessKeyID='"
+        + awsAccessKeyID
+        + '\''
+        + ", awsSecretAccessKey='"
+        + awsSecretAccessKey
+        + '\''
+        + '}';
   }
 }

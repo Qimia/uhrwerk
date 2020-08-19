@@ -1,11 +1,15 @@
 package io.qimia.uhrwerk.common.model;
 
+import net.openhft.hashing.LongHashFunction;
+
+import java.nio.file.Paths;
 import java.util.Objects;
 
 public class Dependency {
   Long id;
   Long tableId;
-  Long targetId;
+  Long dependencyTargetId;
+  Long dependencyTableId;
   String area;
   String vertical;
   String tableName;
@@ -14,6 +18,55 @@ public class Dependency {
   PartitionTransformType transformType;
   PartitionUnit transformPartitionUnit;
   int transformPartitionSize;
+
+  public void setKey() {
+    StringBuilder res =
+        new StringBuilder()
+            .append(this.getArea())
+            .append(this.getVertical())
+            .append(this.getTableName())
+            .append(this.getVersion());
+    long depTableId = LongHashFunction.xx().hashChars(res);
+    setDependencyTableId(depTableId);
+    StringBuilder res2 = new StringBuilder().append(depTableId).append(this.getFormat());
+    long targetId = LongHashFunction.xx().hashChars(res2);
+    setDependencyTargetId(targetId);
+    StringBuilder res3 = new StringBuilder().append(this.getTableId()).append(depTableId).append(this.dependencyTargetId);
+    long id = LongHashFunction.xx().hashChars(res3);
+    this.setId(id);
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public Long getTableId() {
+    return tableId;
+  }
+
+  public void setTableId(Long tableId) {
+    this.tableId = tableId;
+  }
+
+  public Long getDependencyTargetId() {
+    return dependencyTargetId;
+  }
+
+  public void setDependencyTargetId(Long dependencyTargetId) {
+    this.dependencyTargetId = dependencyTargetId;
+  }
+
+  public Long getDependencyTableId() {
+    return dependencyTableId;
+  }
+
+  public void setDependencyTableId(Long dependencyTableId) {
+    this.dependencyTableId = dependencyTableId;
+  }
 
   public String getArea() {
     return area;
@@ -110,7 +163,19 @@ public class Dependency {
   @Override
   public String toString() {
     return "Dependency{"
-        + "area='"
+        + "id='"
+        + id
+        + '\''
+        + ", tableId='"
+        + tableId
+        + '\''
+        + ", targetId='"
+        + dependencyTargetId
+        + '\''
+        + ", targetTableId='"
+        + dependencyTableId
+        + '\''
+        + ", area='"
         + area
         + '\''
         + ", vertical='"

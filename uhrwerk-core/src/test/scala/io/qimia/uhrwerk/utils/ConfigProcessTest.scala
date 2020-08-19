@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.utils
 
 import io.qimia.uhrwerk.MetaStore
+import io.qimia.uhrwerk.config.ConfigProcess
 import io.qimia.uhrwerk.config.model.{Connection, Dependency, Global, Source, Table, Target}
 import org.scalatest.flatspec.AnyFlatSpec
 
