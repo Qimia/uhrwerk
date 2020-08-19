@@ -1,10 +1,12 @@
 package io.qimia.uhrwerk.dao;
 
+import io.qimia.uhrwerk.common.model.Connection;
 import io.qimia.uhrwerk.common.model.Dependency;
 import io.qimia.uhrwerk.common.model.Table;
 import io.qimia.uhrwerk.common.model.Target;
 import org.junit.jupiter.api.Test;
 
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -138,6 +140,6 @@ public class DependencyDAOTest {
         depA.setFormat("parquet");
         depA.setTableId(tableB.getId());
         depA.setKey();
-        assertEquals(depATarget.getId(), depA.getTargetId());
+        assertEquals(depATarget.getId(), depA.getDependencyTargetId());
     }
 }
