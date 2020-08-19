@@ -50,7 +50,8 @@ create table if not exists DEPENDENCY
 (
     id                       BIGINT  PRIMARY KEY,
     table_id                 BIGINT                                     NOT NULL,
-    target_id                BIGINT                                     NOT NULL,
+    dependency_target_id     BIGINT                                     NOT NULL,
+    dependency_table_id      BIGINT                                     NOT NULL,
     transform_type           enum ('AGGREGATE', 'WINDOW', 'IDENTITY')   NOT NULL,
     transform_partition_unit enum ('WEEKS', 'DAYS', 'HOURS', 'MINUTES') NULL,
     transform_partition_size int       DEFAULT 1,
@@ -58,7 +59,7 @@ create table if not exists DEPENDENCY
     updated_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL ON UPDATE CURRENT_TIMESTAMP,
     description              VARCHAR(512)                               NULL,
     FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE,
-    FOREIGN KEY (target_id) REFERENCES TARGET (id) ON DELETE RESTRICT
+    FOREIGN KEY (dependency_target_id) REFERENCES TARGET (id) ON DELETE RESTRICT
 );
 
 create table if not exists PARTITION_

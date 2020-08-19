@@ -8,8 +8,8 @@ import java.util.Objects;
 public class Dependency {
   Long id;
   Long tableId;
-  Long targetId;
-  Long targetTableId;
+  Long dependencyTargetId;
+  Long dependencyTableId;
   String area;
   String vertical;
   String tableName;
@@ -27,11 +27,11 @@ public class Dependency {
             .append(this.getTableName())
             .append(this.getVersion());
     long depTableId = LongHashFunction.xx().hashChars(res);
-    setTargetTableId(depTableId);
+    setDependencyTableId(depTableId);
     StringBuilder res2 = new StringBuilder().append(depTableId).append(this.getFormat());
     long targetId = LongHashFunction.xx().hashChars(res2);
-    setTargetId(targetId);
-    StringBuilder res3 = new StringBuilder().append(this.getTableId()).append(depTableId).append(this.targetId);
+    setDependencyTargetId(targetId);
+    StringBuilder res3 = new StringBuilder().append(this.getTableId()).append(depTableId).append(this.dependencyTargetId);
     long id = LongHashFunction.xx().hashChars(res3);
     this.setId(id);
   }
@@ -52,20 +52,20 @@ public class Dependency {
     this.tableId = tableId;
   }
 
-  public Long getTargetId() {
-    return targetId;
+  public Long getDependencyTargetId() {
+    return dependencyTargetId;
   }
 
-  public void setTargetId(Long targetId) {
-    this.targetId = targetId;
+  public void setDependencyTargetId(Long dependencyTargetId) {
+    this.dependencyTargetId = dependencyTargetId;
   }
 
-  public Long getTargetTableId() {
-    return targetTableId;
+  public Long getDependencyTableId() {
+    return dependencyTableId;
   }
 
-  public void setTargetTableId(Long targetTableId) {
-    this.targetTableId = targetTableId;
+  public void setDependencyTableId(Long dependencyTableId) {
+    this.dependencyTableId = dependencyTableId;
   }
 
   public String getArea() {
@@ -196,10 +196,10 @@ public class Dependency {
         + tableId
         + '\''
         + ", targetId='"
-        + targetId
+        + dependencyTargetId
         + '\''
         + ", targetTableId='"
-        + targetTableId
+        + dependencyTableId
         + '\''
         + ", area='"
         + area

@@ -11,31 +11,21 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SourceDAO implements SourceService {
     private java.sql.Connection db;
-
-    public SourceDAO() {
-    }
 
     public SourceDAO(java.sql.Connection db) {
         this.db = db;
     }
 
-    public java.sql.Connection getDb() {
-        return db;
-    }
-
-    public void setDb(java.sql.Connection db) {
-        this.db = db;
-    }
-
-    private static final String INSERT_SOURCE =
+    private static final String UPSERT_SOURCE =
             "INSERT INTO SOURCE(id, table_id, connection_id, path, format, partition_unit, partition_size, sql_select_query, " +
                     "sql_partition_query, partition_column, partition_num, query_column)\n"
-                    + "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
+                    + "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)\n"
+                    + "ON DUPLICATE KEY UPDATE \n"
+                    + "path=?, format=?, partition_unit=?, partition_size=?, sql_select_query=?, sql_partition_query=?, " +
+                    "partition_column=?, partition_num=?, query_column=?";
 
     private static final String SELECT_BY_ID =
             "SELECT id, table_id, connection_id, path, format, partition_unit, partition_size, sql_select_query, " +
@@ -43,11 +33,13 @@ public class SourceDAO implements SourceService {
                     "FROM SOURCE\n" +
                     "WHERE id =?";
 
-    private Long saveToDb(Source source) throws SQLException {
-        PreparedStatement insert = db.prepareStatement(INSERT_SOURCE, Statement.RETURN_GENERATED_KEYS);
+    private void saveToDb(Source source) throws SQLException, NullPointerException {
+        PreparedStatement insert = db.prepareStatement(UPSERT_SOURCE, Statement.RETURN_GENERATED_KEYS);
+        // INSERT
         // ids
         insert.setLong(1, source.getId());
         insert.setLong(2, source.getTableId());
+
         insert.setLong(3, source.getConnection().getId());
         // other fields
         insert.setString(4, source.getPath());
@@ -60,9 +52,18 @@ public class SourceDAO implements SourceService {
         insert.setInt(11, source.getParallelLoadNum());
         insert.setString(12, source.getSelectColumn());
 
-        JdbcBackendUtils.singleRowUpdate(insert);
+        // UPDATE
+        insert.setString(13, source.getPath());
+        insert.setString(14, source.getFormat());
+        insert.setString(15, source.getPartitionUnit().name());
+        insert.setInt(16, source.getPartitionSize());
+        insert.setString(17, source.getSelectQuery());
+        insert.setString(18, source.getParallelLoadQuery());
+        insert.setString(19, source.getParallelLoadColumn());
+        insert.setInt(20, source.getParallelLoadNum());
+        insert.setString(21, source.getSelectColumn());
 
-        return source.getId();
+        JdbcBackendUtils.singleRowUpdate(insert);
     }
 
     private Source getSource(PreparedStatement select) throws SQLException {
@@ -74,11 +75,7 @@ public class SourceDAO implements SourceService {
 
             ConnectionDAO connectionDAO = new ConnectionDAO(db);
             Connection connection = connectionDAO.getById(record.getLong(3));
-            if (connection == null) {
-                throw new SQLException("There is no connection for an existing source in the Metastore.");
-            } else {
-                res.setConnection(connection);
-            }
+            res.setConnection(connection);
 
             res.setPath(record.getString(4));
             res.setFormat(record.getString(5));
@@ -106,46 +103,52 @@ public class SourceDAO implements SourceService {
         SourceResult result = new SourceResult();
         result.setNewResult(source);
         try {
+            if (source.getConnection() == null) {
+                throw new NullPointerException("The connection in this source is null. It needs to be set.");
+            }
             if (!overwrite) {
-                try {
-                    Source oldSource = getById(source.getId());
-                    if (oldSource != null) {
-                        result.setOldResult(oldSource);
-                        result.setMessage(
-                                String.format(
-                                        "A Source with id=%d already exists in the Metastore.",
-                                        source.getId()));
-                        result.setError(true);
-
-                        return result;
-                    }
-                } catch (SQLException e) {
-                    result.setMessage(e.getMessage());
-                    result.setException(e);
+                Source oldSource = getById(source.getId());
+                if (oldSource != null && !oldSource.equals(source)) {
+                    result.setOldResult(oldSource);
+                    result.setMessage(
+                            String.format(
+                                    "A Source with id=%d and different values already exists in the Metastore.",
+                                    source.getId()));
                     result.setError(true);
+                    result.setSuccess(false);
+
                     return result;
                 }
+            } else {
+                Source oldSource = getById(source.getId());
+                if (oldSource != null
+                        && (!oldSource.getId().equals(source.getId())
+                        || !oldSource.getConnection().equals(source.getConnection())
+                        || !oldSource.getTableId().equals(source.getTableId()))) {
+                    throw new SQLException("It is not possible to overwrite these fields: id, tableId, connection");
+                }
             }
-            Long id = saveToDb(source);
+            saveToDb(source);
             result.setSuccess(true);
+            result.setError(false);
             result.setOldResult(source);
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             result.setError(true);
+            result.setSuccess(false);
             result.setException(e);
             result.setMessage(e.getMessage());
         }
         return result;
     }
 
-    public List<Long> save(Source[] sources, Long tableId) throws SQLException {
-        List<Long> ids = new ArrayList<>(sources.length);
+    @Override
+    public SourceResult[] save(Source[] sources, boolean overwrite) {
+        SourceResult[] results = new SourceResult[sources.length];
 
-        for (Source source : sources) {
-            source.setTableId(tableId);
-            Long id = saveToDb(source);
-            ids.add(id);
+        for (int i = 0; i < sources.length; i++) {
+            results[i] = save(sources[i], overwrite);
         }
 
-        return ids;
+        return results;
     }
 }
