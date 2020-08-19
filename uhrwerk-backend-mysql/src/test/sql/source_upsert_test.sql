@@ -14,9 +14,9 @@ VALUES(42,
        'column2');
 
 SELECT * FROM SOURCE;
+select * from TABLE_;
+select * from CONNECTION;
 
-TRUNCATE SOURCE;
+# INSERT INTO CONNECTION(id, name, type, path)
+# VALUES(-172160285628269299, 'Test-Conn-Source', 'FS', '/some/path/test1');
 
-SELECT * FROM TABLE_;
-
-SELECT * FROM CONNECTION;

@@ -1,6 +1,11 @@
 package io.qimia.uhrwerk.common.model;
 
+import net.openhft.hashing.LongHashFunction;
+
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 public class Partition {
@@ -14,6 +19,13 @@ public class Partition {
   String minute;
   PartitionUnit partitionUnit;
   int partitionSize;
+
+  public void setKey() {
+    StringBuilder res =
+        new StringBuilder().append(targetId).append(partitionTs.toEpochSecond(ZoneOffset.UTC));
+    long id = LongHashFunction.xx().hashChars(res);
+    this.setId(id);
+  }
 
   public Long getId() {
     return id;
@@ -37,6 +49,7 @@ public class Partition {
 
   public void setPartitionTs(LocalDateTime partitionTs) {
     this.partitionTs = partitionTs;
+    ZonedDateTime partitionTsUTC = this.partitionTs.atZone(ZoneId.of("UTC"));
   }
 
   public String getYear() {
@@ -120,17 +133,32 @@ public class Partition {
 
   @Override
   public String toString() {
-    return "Partition{" +
-            "id=" + id +
-            ", targetId=" + targetId +
-            ", partitionTs=" + partitionTs +
-            ", year='" + year + '\'' +
-            ", month='" + month + '\'' +
-            ", day='" + day + '\'' +
-            ", hour='" + hour + '\'' +
-            ", minute='" + minute + '\'' +
-            ", partitionUnit=" + partitionUnit +
-            ", partitionSize=" + partitionSize +
-            '}';
+    return "Partition{"
+        + "id="
+        + id
+        + ", targetId="
+        + targetId
+        + ", partitionTs="
+        + partitionTs
+        + ", year='"
+        + year
+        + '\''
+        + ", month='"
+        + month
+        + '\''
+        + ", day='"
+        + day
+        + '\''
+        + ", hour='"
+        + hour
+        + '\''
+        + ", minute='"
+        + minute
+        + '\''
+        + ", partitionUnit="
+        + partitionUnit
+        + ", partitionSize="
+        + partitionSize
+        + '}';
   }
 }

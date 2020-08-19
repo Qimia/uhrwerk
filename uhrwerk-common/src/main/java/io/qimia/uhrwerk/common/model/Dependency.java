@@ -9,6 +9,7 @@ public class Dependency {
   Long id;
   Long tableId;
   Long targetId;
+  Long targetTableId;
   String area;
   String vertical;
   String tableName;
@@ -24,12 +25,14 @@ public class Dependency {
             .append(this.getArea())
             .append(this.getVertical())
             .append(this.getTableName())
-            .append(this.getVersion())
-            .append(this.getFormat());
-    long targetId = LongHashFunction.xx().hashChars(res);
+            .append(this.getVersion());
+    long depTableId = LongHashFunction.xx().hashChars(res);
+    setTargetTableId(depTableId);
+    StringBuilder res2 = new StringBuilder().append(depTableId).append(this.getFormat());
+    long targetId = LongHashFunction.xx().hashChars(res2);
     setTargetId(targetId);
-    StringBuilder res2 = new StringBuilder().append(this.tableId).append(targetId);
-    long id = LongHashFunction.xx().hashChars(res2);
+    StringBuilder res3 = new StringBuilder().append(this.getTableId()).append(depTableId).append(this.targetId);
+    long id = LongHashFunction.xx().hashChars(res3);
     this.setId(id);
   }
 
@@ -55,6 +58,14 @@ public class Dependency {
 
   public void setTargetId(Long targetId) {
     this.targetId = targetId;
+  }
+
+  public Long getTargetTableId() {
+    return targetTableId;
+  }
+
+  public void setTargetTableId(Long targetTableId) {
+    this.targetTableId = targetTableId;
   }
 
   public String getArea() {
