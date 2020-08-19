@@ -126,14 +126,17 @@ public class YamlConfigReader {
           switch (dependencies[j].getTransform().getType()) {
             case "identity":
               dep.setTransformType(PartitionTransformType.IDENTITY);
+              dep.setTransformPartitionUnit(getModelPartitionUnit("hours");
               dep.setTransformPartitionSize(1);
               break;
             case "aggregate":
               dep.setTransformType(PartitionTransformType.AGGREGATE);
+              dep.setTransformPartitionUnit(getModelPartitionUnit("hours");
               dep.setTransformPartitionSize(dependencies[j].getTransform().getPartition().getSize());
               break;
             case "window":
               dep.setTransformType(PartitionTransformType.WINDOW);
+              dep.setTransformPartitionUnit(getModelPartitionUnit("hours");
               dep.setTransformPartitionSize(dependencies[j].getTransform().getPartition().getSize());
               break;
             case "temporal_aggregate":
