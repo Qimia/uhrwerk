@@ -3,12 +3,18 @@ package io.qimia.uhrwerk.dao;
 import io.qimia.uhrwerk.common.model.Partition;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PartitionDAO {
   private static String INSERT =
       "INSERT INTO PARTITION_(id,target_id, partition_ts, year, month, day, hour, minute)  VALUES (?,?,?,?,?,?,?)";
+  private final Connection db;
+
+  public PartitionDAO(Connection db) {
+    this.db = db;
+  }
 
   public static Partition save(java.sql.Connection db, Partition partition) throws SQLException {
     PreparedStatement insert = db.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS);
@@ -48,5 +54,9 @@ public class PartitionDAO {
       i++;
     }
     return partitions;
+  }
+
+  public Partition[] getPartitions(Long targetId, LocalDateTime[] partitionTs) {
+    return null;
   }
 }
