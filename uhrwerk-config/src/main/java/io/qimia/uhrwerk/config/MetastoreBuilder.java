@@ -25,7 +25,7 @@ public class MetastoreBuilder {
     }
 
     public MetastoreBuilder pass(String pass){
-        this.metastore.setUser(pass);
+        this.metastore.setPass(pass);
         return this;
     }
 

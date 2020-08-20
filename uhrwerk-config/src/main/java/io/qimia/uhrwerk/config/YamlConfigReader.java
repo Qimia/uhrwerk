@@ -45,7 +45,7 @@ public class YamlConfigReader {
 
   public io.qimia.uhrwerk.common.model.Table getModelTable(Table table){
     if (table != null) {
-      table.validate("");
+      //table.validate("");
       io.qimia.uhrwerk.common.model.Table result =
               new io.qimia.uhrwerk.common.model.Table();
       io.qimia.uhrwerk.common.model.Table tab =
@@ -71,24 +71,25 @@ public class YamlConfigReader {
                   new io.qimia.uhrwerk.common.model.Source();
           resultSource[j] = source;
           source.setTableId(tab.getId());
-          conn.setName(sources[j].getConnection_name());
+          /**conn.setName(sources[j].getConnection_name());
           conn.setKey();
           source.setConnection(conn);
           source.setPath(sources[j].getPath());
           source.setFormat(sources[j].getFormat());
           source.setPartitionUnit(getModelPartitionUnit(sources[j].getPartition().getUnit()));
           source.setPartitionSize(sources[j].getPartition().getSize());
-          source.setParallelLoadQuery(readQueryOrFileLines(sources[j].getParallel_load().getQuery()));
-          source.setParallelLoadColumn(sources[j].getParallel_load().getColumn());
-          source.setParallelLoadNum(sources[j].getParallel_load().getNum());
+          if (sources[j].getParallel_load() != null){
+            source.setParallelLoadQuery(readQueryOrFileLines(sources[j].getParallel_load().getQuery()));
+            source.setParallelLoadColumn(sources[j].getParallel_load().getColumn());
+            source.setParallelLoadNum(sources[j].getParallel_load().getNum());
+          }
           source.setSelectQuery(readQueryOrFileLines(sources[j].getSelect().getQuery()));
           source.setSelectColumn(sources[j].getSelect().getColumn());
-          source.setKey();
-
+          source.setKey();**/
         }
         tab.setSources(resultSource);
       }
-
+      /**
       Target[] targets = table.getTargets();
       if (targets != null) {
         io.qimia.uhrwerk.common.model.Target[] resultTarget =
@@ -149,6 +150,7 @@ public class YamlConfigReader {
         }
         tab.setDependencies(resultDependency);
       }
+      **/
       return result;
     }
     else {return null;}
@@ -222,7 +224,7 @@ public class YamlConfigReader {
   }
 
   public io.qimia.uhrwerk.common.model.Dag getModelDag(Dag dag){
-    dag.validate("");
+    //dag.validate("");
     io.qimia.uhrwerk.common.model.Dag result =
             new io.qimia.uhrwerk.common.model.Dag();
     result.setConnections(getModelConnections(dag.getConnections()));

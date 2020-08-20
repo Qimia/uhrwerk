@@ -118,10 +118,10 @@ public class Table{
         if(version == null){
             throw new ConfigException("Missing field: " + path + "version");
         }
-        if(parallelism == 0){
+        if(parallelism == null){
             throw new ConfigException("Missing field: " + path + "parallelism");
         }
-        if(max_bulk_size == 0){
+        if(max_bulk_size == null){
             throw new ConfigException("Missing field: " + path + "max_bulk_size");
         }
         if(partition == null){
