@@ -54,35 +54,35 @@ public class DependencyDAO implements DependencyStoreService {
         String newDepName = newDep.getTableName();
         if (!trueDep.getTableId().equals(newDep.getTableId())) {
             result.success = false;
-            problemString.append("dependency:" + newDepName + "\thas a different table-id\n");
+            problemString.append("dependency: ").append(newDepName).append("\thas a different table-id\n");
         }
         if (!trueDep.getArea().equals(newDep.getArea())) {
             result.success = false;
-            problemString.append("dependency:" + newDepName + "\thas a different area\n");
+            problemString.append("dependency: ").append(newDepName).append("\thas a different area\n");
         }
         if (!trueDep.getVertical().equals(newDep.getVertical())) {
             result.success = false;
-            problemString.append("dependency:" + newDepName + "\thas a different vertical\n");
+            problemString.append("dependency: ").append(newDepName).append("\thas a different vertical\n");
         }
         if (!trueDep.getTableName().equals(newDep.getTableName())) {
             result.success = false;
-            problemString.append("dependency:" + newDepName + "\thas a different table name\n");
+            problemString.append("dependency: ").append(newDepName).append("\thas a different table name\n");
         }
         if (!trueDep.getFormat().equals(newDep.getFormat())) {
             result.success = false;
-            problemString.append("dependency:" + newDepName + "\thas a different format\n");
+            problemString.append("dependency: ").append(newDepName).append("\thas a different format\n");
         }
         if (!trueDep.getVersion().equals(newDep.getVersion())) {
             result.success = false;
-            problemString.append("dependency:" + newDepName + "\thas a different version\n");
+            problemString.append("dependency: ").append(newDepName).append("\thas a different version\n");
         }
         if (!trueDep.getTransformType().equals(newDep.getTransformType())) {
             result.success = false;
-            problemString.append("dependency:" + newDepName + "\thas a different type\n");
+            problemString.append("dependency: ").append(newDepName).append("\thas a different type\n");
         }
         if (trueDep.getTransformPartitionSize() != newDep.getTransformPartitionSize()) {
             result.success = false;
-            problemString.append("dependency:" + newDepName + "\thas a different size\n");
+            problemString.append("dependency: ").append(newDepName).append("\thas a different size\n");
         }
         // All other ID's in Dependency are set based on these parameters (and should be the same if these are the same)
 
@@ -176,7 +176,7 @@ public class DependencyDAO implements DependencyStoreService {
             var depTableName = inDep.getTableName();
             if (!storedDepLookup.containsKey(depTableName)) {
                 existingRes.correct = false;
-                problemString.append("dependency:" + depTableName + "\twas later added\n");
+                problemString.append("dependency:").append(depTableName).append("\twas later added\n");
                 continue;
             }
             var foundDep = storedDepLookup.get(depTableName);
@@ -207,7 +207,7 @@ public class DependencyDAO implements DependencyStoreService {
      * Find the tables for all the dependencies and check if the targets exists by querying on target-id.
      * @param dependencies dependencies that have to be found
      * @return FindQueryResult object with partition info about found tables and the names of the missing tables
-     * @throws SQLException
+     * @throws SQLException can throw database query errors
      * @throws IllegalArgumentException
      */
     public FindTableRes findTables(Dependency[] dependencies) throws SQLException, IllegalArgumentException {
@@ -240,7 +240,7 @@ public class DependencyDAO implements DependencyStoreService {
     /**
      * Delete all dependencies for a given tableId
      * @param tableId id of the table for which to delete the dependencies
-     * @throws SQLException
+     * @throws SQLException can throw database query errors
      */
     public void deleteAllDependencies(Long tableId) throws SQLException {
         PreparedStatement statement = db.prepareStatement(DELETE_DEPENDENCIES);
@@ -251,7 +251,7 @@ public class DependencyDAO implements DependencyStoreService {
     /**
      * Insert all dependencies (assumes no key collisions!)
      * @param dependencies array of dependencies
-     * @throws SQLException
+     * @throws SQLException can throw database query errors
      */
     public void insertDependencies(Dependency[] dependencies) throws SQLException {
         PreparedStatement statement = db.prepareStatement(INSERT_DEPENDENCY);
@@ -311,7 +311,7 @@ public class DependencyDAO implements DependencyStoreService {
         }
 
         // overwrite or write needed -> first get all tables (abort if table not found)
-        FindTableRes tableSearchRes = null;
+        FindTableRes tableSearchRes;
         try {
             tableSearchRes = findTables(dependencies);
         } catch (Exception e) {
@@ -336,7 +336,8 @@ public class DependencyDAO implements DependencyStoreService {
         if (!sizeTestResult.success) {
             result.setSuccess(false);
             result.setError(false);
-            result.setMessage("Tables " + sizeTestResult.badTableNames.toString() + " have the wrong partition duration");
+            result.setMessage("Tables " + Arrays.toString(sizeTestResult.badTableNames) +
+                    " have the wrong partition duration");
             return result;
         }
 
