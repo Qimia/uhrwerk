@@ -19,13 +19,10 @@ public class SourceDAO implements SourceService {
         this.db = db;
     }
 
-    private static final String UPSERT_SOURCE =
+    private static final String INSERT_SOURCE =
             "INSERT INTO SOURCE(id, table_id, connection_id, path, format, partition_unit, partition_size, sql_select_query, " +
                     "sql_partition_query, partition_column, partition_num, query_column)\n"
-                    + "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)\n"
-                    + "ON DUPLICATE KEY UPDATE \n"
-                    + "path=?, format=?, partition_unit=?, partition_size=?, sql_select_query=?, sql_partition_query=?, " +
-                    "partition_column=?, partition_num=?, query_column=?";
+                    + "VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
 
     private static final String SELECT_BY_ID =
             "SELECT id, table_id, connection_id, path, format, partition_unit, partition_size, sql_select_query, " +
@@ -33,8 +30,19 @@ public class SourceDAO implements SourceService {
                     "FROM SOURCE\n" +
                     "WHERE id =?";
 
+    private static final String DELETE_BY_ID = "DELETE FROM SOURCE WHERE id = ?";
+
+    /**
+     * Saves the source to the Metastore, doesn't do any checking anymore.
+     *
+     * @param source Source to save.
+     * @throws SQLException         Thrown when something went wrong with the saving.
+     *                              This is processed by the caller of this function.
+     * @throws NullPointerException Thrown probably only when source.connection or source.partitionUnit are null.
+     *                              Caught and processed again by the caller of this function.
+     */
     private void saveToDb(Source source) throws SQLException, NullPointerException {
-        PreparedStatement insert = db.prepareStatement(UPSERT_SOURCE, Statement.RETURN_GENERATED_KEYS);
+        PreparedStatement insert = db.prepareStatement(INSERT_SOURCE, Statement.RETURN_GENERATED_KEYS);
         // INSERT
         // ids
         insert.setLong(1, source.getId());
@@ -52,20 +60,17 @@ public class SourceDAO implements SourceService {
         insert.setInt(11, source.getParallelLoadNum());
         insert.setString(12, source.getSelectColumn());
 
-        // UPDATE
-        insert.setString(13, source.getPath());
-        insert.setString(14, source.getFormat());
-        insert.setString(15, source.getPartitionUnit().name());
-        insert.setInt(16, source.getPartitionSize());
-        insert.setString(17, source.getSelectQuery());
-        insert.setString(18, source.getParallelLoadQuery());
-        insert.setString(19, source.getParallelLoadColumn());
-        insert.setInt(20, source.getParallelLoadNum());
-        insert.setString(21, source.getSelectColumn());
-
         JdbcBackendUtils.singleRowUpdate(insert);
     }
 
+    /**
+     * Selects a source from a prepared statement and fills the result into a new Source object.
+     * Tries to fill the source's connection as well.
+     *
+     * @param select Prepared select statement.
+     * @return Found source or null otherwise.
+     * @throws SQLException When something goes wrong with the SQL command.
+     */
     private Source getSource(PreparedStatement select) throws SQLException {
         ResultSet record = select.executeQuery();
         if (record.next()) {
@@ -92,6 +97,13 @@ public class SourceDAO implements SourceService {
         return null;
     }
 
+    /**
+     * Find a source in the Metastore by its id.
+     *
+     * @param id Id of the source.
+     * @return Found source or null otherwise.
+     * @throws SQLException When something goes wrong with the SQL command.
+     */
     private Source getById(Long id) throws SQLException {
         PreparedStatement select = db.prepareStatement(SELECT_BY_ID);
         select.setLong(1, id);
@@ -108,37 +120,47 @@ public class SourceDAO implements SourceService {
             }
             if (!overwrite) {
                 Source oldSource = getById(source.getId());
-                if (oldSource != null && !oldSource.equals(source)) {
+                if (oldSource != null) {
                     result.setOldResult(oldSource);
-                    result.setMessage(
-                            String.format(
-                                    "A Source with id=%d and different values already exists in the Metastore.",
-                                    source.getId()));
-                    result.setError(true);
-                    result.setSuccess(false);
+
+                    if (!oldSource.equals(source)) {
+                        result.setMessage(
+                                String.format(
+                                        "A Source with id=%d and different values already exists in the Metastore.",
+                                        source.getId()));
+                        result.setError(true);
+                    } else {
+                        result.setSuccess(true);
+                    }
 
                     return result;
                 }
             } else {
                 Source oldSource = getById(source.getId());
-                if (oldSource != null
-                        && (!oldSource.getId().equals(source.getId())
-                        || !oldSource.getConnection().equals(source.getConnection())
-                        || !oldSource.getTableId().equals(source.getTableId()))) {
-                    throw new SQLException("It is not possible to overwrite these fields: id, tableId, connection");
+                if (oldSource != null) {
+                    deleteById(oldSource.getId());
                 }
             }
             saveToDb(source);
             result.setSuccess(true);
-            result.setError(false);
             result.setOldResult(source);
         } catch (SQLException | NullPointerException e) {
             result.setError(true);
-            result.setSuccess(false);
             result.setException(e);
             result.setMessage(e.getMessage());
         }
         return result;
+    }
+
+    /**
+     * Deletes a source by its id.
+     *
+     * @param id Source id
+     */
+    private void deleteById(Long id) throws SQLException {
+        PreparedStatement delete = db.prepareStatement(DELETE_BY_ID);
+        delete.setLong(1, id);
+        delete.executeUpdate();
     }
 
     @Override

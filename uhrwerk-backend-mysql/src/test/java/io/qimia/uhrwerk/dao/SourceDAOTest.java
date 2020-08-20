@@ -130,7 +130,7 @@ public class SourceDAOTest {
     }
 
     @Test
-    void updateOfNonEssentialFieldsShouldBePossible() throws SQLException {
+    void overwriteOfNonEssentialFieldsShouldBePossible() throws SQLException {
         // first a connection
         Connection connection = generateConnection();
 
@@ -226,7 +226,7 @@ public class SourceDAOTest {
     }
 
     @Test
-    void upsertWithADifferentConnection() throws SQLException {
+    void upsertWithADifferentConnectionShouldWork() throws SQLException {
         // first a connection
         Connection connection = generateConnection();
 
@@ -243,18 +243,22 @@ public class SourceDAOTest {
 
         service.save(source, false);
 
-        source.getConnection().setName("connection2");
-        source.getConnection().setKey();
+        connection.setName("connection2");
+        connection.setKey();
+        connectionDAO.save(connection, false);
+
+        source.setConnection(connection);
+        // in practice, the source's key should get regenerated and it's then a completely different object
 
         // updating a source where the connection changed
         SourceResult result = service.save(source, true);
 
-        assertTrue(result.isError());
-        assertFalse(result.isSuccess());
+        System.out.println(result.getMessage());
+        assertTrue(result.isSuccess());
+        assertFalse(result.isError());
         assertNotNull(result.getNewResult());
         assertNotNull(result.getNewResult().getId());
         assertEquals(source, result.getNewResult());
-        System.out.println(result.getMessage());
     }
 
     @Test

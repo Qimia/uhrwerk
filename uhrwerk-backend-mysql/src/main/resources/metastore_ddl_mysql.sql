@@ -67,15 +67,9 @@ create table if not exists PARTITION_
     id           BIGINT PRIMARY KEY,
     target_id    BIGINT                              NOT NULL,
     partition_ts TIMESTAMP                           NOT NULL,
-    year         VARCHAR(32)                         NOT NULL,
-    month        VARCHAR(32)                         NOT NULL,
-    day          VARCHAR(32)                         NOT NULL,
-    hour         VARCHAR(32)                         NOT NULL,
-    minute       VARCHAR(32)                         NOT NULL,
     created_ts   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
     updated_ts   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
     index (target_id),
-    INDEX (year, month, day, hour, minute),
     index (partition_ts)
 );
 
