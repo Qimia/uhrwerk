@@ -37,6 +37,7 @@ public class PartitionDurationTester {
 
     /**
      * Result object for checking dependencies
+     * If a test fails, it will show which tables are the cause of the test failing
      */
     public static class PartitionTestResult {
         public boolean success;
@@ -45,6 +46,8 @@ public class PartitionDurationTester {
 
     /**
      * Input for checking dependency partition sizes
+     * contains info about the dependency's transformation +
+     * info about the partition size of the table its dependending on
      */
     public static class PartitionTestDependencyInput {
         public String dependencyTableName;
