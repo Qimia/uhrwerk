@@ -1,7 +1,7 @@
 USE UHRWERK_METASTORE;
 CREATE TABLE IF NOT EXISTS CONNECTION
 (
-    id                    BIGINT  PRIMARY KEY,
+    id                    BIGINT PRIMARY KEY,
     name                  VARCHAR(256) UNIQUE                    NOT NULL,
     type                  enum ('FS', 'JDBC', 'S3', 'GC', 'ABS') NOT NULL,
     path                  VARCHAR(512),
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS CONNECTION
 
 create table if not exists TABLE_
 (
-    id             BIGINT  PRIMARY KEY,
+    id             BIGINT PRIMARY KEY,
     area           VARCHAR(128)                               NOT NULL,
     vertical       VARCHAR(128)                               NOT NULL,
     name           VARCHAR(128)                               NOT NULL,
@@ -35,20 +35,20 @@ create table if not exists TABLE_
 
 create table if not exists TARGET
 (
-    id            BIGINT  PRIMARY KEY,
+    id            BIGINT PRIMARY KEY,
     table_id      BIGINT                              NOT NULL,
     connection_id BIGINT                              NULL,
     format        VARCHAR(64)                         NOT NULL,
     created_ts    TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
     updated_ts    TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE,
-    FOREIGN KEY (connection_id) REFERENCES CONNECTION (id) ON DELETE RESTRICT,
+    index (table_id),
+    index (connection_id),
     UNIQUE (table_id, connection_id, format)
 );
 
 create table if not exists DEPENDENCY
 (
-    id                       BIGINT  PRIMARY KEY,
+    id                       BIGINT PRIMARY KEY,
     table_id                 BIGINT                                     NOT NULL,
     dependency_target_id     BIGINT                                     NOT NULL,
     dependency_table_id      BIGINT                                     NOT NULL,
@@ -58,13 +58,13 @@ create table if not exists DEPENDENCY
     created_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL,
     updated_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL ON UPDATE CURRENT_TIMESTAMP,
     description              VARCHAR(512)                               NULL,
-    FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE,
-    FOREIGN KEY (dependency_target_id) REFERENCES TARGET (id) ON DELETE RESTRICT
+    index (table_id),
+    index (dependency_target_id)
 );
 
 create table if not exists PARTITION_
 (
-    id           BIGINT  PRIMARY KEY,
+    id           BIGINT PRIMARY KEY,
     target_id    BIGINT                              NOT NULL,
     partition_ts TIMESTAMP                           NOT NULL,
     year         VARCHAR(32)                         NOT NULL,
@@ -74,23 +74,20 @@ create table if not exists PARTITION_
     minute       VARCHAR(32)                         NOT NULL,
     created_ts   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
     updated_ts   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (target_id) REFERENCES TARGET (id)
-        ON DELETE CASCADE,
+    index (target_id),
     INDEX (year, month, day, hour, minute),
     index (partition_ts)
 );
 
 create table if not exists PARTITION_DEPENDENCY
 (
-    id                      BIGINT  PRIMARY KEY,
+    id                      BIGINT PRIMARY KEY,
     partition_id            BIGINT                              NOT NULL,
     dependency_partition_id BIGINT                              NOT NULL,
     created_ts              TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
     updated_ts              TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (partition_id) REFERENCES PARTITION_ (id)
-        ON DELETE CASCADE,
-    FOREIGN KEY (dependency_partition_id) REFERENCES PARTITION_ (id)
-        ON DELETE CASCADE
+    index (partition_id),
+    index (dependency_partition_id)
 );
 
 CREATE TABLE IF NOT EXISTS SOURCE
@@ -110,8 +107,6 @@ CREATE TABLE IF NOT EXISTS SOURCE
     created_ts          TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
     updated_ts          TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     description         VARCHAR(512),
-    FOREIGN KEY (table_id)
-        REFERENCES TABLE_ (id) ON DELETE CASCADE,
-    FOREIGN KEY (connection_id)
-        REFERENCES CONNECTION (id) ON DELETE RESTRICT
+    index (table_id),
+    index (connection_id)
 );
