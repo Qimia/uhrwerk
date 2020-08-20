@@ -21,7 +21,8 @@ public class JdbcBackendUtilsTests {
             PartitionUnit.MINUTES,
             10,
             PartitionTransformType.AGGREGATE,
-            3);
+            3,
+            null);
     for (int i = 0; i < partitions.length; i++) {
       System.out.println("Table-partition: " + partitions[i]);
       System.out.println("Dependency-partition: " + Arrays.toString(aggPartitions[i]));
@@ -35,7 +36,8 @@ public class JdbcBackendUtilsTests {
             PartitionUnit.MINUTES,
             30,
             PartitionTransformType.WINDOW,
-            4);
+            4,
+            null);
     for (int i = 0; i < partitions.length; i++) {
       System.out.println("Table-partition: " + partitions[i]);
       System.out.println("Dependency-partition: " + Arrays.toString(windowPartitions[i]));

@@ -25,7 +25,8 @@ public class JdbcBackendUtils {
       PartitionUnit depTableUnit,
       int depTableSize,
       PartitionTransformType transformType,
-      int transformSize) {
+      int transformSize,
+      PartitionUnit transformUnit) {
     if (transformType.equals(PartitionTransformType.IDENTITY)) {
       assert tableUnit.equals(depTableUnit) && tableSize == depTableSize;
       LocalDateTime[][] result = new LocalDateTime[tablePartitions.length][1];
