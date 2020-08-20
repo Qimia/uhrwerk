@@ -73,11 +73,11 @@ public class ConnectionDAO implements ConnectionService {
           + "       jdbc_url,\n"
           + "       jdbc_driver,\n"
           + "       jdbc_user,\n"
-              + "       jdbc_pass,\n"
-              + "       aws_access_key_id,\n"
-              + "       aws_secret_access_key\n"
-              + "FROM CONNECTION\n"
-              + "WHERE name =?\n";
+          + "       jdbc_pass,\n"
+          + "       aws_access_key_id,\n"
+          + "       aws_secret_access_key\n"
+          + "FROM CONNECTION\n"
+          + "WHERE name =?\n";
 
   public Connection getByName(java.sql.Connection db, String name) throws SQLException {
     PreparedStatement select = db.prepareStatement(SELECT_BY_NAME);
@@ -86,17 +86,17 @@ public class ConnectionDAO implements ConnectionService {
   }
 
   private static final String SELECT_BY_ID =
-          "SELECT id, name,\n"
-                  + "       type,\n"
-                  + "       path,\n"
-                  + "       jdbc_url,\n"
-                  + "       jdbc_driver,\n"
-                  + "       jdbc_user,\n"
-                  + "       jdbc_pass,\n"
-                  + "       aws_access_key_id,\n"
-                  + "       aws_secret_access_key\n"
-                  + "FROM CONNECTION\n"
-                  + "WHERE id =?\n";
+      "SELECT id, name,\n"
+          + "       type,\n"
+          + "       path,\n"
+          + "       jdbc_url,\n"
+          + "       jdbc_driver,\n"
+          + "       jdbc_user,\n"
+          + "       jdbc_pass,\n"
+          + "       aws_access_key_id,\n"
+          + "       aws_secret_access_key\n"
+          + "FROM CONNECTION\n"
+          + "WHERE id =?\n";
 
   public Connection getById(Long id) throws SQLException {
     PreparedStatement select = db.prepareStatement(SELECT_BY_ID);
@@ -110,13 +110,13 @@ public class ConnectionDAO implements ConnectionService {
   }
 
   private static final String SELECT_DEPENDENCY_CONN =
-          "SELECT cn.id, cn.name,\n"
-                  + "       cn.type,\n"
-                  + "       cn.path,\n"
-                  + "       cn.jdbc_url,\n"
-                  + "       cn.jdbc_driver,\n"
-                  + "       cn.jdbc_user,\n"
-                  + "       cn.jdbc_pass,\n"
+      "SELECT cn.id, cn.name,\n"
+          + "       cn.type,\n"
+          + "       cn.path,\n"
+          + "       cn.jdbc_url,\n"
+          + "       cn.jdbc_driver,\n"
+          + "       cn.jdbc_user,\n"
+          + "       cn.jdbc_pass,\n"
           + "       cn.aws_access_key_id,\n"
           + "       cn.aws_secret_access_key\n"
           + "FROM TABLE_ AS tl\n"
