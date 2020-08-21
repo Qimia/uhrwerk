@@ -31,7 +31,7 @@ public class Partition{
         if(unit == null){
             throw new ConfigException("Missing field: " + path + "unit");
         }
-        if(size == 0){
+        if(size == null){
             throw new ConfigException("Missing field: " + path + "size");
         }
     }

@@ -1,54 +1,151 @@
 package io.qimia.uhrwerk.config;
 
-import io.qimia.uhrwerk.common.model.*;
+import io.qimia.uhrwerk.config.representation.Connection;
+import io.qimia.uhrwerk.config.representation.File;
+import io.qimia.uhrwerk.config.representation.S3;
+import io.qimia.uhrwerk.config.representation.JDBC;
+
+import java.util.ArrayList;
 
 public class ConnectionBuilder {
-  private Connection connection;
+  private ArrayList<io.qimia.uhrwerk.config.representation.Connection> connectionsList;
+  private io.qimia.uhrwerk.config.representation.Connection[] connections;
+
 
   public ConnectionBuilder() {
-    this.connection = connection;
+    this.connectionsList = new ArrayList<io.qimia.uhrwerk.config.representation.Connection>();
   }
 
   public ConnectionBuilder name(String name) {
-    this.connection.setName(name);
+    Connection connection = new Connection();
+    this.connectionsList.add(connection);
+    this.connectionsList.get(this.connectionsList.size()-1).setName(name);
     return this;
   }
 
-  public ConnectionBuilder type(ConnectionType type) {
-    this.connection.setType(type);
+  public ConnectionBuilder jdbc(JDBC jdbc) {
+    if (this.connectionsList.size() != 0) {
+      this.connectionsList.get(this.connectionsList.size() - 1).setJdbc(jdbc);
+    }
     return this;
   }
+
+  public ConnectionBuilder jdbc() {
+    if (this.connectionsList.size() != 0) {
+      this.connectionsList.get(this.connectionsList.size() - 1).setJdbc(new JDBC());
+    }
+    return this;
+  }
+
+  public ConnectionBuilder jdbcUrl(String url) {
+    if (this.connectionsList.size() != 0) {
+      if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
+        this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setJdbc_url(url);
+      }
+    }
+    return this;
+  }
+
+  public ConnectionBuilder jdbcDriver(String driver) {
+    if (this.connectionsList.size() != 0) {
+      if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
+        this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setJdbc_driver(driver);
+      }
+    }
+    return this;
+  }
+
+  public ConnectionBuilder user(String user) {
+    if (this.connectionsList.size() != 0) {
+      if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
+        this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setUser(user);
+      }
+    }
+    return this;
+  }
+
+  public ConnectionBuilder pass(String pass) {
+    if (this.connectionsList.size() != 0) {
+      if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
+        this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setPass(pass);
+      }
+    }
+    return this;
+  }
+
+
+  public ConnectionBuilder s3(S3 s3) {
+    if (this.connectionsList.size() != 0) {
+      this.connectionsList.get(this.connectionsList.size() - 1).setS3(s3);
+    }
+    return this;
+  }
+
+  public ConnectionBuilder s3() {
+    if (this.connectionsList.size() != 0) {
+      this.connectionsList.get(this.connectionsList.size() - 1).setS3(new S3());
+    }
+    return this;
+  }
+
+
   public ConnectionBuilder path(String path) {
-    this.connection.setPath(path);
-    return this;
-  }
-  public ConnectionBuilder jdbcUrl(String jdbcUrl) {
-    this.connection.setJdbcUrl(jdbcUrl);
-    return this;
-  }
-  public ConnectionBuilder jdbcDriver(String jdbcDriver) {
-    this.connection.setJdbcDriver(jdbcDriver);
-    return this;
-  }
-  public ConnectionBuilder jdbcUser(String jdbcUser) {
-    this.connection.setJdbcUser(jdbcUser);
-    return this;
-  }
-  public ConnectionBuilder jdbcPass(String jdbcPass) {
-    this.connection.setJdbcPass(jdbcPass);
-    return this;
-  }
-  public ConnectionBuilder awsAccessKeyID(String awsAccessKeyID) {
-    this.connection.setAwsSecretAccessKey(awsAccessKeyID);
-    return this;
-  }
-  public ConnectionBuilder awsSecretAccessKey(String awsSecretAccessKey) {
-    this.connection.setAwsSecretAccessKey(awsSecretAccessKey);
+    if (this.connectionsList.size() != 0) {
+      if (this.connectionsList.get(this.connectionsList.size()-1).getS3() != null) {
+        if (this.connectionsList.get(this.connectionsList.size() - 1).getS3().getPath() == null) {
+          this.connectionsList.get(this.connectionsList.size() - 1).getS3().setPath(path);
+        }
+      }
+      if (this.connectionsList.get(this.connectionsList.size()-1).getFile() != null) {
+        if (this.connectionsList.get(this.connectionsList.size() - 1).getFile().getPath() == null) {
+          this.connectionsList.get(this.connectionsList.size() - 1).getFile().setPath(path);
+        }
+      }
+    }
     return this;
   }
 
-  public Connection build() {
-    //this.connection.validate("");
-    return this.connection;
+
+  public ConnectionBuilder secretId(String secretId) {
+    if (this.connectionsList.size() != 0) {
+      if (this.connectionsList.get(this.connectionsList.size()-1).getS3() != null){
+        this.connectionsList.get(this.connectionsList.size()-1).getS3().setSecret_id(secretId);
+      }
+    }
+    return this;
+  }
+
+  public ConnectionBuilder secretKey(String secretKey) {
+    if (this.connectionsList.size() != 0) {
+      if (this.connectionsList.get(this.connectionsList.size()-1).getS3() != null){
+        this.connectionsList.get(this.connectionsList.size()-1).getS3().setSecret_key(secretKey);
+      }
+    }
+    return this;
+  }
+
+
+  public ConnectionBuilder file(File file) {
+    if (this.connectionsList.size() != 0) {
+      this.connectionsList.get(this.connectionsList.size() - 1).setFile(file);
+    }
+    return this;
+  }
+
+  public ConnectionBuilder file() {
+    if (this.connectionsList.size() != 0) {
+      this.connectionsList.get(this.connectionsList.size() - 1).setFile(new File());
+    }
+    return this;
+  }
+
+
+  public io.qimia.uhrwerk.common.model.Connection[] build() {
+    if (this.connectionsList != null) {
+      this.connections = new Connection[connectionsList.size()];
+      connectionsList.toArray(this.connections);
+    }
+    YamlConfigReader configReader = new YamlConfigReader();
+    return configReader.getModelConnections(this.connections);
   }
 }
