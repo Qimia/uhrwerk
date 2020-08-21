@@ -4,7 +4,10 @@ import io.qimia.uhrwerk.common.metastore.config.TargetResult;
 import io.qimia.uhrwerk.common.metastore.config.TargetService;
 import io.qimia.uhrwerk.common.model.Target;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
@@ -161,7 +164,7 @@ public class TargetDAO implements TargetService {
                         connectionRetriever.getDb(), shellConnName);
                 if (newTargetConn == null) {
                     saveResult.setSuccess(false);
-                    saveResult.setError(false);
+                    saveResult.setError(false); // todo this might be wrong?
                     saveResult.setMessage("Could not find connection " + shellConnName + " for target-format " +
                             target.getFormat());
                     return saveResult;

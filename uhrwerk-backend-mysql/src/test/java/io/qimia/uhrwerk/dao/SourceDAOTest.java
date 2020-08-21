@@ -14,7 +14,7 @@ public class SourceDAOTest {
     java.sql.Connection db;
     SourceService service;
 
-    private Table generateTable() {
+    static Table generateTable() {
         Table table = new Table();
         table.setArea("test-area-source");
         table.setVertical("test-vertical");
@@ -29,7 +29,7 @@ public class SourceDAOTest {
         return table;
     }
 
-    Connection generateConnection() {
+    static Connection generateConnection() {
         Connection connection = new Connection();
         connection.setName("Test-Conn-Source");
         connection.setType(ConnectionType.FS);
@@ -39,7 +39,7 @@ public class SourceDAOTest {
         return connection;
     }
 
-    Source generateSource() {
+    static Source generateSource() {
         Table table = generateTable();
         Source source = new Source();
         source.setTableId(table.getId());

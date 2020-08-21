@@ -13,6 +13,18 @@ public class TableResult {
     private SourceResult[] sourceResults;
     private DependencyStoreResult dependencyResult;
 
+    public TargetResult getTargetResult() {
+        return targetResult;
+    }
+
+    public SourceResult[] getSourceResults() {
+        return sourceResults;
+    }
+
+    public DependencyStoreResult getDependencyResult() {
+        return dependencyResult;
+    }
+
     public Table getNewResult() {
         return newResult;
     }
