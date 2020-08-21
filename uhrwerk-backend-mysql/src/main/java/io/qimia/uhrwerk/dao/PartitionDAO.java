@@ -113,6 +113,7 @@ public class PartitionDAO implements PartitionService {
         try {
             if (!overwrite) {
                 Partition oldPartition = getById(partition.getId());
+
                 if (oldPartition != null) {
                     result.setOldResult(oldPartition);
 
@@ -129,10 +130,8 @@ public class PartitionDAO implements PartitionService {
                     return result;
                 }
             } else {
-                Partition oldPartition = getById(partition.getId());
-                if (oldPartition != null) {
-                    deleteById(oldPartition.getId());
-                }
+                System.out.println("Deleting the old partition");
+                deleteById(partition.getId());
             }
             saveToDb(partition);
             result.setSuccess(true);

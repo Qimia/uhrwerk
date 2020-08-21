@@ -59,15 +59,15 @@ public class SourceDAOTest {
                 DriverManager.getConnection(
                         "jdbc:mysql://localhost:53306/UHRWERK_METASTORE", "UHRWERK_USER", "Xq92vFqEKF7TB8H9");
         service = new SourceDAO(db);
-
-        // clean up
-        db.prepareStatement("delete from SOURCE where id = " + generateSource().getId()).execute();
-        db.prepareStatement("delete from CONNECTION where id = " + generateConnection().getId()).execute();
-        db.prepareStatement("delete from TABLE_ where id = " + generateTable().getId()).execute();
     }
 
     @org.junit.jupiter.api.AfterEach
     void tearDown() throws SQLException {
+        // clean up
+        db.prepareStatement("delete from SOURCE where id = " + generateSource().getId()).execute();
+        db.prepareStatement("delete from CONNECTION where id = " + generateConnection().getId()).execute();
+        db.prepareStatement("delete from TABLE_ where id = " + generateTable().getId()).execute();
+
         if (db != null) if (!db.isClosed()) db.close();
     }
 
@@ -178,22 +178,24 @@ public class SourceDAOTest {
 
         SourceResult result = service.save(source, true);
 
-        assertTrue(result.isError());
-        assertFalse(result.isSuccess());
+        // without foreign keys this should work
+        System.out.println(result.getMessage());
+        assertTrue(result.isSuccess());
+        assertFalse(result.isError());
         assertNotNull(result.getNewResult());
         assertNotNull(result.getNewResult().getId());
         assertEquals(source, result.getNewResult());
-        System.out.println(result.getMessage());
 
         source.setConnection(null);
         SourceResult resultConnectionNull = service.save(source, true);
 
+        // with connection null this should fail
+        System.out.println(resultConnectionNull.getMessage());
         assertTrue(resultConnectionNull.isError());
         assertFalse(resultConnectionNull.isSuccess());
         assertNotNull(resultConnectionNull.getNewResult());
         assertNotNull(resultConnectionNull.getNewResult().getId());
         assertEquals(source, resultConnectionNull.getNewResult());
-        System.out.println(resultConnectionNull.getMessage());
     }
 
     @Test
@@ -207,8 +209,9 @@ public class SourceDAOTest {
 
         SourceResult result = service.save(source, true);
 
-        assertTrue(result.isError());
-        assertFalse(result.isSuccess());
+        // without foreign keys this should work
+        assertTrue(result.isSuccess());
+        assertFalse(result.isError());
         assertNotNull(result.getNewResult());
         assertNotNull(result.getNewResult().getId());
         assertEquals(source, result.getNewResult());
@@ -217,6 +220,7 @@ public class SourceDAOTest {
         source.setTableId(null);
         SourceResult resultConnectionNull = service.save(source, true);
 
+        // with table id = null this should fail
         assertTrue(resultConnectionNull.isError());
         assertFalse(resultConnectionNull.isSuccess());
         assertNotNull(resultConnectionNull.getNewResult());

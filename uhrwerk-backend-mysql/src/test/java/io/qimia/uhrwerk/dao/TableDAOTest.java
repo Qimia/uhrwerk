@@ -26,9 +26,6 @@ class TableDAOTest {
   }
 
   @Test
-  void save() {}
-
-  @Test
   void saveTable() throws SQLException {
     Table table = new Table();
     table.setArea("test-area");
@@ -42,7 +39,4 @@ class TableDAOTest {
     table.setKey();
     Long id = service.save(table);
   }
-
-  @Test
-  void get() {}
 }
