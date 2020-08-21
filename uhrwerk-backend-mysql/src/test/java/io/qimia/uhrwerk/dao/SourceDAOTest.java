@@ -83,7 +83,7 @@ public class SourceDAOTest {
         Table table = generateTable();
 
         TableDAO tableDAO = new TableDAO(db);
-        tableDAO.saveTable(table);
+        tableDAO.save(table, true);
 
         Source source = generateSource();
 
@@ -108,13 +108,14 @@ public class SourceDAOTest {
         Table table = generateTable();
 
         TableDAO tableDAO = new TableDAO(db);
-        tableDAO.saveTable(table);
+        tableDAO.save(table, true);
 
         Source source = generateSource();
 
         service.save(source, false);
         SourceResult resultSame = service.save(source, false);
 
+        System.out.println(resultSame.getMessage());
         assertTrue(resultSame.isSuccess());
         assertFalse(resultSame.isError());
         assertNotNull(resultSame.getNewResult());
@@ -141,7 +142,7 @@ public class SourceDAOTest {
         Table table = generateTable();
 
         TableDAO tableDAO = new TableDAO(db);
-        tableDAO.saveTable(table);
+        tableDAO.save(table, true);
 
         Source source = generateSource();
 
@@ -172,7 +173,7 @@ public class SourceDAOTest {
         Table table = generateTable();
 
         TableDAO tableDAO = new TableDAO(db);
-        tableDAO.saveTable(table);
+        tableDAO.save(table, true);
 
         Source source = generateSource();
 
@@ -210,6 +211,7 @@ public class SourceDAOTest {
         SourceResult result = service.save(source, true);
 
         // without foreign keys this should work
+        System.out.println(result.getMessage());
         assertTrue(result.isSuccess());
         assertFalse(result.isError());
         assertNotNull(result.getNewResult());
@@ -241,7 +243,7 @@ public class SourceDAOTest {
         Table table = generateTable();
 
         TableDAO tableDAO = new TableDAO(db);
-        tableDAO.saveTable(table);
+        tableDAO.save(table, true);
 
         Source source = generateSource();
 
@@ -277,7 +279,7 @@ public class SourceDAOTest {
         Table table = generateTable();
 
         TableDAO tableDAO = new TableDAO(db);
-        tableDAO.saveTable(table);
+        tableDAO.save(table, true);
 
         Source source1 = generateSource();
         Source source2 = generateSource();

@@ -149,6 +149,7 @@ public class PartitionDAOTest {
         assertFalse(partitionResult.isError());
         assertNotNull(partitionResult.getNewResult());
 
+        int oldSize = partition.getPartitionSize();
         partition.setPartitionSize(234568);
         partitionResult = partitionDAO.save(partition, false);
 
@@ -165,7 +166,7 @@ public class PartitionDAOTest {
         // save connection
         new ConnectionDAO(db).save(connection, true);
         // save table
-        new TableDAO(db).save(table); // target should be saved here
+        new TableDAO(db).save(table, true); // target should be saved here
 
         partitionResult = partitionDAO.save(partition, false);
         assertTrue(partitionResult.isError());
@@ -173,6 +174,15 @@ public class PartitionDAOTest {
         assertNotNull(partitionResult.getNewResult());
         System.out.println(partitionResult.getMessage());
         assertTrue(partitionResult.getMessage().contains("exists in the Metastore"));
+
+        // if the partition doesn't change it will succeed
+
+        partition.setPartitionSize(oldSize);
+        partitionResult = partitionDAO.save(partition, false);
+
+        assertTrue(partitionResult.isSuccess());
+        assertFalse(partitionResult.isError());
+        assertNotNull(partitionResult.getNewResult());
     }
 
     @Test
@@ -187,7 +197,7 @@ public class PartitionDAOTest {
         // save connection
         new ConnectionDAO(db).save(connection, true);
         // save table
-        new TableDAO(db).saveTable(table);
+        new TableDAO(db).save(table, true);
         // save target
         new TargetDAO(db).save(new Target[]{target}, table.getId(), false);
 
@@ -198,13 +208,17 @@ public class PartitionDAOTest {
             p.setPartitionTs(timestamps[i]);
             p.setKey();
             partitions[i] = p;
-            PartitionResult partitionResult = partitionDAO.save(p, false);
+//            PartitionResult partitionResult = partitionDAO.save(p, false);
+        }
+        PartitionResult[] partitionResults = partitionDAO.save(partitions, false);
 
+        for (PartitionResult partitionResult : partitionResults) {
             if (partitionResult.getMessage() != null) {
                 System.out.println(partitionResult.getMessage());
             }
             assertTrue(partitionResult.isSuccess());
         }
+
         Partition[] partitionsSubset = Arrays.copyOfRange(partitions, 2, 4);
 
         Partition[] foundPartitions = partitionDAO.getPartitions(target.getId(), timestamps);

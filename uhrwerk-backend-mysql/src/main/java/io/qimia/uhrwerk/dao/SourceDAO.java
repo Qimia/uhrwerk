@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 public class SourceDAO implements SourceService {
     private java.sql.Connection db;
@@ -28,9 +29,17 @@ public class SourceDAO implements SourceService {
             "SELECT id, table_id, connection_id, path, format, partition_unit, partition_size, sql_select_query, " +
                     "sql_partition_query, partition_column, partition_num, query_column\n" +
                     "FROM SOURCE\n" +
-                    "WHERE id =?";
+                    "WHERE id = ?";
+
+    private static final String SELECT_BY_TABLE_ID =
+            "SELECT id, table_id, connection_id, path, format, partition_unit, partition_size, sql_select_query, " +
+                    "sql_partition_query, partition_column, partition_num, query_column\n" +
+                    "FROM SOURCE\n" +
+                    "WHERE table_id = ?";
 
     private static final String DELETE_BY_ID = "DELETE FROM SOURCE WHERE id = ?";
+
+    private static final String DELETE_BY_TABLE_ID = "DELETE FROM SOURCE WHERE table_id = ?";
 
     /**
      * Saves the source to the Metastore, doesn't do any checking anymore.
@@ -67,13 +76,12 @@ public class SourceDAO implements SourceService {
      * Selects a source from a prepared statement and fills the result into a new Source object.
      * Tries to fill the source's connection as well.
      *
-     * @param select Prepared select statement.
+     * @param record ResultSet.
      * @return Found source or null otherwise.
      * @throws SQLException When something goes wrong with the SQL command.
      */
-    private Source getSource(PreparedStatement select) throws SQLException {
-        ResultSet record = select.executeQuery();
-        if (record.next()) {
+    private Source getSource(ResultSet record) throws SQLException {
+        if (record != null) {
             Source res = new Source();
             res.setId(record.getLong(1));
             res.setTableId(record.getLong(2));
@@ -107,7 +115,12 @@ public class SourceDAO implements SourceService {
     private Source getById(Long id) throws SQLException {
         PreparedStatement select = db.prepareStatement(SELECT_BY_ID);
         select.setLong(1, id);
-        return getSource(select);
+        ResultSet record = select.executeQuery();
+        if (record.next()) {
+            return getSource(record);
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -136,10 +149,7 @@ public class SourceDAO implements SourceService {
                     return result;
                 }
             } else {
-                Source oldSource = getById(source.getId());
-                if (oldSource != null) {
-                    deleteById(oldSource.getId());
-                }
+                deleteById(source.getId());
             }
             saveToDb(source);
             result.setSuccess(true);
@@ -172,5 +182,36 @@ public class SourceDAO implements SourceService {
         }
 
         return results;
+    }
+
+    @Override
+    public Source[] getSourcesByTableId(Long tableId) {
+        PreparedStatement select;
+        try {
+            select = db.prepareStatement(SELECT_BY_TABLE_ID);
+            select.setLong(1, tableId);
+
+            ResultSet record = select.executeQuery();
+            ArrayList<Source> sources = new ArrayList<>();
+
+            while (record.next()) {
+                Source res = getSource(record);
+
+                sources.add(res);
+            }
+
+            return sources.toArray(new Source[0]);
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+
+        return null;
+    }
+
+    @Override
+    public void deleteSourcesByTableId(Long tableId) throws SQLException {
+        PreparedStatement statement = db.prepareStatement(DELETE_BY_TABLE_ID);
+        statement.setLong(1, tableId);
+        statement.executeUpdate();
     }
 }
