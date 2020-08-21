@@ -1,6 +1,9 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
 import io.qimia.uhrwerk.common.metastore.dependency.DependencyResult;
+import io.qimia.uhrwerk.common.model.Partition;
+
+import java.util.List;
 
 public interface PartitionDependencyService {
 
@@ -41,4 +44,12 @@ public interface PartitionDependencyService {
      * @return PartitionDependencyResult denoting success or what kind of error was generated
      */
     public PartitionDependencyResult removeAll(Long childPartitionId);
+
+
+    /**
+     * Retrieve all parent partition for a given (child) partition
+     * @param childPartition a partition with partition dependencies
+     * @return
+     */
+    public List<Partition> getParentPartitions(Partition childPartition);
 }

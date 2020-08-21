@@ -221,4 +221,23 @@ public class PartitionDependencyDAO implements PartitionDependencyService {
         }
         return parentIds;
     }
+
+    /**
+     * Retrieve all parent partition for a given (child) partition
+     * @param childPartition a partition with partition dependencies
+     * @return
+     */
+    public List<Partition> getParentPartitions(Partition childPartition) {
+        PartitionDAO partitionRetriever = new PartitionDAO(db);
+        ArrayList<Partition> parentPartitions = new ArrayList<>();;
+        try {
+            var parentIds = getParentIds(childPartition.getId());
+            for (Long parentId: parentIds) {
+                parentPartitions.add(partitionRetriever.getById(parentId));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return parentPartitions;
+    }
 }

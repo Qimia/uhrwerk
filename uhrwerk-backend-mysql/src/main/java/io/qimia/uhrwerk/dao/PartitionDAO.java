@@ -89,7 +89,7 @@ public class PartitionDAO implements PartitionService {
      * @return Found partition or null otherwise.
      * @throws SQLException When something goes wrong with the SQL command.
      */
-    private Partition getById(Long id) throws SQLException {
+    public Partition getById(Long id) throws SQLException {
         PreparedStatement select = db.prepareStatement(SELECT_BY_ID);
         select.setLong(1, id);
         return getPartition(select);
