@@ -11,24 +11,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SourceDAO implements SourceService {
     private java.sql.Connection db;
 
-    public SourceDAO() {
-    }
-
     public SourceDAO(java.sql.Connection db) {
-        this.db = db;
-    }
-
-    public java.sql.Connection getDb() {
-        return db;
-    }
-
-    public void setDb(java.sql.Connection db) {
         this.db = db;
     }
 
@@ -43,11 +30,24 @@ public class SourceDAO implements SourceService {
                     "FROM SOURCE\n" +
                     "WHERE id =?";
 
-    private Long saveToDb(Source source) throws SQLException {
+    private static final String DELETE_BY_ID = "DELETE FROM SOURCE WHERE id = ?";
+
+    /**
+     * Saves the source to the Metastore, doesn't do any checking anymore.
+     *
+     * @param source Source to save.
+     * @throws SQLException         Thrown when something went wrong with the saving.
+     *                              This is processed by the caller of this function.
+     * @throws NullPointerException Thrown probably only when source.connection or source.partitionUnit are null.
+     *                              Caught and processed again by the caller of this function.
+     */
+    private void saveToDb(Source source) throws SQLException, NullPointerException {
         PreparedStatement insert = db.prepareStatement(INSERT_SOURCE, Statement.RETURN_GENERATED_KEYS);
+        // INSERT
         // ids
         insert.setLong(1, source.getId());
         insert.setLong(2, source.getTableId());
+
         insert.setLong(3, source.getConnection().getId());
         // other fields
         insert.setString(4, source.getPath());
@@ -61,10 +61,16 @@ public class SourceDAO implements SourceService {
         insert.setString(12, source.getSelectColumn());
 
         JdbcBackendUtils.singleRowUpdate(insert);
-
-        return source.getId();
     }
 
+    /**
+     * Selects a source from a prepared statement and fills the result into a new Source object.
+     * Tries to fill the source's connection as well.
+     *
+     * @param select Prepared select statement.
+     * @return Found source or null otherwise.
+     * @throws SQLException When something goes wrong with the SQL command.
+     */
     private Source getSource(PreparedStatement select) throws SQLException {
         ResultSet record = select.executeQuery();
         if (record.next()) {
@@ -74,11 +80,7 @@ public class SourceDAO implements SourceService {
 
             ConnectionDAO connectionDAO = new ConnectionDAO(db);
             Connection connection = connectionDAO.getById(record.getLong(3));
-            if (connection == null) {
-                throw new SQLException("There is no connection for an existing source in the Metastore.");
-            } else {
-                res.setConnection(connection);
-            }
+            res.setConnection(connection);
 
             res.setPath(record.getString(4));
             res.setFormat(record.getString(5));
@@ -95,6 +97,13 @@ public class SourceDAO implements SourceService {
         return null;
     }
 
+    /**
+     * Find a source in the Metastore by its id.
+     *
+     * @param id Id of the source.
+     * @return Found source or null otherwise.
+     * @throws SQLException When something goes wrong with the SQL command.
+     */
     private Source getById(Long id) throws SQLException {
         PreparedStatement select = db.prepareStatement(SELECT_BY_ID);
         select.setLong(1, id);
@@ -106,30 +115,36 @@ public class SourceDAO implements SourceService {
         SourceResult result = new SourceResult();
         result.setNewResult(source);
         try {
+            if (source.getConnection() == null) {
+                throw new NullPointerException("The connection in this source is null. It needs to be set.");
+            }
             if (!overwrite) {
-                try {
-                    Source oldSource = getById(source.getId());
-                    if (oldSource != null) {
-                        result.setOldResult(oldSource);
+                Source oldSource = getById(source.getId());
+                if (oldSource != null) {
+                    result.setOldResult(oldSource);
+
+                    if (!oldSource.equals(source)) {
                         result.setMessage(
                                 String.format(
-                                        "A Source with id=%d already exists in the Metastore.",
+                                        "A Source with id=%d and different values already exists in the Metastore.",
                                         source.getId()));
                         result.setError(true);
-
-                        return result;
+                    } else {
+                        result.setSuccess(true);
                     }
-                } catch (SQLException e) {
-                    result.setMessage(e.getMessage());
-                    result.setException(e);
-                    result.setError(true);
+
                     return result;
                 }
+            } else {
+                Source oldSource = getById(source.getId());
+                if (oldSource != null) {
+                    deleteById(oldSource.getId());
+                }
             }
-            Long id = saveToDb(source);
+            saveToDb(source);
             result.setSuccess(true);
             result.setOldResult(source);
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             result.setError(true);
             result.setException(e);
             result.setMessage(e.getMessage());
@@ -137,15 +152,25 @@ public class SourceDAO implements SourceService {
         return result;
     }
 
-    public List<Long> save(Source[] sources, Long tableId) throws SQLException {
-        List<Long> ids = new ArrayList<>(sources.length);
+    /**
+     * Deletes a source by its id.
+     *
+     * @param id Source id
+     */
+    private void deleteById(Long id) throws SQLException {
+        PreparedStatement delete = db.prepareStatement(DELETE_BY_ID);
+        delete.setLong(1, id);
+        delete.executeUpdate();
+    }
 
-        for (Source source : sources) {
-            source.setTableId(tableId);
-            Long id = saveToDb(source);
-            ids.add(id);
+    @Override
+    public SourceResult[] save(Source[] sources, boolean overwrite) {
+        SourceResult[] results = new SourceResult[sources.length];
+
+        for (int i = 0; i < sources.length; i++) {
+            results[i] = save(sources[i], overwrite);
         }
 
-        return ids;
+        return results;
     }
 }

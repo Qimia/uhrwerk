@@ -13,8 +13,17 @@ public class DependencyResult {
   boolean success;
   Dependency dependency;
   Connection connection;
-  Partition[] succeeded;
-  Partition[] failed;
+  LocalDateTime[] succeeded;
+  LocalDateTime[] failed;
+  Partition[] partitions;
+
+  public LocalDateTime getPartitionTs() {
+    return partitionTs;
+  }
+
+  public void setPartitionTs(LocalDateTime partitionTs) {
+    this.partitionTs = partitionTs;
+  }
 
   public boolean isSuccess() {
     return success;
@@ -40,20 +49,28 @@ public class DependencyResult {
     this.connection = connection;
   }
 
-  public Partition[] getSucceeded() {
+  public LocalDateTime[] getSucceeded() {
     return succeeded;
   }
 
-  public void setSucceeded(Partition[] succeeded) {
+  public void setSucceeded(LocalDateTime[] succeeded) {
     this.succeeded = succeeded;
   }
 
-  public Partition[] getFailed() {
+  public LocalDateTime[] getFailed() {
     return failed;
   }
 
-  public void setFailed(Partition[] failed) {
+  public void setFailed(LocalDateTime[] failed) {
     this.failed = failed;
+  }
+
+  public Partition[] getPartitions() {
+    return partitions;
+  }
+
+  public void setPartitions(Partition[] partitions) {
+    this.partitions = partitions;
   }
 
   @Override
@@ -66,7 +83,8 @@ public class DependencyResult {
         && Objects.equals(dependency, that.dependency)
         && Objects.equals(connection, that.connection)
         && Arrays.equals(succeeded, that.succeeded)
-        && Arrays.equals(failed, that.failed);
+        && Arrays.equals(failed, that.failed)
+        && Arrays.equals(partitions, that.partitions);
   }
 
   @Override
@@ -74,13 +92,14 @@ public class DependencyResult {
     int result = Objects.hash(partitionTs, success, dependency, connection);
     result = 31 * result + Arrays.hashCode(succeeded);
     result = 31 * result + Arrays.hashCode(failed);
+    result = 31 * result + Arrays.hashCode(partitions);
     return result;
   }
 
   @Override
   public String toString() {
     return "DependencyResult{"
-        + "dependentPartitionTs="
+        + "partitionTs="
         + partitionTs
         + ", success="
         + success
@@ -88,10 +107,12 @@ public class DependencyResult {
         + dependency
         + ", connection="
         + connection
-        + ", successPartitions="
+        + ", succeeded="
         + Arrays.toString(succeeded)
-        + ", failedPartitions="
+        + ", failed="
         + Arrays.toString(failed)
+        + ", partitions="
+        + Arrays.toString(partitions)
         + '}';
   }
 }

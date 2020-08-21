@@ -21,4 +21,11 @@ public interface DependencyStoreService {
             int partitionSize,
             boolean overwrite
     );
+
+    /**
+     * Retrieve all stored dependencies for a given table
+     * @param tableId tableId of the table for which the dependencies are returned
+     * @return model Dependency objects
+     */
+    public Dependency[] get(Long tableId);
 }

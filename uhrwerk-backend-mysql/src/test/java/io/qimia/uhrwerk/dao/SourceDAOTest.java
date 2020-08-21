@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SourceDAOTest {
     java.sql.Connection db;
@@ -89,18 +88,16 @@ public class SourceDAOTest {
         Source source = generateSource();
 
         SourceResult result = service.save(source, true);
-        System.out.println(result.getMessage());
-        if (result.isError()) {
-            result.getException().printStackTrace();
-        }
+
         assertTrue(result.isSuccess());
+        assertFalse(result.isError());
         assertNotNull(result.getNewResult());
         assertNotNull(result.getNewResult().getId());
-        System.out.println(result.getNewResult());
+        assertEquals(source, result.getNewResult());
     }
 
     @Test
-    void returnFailWhenAlreadyExisting() throws SQLException {
+    void returnFailWhenAlreadyExistingAndDifferent() throws SQLException {
         // first a connection
         Connection connection = generateConnection();
 
@@ -115,25 +112,184 @@ public class SourceDAOTest {
 
         Source source = generateSource();
 
-        SourceResult result = service.save(source, false);
-        SourceResult result2 = service.save(source, false);
-        assertTrue(result2.isError());
-        assertNotNull(result2.getNewResult());
-        assert (result2.getOldResult().equals(source));
+        service.save(source, false);
+        SourceResult resultSame = service.save(source, false);
+
+        assertTrue(resultSame.isSuccess());
+        assertFalse(resultSame.isError());
+        assertNotNull(resultSame.getNewResult());
+        assertEquals(source, resultSame.getOldResult());
+        assertEquals(source, resultSame.getNewResult());
+
+        source.setPath("different-path");
+        SourceResult resultDifferent = service.save(source, false);
+        assertTrue(resultDifferent.isError());
+        assertFalse(resultDifferent.isSuccess());
+        assertNotNull(resultDifferent.getNewResult());
+        assertEquals(source, resultDifferent.getNewResult());
     }
 
-//    @Test
-//    void update() {
-//        Connection conn = new Connection();
-//        conn.setName("Test-Conn1");
-//        conn.setType(ConnectionType.S3);
-//        conn.setPath("/some/path/updated");
-//        conn.setAwsAccessKeyID("access-key-id1");
-//        conn.setAwsSecretAccessKey("secret-access-key1");
-//        ConnectionResult result = service.save(conn, true);
-//        assertTrue(result.isSuccess());
-//        assertNotNull(result.getNewConnection());
-//        assertNotNull(result.getNewConnection().getId());
-//        System.out.println(result.getNewConnection());
-//    }
+    @Test
+    void overwriteOfNonEssentialFieldsShouldBePossible() throws SQLException {
+        // first a connection
+        Connection connection = generateConnection();
+
+        ConnectionDAO connectionDAO = new ConnectionDAO(db);
+        connectionDAO.save(connection, true);
+
+        // second a table
+        Table table = generateTable();
+
+        TableDAO tableDAO = new TableDAO(db);
+        tableDAO.saveTable(table);
+
+        Source source = generateSource();
+
+        SourceResult result = service.save(source, true);
+
+        assertTrue(result.isSuccess());
+        assertFalse(result.isError());
+        assertNotNull(result.getNewResult());
+        assertNotNull(result.getNewResult().getId());
+        assertEquals(source, result.getNewResult());
+
+        source.setPartitionSize(5);
+        source.setPath("new-path");
+        source.setSelectColumn("column");
+
+        SourceResult resultChanged = service.save(source, true);
+
+        assertTrue(resultChanged.isSuccess());
+        assertFalse(resultChanged.isError());
+        assertNotNull(resultChanged.getNewResult());
+        assertNotNull(resultChanged.getNewResult().getId());
+        assertEquals(source, resultChanged.getNewResult());
+    }
+
+    @Test
+    void insertWithNoConnectionShouldFail() throws SQLException {
+        // second a table
+        Table table = generateTable();
+
+        TableDAO tableDAO = new TableDAO(db);
+        tableDAO.saveTable(table);
+
+        Source source = generateSource();
+
+        SourceResult result = service.save(source, true);
+
+        assertTrue(result.isError());
+        assertFalse(result.isSuccess());
+        assertNotNull(result.getNewResult());
+        assertNotNull(result.getNewResult().getId());
+        assertEquals(source, result.getNewResult());
+        System.out.println(result.getMessage());
+
+        source.setConnection(null);
+        SourceResult resultConnectionNull = service.save(source, true);
+
+        assertTrue(resultConnectionNull.isError());
+        assertFalse(resultConnectionNull.isSuccess());
+        assertNotNull(resultConnectionNull.getNewResult());
+        assertNotNull(resultConnectionNull.getNewResult().getId());
+        assertEquals(source, resultConnectionNull.getNewResult());
+        System.out.println(resultConnectionNull.getMessage());
+    }
+
+    @Test
+    void insertWithNoTableShouldFail() {
+        Connection connection = generateConnection();
+
+        ConnectionDAO connectionDAO = new ConnectionDAO(db);
+        connectionDAO.save(connection, true);
+
+        Source source = generateSource();
+
+        SourceResult result = service.save(source, true);
+
+        assertTrue(result.isError());
+        assertFalse(result.isSuccess());
+        assertNotNull(result.getNewResult());
+        assertNotNull(result.getNewResult().getId());
+        assertEquals(source, result.getNewResult());
+        System.out.println(result.getMessage());
+
+        source.setTableId(null);
+        SourceResult resultConnectionNull = service.save(source, true);
+
+        assertTrue(resultConnectionNull.isError());
+        assertFalse(resultConnectionNull.isSuccess());
+        assertNotNull(resultConnectionNull.getNewResult());
+        assertNotNull(resultConnectionNull.getNewResult().getId());
+        assertEquals(source, resultConnectionNull.getNewResult());
+        System.out.println(resultConnectionNull.getMessage());
+    }
+
+    @Test
+    void upsertWithADifferentConnectionShouldWork() throws SQLException {
+        // first a connection
+        Connection connection = generateConnection();
+
+        ConnectionDAO connectionDAO = new ConnectionDAO(db);
+        connectionDAO.save(connection, true);
+
+        // second a table
+        Table table = generateTable();
+
+        TableDAO tableDAO = new TableDAO(db);
+        tableDAO.saveTable(table);
+
+        Source source = generateSource();
+
+        service.save(source, false);
+
+        connection.setName("connection2");
+        connection.setKey();
+        connectionDAO.save(connection, false);
+
+        source.setConnection(connection);
+        // in practice, the source's key should get regenerated and it's then a completely different object
+
+        // updating a source where the connection changed
+        SourceResult result = service.save(source, true);
+
+        System.out.println(result.getMessage());
+        assertTrue(result.isSuccess());
+        assertFalse(result.isError());
+        assertNotNull(result.getNewResult());
+        assertNotNull(result.getNewResult().getId());
+        assertEquals(source, result.getNewResult());
+    }
+
+    @Test
+    void savingSeveralSourcesAtOnceShouldWork() throws SQLException {
+        // first a connection
+        Connection connection = generateConnection();
+
+        ConnectionDAO connectionDAO = new ConnectionDAO(db);
+        connectionDAO.save(connection, true);
+
+        // second a table
+        Table table = generateTable();
+
+        TableDAO tableDAO = new TableDAO(db);
+        tableDAO.saveTable(table);
+
+        Source source1 = generateSource();
+        Source source2 = generateSource();
+        source2.setPath("path2");
+        Source source3 = generateSource();
+        source3.setPath("path3");
+        Source[] sources = {source1, source2, source3};
+
+        SourceResult[] results = service.save(sources, true);
+        assertEquals(results.length, sources.length);
+
+        for (int i = 0; i < results.length; i++) {
+            SourceResult result = results[i];
+            assertTrue(result.isSuccess());
+            assertFalse(result.isError());
+            assertEquals(result.getNewResult(), sources[i]);
+        }
+    }
 }
