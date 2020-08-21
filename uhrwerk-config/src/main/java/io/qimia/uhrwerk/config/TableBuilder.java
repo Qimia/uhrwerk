@@ -13,12 +13,6 @@ import java.util.ArrayList;
 
 public class TableBuilder {
     private io.qimia.uhrwerk.config.representation.Table table;
-    private io.qimia.uhrwerk.config.representation.Partition partition;
-    private io.qimia.uhrwerk.config.representation.Partition source_partition;
-    private io.qimia.uhrwerk.config.representation.Partition dependency_partition;
-    private ParallelLoad parallel_load;
-    private Select select;
-    private Transform transform;
     private ArrayList<io.qimia.uhrwerk.config.representation.Source> sourcesList;
     private ArrayList<io.qimia.uhrwerk.config.representation.Dependency> dependenciesList;
     private ArrayList<io.qimia.uhrwerk.config.representation.Target> targetsList;
@@ -30,6 +24,50 @@ public class TableBuilder {
     public TableBuilder() {
         this.table = new io.qimia.uhrwerk.config.representation.Table();
     }
+
+
+    public TableBuilder sources(Source[] sources) {
+        this.table.setSources(sources);
+        return this;
+    }
+
+    public TableBuilder source() {
+        if (this.sourcesList == null) {
+            this.sourcesList = new ArrayList<Source>();
+        }
+        Source source = new Source();
+        this.sourcesList.add(source);
+        return this;
+    }
+
+    public TableBuilder targets(Target[] targets) {
+        this.table.setTargets(targets);
+        return this;
+    }
+
+    public TableBuilder target() {
+        if (this.targetsList == null) {
+            this.targetsList = new ArrayList<Target>();
+        }
+        Target target = new Target();
+        this.targetsList.add(target);
+        return this;
+    }
+
+    public TableBuilder dependencies(Dependency[] dependencies) {
+        this.table.setDependencies(dependencies);
+        return this;
+    }
+
+    public TableBuilder dependency() {
+        if (this.dependenciesList == null) {
+            this.dependenciesList = new ArrayList<io.qimia.uhrwerk.config.representation.Dependency>();
+        }
+        Dependency dependency = new Dependency();
+        this.dependenciesList.add(dependency);
+        return this;
+    }
+
 
     public TableBuilder area(String area) {
         if (this.table.getArea() == null) {
@@ -116,17 +154,17 @@ public class TableBuilder {
 
     public TableBuilder partition() {
         if (this.table.getPartition() == null) {
-            this.partition = new Partition();
+            this.table.setPartition(new Partition());
         }
         if (this.sourcesList != null) {
             if (this.sourcesList.get(sourcesList.size() - 1).getPartition() == null) {
-                this.source_partition = new Partition();
+                this.sourcesList.get(sourcesList.size() - 1).setPartition(new Partition());
             }
         }
         if (this.dependenciesList != null) {
             if (this.dependenciesList.get(dependenciesList.size() - 1).getTransform() != null) {
                 if (this.dependenciesList.get(dependenciesList.size() - 1).getTransform().getPartition() == null) {
-                    this.dependency_partition = new Partition();
+                    this.dependenciesList.get(dependenciesList.size() - 1).getTransform().setPartition(new Partition());
                 }
             }
         }
@@ -134,99 +172,75 @@ public class TableBuilder {
     }
 
     public TableBuilder unit(String unit) {
-        if (this.partition == null && this.source_partition == null && this.dependency_partition == null){
-            System.out.println("There is no partition defined to which a partition unit can be set!");
-        }
-        if (this.partition != null) {
-            if (this.partition.getUnit() == null) {
-                this.partition.setUnit(unit);
-                this.table.setPartition(this.partition);
+        if (this.table.getPartition() != null) {
+            if (this.table.getPartition().getUnit() == null) {
+                this.table.getPartition().setUnit(unit);
             }
         }
-        if (this.source_partition != null) {
-            if (this.source_partition.getUnit() == null) {
-                this.source_partition.setUnit(unit);
-                this.sourcesList.get(sourcesList.size() - 1).setPartition(this.source_partition);
+        if (this.sourcesList != null) {
+            if (this.sourcesList.get(sourcesList.size() - 1).getPartition() != null) {
+                if (this.sourcesList.get(sourcesList.size() - 1).getPartition().getUnit() == null) {
+                    this.sourcesList.get(sourcesList.size() - 1).getPartition().setUnit(unit);
+                }
             }
         }
-        if (this.dependency_partition != null) {
-            if (this.dependency_partition.getUnit() == null) {
-                this.dependency_partition.setUnit(unit);
-                this.dependenciesList.get(dependenciesList.size() - 1).getTransform().setPartition(this.dependency_partition);
+        if (this.dependenciesList != null) {
+            if (this.dependenciesList.get(dependenciesList.size() - 1).getTransform() != null) {
+                if (this.dependenciesList.get(dependenciesList.size() - 1).getTransform().getPartition() != null) {
+                    if (this.dependenciesList.get(dependenciesList.size() - 1).getTransform().getPartition().getUnit() == null) {
+                        this.dependenciesList.get(dependenciesList.size() - 1).getTransform().getPartition().setUnit(unit);
+                    }
+                }
             }
         }
         return this;
     }
 
     public TableBuilder size(int size) {
-        if (this.partition == null && this.source_partition == null && this.dependency_partition == null){
-            System.out.println("There is no partition defined to which a partition size can be set!");
-        }
-        if (this.partition != null) {
-            if (this.partition.getSize() == null) {
-                this.partition.setSize(size);
-                this.table.setPartition(this.partition);
+        if (this.table.getPartition() != null) {
+            if (this.table.getPartition().getSize() == null) {
+                this.table.getPartition().setSize(size);
             }
         }
-        if (this.source_partition != null) {
-            if (this.source_partition.getSize() == null) {
-                this.source_partition.setSize(size);
-                this.sourcesList.get(sourcesList.size() - 1).setPartition(this.source_partition);
-            }
-        }
-            if (this.dependency_partition != null) {
-                if (this.dependency_partition.getSize() == null) {
-                    this.dependency_partition.setSize(size);
-                    this.dependenciesList.get(dependenciesList.size() - 1).getTransform().setPartition(this.dependency_partition);
+        if (this.sourcesList != null) {
+            if (this.sourcesList.get(sourcesList.size() - 1).getPartition() != null) {
+                if (this.sourcesList.get(sourcesList.size() - 1).getPartition().getSize() == null) {
+                    this.sourcesList.get(sourcesList.size() - 1).getPartition().setSize(size);
                 }
             }
-        return this;
-    }
-
-    public TableBuilder sources(Source[] sources) {
-        this.table.setSources(sources);
-        return this;
-    }
-
-    public TableBuilder source() {
-        if (this.sourcesList == null) {
-            this.sourcesList = new ArrayList<Source>();
         }
-        Source source = new Source();
-        this.sourcesList.add(source);
-        return this;
-    }
-
-    public TableBuilder targets(Target[] targets) {
-        this.table.setTargets(targets);
-        return this;
-    }
-
-    public TableBuilder target() {
-        if (this.targetsList == null) {
-            this.targetsList = new ArrayList<Target>();
+        if (this.dependenciesList != null) {
+            if (this.dependenciesList.get(dependenciesList.size() - 1).getTransform() != null) {
+                if (this.dependenciesList.get(dependenciesList.size() - 1).getTransform().getPartition() != null) {
+                    if (this.dependenciesList.get(dependenciesList.size() - 1).getTransform().getPartition().getSize() == null) {
+                        this.dependenciesList.get(dependenciesList.size() - 1).getTransform().getPartition().setSize(size);
+                    }
+                }
+            }
         }
-        Target target = new Target();
-        this.targetsList.add(target);
         return this;
     }
 
-    public TableBuilder connection_name(String connection_name) {
+
+
+    public TableBuilder connectionName(String connectionName) {
         if (this.sourcesList != null) {
             if (this.sourcesList.get(sourcesList.size() - 1).getConnection_name() == null) {
-                this.sourcesList.get(sourcesList.size() - 1).setConnection_name(connection_name);
+                this.sourcesList.get(sourcesList.size() - 1).setConnection_name(connectionName);
             }
         }
         if (this.targetsList != null) {
             if (this.targetsList.get(targetsList.size() - 1).getConnection_name() == null) {
-                this.targetsList.get(targetsList.size() - 1).setConnection_name(connection_name);
+                this.targetsList.get(targetsList.size() - 1).setConnection_name(connectionName);
             }
         }
         return this;
     }
 
     public TableBuilder path(String path) {
-        this.sourcesList.get(sourcesList.size() - 1).setPath(path);
+        if (this.sourcesList != null) {
+            this.sourcesList.get(sourcesList.size() - 1).setPath(path);
+        }
         return this;
     }
 
@@ -250,98 +264,99 @@ public class TableBuilder {
     }
 
 
-    public TableBuilder parallel_load(ParallelLoad parallel_load) {
-        this.sourcesList.get(sourcesList.size() - 1).setParallel_load(parallel_load);
+    public TableBuilder parallelLoad(ParallelLoad parallelLoad) {
+        if (this.sourcesList != null) {
+            this.sourcesList.get(sourcesList.size() - 1).setParallel_load(parallelLoad);
+        }
         return this;
     }
 
-    public TableBuilder parallel_load() {
-        this.parallel_load = new ParallelLoad();
+    public TableBuilder parallelLoad() {
+        if (this.sourcesList != null) {
+            this.sourcesList.get(sourcesList.size() - 1).setParallel_load(new ParallelLoad());
+        }
         return this;
     }
 
 
     public TableBuilder query(String query) {
-        if (this.parallel_load == null && this.select == null){
-            System.out.println("There is no parallel_load or select defined to which a query can be set!");
-        }
-        if (this.parallel_load != null) {
-            if (this.parallel_load.getQuery() == null) {
-                this.parallel_load.setQuery(query);
-                this.sourcesList.get(sourcesList.size() - 1).setParallel_load(this.parallel_load);
+        if (this.sourcesList != null) {
+            if (this.sourcesList.get(sourcesList.size()-1).getParallel_load() != null) {
+                if (this.sourcesList.get(sourcesList.size()-1).getParallel_load().getQuery() == null) {
+                    this.sourcesList.get(sourcesList.size()-1).getParallel_load().setQuery(query);
+                }
             }
-        }
-        if (this.select != null) {
-            if (this.select.getQuery() == null) {
-                this.select.setQuery(query);
-                this.sourcesList.get(sourcesList.size() - 1).setSelect(this.select);
+            if (this.sourcesList.get(sourcesList.size()-1).getSelect() != null) {
+                if (this.sourcesList.get(sourcesList.size()-1).getSelect().getQuery() == null) {
+                    this.sourcesList.get(sourcesList.size()-1).getSelect().setQuery(query);
+                }
             }
         }
         return this;
     }
 
     public TableBuilder column(String column) {
-        if (this.parallel_load == null && this.select == null){
-            System.out.println("There is no parallel_load or select defined to which a column can be set!");
-        }
-        if (this.parallel_load != null) {
-            if (this.parallel_load.getColumn() == null) {
-                this.parallel_load.setColumn(column);
-                this.sourcesList.get(sourcesList.size() - 1).setParallel_load(this.parallel_load);
+        if (this.sourcesList != null) {
+            if (this.sourcesList.get(sourcesList.size()-1).getParallel_load() != null) {
+                if (this.sourcesList.get(sourcesList.size()-1).getParallel_load().getColumn() == null) {
+                    this.sourcesList.get(sourcesList.size()-1).getParallel_load().setColumn(column);
+                }
             }
-        }
-        if (this.select != null) {
-            if (this.select.getColumn() == null) {
-                this.select.setColumn(column);
-                this.sourcesList.get(sourcesList.size() - 1).setSelect(this.select);
+            if (this.sourcesList.get(sourcesList.size()-1).getSelect() != null) {
+                if (this.sourcesList.get(sourcesList.size()-1).getSelect().getColumn() == null) {
+                    this.sourcesList.get(sourcesList.size()-1).getSelect().setColumn(column);
+                }
             }
         }
         return this;
     }
 
     public TableBuilder num(int num) {
-        this.parallel_load.setNum(num);
-        this.sourcesList.get(sourcesList.size() - 1).setParallel_load(this.parallel_load);
+        if (this.sourcesList != null) {
+            if (this.sourcesList.get(sourcesList.size()-1).getParallel_load() != null) {
+                if (this.sourcesList.get(sourcesList.size()-1).getParallel_load().getNum() == null) {
+                    this.sourcesList.get(sourcesList.size()-1).getParallel_load().setNum(num);
+                }
+            }
+        }
         return this;
     }
 
     public TableBuilder select(Select select) {
-        this.sourcesList.get(sourcesList.size() - 1).setSelect(select);
+        if (this.sourcesList != null) {
+            this.sourcesList.get(sourcesList.size() - 1).setSelect(select);
+        }
         return this;
     }
 
     public TableBuilder select() {
-        this.select = new Select();
-        return this;
-    }
-
-    public TableBuilder dependencies(io.qimia.uhrwerk.config.representation.Dependency[] dependencies) {
-        this.table.setDependencies(dependencies);
-        return this;
-    }
-
-    public TableBuilder dependency() {
-        if (this.dependenciesList == null) {
-            this.dependenciesList = new ArrayList<io.qimia.uhrwerk.config.representation.Dependency>();
+        if (this.sourcesList != null) {
+            this.sourcesList.get(sourcesList.size() - 1).setSelect(new Select());
         }
-        io.qimia.uhrwerk.config.representation.Dependency dependency = new io.qimia.uhrwerk.config.representation.Dependency();
-        this.dependenciesList.add(dependency);
         return this;
     }
+
 
     public TableBuilder transform(Transform transform) {
-        this.dependenciesList.get(dependenciesList.size() - 1).setTransform(transform);
+        if (this.dependenciesList != null) {
+            this.dependenciesList.get(dependenciesList.size() - 1).setTransform(transform);
+        }
         return this;
     }
 
     public TableBuilder transform() {
-        this.transform = new Transform();
+        if (this.dependenciesList != null) {
+            this.dependenciesList.get(dependenciesList.size() - 1).setTransform(new Transform());
+        }
         return this;
     }
 
     public TableBuilder type(String type) {
-        this.transform.setType(type);
-        this.dependenciesList.get(dependenciesList.size() - 1).setTransform(this.transform);
+        if (this.dependenciesList != null) {
+            if (this.dependenciesList.get(dependenciesList.size() - 1).getTransform() != null) {
+                this.dependenciesList.get(dependenciesList.size() - 1).getTransform().setType(type);
+            }
+        }
         return this;
     }
 

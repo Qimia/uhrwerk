@@ -10,9 +10,7 @@ import java.util.ArrayList;
 public class ConnectionBuilder {
   private ArrayList<io.qimia.uhrwerk.config.representation.Connection> connectionsList;
   private io.qimia.uhrwerk.config.representation.Connection[] connections;
-  private io.qimia.uhrwerk.config.representation.JDBC jdbc;
-  private io.qimia.uhrwerk.config.representation.S3 s3;
-  private io.qimia.uhrwerk.config.representation.File file;
+
 
   public ConnectionBuilder() {
     this.connectionsList = new ArrayList<io.qimia.uhrwerk.config.representation.Connection>();
@@ -26,57 +24,50 @@ public class ConnectionBuilder {
   }
 
   public ConnectionBuilder jdbc(JDBC jdbc) {
-    this.connectionsList.get(this.connectionsList.size()-1).setJdbc(jdbc);
+    if (this.connectionsList.size() != 0) {
+      this.connectionsList.get(this.connectionsList.size() - 1).setJdbc(jdbc);
+    }
     return this;
   }
 
   public ConnectionBuilder jdbc() {
-    if (this.jdbc == null){
-      this.jdbc = new JDBC();
+    if (this.connectionsList.size() != 0) {
+      this.connectionsList.get(this.connectionsList.size() - 1).setJdbc(new JDBC());
     }
-    this.connectionsList.get(this.connectionsList.size()-1).setJdbc(this.jdbc);
     return this;
   }
 
-  public ConnectionBuilder jdbc_url(String url) {
-    if (this.connectionsList != null){
+  public ConnectionBuilder jdbcUrl(String url) {
+    if (this.connectionsList.size() != 0) {
       if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
         this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setJdbc_url(url);
-      } else {
-        System.out.println("There is no JDBC object to which one can set a jdbc_url");
       }
     }
     return this;
   }
 
-  public ConnectionBuilder jdbc_driver(String driver) {
-    if (this.connectionsList != null){
+  public ConnectionBuilder jdbcDriver(String driver) {
+    if (this.connectionsList.size() != 0) {
       if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
         this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setJdbc_driver(driver);
-      } else {
-        System.out.println("There is no JDBC object to which one can set a jdbc_driver");
       }
     }
     return this;
   }
 
   public ConnectionBuilder user(String user) {
-    if (this.connectionsList != null){
+    if (this.connectionsList.size() != 0) {
       if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
         this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setUser(user);
-      } else {
-        System.out.println("There is no JDBC object to which one can set a user");
       }
     }
     return this;
   }
 
   public ConnectionBuilder pass(String pass) {
-    if (this.connectionsList != null){
+    if (this.connectionsList.size() != 0) {
       if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
         this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setPass(pass);
-      } else {
-        System.out.println("There is no JDBC object to which one can set a pass");
       }
     }
     return this;
@@ -84,25 +75,22 @@ public class ConnectionBuilder {
 
 
   public ConnectionBuilder s3(S3 s3) {
-    this.connectionsList.get(this.connectionsList.size()-1).setS3(s3);
+    if (this.connectionsList.size() != 0) {
+      this.connectionsList.get(this.connectionsList.size() - 1).setS3(s3);
+    }
     return this;
   }
 
   public ConnectionBuilder s3() {
-    if (this.s3 == null){
-      this.s3 = new S3();
+    if (this.connectionsList.size() != 0) {
+      this.connectionsList.get(this.connectionsList.size() - 1).setS3(new S3());
     }
-    this.connectionsList.get(this.connectionsList.size()-1).setS3(this.s3);
     return this;
   }
 
 
   public ConnectionBuilder path(String path) {
-    if (this.connectionsList != null){
-      if (this.connectionsList.get(this.connectionsList.size()-1).getS3() == null
-      && this.connectionsList.get(this.connectionsList.size()-1).getFile() == null){
-        System.out.println("There is no S3 or File object to which one can set a path");
-      }
+    if (this.connectionsList.size() != 0) {
       if (this.connectionsList.get(this.connectionsList.size()-1).getS3() != null) {
         if (this.connectionsList.get(this.connectionsList.size() - 1).getS3().getPath() == null) {
           this.connectionsList.get(this.connectionsList.size() - 1).getS3().setPath(path);
@@ -118,24 +106,19 @@ public class ConnectionBuilder {
   }
 
 
-
-  public ConnectionBuilder secret_id(String secret_id) {
-    if (this.connectionsList != null){
+  public ConnectionBuilder secretId(String secretId) {
+    if (this.connectionsList.size() != 0) {
       if (this.connectionsList.get(this.connectionsList.size()-1).getS3() != null){
-        this.connectionsList.get(this.connectionsList.size()-1).getS3().setSecret_id(secret_id);
-      } else {
-        System.out.println("There is no S3 object to which one can set a secret_id");
+        this.connectionsList.get(this.connectionsList.size()-1).getS3().setSecret_id(secretId);
       }
     }
     return this;
   }
 
-  public ConnectionBuilder secret_key(String secret_key) {
-    if (this.connectionsList != null){
+  public ConnectionBuilder secretKey(String secretKey) {
+    if (this.connectionsList.size() != 0) {
       if (this.connectionsList.get(this.connectionsList.size()-1).getS3() != null){
-        this.connectionsList.get(this.connectionsList.size()-1).getS3().setSecret_key(secret_key);
-      } else {
-        System.out.println("There is no S3 object to which one can set a secret_key");
+        this.connectionsList.get(this.connectionsList.size()-1).getS3().setSecret_key(secretKey);
       }
     }
     return this;
@@ -143,15 +126,16 @@ public class ConnectionBuilder {
 
 
   public ConnectionBuilder file(File file) {
-    this.connectionsList.get(this.connectionsList.size()-1).setFile(file);
+    if (this.connectionsList.size() != 0) {
+      this.connectionsList.get(this.connectionsList.size() - 1).setFile(file);
+    }
     return this;
   }
 
   public ConnectionBuilder file() {
-    if (this.file == null){
-      this.file = new File();
+    if (this.connectionsList.size() != 0) {
+      this.connectionsList.get(this.connectionsList.size() - 1).setFile(new File());
     }
-    this.connectionsList.get(this.connectionsList.size()-1).setFile(this.file);
     return this;
   }
 

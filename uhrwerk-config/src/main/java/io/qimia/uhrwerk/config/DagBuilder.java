@@ -7,12 +7,6 @@ import java.util.ArrayList;
 
 public class DagBuilder {
     private io.qimia.uhrwerk.config.representation.Dag dag;
-    private ArrayList<Partition> partition;
-    private ArrayList<Partition> source_partition;
-    private ArrayList<Partition> dependency_partition;
-    private ArrayList<ParallelLoad> parallel_load;
-    private ArrayList<Select> select;
-    private ArrayList<Transform> transform;
     private ArrayList<Table> tablesList;
     private ArrayList<Connection> connectionsList;
     private ArrayList<ArrayList<Source>> sourcesList;
@@ -20,128 +14,11 @@ public class DagBuilder {
     private ArrayList<ArrayList<Target>> targetsList;
     private Connection[] connections;
     private Table[] tables;
-    private JDBC jdbc;
-    private S3 s3;
-    private File file;
 
     public DagBuilder() {
         this.dag = new io.qimia.uhrwerk.config.representation.Dag();
         this.tablesList = new ArrayList<Table>();
         this.connectionsList = new ArrayList<Connection>();
-    }
-
-    public DagBuilder name(String name) {
-        this.connectionsList.get(this.connectionsList.size()-1).setName(name);
-        return this;
-    }
-
-    public DagBuilder jdbc(JDBC jdbc) {
-        this.connectionsList.get(this.connectionsList.size()-1).setJdbc(jdbc);
-        return this;
-    }
-
-    public DagBuilder jdbc() {
-        if (this.jdbc == null){
-            this.jdbc = new JDBC();
-        }
-        this.connectionsList.get(this.connectionsList.size()-1).setJdbc(this.jdbc);
-        return this;
-    }
-
-    public DagBuilder jdbc_url(String url) {
-        if (this.connectionsList != null){
-            if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
-                this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setJdbc_url(url);
-            } else {
-                System.out.println("There is no JDBC object to which one can set a jdbc_url");
-            }
-        }
-        return this;
-    }
-
-    public DagBuilder jdbc_driver(String driver) {
-        if (this.connectionsList != null){
-            if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
-                this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setJdbc_driver(driver);
-            } else {
-                System.out.println("There is no JDBC object to which one can set a jdbc_driver");
-            }
-        }
-        return this;
-    }
-
-    public DagBuilder user(String user) {
-        if (this.connectionsList != null){
-            if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
-                this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setUser(user);
-            } else {
-                System.out.println("There is no JDBC object to which one can set a user");
-            }
-        }
-        return this;
-    }
-
-    public DagBuilder pass(String pass) {
-        if (this.connectionsList != null){
-            if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
-                this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setPass(pass);
-            } else {
-                System.out.println("There is no JDBC object to which one can set a pass");
-            }
-        }
-        return this;
-    }
-
-
-    public DagBuilder s3(S3 s3) {
-        this.connectionsList.get(this.connectionsList.size()-1).setS3(s3);
-        return this;
-    }
-
-    public DagBuilder s3() {
-        if (this.s3 == null){
-            this.s3 = new S3();
-        }
-        this.connectionsList.get(this.connectionsList.size()-1).setS3(this.s3);
-        return this;
-    }
-
-
-
-    public DagBuilder secret_id(String secret_id) {
-        if (this.connectionsList != null){
-            if (this.connectionsList.get(this.connectionsList.size()-1).getS3() != null){
-                this.connectionsList.get(this.connectionsList.size()-1).getS3().setSecret_id(secret_id);
-            } else {
-                System.out.println("There is no S3 object to which one can set a secret_id");
-            }
-        }
-        return this;
-    }
-
-    public DagBuilder secret_key(String secret_key) {
-        if (this.connectionsList != null){
-            if (this.connectionsList.get(this.connectionsList.size()-1).getS3() != null){
-                this.connectionsList.get(this.connectionsList.size()-1).getS3().setSecret_key(secret_key);
-            } else {
-                System.out.println("There is no S3 object to which one can set a secret_key");
-            }
-        }
-        return this;
-    }
-
-
-    public DagBuilder file(File file) {
-        this.connectionsList.get(this.connectionsList.size()-1).setFile(file);
-        return this;
-    }
-
-    public DagBuilder file() {
-        if (this.file == null){
-            this.file = new File();
-        }
-        this.connectionsList.get(this.connectionsList.size()-1).setFile(this.file);
-        return this;
     }
 
 
@@ -183,12 +60,120 @@ public class DagBuilder {
     }
 
 
+    public DagBuilder name(String name) {
+        if (this.connectionsList.size() != 0) {
+            this.connectionsList.get(this.connectionsList.size() - 1).setName(name);
+        }
+        return this;
+    }
+
+    public DagBuilder jdbc(JDBC jdbc) {
+        if (this.connectionsList.size() != 0) {
+            this.connectionsList.get(this.connectionsList.size() - 1).setJdbc(jdbc);
+        }
+        return this;
+    }
+
+    public DagBuilder jdbc() {
+        if (this.connectionsList.size() != 0) {
+
+            this.connectionsList.get(this.connectionsList.size() - 1).setJdbc(new JDBC());
+        }
+        return this;
+    }
+
+    public DagBuilder jdbcUrl(String url) {
+        if (this.connectionsList.size() != 0){
+            if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
+                this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setJdbc_url(url);
+            }
+        }
+        return this;
+    }
+
+    public DagBuilder jdbcDriver(String driver) {
+        if (this.connectionsList.size() != 0){
+            if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
+                this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setJdbc_driver(driver);
+            }
+        }
+        return this;
+    }
+
+    public DagBuilder user(String user) {
+        if (this.connectionsList.size() != 0){
+            if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
+                this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setUser(user);
+            }
+        }
+        return this;
+    }
+
+    public DagBuilder pass(String pass) {
+        if (this.connectionsList.size() != 0){
+            if (this.connectionsList.get(this.connectionsList.size()-1).getJdbc() != null){
+                this.connectionsList.get(this.connectionsList.size()-1).getJdbc().setPass(pass);
+            }
+        }
+        return this;
+    }
+
+    public DagBuilder s3(S3 s3) {
+        if (this.connectionsList.size() != 0) {
+            this.connectionsList.get(this.connectionsList.size() - 1).setS3(s3);
+        }
+        return this;
+    }
+
+    public DagBuilder s3() {
+        if (this.connectionsList.size() != 0) {
+            this.connectionsList.get(this.connectionsList.size() - 1).setS3(new S3());
+        }
+        return this;
+    }
+
+
+
+    public DagBuilder secretId(String secretId) {
+        if (this.connectionsList.size() != 0){
+            if (this.connectionsList.get(this.connectionsList.size()-1).getS3() != null){
+                this.connectionsList.get(this.connectionsList.size()-1).getS3().setSecret_id(secretId);
+            }
+        }
+        return this;
+    }
+
+    public DagBuilder secretKey(String secretKey) {
+        if (this.connectionsList.size() != 0){
+            if (this.connectionsList.get(this.connectionsList.size()-1).getS3() != null){
+                this.connectionsList.get(this.connectionsList.size()-1).getS3().setSecret_key(secretKey);
+            }
+        }
+        return this;
+    }
+
+
+    public DagBuilder file(File file) {
+        if (this.connectionsList.size() != 0) {
+            this.connectionsList.get(this.connectionsList.size() - 1).setFile(file);
+        }
+        return this;
+    }
+
+    public DagBuilder file() {
+        if (this.connectionsList.size() != 0) {
+            this.connectionsList.get(this.connectionsList.size() - 1).setFile(new File());
+        }
+        return this;
+    }
+
+
     public DagBuilder area(String area) {
-        if (this.tablesList != null) {
+        if (this.tablesList.size() != 0) {
             if (this.tablesList.get(tablesList.size() - 1).getArea() == null) {
                 this.tablesList.get(tablesList.size() - 1).setArea(area);
             }
-            if (this.dependenciesList != null) {
+            if (this.dependenciesList.size() != 0) {
                 if (this.dependenciesList.get(tablesList.size()-1).size() != 0){
                     if (this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).getArea() == null) {
                         this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).setArea(area);
@@ -200,11 +185,11 @@ public class DagBuilder {
     }
 
     public DagBuilder vertical(String vertical) {
-        if (this.tablesList != null) {
+        if (this.tablesList.size() != 0) {
             if (this.tablesList.get(tablesList.size() - 1).getVertical() == null) {
                 this.tablesList.get(tablesList.size() - 1).setVertical(vertical);
             }
-            if (this.dependenciesList != null) {
+            if (this.dependenciesList.size() != 0) {
                 if (this.dependenciesList.get(tablesList.size()-1).size() != 0){
                     if (this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).getVertical() == null) {
                         this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).setVertical(vertical);
@@ -216,11 +201,11 @@ public class DagBuilder {
     }
 
     public DagBuilder table(String table) {
-        if (this.tablesList != null) {
+        if (this.tablesList.size() != 0) {
             if (this.tablesList.get(tablesList.size() - 1).getTable() == null) {
                 this.tablesList.get(tablesList.size() - 1).setTable(table);
             }
-            if (this.dependenciesList != null) {
+            if (this.dependenciesList.size() != 0) {
                 if (this.dependenciesList.get(tablesList.size()-1).size() != 0){
                     if (this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).getTable() == null) {
                         this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).setTable(table);
@@ -232,11 +217,11 @@ public class DagBuilder {
     }
 
     public DagBuilder version(String version) {
-        if (this.tablesList != null) {
+        if (this.tablesList.size() != 0) {
             if (this.tablesList.get(tablesList.size() - 1).getVersion() == null) {
                 this.tablesList.get(tablesList.size() - 1).setVersion(version);
             }
-            if (this.sourcesList != null) {
+            if (this.sourcesList.size() != 0) {
                 if (this.sourcesList.get(tablesList.size()-1).size() != 0){
                     if (this.sourcesList.get(tablesList.size()-1).get(sourcesList.get(tablesList.size()-1).size() - 1).getVersion() == null) {
                         this.sourcesList.get(tablesList.size()-1).get(sourcesList.get(tablesList.size()-1).size() - 1).setVersion(version);
@@ -244,7 +229,7 @@ public class DagBuilder {
                 }
             }
 
-            if (this.dependenciesList != null) {
+            if (this.dependenciesList.size() != 0) {
                 if (this.dependenciesList.get(tablesList.size()-1).size() != 0){
                     if (this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).getVersion() == null) {
                         this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).setVersion(version);
@@ -256,14 +241,14 @@ public class DagBuilder {
     }
 
     public DagBuilder parallelism(int parallelism) {
-        if (this.tablesList != null) {
+        if (this.tablesList.size() != 0) {
             this.tablesList.get(tablesList.size()-1).setParallelism(parallelism);
         }
         return this;
     }
 
     public DagBuilder maxBulkSize(int maxBulkSize) {
-        if (this.tablesList != null) {
+        if (this.tablesList.size() != 0) {
             this.tablesList.get(tablesList.size()-1).setMax_bulk_size(maxBulkSize);
         }
         return this;
@@ -387,80 +372,61 @@ public class DagBuilder {
     }
 
     public DagBuilder sources(Source[] sources) {
-        if (this.tablesList.get(tablesList.size() - 1) == null) {
-            System.out.println("There is no table to which a source can be set");
-        }
-        else {
+        if (this.tablesList.size() != 0)  {
             this.tablesList.get(tablesList.size() - 1).setSources(sources);
         }
         return this;
     }
 
     public DagBuilder source() {
-            if (this.tablesList.get(tablesList.size() - 1) == null) {
-                System.out.println("There is no table to which a source can be set");
-            }
-            else {
-                Source source = new Source();
-                this.sourcesList.get(tablesList.size() - 1).add(source);
+            if (this.tablesList.size() != 0)  {
+                this.sourcesList.get(tablesList.size() - 1).add(new Source());
             }
         return this;
     }
 
     public DagBuilder targets(Target[] targets) {
-        if (this.tablesList.get(tablesList.size() - 1) == null) {
-            System.out.println("There is no table to which a Target can be set");
-        }
-        else {
+        if (this.tablesList.size() != 0) {
             this.tablesList.get(tablesList.size() - 1).setTargets(targets);
         }
         return this;
     }
 
     public DagBuilder target() {
-        if (this.tablesList.get(tablesList.size() - 1) == null) {
-            System.out.println("There is no table to which a Target can be set");
-        }
-        else {
-            Target target = new Target();
-            this.targetsList.get(tablesList.size() - 1).add(target);
+        if (this.tablesList.size() != 0) {
+            this.targetsList.get(tablesList.size() - 1).add(new Target());
         }
         return this;
     }
 
     public DagBuilder dependencies(Dependency[] dependencies) {
-        if (this.tablesList.get(tablesList.size() - 1) == null) {
-            System.out.println("There is no table to which a dependency can be set");
-        }
-        else {
+        if (this.tablesList.size() != 0) {
             this.tablesList.get(tablesList.size() - 1).setDependencies(dependencies);
         }
         return this;
     }
 
     public DagBuilder dependency() {
-        if (this.tablesList.get(tablesList.size() - 1) == null) {
-            System.out.println("There is no table to which a dependency can be set");
-        }
-        else {
-            Dependency dependency = new Dependency();
-            this.dependenciesList.get(tablesList.size() - 1).add(dependency);
+        if (this.tablesList.size() != 0) {
+            this.dependenciesList.get(tablesList.size() - 1).add(new Dependency());
         }
         return this;
     }
 
-    public DagBuilder connection_name(String connection_name) {
-        if (this.sourcesList != null) {
-            if (this.sourcesList.get(tablesList.size()-1).size() != 0){
-                if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getConnection_name() == null) {
-                    this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setConnection_name(connection_name);
+    public DagBuilder connectionName(String connection_name) {
+        if (this.tablesList.size() != 0) {
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getConnection_name() == null) {
+                        this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setConnection_name(connection_name);
+                    }
                 }
             }
-        }
-        if (this.targetsList != null) {
-            if (this.targetsList.get(tablesList.size()-1).size() != 0){
-                if (this.targetsList.get(tablesList.size() - 1).get(targetsList.get(tablesList.size() - 1).size() - 1).getConnection_name() == null) {
-                    this.targetsList.get(tablesList.size() - 1).get(targetsList.get(tablesList.size() - 1).size() - 1).setConnection_name(connection_name);
+            if (this.targetsList.size() != 0) {
+                if (this.targetsList.get(tablesList.size() - 1).size() != 0) {
+                    if (this.targetsList.get(tablesList.size() - 1).get(targetsList.get(tablesList.size() - 1).size() - 1).getConnection_name() == null) {
+                        this.targetsList.get(tablesList.size() - 1).get(targetsList.get(tablesList.size() - 1).size() - 1).setConnection_name(connection_name);
+                    }
                 }
             }
         }
@@ -468,12 +434,7 @@ public class DagBuilder {
     }
 
     public DagBuilder path(String path) {
-        if (this.connectionsList.get(this.connectionsList.size()-1).getS3() == null
-                && this.connectionsList.get(this.connectionsList.size()-1).getFile() == null
-        && this.sourcesList.get(tablesList.size() - 1) == null){
-            System.out.println("There is no S3 or File or Source object to which one can set a path");
-        }
-        if (this.connectionsList != null){
+        if (this.connectionsList.size() != 0){
             if (this.connectionsList.get(this.connectionsList.size()-1).getS3() != null) {
                 if (this.connectionsList.get(this.connectionsList.size() - 1).getS3().getPath() == null) {
                     this.connectionsList.get(this.connectionsList.size() - 1).getS3().setPath(path);
@@ -485,9 +446,11 @@ public class DagBuilder {
                 }
             }
         }
-        if (this.sourcesList != null) {
-            if (this.sourcesList.get(tablesList.size()-1).size() != 0){
-                this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setPath(path);
+        if (this.tablesList.size() != 0) {
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setPath(path);
+                }
             }
         }
         return this;
@@ -495,24 +458,26 @@ public class DagBuilder {
 
 
     public DagBuilder format(String format) {
-        if (this.sourcesList != null) {
-            if (this.sourcesList.get(tablesList.size()-1).size() != 0){
-                if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getFormat() == null) {
-                    this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setFormat(format);
+        if (this.tablesList.size() != 0) {
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getFormat() == null) {
+                        this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setFormat(format);
+                    }
                 }
             }
-        }
-        if (this.targetsList != null) {
-            if (this.targetsList.get(tablesList.size()-1).size() != 0){
-                if (this.targetsList.get(tablesList.size() - 1).get(targetsList.get(tablesList.size() - 1).size() - 1).getFormat() == null) {
-                    this.targetsList.get(tablesList.size() - 1).get(targetsList.get(tablesList.size() - 1).size() - 1).setFormat(format);
+            if (this.targetsList.size() != 0) {
+                if (this.targetsList.get(tablesList.size() - 1).size() != 0) {
+                    if (this.targetsList.get(tablesList.size() - 1).get(targetsList.get(tablesList.size() - 1).size() - 1).getFormat() == null) {
+                        this.targetsList.get(tablesList.size() - 1).get(targetsList.get(tablesList.size() - 1).size() - 1).setFormat(format);
+                    }
                 }
             }
-        }
-        if (this.dependenciesList != null) {
-            if (this.dependenciesList.get(tablesList.size()-1).size() != 0){
-                if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getFormat() == null) {
-                    this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).setFormat(format);
+            if (this.dependenciesList.size() != 0) {
+                if (this.dependenciesList.get(tablesList.size() - 1).size() != 0) {
+                    if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getFormat() == null) {
+                        this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).setFormat(format);
+                    }
                 }
             }
         }
@@ -520,19 +485,23 @@ public class DagBuilder {
     }
 
 
-    public DagBuilder parallel_load(ParallelLoad parallel_load) {
-        if (this.sourcesList.size() != 0) {
-            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
-                this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setParallel_load(parallel_load);
+    public DagBuilder parallelLoad(ParallelLoad parallel_load) {
+        if (this.tablesList.size() != 0) {
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setParallel_load(parallel_load);
+                }
             }
         }
         return this;
     }
 
-    public DagBuilder parallel_load() {
-        if (this.sourcesList.size() != 0) {
-            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
-                this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setParallel_load(new ParallelLoad());
+    public DagBuilder parallelLoad() {
+        if (this.tablesList.size() != 0) {
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setParallel_load(new ParallelLoad());
+                }
             }
         }
         return this;
@@ -540,20 +509,22 @@ public class DagBuilder {
 
 
     public DagBuilder query(String query) {
-        if (this.sourcesList.size() != 0) {
-            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
-                if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load() != null) {
-                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().getQuery() == null) {
-                        this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().setQuery(query);
+        if (this.tablesList.size() != 0) {
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load() != null) {
+                        if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().getQuery() == null) {
+                            this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().setQuery(query);
+                        }
                     }
                 }
             }
-        }
-        if (this.sourcesList.size() != 0) {
-            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
-                if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect() != null) {
-                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect().getQuery() == null) {
-                        this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect().setQuery(query);
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect() != null) {
+                        if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect().getQuery() == null) {
+                            this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect().setQuery(query);
+                        }
                     }
                 }
             }
@@ -562,20 +533,22 @@ public class DagBuilder {
     }
 
     public DagBuilder column(String column) {
-        if (this.sourcesList.size() != 0) {
-            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
-                if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load() != null) {
-                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().getColumn() == null) {
-                        this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().setColumn(column);
+        if (this.tablesList.size() != 0) {
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load() != null) {
+                        if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().getColumn() == null) {
+                            this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().setColumn(column);
+                        }
                     }
                 }
             }
-        }
-        if (this.sourcesList.size() != 0) {
-            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
-                if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect() != null) {
-                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect().getColumn() == null) {
-                        this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect().setColumn(column);
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect() != null) {
+                        if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect().getColumn() == null) {
+                            this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect().setColumn(column);
+                        }
                     }
                 }
             }
@@ -584,11 +557,13 @@ public class DagBuilder {
     }
 
     public DagBuilder num(int num) {
-        if (this.sourcesList.size() != 0) {
-            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
-                if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load() != null) {
-                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().getNum() == null) {
-                        this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().setNum(num);
+        if (this.tablesList.size() != 0) {
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load() != null) {
+                        if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().getNum() == null) {
+                            this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().setNum(num);
+                        }
                     }
                 }
             }
@@ -597,18 +572,22 @@ public class DagBuilder {
     }
 
     public DagBuilder select(Select select) {
-        if (this.sourcesList.size() != 0) {
-            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
-                this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setSelect(select);
+        if (this.tablesList.size() != 0) {
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setSelect(select);
+                }
             }
         }
         return this;
     }
 
     public DagBuilder select() {
-        if (this.sourcesList.size() != 0) {
-            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
-                this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setSelect(new Select());
+        if (this.tablesList.size() != 0) {
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setSelect(new Select());
+                }
             }
         }
         return this;
@@ -616,21 +595,37 @@ public class DagBuilder {
 
 
     public DagBuilder transform(Transform transform) {
-        this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).setTransform(transform);
+        if (this.tablesList.size() != 0) {
+            if (this.dependenciesList.size() != 0) {
+                if (this.dependenciesList.get(tablesList.size() - 1).size() != 0) {
+                    this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).setTransform(transform);
+                }
+            }
+        }
         return this;
     }
 
     public DagBuilder transform() {
-        if (this.transform == null) {
-            this.transform = new ArrayList<Transform>();
+        if (this.tablesList.size() != 0) {
+            if (this.dependenciesList.size() != 0) {
+                if (this.dependenciesList.get(tablesList.size() - 1).size() != 0) {
+                    this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).setTransform(new Transform());
+                }
+            }
         }
-        this.transform.add(new Transform());
         return this;
     }
 
     public DagBuilder type(String type) {
-        this.transform.get(tablesList.size()-1).setType(type);
-        this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).setTransform(this.transform.get(tablesList.size()-1));
+        if (this.tablesList.size() != 0) {
+            if (this.dependenciesList.size() != 0) {
+                if (this.dependenciesList.get(tablesList.size() - 1).size() != 0) {
+                    if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform() != null) {
+                        this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform().setType(type);
+                    }
+                }
+            }
+        }
         return this;
     }
 

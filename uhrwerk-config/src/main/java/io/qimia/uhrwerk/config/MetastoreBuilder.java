@@ -9,13 +9,13 @@ public class MetastoreBuilder {
         this.metastore = new io.qimia.uhrwerk.config.representation.Metastore();
     }
 
-    public MetastoreBuilder jdbc_url(String jdbc_url){
-        this.metastore.setJdbc_url(jdbc_url);
+    public MetastoreBuilder jdbcUrl(String jdbcUrl){
+        this.metastore.setJdbc_url(jdbcUrl);
         return this;
     }
 
-    public MetastoreBuilder jdbc_driver(String jdbc_driver){
-        this.metastore.setJdbc_driver(jdbc_driver);
+    public MetastoreBuilder jdbcDriver(String jdbcDriver){
+        this.metastore.setJdbc_driver(jdbcDriver);
         return this;
     }
 
