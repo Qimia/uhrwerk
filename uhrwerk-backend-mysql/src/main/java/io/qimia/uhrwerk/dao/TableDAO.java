@@ -116,6 +116,15 @@ public class TableDAO implements TableDependencyService {
   @Override
   public TablePartitionResultSet processingPartitions(
       Table table, LocalDateTime[] requestedPartitionTs) throws SQLException {
+    // FIXME which target for the table should be used for getting (already) processed partition of
+    // the table
+    Partition[] processedPartitions =
+        partitionDAO.getPartitions(table.getTargets()[0].getId(), requestedPartitionTs);
+    TreeSet<LocalDateTime> processedTs = new TreeSet<>();
+    for (int i = 0; i < processedPartitions.length; i++) {
+      processedTs.add(processedPartitions[i].getPartitionTs());
+    }
+
     List<TablePartitionSpec> tablePartitionSpecs = getTablePartitionSpecs(table);
     Connection[] connections = this.connectionDAO.getTableDependenciesConnections(table.getId());
     Map<Long, Connection> connectionsMap = new HashMap<>();
@@ -153,11 +162,13 @@ public class TableDAO implements TableDependencyService {
           dependencyResult.setPartitions(depPartitions);
         } else {
           List<LocalDateTime> succeeded = new ArrayList<>();
-          if (depPartitions != null)
+          if (depPartitions != null && depPartitions.length > 0) {
+            dependencyResult.setPartitions(depPartitions);
             for (Partition partition : depPartitions) {
               LocalDateTime ts = partition.getPartitionTs();
               succeeded.add(ts);
             }
+          }
           TreeSet<LocalDateTime> failed = new TreeSet<>(Arrays.asList(partitionTs[i]));
           failed.removeAll(succeeded);
           dependencyResult.setSuccess(false);
@@ -168,12 +179,9 @@ public class TableDAO implements TableDependencyService {
       }
     }
     List<LocalDateTime> resolvedTs = new ArrayList<>();
-    // FIXME: processed ones
-    List<LocalDateTime> processedTs = new ArrayList<>();
     List<LocalDateTime> failedTs = new ArrayList<>();
 
     List<TablePartitionResult> resolved = new ArrayList<>();
-    // FIXME: processed ones
     List<TablePartitionResult> processed = new ArrayList<>();
     List<TablePartitionResult> failed = new ArrayList<>();
 
@@ -182,7 +190,6 @@ public class TableDAO implements TableDependencyService {
       LocalDateTime partitionTs = requestedPartitionTs[i];
       tablePartitionResult.setPartitionTs(partitionTs);
       DependencyResult[] results = dependencyResults[i];
-      // FIXME: set Processed by filter the partitions already processed higher up
       boolean success = true;
       List<DependencyResult> resolvedDependencies = new ArrayList<>();
       List<DependencyResult> failedDependencies = new ArrayList<>();
@@ -200,8 +207,10 @@ public class TableDAO implements TableDependencyService {
         tablePartitionResult.setFailedDependencies(
             failedDependencies.toArray(new DependencyResult[failedDependencies.size()]));
       }
-      // FIXME processed is also needed
-      if (tablePartitionResult.isResolved()) {
+      if (processedTs.contains(partitionTs)) {
+        tablePartitionResult.setProcessed(true);
+        processed.add(tablePartitionResult);
+      } else if (tablePartitionResult.isResolved()) {
         resolved.add(tablePartitionResult);
         resolvedTs.add(tablePartitionResult.getPartitionTs());
       } else {
@@ -210,11 +219,16 @@ public class TableDAO implements TableDependencyService {
       }
     }
     TablePartitionResultSet tablePartitionResultSet = new TablePartitionResultSet();
-    tablePartitionResultSet.setFailed(failed.toArray(new TablePartitionResult[failed.size()]));
+    tablePartitionResultSet.setProcessed(
+        processed.toArray(new TablePartitionResult[processed.size()]));
     tablePartitionResultSet.setResolved(
         resolved.toArray(new TablePartitionResult[resolved.size()]));
-    tablePartitionResultSet.setFailedTs(failedTs.toArray(new LocalDateTime[failedTs.size()]));
+    tablePartitionResultSet.setFailed(failed.toArray(new TablePartitionResult[failed.size()]));
+
+    tablePartitionResultSet.setProcessedTs(
+        processedTs.toArray(new LocalDateTime[processedTs.size()]));
     tablePartitionResultSet.setResolvedTs(resolvedTs.toArray(new LocalDateTime[resolvedTs.size()]));
+    tablePartitionResultSet.setFailedTs(failedTs.toArray(new LocalDateTime[failedTs.size()]));
     return tablePartitionResultSet;
   }
 
