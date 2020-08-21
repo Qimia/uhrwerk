@@ -184,15 +184,16 @@ public class ConnectionDAO implements ConnectionService {
     List<Connection> list = new ArrayList<>();
     while (record.next()) {
       Connection connection = new Connection();
-      connection.setName(record.getString(1));
-      connection.setType(ConnectionType.valueOf(record.getString(2)));
-      connection.setPath(record.getString(3));
-      connection.setJdbcUrl(record.getString(4));
-      connection.setJdbcDriver(record.getString(5));
-      connection.setJdbcUser(record.getString(6));
-      connection.setJdbcPass(record.getString(7));
-      connection.setAwsAccessKeyID(record.getString(8));
-      connection.setAwsSecretAccessKey(record.getString(9));
+      connection.setId(record.getLong(1));
+      connection.setName(record.getString(2));
+      connection.setType(ConnectionType.valueOf(record.getString(3)));
+      connection.setPath(record.getString(4));
+      connection.setJdbcUrl(record.getString(5));
+      connection.setJdbcDriver(record.getString(6));
+      connection.setJdbcUser(record.getString(7));
+      connection.setJdbcPass(record.getString(8));
+      connection.setAwsAccessKeyID(record.getString(9));
+      connection.setAwsSecretAccessKey(record.getString(10));
       list.add(connection);
     }
     return list.toArray(new Connection[list.size()]);

@@ -161,13 +161,13 @@ public class TableDAO implements TableDependencyService, TableService {
 
     private static final String SELECT_TABLE_PARTITION_SPEC =
             "SELECT D.id,\n"
-                    + "       T.id,\n"
+                    + "       TR.id,\n"
                     + "       D.dependency_target_id,\n"
                     + "       T.partition_unit,\n"
                     + "       T.partition_size,\n"
-                    + "       d.transform_type,\n"
-                    + "       d.transform_partition_unit,\n"
-                    + "       d.transform_partition_size,\n"
+                    + "       D.transform_type,\n"
+                    + "       D.transform_partition_unit,\n"
+                    + "       D.transform_partition_size,\n"
                     + "       TR.connection_id\n"
                     + "FROM TABLE_ T\n"
                     + "         JOIN (SELECT d.id,\n"
@@ -263,9 +263,9 @@ public class TableDAO implements TableDependencyService, TableService {
             List<DependencyResult> resolvedDependencies = new ArrayList<>();
             List<DependencyResult> failedDependencies = new ArrayList<>();
             for (int j = 0; j < results.length; j++) {
-                success &= results[i].isSuccess();
-                if (results[i].isSuccess()) resolvedDependencies.add(results[i]);
-                else failedDependencies.add(results[i]);
+                success &= results[j].isSuccess();
+                if (results[j].isSuccess()) resolvedDependencies.add(results[j]);
+                else failedDependencies.add(results[j]);
             }
             if (success) {
                 tablePartitionResult.setResolved(true);
@@ -314,7 +314,11 @@ public class TableDAO implements TableDependencyService, TableService {
             PartitionUnit partitionUnit = PartitionUnit.valueOf(resultSet.getString(4));
             int partitionSize = resultSet.getInt(5);
             PartitionTransformType transformType = PartitionTransformType.valueOf(resultSet.getString(6));
-            PartitionUnit transformUnit = PartitionUnit.valueOf(resultSet.getString(7));
+            String transformUnitStr = resultSet.getString(7);
+            PartitionUnit transformUnit = null;
+            if (transformUnitStr != null && !transformUnitStr.equals("")) {
+                transformUnit = PartitionUnit.valueOf(transformUnitStr);
+            }
             int transformSize = resultSet.getInt(8);
             long connectionId = resultSet.getLong(9);
             tablePartitionSpecs.add(
