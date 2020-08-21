@@ -163,7 +163,22 @@ public class DagBuilder {
 
     public DagBuilder table() {
         Table table = new Table();
+        ArrayList<Source> sources = new ArrayList<Source>();
+        ArrayList<Target> targets = new ArrayList<Target>();
+        ArrayList<Dependency> dependencies = new ArrayList<Dependency>();
+        if (this.sourcesList == null) {
+            this.sourcesList = new ArrayList<ArrayList<Source>>();
+        }
+        if (this.targetsList == null) {
+            this.targetsList = new ArrayList<ArrayList<Target>>();
+        }
+        if (this.dependenciesList == null) {
+            this.dependenciesList = new ArrayList<ArrayList<Dependency>>();
+        }
         this.tablesList.add(table);
+        this.sourcesList.add(sources);
+        this.targetsList.add(targets);
+        this.dependenciesList.add(dependencies);
         return this;
     }
 
@@ -174,7 +189,7 @@ public class DagBuilder {
                 this.tablesList.get(tablesList.size() - 1).setArea(area);
             }
             if (this.dependenciesList != null) {
-                if (this.dependenciesList.get(tablesList.size()-1) != null){
+                if (this.dependenciesList.get(tablesList.size()-1).size() != 0){
                     if (this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).getArea() == null) {
                         this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).setArea(area);
                     }
@@ -190,7 +205,7 @@ public class DagBuilder {
                 this.tablesList.get(tablesList.size() - 1).setVertical(vertical);
             }
             if (this.dependenciesList != null) {
-                if (this.dependenciesList.get(tablesList.size() - 1) != null) {
+                if (this.dependenciesList.get(tablesList.size()-1).size() != 0){
                     if (this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).getVertical() == null) {
                         this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).setVertical(vertical);
                     }
@@ -206,7 +221,7 @@ public class DagBuilder {
                 this.tablesList.get(tablesList.size() - 1).setTable(table);
             }
             if (this.dependenciesList != null) {
-                if (this.dependenciesList.get(tablesList.size() - 1) != null) {
+                if (this.dependenciesList.get(tablesList.size()-1).size() != 0){
                     if (this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).getTable() == null) {
                         this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).setTable(table);
                     }
@@ -222,7 +237,7 @@ public class DagBuilder {
                 this.tablesList.get(tablesList.size() - 1).setVersion(version);
             }
             if (this.sourcesList != null) {
-                if (this.sourcesList.get(tablesList.size() - 1) != null) {
+                if (this.sourcesList.get(tablesList.size()-1).size() != 0){
                     if (this.sourcesList.get(tablesList.size()-1).get(sourcesList.get(tablesList.size()-1).size() - 1).getVersion() == null) {
                         this.sourcesList.get(tablesList.size()-1).get(sourcesList.get(tablesList.size()-1).size() - 1).setVersion(version);
                     }
@@ -230,7 +245,7 @@ public class DagBuilder {
             }
 
             if (this.dependenciesList != null) {
-                if (this.dependenciesList.get(tablesList.size() - 1) != null) {
+                if (this.dependenciesList.get(tablesList.size()-1).size() != 0){
                     if (this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).getVersion() == null) {
                         this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).setVersion(version);
                     }
@@ -254,21 +269,21 @@ public class DagBuilder {
         return this;
     }
 
-    public DagBuilder partition(io.qimia.uhrwerk.config.representation.Partition partition) {
+    public DagBuilder partition(Partition partition) {
         if(this.tablesList.size() != 0) {
             if (this.tablesList.get(tablesList.size() - 1).getPartition() == null) {
                 this.tablesList.get(tablesList.size() - 1).setPartition(partition);
             }
 
-            if (this.sourcesList != null) {
-                if (this.sourcesList.get(tablesList.size() - 1) != null) {
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size()-1).size() != 0){
                     if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getPartition() == null) {
                         this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setPartition(partition);
                     }
                 }
             }
-            if (this.dependenciesList != null) {
-                if (this.dependenciesList.get(tablesList.size() - 1) != null) {
+            if (this.dependenciesList.size() != 0) {
+                if (this.dependenciesList.get(tablesList.size()-1).size() != 0){
                     if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform() != null) {
                         if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform().getPartition() == null) {
                             this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform().setPartition(partition);
@@ -283,29 +298,24 @@ public class DagBuilder {
     public DagBuilder partition() {
         if (this.tablesList.size() != 0) {
             if (this.tablesList.get(tablesList.size()-1).getPartition() == null) {
-                if (this.partition == null){
-                    this.partition = new ArrayList<Partition>();
-                }
-                this.partition.add(new Partition());
+                Partition partition = new Partition();
+                this.tablesList.get(tablesList.size()-1).setPartition(partition);
             }
-            if (this.sourcesList != null) {
-                if (this.sourcesList.get(tablesList.size() - 1) != null) {
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size()-1).size() != 0){
                     if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getPartition() == null) {
-                        if (this.source_partition == null){
-                            this.source_partition = new ArrayList<Partition>();
-                        }
-                        this.source_partition.add(new io.qimia.uhrwerk.config.representation.Partition());
+                        Partition partition = new Partition();
+                        this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setPartition(partition);
+
                     }
                 }
             }
-            if (this.dependenciesList != null) {
-                if (this.dependenciesList.get(tablesList.size() - 1) != null) {
+            if (this.dependenciesList.size() != 0) {
+                if (this.dependenciesList.get(tablesList.size()-1).size() != 0){
                     if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform() != null) {
                         if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform().getPartition() == null) {
-                            if (this.dependency_partition == null){
-                                this.dependency_partition = new ArrayList<Partition>();
-                            }
-                            this.dependency_partition.add(new io.qimia.uhrwerk.config.representation.Partition());
+                            Partition partition = new Partition();
+                            this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform().setPartition(partition);
                         }
                     }
                 }
@@ -315,31 +325,29 @@ public class DagBuilder {
     }
 
     public DagBuilder unit(String unit) {
-        if (this.partition == null && this.source_partition == null && this.dependency_partition == null){
-            System.out.println("There is no partition defined to which a partition unit can be set!");
-        }
-        if (this.partition != null) {
-            if (this.partition.get(tablesList.size() - 1) != null) {
-                if (this.partition.get(tablesList.size() - 1).getUnit() == null) {
-                    this.partition.get(tablesList.size() - 1).setUnit(unit);
-                    this.tablesList.get(tablesList.size() - 1).setPartition(this.partition.get(tablesList.size() - 1));
+        if (this.tablesList.size() != 0) {
+            if (this.tablesList.get(tablesList.size() - 1).getPartition() != null) {
+                if (this.tablesList.get(tablesList.size() - 1).getPartition().getUnit() == null) {
+                    this.tablesList.get(tablesList.size() - 1).getPartition().setUnit(unit);
                 }
             }
-        }
-        if (this.source_partition != null) {
-            if (this.source_partition.get(tablesList.size() - 1) != null) {
-                if (this.source_partition.get(tablesList.size() - 1).getUnit() == null) {
-                    this.source_partition.get(tablesList.size() - 1).setUnit(unit);
-                    this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setPartition(this.source_partition.get(tablesList.size() - 1));
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getPartition() != null) {
+                        if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getPartition().getUnit() == null) {
+                            this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getPartition().setUnit(unit);
+                        }
+                    }
                 }
             }
-        }
-        if (this.dependency_partition != null) {
-            if (this.dependency_partition.get(tablesList.size() - 1) != null) {
-                if (this.dependency_partition.get(tablesList.size() - 1).getUnit() == null) {
-                    this.dependency_partition.get(tablesList.size() - 1).setUnit(unit);
+            if (this.dependenciesList.size() != 0) {
+                if (this.dependenciesList.get(tablesList.size() - 1).size() != 0) {
                     if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform() != null) {
-                        this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform().setPartition(this.dependency_partition.get(tablesList.size() - 1));
+                        if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform().getPartition() != null) {
+                            if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform().getPartition().getUnit() == null) {
+                                this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform().getPartition().setUnit(unit);
+                            }
+                        }
                     }
                 }
             }
@@ -348,31 +356,29 @@ public class DagBuilder {
     }
 
     public DagBuilder size(int size) {
-        if (this.partition == null && this.source_partition == null && this.dependency_partition == null){
-            System.out.println("There is no partition defined to which a partition size can be set!");
-        }
-        if (this.partition != null) {
-            if (this.partition.get(tablesList.size() - 1) != null) {
-                if (this.partition.get(tablesList.size() - 1).getSize() == null) {
-                    this.partition.get(tablesList.size() - 1).setSize(size);
-                    this.tablesList.get(tablesList.size() - 1).setPartition(this.partition.get(tablesList.size() - 1));
+        if (this.tablesList.size() != 0) {
+            if (this.tablesList.get(tablesList.size() - 1).getPartition() != null) {
+                if (this.tablesList.get(tablesList.size() - 1).getPartition().getSize() == null) {
+                    this.tablesList.get(tablesList.size() - 1).getPartition().setSize(size);
                 }
             }
-        }
-        if (this.source_partition != null) {
-            if (this.source_partition.get(tablesList.size() - 1) != null) {
-                if (this.source_partition.get(tablesList.size() - 1).getSize() == null) {
-                    this.source_partition.get(tablesList.size() - 1).setSize(size);
-                    this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setPartition(this.source_partition.get(tablesList.size() - 1));
+            if (this.sourcesList.size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getPartition() != null) {
+                        if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getPartition().getSize() == null) {
+                            this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getPartition().setSize(size);
+                        }
+                    }
                 }
             }
-        }
-        if (this.dependency_partition != null) {
-            if (this.dependency_partition.get(tablesList.size() - 1) != null) {
-                if (this.dependency_partition.get(tablesList.size() - 1).getSize() == null) {
-                    this.dependency_partition.get(tablesList.size() - 1).setSize(size);
+            if (this.dependenciesList.size() != 0) {
+                if (this.dependenciesList.get(tablesList.size() - 1).size() != 0) {
                     if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform() != null) {
-                        this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform().setPartition(this.dependency_partition.get(tablesList.size() - 1));
+                    if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform().getPartition() != null) {
+                        if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform().getPartition().getSize() == null) {
+                            this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getTransform().getPartition().setSize(size);
+                        }
+                    }
                     }
                 }
             }
@@ -380,50 +386,79 @@ public class DagBuilder {
         return this;
     }
 
-    public DagBuilder sources(io.qimia.uhrwerk.config.representation.Source[] sources) {
-        if (this.tablesList != null) {
+    public DagBuilder sources(Source[] sources) {
+        if (this.tablesList.get(tablesList.size() - 1) == null) {
+            System.out.println("There is no table to which a source can be set");
+        }
+        else {
             this.tablesList.get(tablesList.size() - 1).setSources(sources);
         }
         return this;
     }
 
     public DagBuilder source() {
-            if (this.sourcesList == null) {
-                this.sourcesList = new ArrayList<ArrayList<io.qimia.uhrwerk.config.representation.Source>>();
+            if (this.tablesList.get(tablesList.size() - 1) == null) {
+                System.out.println("There is no table to which a source can be set");
             }
-            Source source = new io.qimia.uhrwerk.config.representation.Source();
-            this.sourcesList.get(tablesList.size() - 1).add(source);
+            else {
+                Source source = new Source();
+                this.sourcesList.get(tablesList.size() - 1).add(source);
+            }
         return this;
     }
 
-    public DagBuilder targets(io.qimia.uhrwerk.config.representation.Target[] targets) {
-        if (this.tablesList != null) {
+    public DagBuilder targets(Target[] targets) {
+        if (this.tablesList.get(tablesList.size() - 1) == null) {
+            System.out.println("There is no table to which a Target can be set");
+        }
+        else {
             this.tablesList.get(tablesList.size() - 1).setTargets(targets);
         }
         return this;
     }
 
     public DagBuilder target() {
-        if (this.tablesList != null) {
-            if (this.targetsList == null) {
-                this.targetsList = new ArrayList<ArrayList<io.qimia.uhrwerk.config.representation.Target>>();
-            }
-            io.qimia.uhrwerk.config.representation.Target target = new io.qimia.uhrwerk.config.representation.Target();
+        if (this.tablesList.get(tablesList.size() - 1) == null) {
+            System.out.println("There is no table to which a Target can be set");
+        }
+        else {
+            Target target = new Target();
             this.targetsList.get(tablesList.size() - 1).add(target);
+        }
+        return this;
+    }
+
+    public DagBuilder dependencies(Dependency[] dependencies) {
+        if (this.tablesList.get(tablesList.size() - 1) == null) {
+            System.out.println("There is no table to which a dependency can be set");
+        }
+        else {
+            this.tablesList.get(tablesList.size() - 1).setDependencies(dependencies);
+        }
+        return this;
+    }
+
+    public DagBuilder dependency() {
+        if (this.tablesList.get(tablesList.size() - 1) == null) {
+            System.out.println("There is no table to which a dependency can be set");
+        }
+        else {
+            Dependency dependency = new Dependency();
+            this.dependenciesList.get(tablesList.size() - 1).add(dependency);
         }
         return this;
     }
 
     public DagBuilder connection_name(String connection_name) {
         if (this.sourcesList != null) {
-            if (this.sourcesList.get(tablesList.size() - 1) != null) {
+            if (this.sourcesList.get(tablesList.size()-1).size() != 0){
                 if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getConnection_name() == null) {
                     this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setConnection_name(connection_name);
                 }
             }
         }
         if (this.targetsList != null) {
-            if (this.targetsList.get(tablesList.size() - 1) != null) {
+            if (this.targetsList.get(tablesList.size()-1).size() != 0){
                 if (this.targetsList.get(tablesList.size() - 1).get(targetsList.get(tablesList.size() - 1).size() - 1).getConnection_name() == null) {
                     this.targetsList.get(tablesList.size() - 1).get(targetsList.get(tablesList.size() - 1).size() - 1).setConnection_name(connection_name);
                 }
@@ -451,7 +486,7 @@ public class DagBuilder {
             }
         }
         if (this.sourcesList != null) {
-            if (this.sourcesList.get(tablesList.size() - 1) != null) {
+            if (this.sourcesList.get(tablesList.size()-1).size() != 0){
                 this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setPath(path);
             }
         }
@@ -461,21 +496,21 @@ public class DagBuilder {
 
     public DagBuilder format(String format) {
         if (this.sourcesList != null) {
-            if (this.sourcesList.get(tablesList.size() - 1) != null) {
+            if (this.sourcesList.get(tablesList.size()-1).size() != 0){
                 if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getFormat() == null) {
                     this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setFormat(format);
                 }
             }
         }
         if (this.targetsList != null) {
-            if (this.targetsList.get(tablesList.size() - 1) != null) {
+            if (this.targetsList.get(tablesList.size()-1).size() != 0){
                 if (this.targetsList.get(tablesList.size() - 1).get(targetsList.get(tablesList.size() - 1).size() - 1).getFormat() == null) {
                     this.targetsList.get(tablesList.size() - 1).get(targetsList.get(tablesList.size() - 1).size() - 1).setFormat(format);
                 }
             }
         }
         if (this.dependenciesList != null) {
-            if (this.dependenciesList.get(tablesList.size() - 1) != null) {
+            if (this.dependenciesList.get(tablesList.size()-1).size() != 0){
                 if (this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).getFormat() == null) {
                     this.dependenciesList.get(tablesList.size() - 1).get(dependenciesList.get(tablesList.size() - 1).size() - 1).setFormat(format);
                 }
@@ -486,38 +521,40 @@ public class DagBuilder {
 
 
     public DagBuilder parallel_load(ParallelLoad parallel_load) {
-        if (this.sourcesList != null) {
-            this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setParallel_load(parallel_load);
+        if (this.sourcesList.size() != 0) {
+            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setParallel_load(parallel_load);
+            }
         }
         return this;
     }
 
     public DagBuilder parallel_load() {
-        if (this.parallel_load == null) {
-            this.parallel_load = new ArrayList<ParallelLoad>();
+        if (this.sourcesList.size() != 0) {
+            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setParallel_load(new ParallelLoad());
+            }
         }
-        this.parallel_load.add( new ParallelLoad());
         return this;
     }
 
 
     public DagBuilder query(String query) {
-        if (this.parallel_load == null && this.select == null){
-            System.out.println("There is no parallel_load or select defined to which a query can be set!");
-        }
-        if (this.parallel_load != null) {
-            if (this.parallel_load.get(tablesList.size()-1) != null) {
-                if (this.parallel_load.get(tablesList.size()-1).getQuery() == null) {
-                    this.parallel_load.get(tablesList.size()-1).setQuery(query);
-                    this.sourcesList.get(tablesList.size()-1).get(sourcesList.get(tablesList.size()-1).size() - 1).setParallel_load(this.parallel_load.get(tablesList.size()-1));
+        if (this.sourcesList.size() != 0) {
+            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load() != null) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().getQuery() == null) {
+                        this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().setQuery(query);
+                    }
                 }
             }
         }
-        if (this.select != null) {
-            if (this.select.get(tablesList.size()-1) != null) {
-                if (this.select.get(tablesList.size() - 1).getQuery() == null) {
-                    this.select.get(tablesList.size() - 1).setQuery(query);
-                    this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setSelect(this.select.get(tablesList.size() - 1));
+        if (this.sourcesList.size() != 0) {
+            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect() != null) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect().getQuery() == null) {
+                        this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect().setQuery(query);
+                    }
                 }
             }
         }
@@ -525,22 +562,21 @@ public class DagBuilder {
     }
 
     public DagBuilder column(String column) {
-        if (this.parallel_load == null && this.select == null){
-            System.out.println("There is no parallel_load or select defined to which a column can be set!");
-        }
-        if (this.parallel_load != null) {
-            if (this.parallel_load.get(tablesList.size()-1) != null) {
-                if (this.parallel_load.get(tablesList.size()-1).getColumn() == null) {
-                    this.parallel_load.get(tablesList.size()-1).setColumn(column);
-                    this.sourcesList.get(tablesList.size()-1).get(sourcesList.get(tablesList.size()-1).size() - 1).setParallel_load(this.parallel_load.get(tablesList.size()-1));
+        if (this.sourcesList.size() != 0) {
+            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load() != null) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().getColumn() == null) {
+                        this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().setColumn(column);
+                    }
                 }
             }
         }
-        if (this.select != null) {
-            if (this.select.get(tablesList.size()-1) != null) {
-                if (this.select.get(tablesList.size() - 1).getColumn() == null) {
-                    this.select.get(tablesList.size() - 1).setColumn(column);
-                    this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setSelect(this.select.get(tablesList.size() - 1));
+        if (this.sourcesList.size() != 0) {
+            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect() != null) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect().getColumn() == null) {
+                        this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getSelect().setColumn(column);
+                    }
                 }
             }
         }
@@ -548,41 +584,36 @@ public class DagBuilder {
     }
 
     public DagBuilder num(int num) {
-        if (this.parallel_load.get(tablesList.size() - 1) != null) {
-            this.parallel_load.get(tablesList.size() - 1).setNum(num);
-            this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setParallel_load(this.parallel_load.get(tablesList.size() - 1));
+        if (this.sourcesList.size() != 0) {
+            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load() != null) {
+                    if (this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().getNum() == null) {
+                        this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).getParallel_load().setNum(num);
+                    }
+                }
+            }
         }
         return this;
     }
 
     public DagBuilder select(Select select) {
-        if (this.sourcesList.get(tablesList.size() - 1) != null) {
-            this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setSelect(select);
+        if (this.sourcesList.size() != 0) {
+            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setSelect(select);
+            }
         }
         return this;
     }
 
     public DagBuilder select() {
-        if (this.select == null){
-            this.select = new ArrayList<Select>();
+        if (this.sourcesList.size() != 0) {
+            if (this.sourcesList.get(tablesList.size() - 1).size() != 0) {
+                this.sourcesList.get(tablesList.size() - 1).get(sourcesList.get(tablesList.size() - 1).size() - 1).setSelect(new Select());
+            }
         }
-        this.select.add(new Select());
         return this;
     }
 
-    public DagBuilder dependencies(io.qimia.uhrwerk.config.representation.Dependency[] dependencies) {
-        this.tablesList.get(tablesList.size()-1).setDependencies(dependencies);
-        return this;
-    }
-
-    public DagBuilder dependency() {
-        if (this.dependenciesList == null) {
-            this.dependenciesList = new ArrayList<ArrayList<io.qimia.uhrwerk.config.representation.Dependency>>();
-        }
-        io.qimia.uhrwerk.config.representation.Dependency dependency = new io.qimia.uhrwerk.config.representation.Dependency();
-        this.dependenciesList.get(tablesList.size()-1).add(dependency);
-        return this;
-    }
 
     public DagBuilder transform(Transform transform) {
         this.dependenciesList.get(tablesList.size()-1).get(dependenciesList.get(tablesList.size()-1).size() - 1).setTransform(transform);
@@ -606,20 +637,19 @@ public class DagBuilder {
     public Dag build() {
         if (tablesList != null) {
             int tablesLength = tablesList.size();
-            System.out.println(tablesLength);
             if (tablesLength != 0) {
                 for (int i = 0; i < tablesLength; i++) {
-                    if (this.sourcesList != null) {
+                    if (this.sourcesList.get(i) != null) {
                         Source[] sources = new Source[sourcesList.get(i).size()];
                         sourcesList.get(i).toArray(sources);
                         this.tablesList.get(i).setSources(sources);
                     }
-                    if (this.targetsList != null) {
+                    if (this.targetsList.get(i) != null) {
                         Target[] targets = new Target[targetsList.get(i).size()];
                         targetsList.get(i).toArray(targets);
                         this.tablesList.get(i).setTargets(targets);
                     }
-                    if (this.dependenciesList != null) {
+                    if (this.dependenciesList.get(i) != null) {
                         Dependency[] dependencies = new Dependency[dependenciesList.get(i).size()];
                         dependenciesList.get(i).toArray(dependencies);
                         this.tablesList.get(i).setDependencies(dependencies);
