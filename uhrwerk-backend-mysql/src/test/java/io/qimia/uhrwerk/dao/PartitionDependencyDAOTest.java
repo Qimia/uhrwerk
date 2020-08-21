@@ -133,4 +133,27 @@ public class PartitionDependencyDAOTest {
         assertFalse(insertRes.isError());
     }
 
+    @Test
+    void gettingPartitions() throws SQLException {
+        LocalDateTime batchTime = LocalDateTime.of(2020, 6, 1, 10, 0);
+        var partitions = setupPartitions(batchTime);
+        var depResA = new DependencyResult();
+        depResA.setPartitionTs(batchTime);
+        depResA.setPartitions(new Partition[]{partitions[0]});
+        var dao = new PartitionDependencyDAO(db);
+        var insertRes = dao.save(partitions[2].getId(), depResA, false);
+        assertTrue(insertRes.isSuccess());
+        assertFalse(insertRes.isError());
+
+        var depResB = new DependencyResult();
+        depResB.setPartitionTs(batchTime);
+        depResB.setPartitions(new Partition[]{partitions[1]});
+        var insertRes2 = dao.save(partitions[2].getId(), depResB, false);
+        assertTrue(insertRes2.isSuccess());
+        assertFalse(insertRes2.isError());
+
+        var parentPartitions = dao.getParentPartitions(partitions[2]);
+        assertEquals(2, parentPartitions.size());
+    }
+
 }
