@@ -121,7 +121,7 @@ public class ProcessPartitionTest {
     }
 
     @Test
-    void checkSimpleIdentityDependency() throws SQLException {
+    void checkSingleIdentityDependency() throws SQLException {
         setupTableA();
 
         // Setup a simple one on one data model
@@ -142,6 +142,7 @@ public class ProcessPartitionTest {
         dependencyIn.setDependencyTableId(tableDepA.getId());
         dependencyIn.setDependencyTargetId(depATarget.getId());
         dependencyIn.setTableId(tableOut.getId());
+        dependencyIn.setTransformType(PartitionTransformType.IDENTITY);
         dependencyIn.setKey();
         tableOut.setDependencies(new Dependency[]{dependencyIn});
         var targetOut = new Target();
@@ -188,7 +189,8 @@ public class ProcessPartitionTest {
         long partDepId = PartitionDependencyHash.generateId(outPartition.getId(), partitionsA[0].getId());
         partDepStm.setLong(1, partDepId);
         partDepStm.setLong(2, outPartition.getId());
-        partDepStm.setLong(2, partitionsA[0].getId());
+        partDepStm.setLong(3, partitionsA[0].getId());
+        partDepStm.executeUpdate();
 
         // Now call processingPartitions
         var dao = new TableDAO(db);
@@ -203,4 +205,196 @@ public class ProcessPartitionTest {
         assertEquals(1, resultSet.getProcessedTs().length);
         assertEquals(2, resultSet.getResolvedTs().length);
     }
+
+    @Test
+    void checkSingleWindowedDependency() throws SQLException {
+        setupTableA();
+
+        // Setup a simple one on one data model
+        var tableOut = new Table();
+        tableOut.setArea("area1");
+        tableOut.setVertical("vertical1");
+        tableOut.setName("tableout");
+        tableOut.setVersion("1.0");
+        tableOut.setPartitionSize(1);
+        tableOut.setPartitionUnit(PartitionUnit.HOURS);
+        tableOut.setKey();
+        var dependencyIn = new Dependency();
+        dependencyIn.setTableName(tableDepA.getName());
+        dependencyIn.setArea(tableDepA.getArea());
+        dependencyIn.setFormat(depATarget.getFormat());
+        dependencyIn.setVertical(tableDepA.getVertical());
+        dependencyIn.setVersion(tableDepA.getVersion());
+        dependencyIn.setDependencyTableId(tableDepA.getId());
+        dependencyIn.setDependencyTargetId(depATarget.getId());
+        dependencyIn.setTableId(tableOut.getId());
+        dependencyIn.setTransformType(PartitionTransformType.WINDOW);
+        dependencyIn.setTransformPartitionSize(2);
+        dependencyIn.setKey();
+        tableOut.setDependencies(new Dependency[]{dependencyIn});
+        var targetOut = new Target();
+        targetOut.setFormat("csv");
+        targetOut.setTableId(tableOut.getId());
+        targetOut.setConnection(connFS);
+        targetOut.setKey();
+        tableOut.setTargets(new Target[]{targetOut});
+
+        Statement tableStm = db.createStatement();
+        tableStm.executeUpdate("INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)" +
+                "VALUES (" + tableOut.getId() + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 1, 1, 1)");
+        tableStm.close();
+
+        PreparedStatement depStm = db.prepareStatement("INSERT INTO DEPENDENCY(id, table_id, dependency_target_id, dependency_table_id, " +
+                "transform_type, transform_partition_size) VALUES (?, ?, ?, ?, 'WINDOW', 2)");
+        depStm.setLong(1, dependencyIn.getId());
+        depStm.setLong(2, dependencyIn.getTableId());
+        depStm.setLong(3, dependencyIn.getDependencyTargetId());
+        depStm.setLong(4, dependencyIn.getDependencyTableId());
+        depStm.executeUpdate();
+
+        Statement tarStm = db.createStatement();
+        tarStm.executeUpdate("INSERT INTO TARGET (id, table_id, connection_id, format)" +
+                "VALUES (" + targetOut.getId() + "," + tableOut.getId() + "," + connFS.getId() + ", 'csv')");
+        tarStm.close();
+
+        // Already write a single Partition for the output
+        var outPartition = new Partition();
+        outPartition.setTargetId(targetOut.getId());
+        outPartition.setPartitionTs(filledPartitionsA[1]);     // The second one is already there
+        outPartition.setPartitionUnit(PartitionUnit.HOURS);
+        outPartition.setPartitionSize(1);
+        outPartition.setKey();
+
+        PreparedStatement partStm = db.prepareStatement(insertPartitionQuery);
+        partStm.setLong(1, outPartition.getId());
+        partStm.setLong(2, outPartition.getTargetId());
+        partStm.setTimestamp(3, Timestamp.valueOf(outPartition.getPartitionTs()));
+        partStm.executeUpdate();
+
+        // Now make sure that the 2nd partition depends on the 2 previous partitions
+        PreparedStatement partDepStm = db.prepareStatement("INSERT INTO PARTITION_DEPENDENCY (id, partition_id, dependency_partition_id)\n" +
+                "VALUES (?, ?, ?);");
+        long partDepId = PartitionDependencyHash.generateId(outPartition.getId(), partitionsA[0].getId());
+        partDepStm.setLong(1, partDepId);
+        partDepStm.setLong(2, outPartition.getId());
+        partDepStm.setLong(3, partitionsA[0].getId());
+        partDepStm.executeUpdate();
+        partDepId = PartitionDependencyHash.generateId(outPartition.getId(), partitionsA[1].getId());
+        partDepStm.setLong(1, partDepId);
+        partDepStm.setLong(2, outPartition.getId());
+        partDepStm.setLong(3, partitionsA[1].getId());
+        partDepStm.executeUpdate();
+
+        // Now call processingPartitions
+        var dao = new TableDAO(db);
+        LocalDateTime[] testTimes = new LocalDateTime[]{
+                filledPartitionsA[0],       // Can't run because 9 o clock isn't there
+                filledPartitionsA[1],       // has already been filled
+                filledPartitionsA[2],       // is ready to run
+                LocalDateTime.of(2020, 4, 10, 13, 0)    // Can't run because 13 isnt there
+        };
+        var resultSet = dao.processingPartitions(tableOut, testTimes);
+        assertEquals(2, resultSet.getFailedTs().length);
+        assertEquals(testTimes[1], resultSet.getProcessedTs()[0]);
+        assertEquals(testTimes[2], resultSet.getResolvedTs()[0]);
+    }
+
+    @Test
+    void checkSingleAggregatedDependency() throws SQLException {
+        setupTableA();
+
+        // Setup a simple one on one data model
+        var tableOut = new Table();
+        tableOut.setArea("area1");
+        tableOut.setVertical("vertical1");
+        tableOut.setName("tableout");
+        tableOut.setVersion("1.0");
+        tableOut.setPartitionSize(2);
+        tableOut.setPartitionUnit(PartitionUnit.HOURS);
+        tableOut.setKey();
+        var dependencyIn = new Dependency();
+        dependencyIn.setTableName(tableDepA.getName());
+        dependencyIn.setArea(tableDepA.getArea());
+        dependencyIn.setFormat(depATarget.getFormat());
+        dependencyIn.setVertical(tableDepA.getVertical());
+        dependencyIn.setVersion(tableDepA.getVersion());
+        dependencyIn.setDependencyTableId(tableDepA.getId());
+        dependencyIn.setDependencyTargetId(depATarget.getId());
+        dependencyIn.setTableId(tableOut.getId());
+        dependencyIn.setTransformType(PartitionTransformType.AGGREGATE);
+        dependencyIn.setTransformPartitionSize(2);
+        dependencyIn.setKey();
+        tableOut.setDependencies(new Dependency[]{dependencyIn});
+        var targetOut = new Target();
+        targetOut.setFormat("csv");
+        targetOut.setTableId(tableOut.getId());
+        targetOut.setConnection(connFS);
+        targetOut.setKey();
+        tableOut.setTargets(new Target[]{targetOut});
+
+        Statement tableStm = db.createStatement();
+        tableStm.executeUpdate("INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)" +
+                "VALUES (" + tableOut.getId() + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 2, 1, 1)");
+        tableStm.close();
+
+        PreparedStatement depStm = db.prepareStatement("INSERT INTO DEPENDENCY(id, table_id, dependency_target_id, dependency_table_id, " +
+                "transform_type, transform_partition_size) VALUES (?, ?, ?, ?, 'AGGREGATE', 2)");
+        depStm.setLong(1, dependencyIn.getId());
+        depStm.setLong(2, dependencyIn.getTableId());
+        depStm.setLong(3, dependencyIn.getDependencyTargetId());
+        depStm.setLong(4, dependencyIn.getDependencyTableId());
+        depStm.executeUpdate();
+
+        Statement tarStm = db.createStatement();
+        tarStm.executeUpdate("INSERT INTO TARGET (id, table_id, connection_id, format)" +
+                "VALUES (" + targetOut.getId() + "," + tableOut.getId() + "," + connFS.getId() + ", 'csv')");
+        tarStm.close();
+
+        // First test without having any partitions written (with 2 hour batches ofcourse)
+        var dao = new TableDAO(db);
+        LocalDateTime[] testTimes = new LocalDateTime[]{
+                filledPartitionsA[0],       // should be ready to run
+                filledPartitionsA[2],       // Should be missing the 13 hour batch
+        };
+        var resultSet = dao.processingPartitions(tableOut, testTimes);
+        assertEquals(testTimes[1], resultSet.getFailedTs()[0]);
+        assertEquals(0, resultSet.getProcessedTs().length);
+        assertEquals(testTimes[0], resultSet.getResolvedTs()[0]);
+
+        // Now we fill the first testTimes partition for the outtable
+        var outPartition = new Partition();
+        outPartition.setTargetId(targetOut.getId());
+        outPartition.setPartitionTs(filledPartitionsA[0]);     // The second one is already there
+        outPartition.setPartitionUnit(PartitionUnit.HOURS);
+        outPartition.setPartitionSize(2);
+        outPartition.setKey();
+
+        PreparedStatement partStm = db.prepareStatement(insertPartitionQuery);
+        partStm.setLong(1, outPartition.getId());
+        partStm.setLong(2, outPartition.getTargetId());
+        partStm.setTimestamp(3, Timestamp.valueOf(outPartition.getPartitionTs()));
+        partStm.executeUpdate();
+
+        // Now make sure that the 1st partition depends on the 2 partitions of the dependency
+        PreparedStatement partDepStm = db.prepareStatement("INSERT INTO PARTITION_DEPENDENCY (id, partition_id, dependency_partition_id)\n" +
+                "VALUES (?, ?, ?);");
+        long partDepId = PartitionDependencyHash.generateId(outPartition.getId(), partitionsA[0].getId());
+        partDepStm.setLong(1, partDepId);
+        partDepStm.setLong(2, outPartition.getId());
+        partDepStm.setLong(3, partitionsA[0].getId());
+        partDepStm.executeUpdate();
+        partDepId = PartitionDependencyHash.generateId(outPartition.getId(), partitionsA[1].getId());
+        partDepStm.setLong(1, partDepId);
+        partDepStm.setLong(2, outPartition.getId());
+        partDepStm.setLong(3, partitionsA[1].getId());
+        partDepStm.executeUpdate();
+
+        // Now we do the same processingPartitions call as before and we should see a processedTs
+        resultSet = dao.processingPartitions(tableOut, testTimes);
+        assertEquals(testTimes[1], resultSet.getFailedTs()[0]);
+        assertEquals(testTimes[0], resultSet.getProcessedTs()[0]);
+        assertEquals(0, resultSet.getResolvedTs().length);
+    }
+
+
 }
