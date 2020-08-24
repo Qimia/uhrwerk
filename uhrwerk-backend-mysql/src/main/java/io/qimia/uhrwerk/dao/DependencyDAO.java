@@ -370,6 +370,7 @@ public class DependencyDAO implements DependencyStoreService {
         try {
             PreparedStatement statement = db.prepareStatement(GET_DEPENDENCY_BY_TABLE);
             statement.setLong(1, tableId);
+            System.out.println(statement.toString());
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 var singleDep = new Dependency();

@@ -52,10 +52,12 @@ public class TableDAO implements TableDependencyService, TableService {
 
         try {
             if (!overwrite) {
-                Table oldTable = getById(table.getId());
+                Table oldTable = getById(tableId);
                 if (oldTable != null) {
                     tableResult.setOldResult(oldTable);
 
+                    System.out.println(table.toString());
+                    System.out.println(oldTable.toString());
                     if (!oldTable.equals(table)) {
                         tableResult.setMessage(
                                 String.format(
