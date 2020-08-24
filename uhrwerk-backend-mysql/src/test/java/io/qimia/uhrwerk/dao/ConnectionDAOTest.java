@@ -11,8 +11,10 @@ import io.qimia.uhrwerk.config.ConnectionBuilder;
 
 
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -20,6 +22,8 @@ class ConnectionDAOTest {
 
   java.sql.Connection db;
   ConnectionService service;
+  String[] connNames = {"S3","JDBC","file"};
+
 
   @org.junit.jupiter.api.BeforeEach
   void setUp() throws SQLException {
@@ -68,18 +72,18 @@ class ConnectionDAOTest {
   @Test
   void insertFullConnection() {
     Connection[] conn = (new io.qimia.uhrwerk.config.ConnectionBuilder())
-            .name("S3")
+            .name(connNames[0])
             .s3()
             .path("S3Path")
             .secretId("ID")
             .secretKey("key")
-            .name("JDBC")
+            .name(connNames[1])
             .jdbc()
             .jdbcUrl("url")
             .jdbcDriver("driver")
             .user("user")
-            .pass("pass")
-            .name("file")
+            .pass("pass2")
+            .name(connNames[2])
             .file()
             .path("filePath")
             .build();
@@ -90,12 +94,61 @@ class ConnectionDAOTest {
       assertTrue(result.isSuccess());
       assertNotNull(result.getNewConnection());
       assertNotNull(result.getNewConnection().getId());
+      System.out.println(c);
       System.out.println(result.getNewConnection());
     }
   }
 
   @Test
   void getByNameConnection() {
+    try {
+      for (String n : connNames) {
+        Connection con = service.getByName(db, n);
+        System.out.println(con);
+        assertEquals(n,con.getName());
+      }
+    } catch (SQLException e) {
+      System.out.println("caught in Connection.");
+    }
+
+  }
+
+
+  @Test
+  void getByIDConnection() {
+    try {
+      for (String n : connNames) {
+        Connection testCon = new Connection();
+        testCon.setName(n);
+        testCon.setKey();
+        Connection con = service.getById(testCon.getId());
+        System.out.println(con);
+        assertEquals(testCon.getId(),con.getId());
+      }
+    } catch (SQLException e) {
+      System.out.println("caught in Connection.");
+    }
+
+  }
+
+
+  @Test
+  void getDependency() {
+
+  }
+
+  @Test
+  void getByStatementConnection() {
+    try {
+        PreparedStatement statement = db.prepareStatement("SELECT * FROM CONNECTION WHERE NAME in ();");
+        Connection[] con = service.getConnections(statement);
+      for (int i=0;i<con.length; i++) {
+        System.out.println(con[i]);
+        assertEquals(connNames[i],con[i].getName());
+      }
+    } catch (SQLException e) {
+      System.out.println("caught in Connection.");
+    }
 
   }
 
