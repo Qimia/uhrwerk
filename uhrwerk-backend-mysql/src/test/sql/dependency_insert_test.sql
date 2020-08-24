@@ -14,8 +14,8 @@ INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_
 VALUES (456, 'area1', 'vertical1', 'name2', '1.0', 'HOURS', 1, 1, 1); -- Id 2
 
 -- Insert a correct new Dependency (we also check the partition size here to see if it is correct or not!!)
-INSERT INTO DEPENDENCY(table_id, target_id, transform_type)
-VALUES (456, 345, "identity");
+INSERT INTO DEPENDENCY(id, table_id, dependency_target_id, dependency_table_id, transform_type)
+VALUES (567, 456, 345, 234, "identity");
 
 TRUNCATE DEPENDENCY;
 
@@ -43,5 +43,31 @@ FROM DEPENDENCY
 WHERE table_id = 456
 AND target_id = 345
 AND transform_type = "identity");
+
+-- Loading all dependencies from the storage
+SELECT 
+	dep.id,
+	dep.table_id,
+	dep.dependency_target_id,
+	dep.dependency_table_id,
+	tab.area,
+	tab.vertical,
+	tab.name,
+	tar.format,
+	tab.version,
+	dep.transform_type,  -- TODO: Skipping transform unit
+	dep.transform_partition_size 
+FROM DEPENDENCY dep
+JOIN TABLE_ tab ON dep.dependency_table_id = tab.id
+JOIN TARGET tar ON dep.dependency_target_id = tar.id
+WHERE dep.table_id = 456;
+
+-- Cleaning up
+DELETE FROM DEPENDENCY;
+DELETE FROM TARGET;
+DELETE FROM TABLE_;
+DELETE FROM `CONNECTION`;
+
+DELETE FROM SOURCE ;
 
 

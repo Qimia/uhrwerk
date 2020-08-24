@@ -2,6 +2,8 @@ package io.qimia.uhrwerk.common.metastore.config;
 
 import io.qimia.uhrwerk.common.model.Source;
 
+import java.sql.SQLException;
+
 public interface SourceService {
     /**
      * Saves a Source into the Metastore.
@@ -26,4 +28,19 @@ public interface SourceService {
      * @return An array with SourceResults.
      */
     SourceResult[] save(Source[] sources, boolean overwrite);
+
+    /**
+     * Returns all sources belonging to a table.
+     *
+     * @param tableId Table id.
+     * @return An array of sources. Could be empty or null when something goes wrong.
+     */
+    Source[] getSourcesByTableId(Long tableId);
+
+    /**
+     * Deletes all sources belonging to a table.
+     *
+     * @param tableId Table id.
+     */
+    void deleteSourcesByTableId(Long tableId) throws SQLException;
 }

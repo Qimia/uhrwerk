@@ -10,13 +10,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ConnectionDAO implements ConnectionService {
 
   private java.sql.Connection db;
 
-  public ConnectionDAO() {
-  }
+  public ConnectionDAO() {}
 
   public ConnectionDAO(java.sql.Connection db) {
     this.db = db;
@@ -25,15 +26,16 @@ public class ConnectionDAO implements ConnectionService {
   public java.sql.Connection getDb() {
     return db;
   }
+
   public void setDb(java.sql.Connection db) {
     this.db = db;
   }
 
   private static final String UPSERT_CONN =
-          "INSERT INTO CONNECTION(id, name, type, path, jdbc_url, jdbc_driver, jdbc_user, jdbc_pass, aws_access_key_id, aws_secret_access_key)\n"
-                  + "VALUES(?,?,?,?,?,?,?,?,?,?) "
-                  + "ON DUPLICATE KEY UPDATE \n"
-                  + "type=?, path=?, jdbc_url=?, jdbc_driver=?, jdbc_user=?, jdbc_pass=?, aws_access_key_id=?, aws_secret_access_key=?";
+      "INSERT INTO CONNECTION(id, name, type, path, jdbc_url, jdbc_driver, jdbc_user, jdbc_pass, aws_access_key_id, aws_secret_access_key)\n"
+          + "VALUES(?,?,?,?,?,?,?,?,?,?) "
+          + "ON DUPLICATE KEY UPDATE \n"
+          + "type=?, path=?, jdbc_url=?, jdbc_driver=?, jdbc_user=?, jdbc_pass=?, aws_access_key_id=?, aws_secret_access_key=?";
 
   public Long save(Connection connection) throws SQLException {
     PreparedStatement insert = db.prepareStatement(UPSERT_CONN, Statement.RETURN_GENERATED_KEYS);
@@ -65,17 +67,17 @@ public class ConnectionDAO implements ConnectionService {
   }
 
   private static final String SELECT_BY_NAME =
-      "SELECT name,\n"
+      "SELECT id, name,\n"
           + "       type,\n"
           + "       path,\n"
           + "       jdbc_url,\n"
           + "       jdbc_driver,\n"
           + "       jdbc_user,\n"
-              + "       jdbc_pass,\n"
-              + "       aws_access_key_id,\n"
-              + "       aws_secret_access_key\n"
-              + "FROM CONNECTION\n"
-              + "WHERE name =?\n";
+          + "       jdbc_pass,\n"
+          + "       aws_access_key_id,\n"
+          + "       aws_secret_access_key\n"
+          + "FROM CONNECTION\n"
+          + "WHERE name =?\n";
 
   public Connection getByName(java.sql.Connection db, String name) throws SQLException {
     PreparedStatement select = db.prepareStatement(SELECT_BY_NAME);
@@ -84,17 +86,17 @@ public class ConnectionDAO implements ConnectionService {
   }
 
   private static final String SELECT_BY_ID =
-          "SELECT name,\n"
-                  + "       type,\n"
-                  + "       path,\n"
-                  + "       jdbc_url,\n"
-                  + "       jdbc_driver,\n"
-                  + "       jdbc_user,\n"
-                  + "       jdbc_pass,\n"
-                  + "       aws_access_key_id,\n"
-                  + "       aws_secret_access_key\n"
-                  + "FROM CONNECTION\n"
-                  + "WHERE id =?\n";
+      "SELECT id, name,\n"
+          + "       type,\n"
+          + "       path,\n"
+          + "       jdbc_url,\n"
+          + "       jdbc_driver,\n"
+          + "       jdbc_user,\n"
+          + "       jdbc_pass,\n"
+          + "       aws_access_key_id,\n"
+          + "       aws_secret_access_key\n"
+          + "FROM CONNECTION\n"
+          + "WHERE id =?\n";
 
   public Connection getById(Long id) throws SQLException {
     PreparedStatement select = db.prepareStatement(SELECT_BY_ID);
@@ -108,13 +110,13 @@ public class ConnectionDAO implements ConnectionService {
   }
 
   private static final String SELECT_DEPENDENCY_CONN =
-          "SELECT cn.name,\n"
-                  + "       cn.type,\n"
-                  + "       cn.path,\n"
-                  + "       cn.jdbc_url,\n"
-                  + "       cn.jdbc_driver,\n"
-                  + "       cn.jdbc_user,\n"
-                  + "       cn.jdbc_pass,\n"
+      "SELECT cn.id, cn.name,\n"
+          + "       cn.type,\n"
+          + "       cn.path,\n"
+          + "       cn.jdbc_url,\n"
+          + "       cn.jdbc_driver,\n"
+          + "       cn.jdbc_user,\n"
+          + "       cn.jdbc_pass,\n"
           + "       cn.aws_access_key_id,\n"
           + "       cn.aws_secret_access_key\n"
           + "FROM TABLE_ AS tl\n"
@@ -136,22 +138,65 @@ public class ConnectionDAO implements ConnectionService {
     return getConnection(select);
   }
 
+  private static final String SELECT_TABLE_DEPS_CONNS =
+      "SELECT C.id,\n"
+          + "       C.name,\n"
+          + "       C.type,\n"
+          + "       C.path,\n"
+          + "       C.jdbc_url,\n"
+          + "       C.jdbc_driver,\n"
+          + "       C.jdbc_user,\n"
+          + "       C.jdbc_pass,\n"
+          + "       C.aws_access_key_id,\n"
+          + "       C.aws_secret_access_key\n"
+          + "FROM CONNECTION C\n"
+          + "         JOIN TARGET T on C.id = T.connection_id\n"
+          + "         JOIN DEPENDENCY D on T.id = D.dependency_target_id\n"
+          + "WHERE D.table_id = ?";
+
+  public Connection[] getTableDependenciesConnections(Long tableId) throws SQLException {
+    PreparedStatement select = db.prepareStatement(SELECT_TABLE_DEPS_CONNS);
+    select.setLong(1, tableId);
+    return getConnections(select);
+  }
+
   private Connection getConnection(PreparedStatement select) throws SQLException {
     ResultSet record = select.executeQuery();
     if (record.next()) {
       Connection res = new Connection();
-      res.setName(record.getString(1));
-      res.setType(ConnectionType.valueOf(record.getString(2)));
-      res.setPath(record.getString(3));
-      res.setJdbcUrl(record.getString(4));
-      res.setJdbcDriver(record.getString(5));
-      res.setJdbcUser(record.getString(6));
-      res.setJdbcPass(record.getString(7));
-      res.setAwsAccessKeyID(record.getString(8));
-      res.setAwsSecretAccessKey(record.getString(9));
+      res.setId(record.getLong(1));
+      res.setName(record.getString(2));
+      res.setType(ConnectionType.valueOf(record.getString(3)));
+      res.setPath(record.getString(4));
+      res.setJdbcUrl(record.getString(5));
+      res.setJdbcDriver(record.getString(6));
+      res.setJdbcUser(record.getString(7));
+      res.setJdbcPass(record.getString(8));
+      res.setAwsAccessKeyID(record.getString(9));
+      res.setAwsSecretAccessKey(record.getString(10));
       return res;
     }
     return null;
+  }
+
+  private Connection[] getConnections(PreparedStatement select) throws SQLException {
+    ResultSet record = select.executeQuery();
+    List<Connection> list = new ArrayList<>();
+    while (record.next()) {
+      Connection connection = new Connection();
+      connection.setId(record.getLong(1));
+      connection.setName(record.getString(2));
+      connection.setType(ConnectionType.valueOf(record.getString(3)));
+      connection.setPath(record.getString(4));
+      connection.setJdbcUrl(record.getString(5));
+      connection.setJdbcDriver(record.getString(6));
+      connection.setJdbcUser(record.getString(7));
+      connection.setJdbcPass(record.getString(8));
+      connection.setAwsAccessKeyID(record.getString(9));
+      connection.setAwsSecretAccessKey(record.getString(10));
+      list.add(connection);
+    }
+    return list.toArray(new Connection[list.size()]);
   }
 
   @Override

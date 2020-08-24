@@ -1,29 +1,21 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
-import io.qimia.uhrwerk.common.model.Source;
+import io.qimia.uhrwerk.common.model.Target;
 
-public class SourceResult {
-    Source newResult;
-    Source oldResult;
+public class TargetResult {
+
+    Target[] storedTargets;
     boolean success;
     boolean error;
     String message;
     Exception exception;
 
-    public Source getNewResult() {
-        return newResult;
+    public Target[] getStoredTargets() {
+        return storedTargets;
     }
 
-    public void setNewResult(Source newResult) {
-        this.newResult = newResult;
-    }
-
-    public Source getOldResult() {
-        return oldResult;
-    }
-
-    public void setOldResult(Source oldResult) {
-        this.oldResult = oldResult;
+    public void setStoredTargets(Target[] storedTargets) {
+        this.storedTargets = storedTargets;
     }
 
     public boolean isSuccess() {
@@ -32,7 +24,6 @@ public class SourceResult {
 
     public void setSuccess(boolean success) {
         this.success = success;
-        this.error = !success;
     }
 
     public boolean isError() {
@@ -41,7 +32,6 @@ public class SourceResult {
 
     public void setError(boolean error) {
         this.error = error;
-        this.success = !error;
     }
 
     public String getMessage() {

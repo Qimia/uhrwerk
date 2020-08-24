@@ -62,6 +62,8 @@ tables:
         version: "1.0"
         transform:
           type: "identity"
+          partition:
+            size: 4
       - area: staging
         vertical: sourcedb_1
         table: tableOne  # On DB

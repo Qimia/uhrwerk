@@ -1,28 +1,28 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
-import io.qimia.uhrwerk.common.model.Source;
+import io.qimia.uhrwerk.common.model.Partition;
 
-public class SourceResult {
-    Source newResult;
-    Source oldResult;
+public class PartitionResult {
+    Partition newResult;
+    Partition oldResult;
     boolean success;
     boolean error;
     String message;
     Exception exception;
 
-    public Source getNewResult() {
+    public Partition getNewResult() {
         return newResult;
     }
 
-    public void setNewResult(Source newResult) {
+    public void setNewResult(Partition newResult) {
         this.newResult = newResult;
     }
 
-    public Source getOldResult() {
+    public Partition getOldResult() {
         return oldResult;
     }
 
-    public void setOldResult(Source oldResult) {
+    public void setOldResult(Partition oldResult) {
         this.oldResult = oldResult;
     }
 

@@ -17,31 +17,7 @@ public class PartitionBuilder {
         this.partition.setPartitionTs(partitionTs);
         return this;
     }
-
-    public PartitionBuilder year(String year){
-        this.partition.setYear(year);
-        return this;
-    }
-
-    public PartitionBuilder month(String month){
-        this.partition.setMonth(month);
-        return this;
-    }
-
-    public PartitionBuilder day(String day){
-        this.partition.setDay(day);
-        return this;
-    }
-
-    public PartitionBuilder hour(String hour){
-        this.partition.setHour(hour);
-        return this;
-    }
-
-    public PartitionBuilder minute(String minute){
-        this.partition.setMinute(minute);
-        return this;
-    }
+    
 
     public PartitionBuilder partitionUnit(PartitionUnit partitionUnit){
         this.partition.setPartitionUnit(partitionUnit);

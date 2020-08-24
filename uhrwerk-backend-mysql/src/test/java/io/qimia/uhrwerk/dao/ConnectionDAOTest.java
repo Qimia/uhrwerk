@@ -6,6 +6,10 @@ import io.qimia.uhrwerk.common.model.Connection;
 import io.qimia.uhrwerk.common.model.ConnectionType;
 import org.junit.jupiter.api.Test;
 
+
+import io.qimia.uhrwerk.config.ConnectionBuilder;
+
+
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
@@ -59,4 +63,40 @@ class ConnectionDAOTest {
     assertNotNull(result.getNewConnection().getId());
     System.out.println(result.getNewConnection());
   }
+
+
+  @Test
+  void insertFullConnection() {
+    Connection[] conn = (new io.qimia.uhrwerk.config.ConnectionBuilder())
+            .name("S3")
+            .s3()
+            .path("S3Path")
+            .secretId("ID")
+            .secretKey("key")
+            .name("JDBC")
+            .jdbc()
+            .jdbcUrl("url")
+            .jdbcDriver("driver")
+            .user("user")
+            .pass("pass")
+            .name("file")
+            .file()
+            .path("filePath")
+            .build();
+
+    for (Connection c : conn)
+    {
+      ConnectionResult result = service.save(c, true);
+      assertTrue(result.isSuccess());
+      assertNotNull(result.getNewConnection());
+      assertNotNull(result.getNewConnection().getId());
+      System.out.println(result.getNewConnection());
+    }
+  }
+
+  @Test
+  void getByNameConnection() {
+
+  }
+
 }

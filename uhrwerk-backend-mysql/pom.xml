@@ -18,6 +18,11 @@
             <version>${version}</version>
         </dependency>
         <dependency>
+            <groupId>io.qimia</groupId>
+            <artifactId>uhrwerk-config</artifactId>
+            <version>${version}</version>
+        </dependency>
+        <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>${mysql.version}</version>

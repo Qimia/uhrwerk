@@ -91,12 +91,12 @@ public class Source{
         else{
             partition.validate(path);
         }
-        if(parallel_load == null){
-            throw new ConfigException("Missing field: " + path + "parallel_load");
-        }
-        else{
+        if(parallel_load != null){
             parallel_load.validate(path);
         }
+        //else {
+        //    throw new ConfigException("Missing field: " + path + "parallel_load");
+        //}
         if(select == null){
             throw new ConfigException("Missing field: " + path + "select");
         }
