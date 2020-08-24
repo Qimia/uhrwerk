@@ -25,10 +25,10 @@ object DependencyHelper {
                bulkDependency.dependency.getVersion)
 
   /**
-    * Group together continuous sequential groups of TablePartitionResult
-    * @param in
-    * @param maxSize
-    * @return
+    * Group together continuous sequential groups of resolved TablePartitionResult
+    * @param in full TablePartitionResultSet with all the results
+    * @param maxSize maximum size of the grouped together results
+    * @return array with grouped together TablePartitionResult objects
     */
   def createTablePartitionResultGroups(
       in: TablePartitionResultSet,
@@ -37,7 +37,7 @@ object DependencyHelper {
     val groups = TimeHelper.groupSequentialIncreasing(in.getResolvedTs,
                                                       partitionSize,
                                                       maxSize)
-    var queue = in.getProcessed
+    var queue = in.getResolved
     val res: mutable.ListBuffer[Array[TablePartitionResult]] =
       new mutable.ListBuffer
     groups.foreach(num => {
@@ -50,9 +50,9 @@ object DependencyHelper {
 
   /**
     * Go from a TablePartitionResult for a list of partitions, to a BulkDependencyResult for a list of Dependencies
-    * (facilitating grouping multiple batches for each dependency)
-    * @param partitionResults
-    * @return
+    * (facilitating grouping multiple batches for each dependency and assumes that they are combinable)
+    * @param partitionResults Array of TablePartitionResults which need to be transformed together
+    * @return Array of BulkDependencyResult, one for each dependency
     */
   def extractBulkDependencyResult(partitionResults: Array[TablePartitionResult])
     : List[BulkDependencyResult] = {
