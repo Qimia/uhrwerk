@@ -1,30 +1,12 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
-import io.qimia.uhrwerk.common.model.Partition;
-
-public class PartitionResult {
-    Partition newResult;
-    Partition oldResult;
+public class PartitionDependencyResult {
     boolean success;
     boolean error;
     String message;
     Exception exception;
 
-    public Partition getNewResult() {
-        return newResult;
-    }
-
-    public void setNewResult(Partition newResult) {
-        this.newResult = newResult;
-    }
-
-    public Partition getOldResult() {
-        return oldResult;
-    }
-
-    public void setOldResult(Partition oldResult) {
-        this.oldResult = oldResult;
-    }
+    public PartitionDependencyResult() {}
 
     public boolean isSuccess() {
         return success;
@@ -32,7 +14,6 @@ public class PartitionResult {
 
     public void setSuccess(boolean success) {
         this.success = success;
-        this.error = !success;
     }
 
     public boolean isError() {
@@ -41,7 +22,6 @@ public class PartitionResult {
 
     public void setError(boolean error) {
         this.error = error;
-        this.success = !error;
     }
 
     public String getMessage() {
