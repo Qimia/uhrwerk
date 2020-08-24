@@ -63,7 +63,7 @@ object JDBCTools {
     try {
       val jdbcConnection = getJDBCConnection(connection)
       val statement = jdbcConnection.createStatement
-      statement.execute(s"DROP DATABASE ${databaseName}")
+      statement.execute(s"DROP DATABASE `$databaseName`")
       jdbcConnection.close()
     } catch {
       case e: Exception => println(e.getLocalizedMessage)

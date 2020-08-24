@@ -79,7 +79,7 @@ object SparkFrameManager {
         .toString
     }
     else { // jdbc
-      table.getArea + "-" + table.getVertical + "." + table.getName + "-" + table.getVersion
+      "`" + table.getArea + "-" + table.getVertical + "`.`" + table.getName + "-" + table.getVersion.replace(".", "_") + "`"
     }
   }
 
@@ -101,7 +101,7 @@ object SparkFrameManager {
         .toString
     }
     else { // jdbc
-      dependency.getArea + "-" + dependency.getVertical + "." + dependency.getTableName + "-" + dependency.getVersion
+      "`" + dependency.getArea + "-" + dependency.getVertical + "`.`" + dependency.getTableName + "-" + dependency.getVersion.replace(".", "_") + "`"
     }
   }
 }
@@ -152,7 +152,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         .read
     }
 
-    val df = reader.format(source.getFormat).load(fullLocation) // todo change to getFormat
+    val df = reader.format(source.getFormat).load(fullLocation)
 
     if (startTS.isDefined && endTSExcl.isDefined) {
       df
@@ -182,13 +182,13 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
     val filter: Column = dependencyResult
       .succeeded
-      .map(p => p match {
-        case p if p.getMinute != null => col("minute") === s"${p.getYear}-${TimeTools.leftPad(p.getMonth)}-${TimeTools.leftPad(p.getDay)}-${TimeTools.leftPad(p.getHour)}-${TimeTools.leftPad(p.getMinute)}"
-        case p if p.getHour != null => col("hour") === s"${p.getYear}-${TimeTools.leftPad(p.getMonth)}-${TimeTools.leftPad(p.getDay)}-${TimeTools.leftPad(p.getHour)}"
-        case p if p.getDay != null => col("day") === s"${p.getYear}-${TimeTools.leftPad(p.getMonth)}-${TimeTools.leftPad(p.getDay)}"
-        case p if p.getMonth != null => col("month") === s"${p.getYear}-${TimeTools.leftPad(p.getMonth)}"
-        case p if p.getYear != null => col("year") === s"${p.getYear}"
-        case _ => throw new Exception("SparkFrameManager received an empty partition")
+      .map(p => {
+        val (year, month, day, hour, minute) = getTimeValues(p.getPartitionTs)
+        p.getPartitionUnit match {
+          case PartitionUnit.MINUTES => col("minute") === s"$minute"
+          case PartitionUnit.HOURS => col("hour") === s"$hour"
+          case _ => col("day") === s"$day"
+        }
       })
       .reduce((a, b) => a || b)
 
@@ -211,7 +211,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         .option("driver", dependencyResult.connection.getJdbcDriver)
         .option("user", dependencyResult.connection.getJdbcUser)
         .option("password", dependencyResult.connection.getJdbcPass)
-        .option("dbtable", getFullLocation(dependencyResult.connection.getPath, getDependencyPath(dependencyResult.dependency, false)))
+        .option("dbtable", getDependencyPath(dependencyResult.dependency, false))
         .load()
     } else {
       dfReaderWithUserOptions
@@ -303,6 +303,17 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     false
   }
 
+  def addTimeColumns(frame: DataFrame, ts: LocalDateTime): DataFrame = {
+    val (year, month, day, hour, minute) = getTimeValues(ts)
+
+    frame
+      .withColumn("year", lit(year))
+      .withColumn("month", lit(month))
+      .withColumn("day", lit(day))
+      .withColumn("hour", lit(hour))
+      .withColumn("minute", lit(minute))
+  }
+
   /**
    * Saves a table to all its targets.
    * Four possible scenarios regarding the timestamp:
@@ -322,100 +333,65 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
                               dataFrameWriterOptions: Option[Map[String, String]] = Option.empty): Unit = {
     locationTableInfo.getTargets.foreach(target => {
       val isJDBC = target.getConnection.getType.equals(ConnectionType.JDBC)
-      val path = getFullLocation(target.getConnection.getPath, getTablePath(locationTableInfo, !isJDBC, target.getFormat))
+      val tablePath = getTablePath(locationTableInfo, !isJDBC, target.getFormat)
+      val path = if (isJDBC) {
+        tablePath
+      } else {
+        getFullLocation(target.getConnection.getPath, tablePath)
+      }
 
       val (fullPath, df) = if (startTS.isDefined) {
         val datePath = createDatePath(startTS.get)
 
-        (concatenatePaths(path, datePath), frame.drop(timeColumns: _*))
+        if (isJDBC) {
+          val jdbcDF = addTimeColumns(frame, startTS.get)
+
+          (path, jdbcDF)
+        } else {
+          (concatenatePaths(path, datePath), frame.drop(timeColumns: _*))
+        }
       } else {
         (path, frame)
       }
 
-      if (isJDBC) {
-        writeDataFrameToJDBC(df, target.getConnection, target, locationTableInfo, startTS, dataFrameWriterOptions) // todo implement
+      val writer = df.write.mode(SaveMode.Append).format(target.getFormat)
+      val writerWithOptions = if (dataFrameWriterOptions.isDefined) {
+        writer
+          .options(dataFrameWriterOptions.get)
       } else {
-        val writer = df.write.mode(SaveMode.Append).format(target.getFormat)
-        val writerWithOptions = if (dataFrameWriterOptions.isDefined) {
-          writer
-            .options(dataFrameWriterOptions.get)
-        } else {
-          writer
-        }
+        writer
+      }
 
-        val writerWithPartitioning = if (startTS.isEmpty && containsTimeColumns(df)) {
-          writerWithOptions
-            .partitionBy(timeColumns: _*)
-        } else {
-          writerWithOptions
-        }
+      val writerWithPartitioning = if ((startTS.isEmpty || isJDBC) && containsTimeColumns(df)) {
+        writerWithOptions
+          .partitionBy(timeColumns: _*)
+      } else {
+        writerWithOptions
+      }
 
-        println(s"Saving DF to $fullPath")
-        writerWithPartitioning.save(fullPath)
+      println(s"Saving DF to $fullPath")
+      if (isJDBC) {
+        val jdbcWriter = writerWithPartitioning
+          .option("url", target.getConnection.getJdbcUrl)
+          .option("driver", target.getConnection.getJdbcDriver)
+          .option("user", target.getConnection.getJdbcUser)
+          .option("password", target.getConnection.getJdbcPass)
+          .option("dbtable", s"$fullPath")
+        try {
+          jdbcWriter
+            .save()
+        } catch {
+          case e: Exception =>
+            println(e.getLocalizedMessage)
+            println("Trying to create the database")
+            JDBCTools.createJDBCDatabase(target.getConnection, fullPath.split("\\.")(0))
+            jdbcWriter
+              .save()
+        }
+      } else {
+        writerWithPartitioning
+          .save(fullPath)
       }
     })
-  }
-
-  /**
-   * Write dataframe to JDBC. Either one batch or the full path.
-   *
-   * @param frame                  DataFrame to save
-   * @param conn                   Connection
-   * @param locationTargetInfo     Location Info
-   * @param startTS                Batch Timestamp, optional
-   * @param dataFrameWriterOptions Optional Spark writing options.
-   */
-  private def writeDataFrameToJDBC(frame: DataFrame,
-                                   conn: Connection,
-                                   locationTargetInfo: Target,
-                                   locationTableInfo: Table,
-                                   startTS: Option[LocalDateTime],
-                                   dataFrameWriterOptions: Option[Map[String, String]] = Option.empty): Unit = {
-    val (date: Option[String], batch: Option[String]) = if (startTS.isDefined) {
-      val duration = TimeTools.convertDurationStrToObj(locationTableInfo.getPartitionUnit, locationTableInfo.getPartitionSize)
-      val date = TimeTools.dateTimeToDate(startTS.get)
-      val batch = TimeTools.dateTimeToPostFix(startTS.get, duration)
-      (Option(date), Option(batch))
-    } else {
-      (Option.empty, Option.empty)
-    }
-
-    val df = if (date.isDefined && batch.isDefined) {
-      frame
-        .withColumn("date", lit(date.get))
-        .withColumn("batch", lit(batch.get))
-    } else {
-      frame
-    }
-
-    val dfWriterWithUserOptions = if (dataFrameWriterOptions.isDefined) {
-      df
-        .write
-        .options(dataFrameWriterOptions.get)
-    } else {
-      df
-        .write
-    }
-
-    val dfWriter: DataFrameWriter[Row] = dfWriterWithUserOptions
-      .mode(SaveMode.Append)
-      .format("jdbc")
-      .option("url", conn.getJdbcUrl)
-      .option("driver", conn.getJdbcDriver)
-    //      .option("user", conn.getUser)
-    //      .option("password", conn.getPass)
-    //      .option("dbtable", locationTableInfo.getPath)
-
-    try {
-      dfWriter
-        .save()
-    } catch {
-      case e: Exception =>
-        println(e.getLocalizedMessage)
-        println("Trying to create the database")
-        //        JDBCTools.createJDBCDatabase(conn, locationTableInfo.getPath.split("\\.")(0))
-        dfWriter
-          .save()
-    }
   }
 }

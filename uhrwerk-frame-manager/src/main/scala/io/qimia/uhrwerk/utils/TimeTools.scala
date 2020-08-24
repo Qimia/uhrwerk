@@ -4,7 +4,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.time.{Duration, LocalDateTime, LocalTime}
 
-import io.qimia.uhrwerk.common.model.{BatchTemporalUnit, PartitionUnit}
+import io.qimia.uhrwerk.common.model.PartitionUnit
 
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -21,27 +21,6 @@ object TimeTools {
    */
   def isDurationSizeDays(batchDuration: Duration): Boolean = {
     convertDurationToStr(batchDuration).contains("d")
-  }
-
-  /**
-   * Converts a duration to a backend BatchTemporalUnit.
-   *
-   * @param duration Duration to convert.
-   * @return Option[BatchTemporalUnit]
-   */
-  def convertDurationToBatchTemporalUnit(
-                                          duration: Duration): Option[BatchTemporalUnit] = {
-    val mappings = Map(
-      "m" -> BatchTemporalUnit.MINUTES,
-      "h" -> BatchTemporalUnit.HOURS,
-      "d" -> BatchTemporalUnit.DAYS,
-      "l" -> BatchTemporalUnit.MONTHS, // todo check if named correctly - "l" as Luna
-      "y" -> BatchTemporalUnit.YEARS
-    )
-
-    mappings collectFirst {
-      case (str, v) if convertDurationToStr(duration) contains str => v
-    }
   }
 
   /**
