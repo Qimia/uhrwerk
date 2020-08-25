@@ -364,8 +364,11 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
                               startTS: Option[LocalDateTime] = Option.empty,
                               dataFrameWriterOptions: Option[Array[Map[String, String]]] = Option.empty): Unit = {
     locationTableInfo.getTargets.zipWithIndex.foreach((item: (Target, Int)) => {
-      val target = item._1
-      val index = item._2
+      val target: Target = item._1
+      val index: Int = item._2
+      if (target.getConnection == null) {
+        throw new IllegalArgumentException("A connection is missing in the target.")
+      }
       val isJDBC = target.getConnection.getType.equals(ConnectionType.JDBC)
       val tablePath = getTablePath(locationTableInfo, !isJDBC, target.getFormat)
       val path = if (isJDBC) {

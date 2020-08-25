@@ -161,7 +161,7 @@ public class TargetDAO implements TargetService {
                 var shellConn = target.getConnection();
                 var shellConnName = shellConn.getName();
                 var newTargetConn = connectionRetriever.getByName(
-                        connectionRetriever.getDb(), shellConnName);
+                        shellConnName);
                 if (newTargetConn == null) {
                     saveResult.setSuccess(false);
                     saveResult.setError(false); // todo this might be wrong?

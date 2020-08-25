@@ -6,17 +6,11 @@ import io.qimia.uhrwerk.common.model.Connection;
 import io.qimia.uhrwerk.common.model.ConnectionType;
 import org.junit.jupiter.api.Test;
 
-
-import io.qimia.uhrwerk.config.ConnectionBuilder;
-
-
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ConnectionDAOTest {
 
@@ -103,7 +97,7 @@ class ConnectionDAOTest {
   void getByNameConnection() {
     try {
       for (String n : connNames) {
-        Connection con = service.getByName(db, n);
+        Connection con = service.getByName(n);
         System.out.println(con);
         assertEquals(n,con.getName());
       }

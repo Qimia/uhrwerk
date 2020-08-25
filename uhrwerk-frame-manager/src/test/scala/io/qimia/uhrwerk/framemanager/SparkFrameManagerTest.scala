@@ -236,8 +236,8 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     targetParquet.setFormat("parquet")
 
     val targetCsv = new Target
-    targetParquet.setConnection(connection)
-    targetParquet.setFormat("csv")
+    targetCsv.setConnection(connection)
+    targetCsv.setFormat("csv")
 
     val table = new Table
     table.setPartitionUnit(PartitionUnit.MINUTES)

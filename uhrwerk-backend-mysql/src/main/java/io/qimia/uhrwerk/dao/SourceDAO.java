@@ -140,9 +140,17 @@ public class SourceDAO implements SourceService {
                 throw new NullPointerException("The connection in this source " +
                         "(id = " + source.getId() + ") is null. It needs to be set.");
             }
-            if (connectionDAO.getById(source.getConnection().getId()) == null) {
+            Connection connection = null;
+            if (source.getConnection().getName() != null) {
+                connection = connectionDAO.getByName(source.getConnection().getName());
+            } else if (source.getConnection().getId() != null) {
+                connection = connectionDAO.getById(source.getConnection().getId());
+            }
+            if (connection == null) {
                 throw new NullPointerException("The connection for this source " +
                         "(id = " + source.getId() + ") is missing in the Metastore.");
+            } else {
+                source.setConnection(connection);
             }
             if (!overwrite) {
                 Source oldSource = getById(source.getId());

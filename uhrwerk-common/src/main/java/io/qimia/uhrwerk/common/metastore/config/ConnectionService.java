@@ -8,7 +8,7 @@ import java.sql.SQLException;
 public interface ConnectionService {
   public ConnectionResult save(Connection connection, boolean overwrite);
 
-  public Connection getByName(java.sql.Connection db, String name) throws SQLException;
+  public Connection getByName(String name) throws SQLException;
 
     public Connection getById(Long id) throws SQLException;
 

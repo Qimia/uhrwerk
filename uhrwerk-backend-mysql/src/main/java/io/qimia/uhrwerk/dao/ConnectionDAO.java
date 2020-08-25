@@ -81,7 +81,7 @@ public class ConnectionDAO implements ConnectionService {
           + "FROM CONNECTION\n"
           + "WHERE name =?\n";
 
-  public Connection getByName(java.sql.Connection db, String name) throws SQLException {
+  public Connection getByName(String name) throws SQLException {
     PreparedStatement select = db.prepareStatement(SELECT_BY_NAME);
     select.setString(1, name);
     return getConnection(select);
@@ -207,7 +207,7 @@ public class ConnectionDAO implements ConnectionService {
     result.setNewConnection(connection);
     try {
       if (!overwrite) {
-        Connection oldConnection = getByName(db, connection.getName());
+        Connection oldConnection = getByName(connection.getName());
         if (oldConnection != null) {
           result.setOldConnection(oldConnection);
           result.setMessage(
