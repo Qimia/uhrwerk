@@ -160,7 +160,7 @@ public class ConnectionDAO implements ConnectionService {
     return getConnections(select);
   }
 
-  private Connection getConnection(PreparedStatement select) throws SQLException {
+  public Connection getConnection(PreparedStatement select) throws SQLException {
     ResultSet record = select.executeQuery();
     if (record.next()) {
       Connection res = new Connection();
@@ -179,7 +179,7 @@ public class ConnectionDAO implements ConnectionService {
     return null;
   }
 
-  private Connection[] getConnections(PreparedStatement select) throws SQLException {
+  public Connection[] getConnections(PreparedStatement select) throws SQLException {
     ResultSet record = select.executeQuery();
     List<Connection> list = new ArrayList<>();
     while (record.next()) {
