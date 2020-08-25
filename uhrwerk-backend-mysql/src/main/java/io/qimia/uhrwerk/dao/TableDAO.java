@@ -52,11 +52,12 @@ public class TableDAO implements TableDependencyService, TableService {
 
     try {
       if (!overwrite) {
-        Table oldTable = getById(table.getId());
+        Table oldTable = getById(tableId);
         if (oldTable != null) {
           tableResult.setOldResult(oldTable);
 
-          if (!oldTable.equals(table)) {
+          System.out.println(table.toString());
+                    System.out.println(oldTable.toString());if (!oldTable.equals(table)) {
             tableResult.setMessage(
                 String.format(
                     "A Table with id=%d and different values already exists in the Metastore.",

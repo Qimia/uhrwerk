@@ -4,9 +4,7 @@ import io.qimia.uhrwerk.common.metastore.config.ConnectionResult;
 import io.qimia.uhrwerk.common.metastore.config.TableResult;
 import io.qimia.uhrwerk.common.model.*;
 import io.qimia.uhrwerk.config.ConnectionBuilder;
-import io.qimia.uhrwerk.config.DagBuilder;
 import io.qimia.uhrwerk.config.TableBuilder;
-import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 import org.junit.jupiter.api.Test;
 
 import java.sql.DriverManager;
@@ -25,72 +23,90 @@ class TableDAOTest {
   ConnectionDAO connectionDAO;
   PartitionDAO partitionDAO;
 
-  Source[] generateSources() {
+  Source[] generateSources(long tableId) {
     var sources = new Source[2];
 
     for (int i = 0; i < sources.length; i++) {
       sources[i] = SourceDAOTest.generateSource();
       sources[i].setPath("path" + i);
+      sources[i].setTableId(tableId);
       sources[i].setKey();
     }
 
     return sources;
   }
 
-  Dependency generateDependency() {
-    var dependency = new Dependency();
+  private Table generateTable() {
+    Table table = new Table();
+    table.setArea("dwh");
+    table.setVertical("vertical1");
+    table.setName("tableA");
+    table.setPartitionUnit(PartitionUnit.MINUTES);
+    table.setPartitionSize(15);
+    table.setParallelism(8);
+    table.setMaxBulkSize(96);
+    table.setVersion("1.0");
+    table.setKey();
 
-    dependency.setArea("a");
-    dependency.setDependencyTableId(123L);
-    dependency.setDependencyTargetId(456L);
-    dependency.setFormat("csv");
-    dependency.setTableId(SourceDAOTest.generateTable().getId());
-    dependency.setTableName("test-table-sourcedao");
-    dependency.setTransformPartitionSize(1);
-    dependency.setTransformPartitionUnit(PartitionUnit.DAYS);
-    dependency.setTransformType(PartitionTransformType.IDENTITY);
-    dependency.setVersion("1");
-    dependency.setVertical("jjjjj");
-    dependency.setKey();
+    table.setSources(generateSources(table.getId()));
+    table.setDependencies(generateDependencies(table.getId()));
+    table.setTargets(generateTargets(table.getId()));
 
-    return dependency;
+    return table;
   }
 
-  Dependency[] generateDependencies() {
+  Dependency[] generateDependencies(long tableId) {
     var dependencies = new Dependency[2];
 
     for (int i = 0; i < dependencies.length; i++) {
-      dependencies[i] = generateDependency();
-      var table = SourceDAOTest.generateTable();
-      table.setName("dependency" + i);
+      Table table = new Table();
+      table.setArea("staging");
+      table.setVertical("vertical2");
+      table.setName("tableDep" + i);
+      table.setPartitionUnit(PartitionUnit.MINUTES);
+      table.setPartitionSize(15);
+      table.setParallelism(8);
+      table.setMaxBulkSize(96);
+      table.setVersion("1.0");
       table.setKey();
       tableDAO.save(table, false);
-      dependencies[i].setDependencyTableId(table.getId());
+      var target = generateTarget(table.getId(), i);
+      new TargetDAO(db).save(new Target[] {target}, target.getTableId(), false);
+
+      dependencies[i] = new Dependency();
+      dependencies[i].setTransformType(PartitionTransformType.IDENTITY);
+      dependencies[i].setTransformPartitionUnit(PartitionUnit.MINUTES);
+      dependencies[i].setTransformPartitionSize(15);
+      dependencies[i].setFormat(target.getFormat());
+      dependencies[i].setTableName(table.getName());
+      dependencies[i].setArea(table.getArea());
+      dependencies[i].setVertical(table.getVertical());
+      dependencies[i].setVersion(table.getVersion());
+      dependencies[i].setTableId(tableId);
       dependencies[i].setKey();
     }
 
     return dependencies;
   }
 
-  Target generateTarget() {
+  Target generateTarget(long tableId, int i) {
     var target = new Target();
     var connection = SourceDAOTest.generateConnection();
     new ConnectionDAO(db).save(connection, true);
 
-    target.setFormat("csv");
-    target.setTableId(SourceDAOTest.generateTable().getId());
+    target.setFormat("csv" + i);
+    target.setTableId(tableId);
     target.setConnection(connection);
     target.setKey();
 
     return target;
   }
 
-  Target[] generateTargets() {
+  Target[] generateTargets(long tableId) {
     var targets = new Target[2];
 
     for (int i = 0; i < targets.length; i++) {
-      targets[i] = generateTarget();
-      targets[i].setFormat("format" + i);
+      targets[i] = generateTarget(tableId, i);
       targets[i].setKey();
     }
 
@@ -130,23 +146,59 @@ class TableDAOTest {
 
   @Test
   void saveTableWithAllChildren() {
-    var table = SourceDAOTest.generateTable();
-    table.setSources(generateSources());
-    table.setDependencies(generateDependencies());
-    table.setTargets(generateTargets());
+    var table = generateTable();
 
     var result = tableDAO.save(table, false);
 
-    System.out.println(result.getMessage());
     assertTrue(result.isSuccess());
     Arrays.stream(result.getSourceResults())
         .forEach(sourceResult -> assertTrue(sourceResult.isSuccess()));
 
-    System.out.println(result.getTargetResult().getMessage());
     assertTrue(result.getTargetResult().isSuccess());
 
-    System.out.println(result.getDependencyResult().getMessage());
     assertTrue(result.getDependencyResult().isSuccess());
+  }
+
+  @Test
+  void savingChangedTableTwiceShouldFail() {
+    var table = generateTable();
+
+    var result = tableDAO.save(table, false);
+
+    assertTrue(result.isSuccess());
+
+    table.setParallelism(9874263);
+    result = tableDAO.save(table, false);
+
+    assertTrue(result.isError());
+  }
+
+  @Test
+  void savingSameTableTwiceShouldSucceed() {
+    var table = generateTable();
+
+    var result = tableDAO.save(table, false);
+
+    assertTrue(result.isSuccess());
+
+    result = tableDAO.save(table, false);
+
+    System.out.println(result.getMessage());
+    assertTrue(result.isSuccess());
+  }
+
+  @Test
+  void savingChangedTableTwiceShouldSucceedWithOverwrite() {
+    var table = generateTable();
+
+    var result = tableDAO.save(table, false);
+
+    assertTrue(result.isSuccess());
+
+    table.setParallelism(9874263);
+    result = tableDAO.save(table, true);
+
+    assertTrue(result.isSuccess());
   }
 
   @Test

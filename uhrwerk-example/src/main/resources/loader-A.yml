@@ -1,0 +1,29 @@
+area: "staging"
+vertical: "yelp_db"
+table: "table_a"
+version: "1.0"
+parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+max_bulk_size: 1
+partition:
+  unit: "days"
+  size: 1
+
+sources:
+  - connection_name: "yelp_mysql"
+    path: "review"  # On DB
+    format: "jdbc"
+    version: "1.0"
+    partition:
+      unit: "days"
+      size: 1
+    parallel_load:
+      query: "SELECT id FROM <path> WHERE date >= '<lower_bound>' and date \\< '<upper_bound>'"
+      column: "id"
+      num: 8
+    select:
+      query: "SELECT * FROM <path> WHERE date >= '<lower_bound>' and date \\< '<upper_bound>';"
+      column: "date"
+
+targets:
+  - connection_name: "local_fs"
+    format: "parquet"

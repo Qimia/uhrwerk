@@ -1,0 +1,12 @@
+# For testing only a yelp source from db and a datalake
+
+- name: "yelp_mysql"
+  jdbc:
+    jdbc_url: 'jdbc:mysql://localhost:53306/yelp_db'
+    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    user: root
+    pass: mysql
+
+- name: "local_fs"
+  file:
+    path: './example_datalake'
