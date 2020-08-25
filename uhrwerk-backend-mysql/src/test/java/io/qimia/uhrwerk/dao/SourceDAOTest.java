@@ -179,10 +179,10 @@ public class SourceDAOTest {
 
         SourceResult result = service.save(source, true);
 
-        // without foreign keys this should work
+        // without foreign keys this should fail as well
         System.out.println(result.getMessage());
-        assertTrue(result.isSuccess());
-        assertFalse(result.isError());
+        assertFalse(result.isSuccess());
+        assertTrue(result.isError());
         assertNotNull(result.getNewResult());
         assertNotNull(result.getNewResult().getId());
         assertEquals(source, result.getNewResult());
@@ -197,6 +197,33 @@ public class SourceDAOTest {
         assertNotNull(resultConnectionNull.getNewResult());
         assertNotNull(resultConnectionNull.getNewResult().getId());
         assertEquals(source, resultConnectionNull.getNewResult());
+    }
+
+    @Test
+    void getWithNoConnectionShouldFail() throws SQLException {
+        Table table = generateTable();
+
+        TableDAO tableDAO = new TableDAO(db);
+        tableDAO.save(table, true);
+
+        Connection connection = generateConnection();
+
+        ConnectionDAO connectionDAO = new ConnectionDAO(db);
+        connectionDAO.save(connection, true);
+
+        Source source = generateSource();
+
+        SourceResult result = service.save(source, true);
+
+        System.out.println(result.getMessage());
+        assertTrue(result.isSuccess());
+        assertFalse(result.isError());
+        assertNotNull(result.getNewResult());
+        assertNotNull(result.getNewResult().getId());
+        assertEquals(source, result.getNewResult());
+
+        connectionDAO.deleteById(connection.getId());
+        assertThrows(NullPointerException.class, () -> service.getSourcesByTableId(table.getId()));
     }
 
     @Test

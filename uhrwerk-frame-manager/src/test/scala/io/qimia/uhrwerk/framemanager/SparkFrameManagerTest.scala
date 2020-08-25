@@ -231,9 +231,13 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     connection.setType(ConnectionType.FS)
     connection.setPath("src/test/resources/testlake/")
 
-    val target = new Target
-    target.setConnection(connection)
-    target.setFormat("parquet")
+    val targetParquet = new Target
+    targetParquet.setConnection(connection)
+    targetParquet.setFormat("parquet")
+
+    val targetCsv = new Target
+    targetParquet.setConnection(connection)
+    targetParquet.setFormat("csv")
 
     val table = new Table
     table.setPartitionUnit(PartitionUnit.MINUTES)
@@ -242,7 +246,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     table.setArea("source")
     table.setName("sourcenumberone")
     table.setVertical("testdb")
-    table.setTargets(Array(target))
+    table.setTargets(Array(targetParquet, targetCsv))
 
     manager.writeDataFrame(dfWithTS, table)
 
@@ -261,6 +265,10 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val bSourceWithTS = loadedDFSourceWithTS.collect()
     val a = df.sort("a", "b", "c").collect()
     assert(bSourceWithTS === a)
+
+    // test for csv too
+
+
   }
 
   "specifying timestamps but not the source select column" should "throw an exception" in {
@@ -424,7 +432,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val dataFrameOptions = Map("header" -> "true",
       "delimiter" -> "?",
       "inferSchema" -> "true")
-    manager.writeDataFrame(df, table, Option(dateTime), Option(dataFrameOptions))
+    manager.writeDataFrame(df, table, Option(dateTime), Option(Array(dataFrameOptions)))
 
     val dependency = Converters.convertTargetToDependency(target, table)
     val partition = new Partition

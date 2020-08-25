@@ -15,9 +15,12 @@ import java.util.ArrayList;
 
 public class SourceDAO implements SourceService {
     private java.sql.Connection db;
+    private ConnectionDAO connectionDAO;
+
 
     public SourceDAO(java.sql.Connection db) {
         this.db = db;
+        this.connectionDAO = new ConnectionDAO(db);
     }
 
     private static final String INSERT_SOURCE =
@@ -78,16 +81,20 @@ public class SourceDAO implements SourceService {
      *
      * @param record ResultSet.
      * @return Found source or null otherwise.
-     * @throws SQLException When something goes wrong with the SQL command.
+     * @throws SQLException         When something goes wrong with the SQL command.
+     * @throws NullPointerException When the source's connection is missing.
      */
-    private Source getSource(ResultSet record) throws SQLException {
+    private Source getSource(ResultSet record) throws SQLException, NullPointerException {
         if (record != null) {
             Source res = new Source();
             res.setId(record.getLong(1));
             res.setTableId(record.getLong(2));
 
-            ConnectionDAO connectionDAO = new ConnectionDAO(db);
             Connection connection = connectionDAO.getById(record.getLong(3));
+            if (connection == null) {
+                throw new NullPointerException("The connection for this source " +
+                        "(id = " + res.getId() + ") is missing in the Metastore.");
+            }
             res.setConnection(connection);
 
             res.setPath(record.getString(4));
@@ -110,9 +117,10 @@ public class SourceDAO implements SourceService {
      *
      * @param id Id of the source.
      * @return Found source or null otherwise.
-     * @throws SQLException When something goes wrong with the SQL command.
+     * @throws SQLException         When something goes wrong with the SQL command.
+     * @throws NullPointerException When the source's connection is missing.
      */
-    private Source getById(Long id) throws SQLException {
+    private Source getById(Long id) throws SQLException, NullPointerException {
         PreparedStatement select = db.prepareStatement(SELECT_BY_ID);
         select.setLong(1, id);
         ResultSet record = select.executeQuery();
@@ -129,7 +137,12 @@ public class SourceDAO implements SourceService {
         result.setNewResult(source);
         try {
             if (source.getConnection() == null) {
-                throw new NullPointerException("The connection in this source is null. It needs to be set.");
+                throw new NullPointerException("The connection in this source " +
+                        "(id = " + source.getId() + ") is null. It needs to be set.");
+            }
+            if (connectionDAO.getById(source.getConnection().getId()) == null) {
+                throw new NullPointerException("The connection for this source " +
+                        "(id = " + source.getId() + ") is missing in the Metastore.");
             }
             if (!overwrite) {
                 Source oldSource = getById(source.getId());
@@ -185,27 +198,21 @@ public class SourceDAO implements SourceService {
     }
 
     @Override
-    public Source[] getSourcesByTableId(Long tableId) {
+    public Source[] getSourcesByTableId(Long tableId) throws SQLException, NullPointerException {
         PreparedStatement select;
-        try {
-            select = db.prepareStatement(SELECT_BY_TABLE_ID);
-            select.setLong(1, tableId);
+        select = db.prepareStatement(SELECT_BY_TABLE_ID);
+        select.setLong(1, tableId);
 
-            ResultSet record = select.executeQuery();
-            ArrayList<Source> sources = new ArrayList<>();
+        ResultSet record = select.executeQuery();
+        ArrayList<Source> sources = new ArrayList<>();
 
-            while (record.next()) {
-                Source res = getSource(record);
+        while (record.next()) {
+            Source res = getSource(record);
 
-                sources.add(res);
-            }
-
-            return sources.toArray(new Source[0]);
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+            sources.add(res);
         }
 
-        return null;
+        return sources.toArray(new Source[0]);
     }
 
     @Override

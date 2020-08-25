@@ -354,13 +354,18 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @param frame                  DataFrame to save
    * @param locationTableInfo      Location Info
    * @param startTS                Start Timestamp, optional
-   * @param dataFrameWriterOptions Optional Spark writing options.
+   * @param dataFrameWriterOptions Optional array of Spark writing options.
+   *                               If the array has only one item (one map), this one is used for all targets.
+   *                               If the array has as many items as there are targets,
+   *                               each target is saved with different options.
    */
   override def writeDataFrame(frame: DataFrame,
                               locationTableInfo: Table,
                               startTS: Option[LocalDateTime] = Option.empty,
-                              dataFrameWriterOptions: Option[Map[String, String]] = Option.empty): Unit = {
-    locationTableInfo.getTargets.foreach(target => {
+                              dataFrameWriterOptions: Option[Array[Map[String, String]]] = Option.empty): Unit = {
+    locationTableInfo.getTargets.zipWithIndex.foreach((item: (Target, Int)) => {
+      val target = item._1
+      val index = item._2
       val isJDBC = target.getConnection.getType.equals(ConnectionType.JDBC)
       val tablePath = getTablePath(locationTableInfo, !isJDBC, target.getFormat)
       val path = if (isJDBC) {
@@ -385,8 +390,13 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
       val writer = df.write.mode(SaveMode.Append).format(target.getFormat)
       val writerWithOptions = if (dataFrameWriterOptions.isDefined) {
+        val options = if (dataFrameWriterOptions.get.length == locationTableInfo.getTargets.length) {
+          dataFrameWriterOptions.get(index)
+        } else {
+          dataFrameWriterOptions.get.head
+        }
         writer
-          .options(dataFrameWriterOptions.get)
+          .options(options)
       } else {
         writer
       }

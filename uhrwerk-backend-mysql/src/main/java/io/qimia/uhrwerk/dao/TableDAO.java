@@ -126,7 +126,7 @@ public class TableDAO implements TableDependencyService, TableService {
     insert.executeUpdate();
   }
 
-  private Table getById(Long id) throws SQLException {
+  private Table getById(Long id) throws SQLException, NullPointerException {
     PreparedStatement select = db.prepareStatement(SELECT_BY_ID);
     select.setLong(1, id);
     Table table = getTable(select);

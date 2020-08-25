@@ -34,8 +34,10 @@ public interface SourceService {
      *
      * @param tableId Table id.
      * @return An array of sources. Could be empty or null when something goes wrong.
+     * @throws SQLException         When something goes wrong with the connection to the Metastore.
+     * @throws NullPointerException When a source's connection is missing.
      */
-    Source[] getSourcesByTableId(Long tableId);
+    Source[] getSourcesByTableId(Long tableId) throws SQLException, NullPointerException;
 
     /**
      * Deletes all sources belonging to a table.

@@ -31,11 +31,13 @@ public class ConnectionDAO implements ConnectionService {
     this.db = db;
   }
 
+  private static final String DELETE_BY_ID = "DELETE FROM CONNECTION WHERE id = ?";
+
   private static final String UPSERT_CONN =
-      "INSERT INTO CONNECTION(id, name, type, path, jdbc_url, jdbc_driver, jdbc_user, jdbc_pass, aws_access_key_id, aws_secret_access_key)\n"
-          + "VALUES(?,?,?,?,?,?,?,?,?,?) "
-          + "ON DUPLICATE KEY UPDATE \n"
-          + "type=?, path=?, jdbc_url=?, jdbc_driver=?, jdbc_user=?, jdbc_pass=?, aws_access_key_id=?, aws_secret_access_key=?";
+          "INSERT INTO CONNECTION(id, name, type, path, jdbc_url, jdbc_driver, jdbc_user, jdbc_pass, aws_access_key_id, aws_secret_access_key)\n"
+                  + "VALUES(?,?,?,?,?,?,?,?,?,?) "
+                  + "ON DUPLICATE KEY UPDATE \n"
+                  + "type=?, path=?, jdbc_url=?, jdbc_driver=?, jdbc_user=?, jdbc_pass=?, aws_access_key_id=?, aws_secret_access_key=?";
 
   public Long save(Connection connection) throws SQLException {
     PreparedStatement insert = db.prepareStatement(UPSERT_CONN, Statement.RETURN_GENERATED_KEYS);
@@ -232,5 +234,16 @@ public class ConnectionDAO implements ConnectionService {
       resultSet[i] = connResult;
     }
     return resultSet;
+  }
+
+  /**
+   * Deletes a connection by its id.
+   *
+   * @param id Connection id
+   */
+  protected void deleteById(Long id) throws SQLException {
+    PreparedStatement delete = db.prepareStatement(DELETE_BY_ID);
+    delete.setLong(1, id);
+    delete.executeUpdate();
   }
 }
