@@ -11,8 +11,8 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions.{col, lit, to_date}
 
 object SparkFrameManager {
-  val timeColumns = List("year", "month", "day", "hour", "minute")
-  val timeColumnsFormats = List("yyyy", "yyyy-MM", "yyyy-MM-dd", "yyyy-MM-dd-HH", "yyyy-MM-dd-HH-mm")
+  private[framemanager] val timeColumns = List("year", "month", "day", "hour", "minute")
+  private[framemanager] val timeColumnsFormats = List("yyyy", "yyyy-MM", "yyyy-MM-dd", "yyyy-MM-dd-HH", "yyyy-MM-dd-HH-mm")
 
   /**
    * Concatenates paths into a single string. Handles properly all trailing slashes
@@ -21,7 +21,7 @@ object SparkFrameManager {
    * @param more  One or more paths
    * @return Concatenated path
    */
-  def concatenatePaths(first: String, more: String*): String = {
+  private[framemanager] def concatenatePaths(first: String, more: String*): String = {
     Paths.get(first, more: _*).toString
   }
 
@@ -32,15 +32,15 @@ object SparkFrameManager {
    * @param tablePath      Table path.
    * @return Full location.
    */
-  def getFullLocation(connectionPath: String, tablePath: String): String = {
+  private[framemanager] def getFullLocation(connectionPath: String, tablePath: String): String = {
     concatenatePaths(connectionPath, tablePath)
   }
 
-  def concatenateDateParts(first: String, second: String): String = {
+  private[framemanager] def concatenateDateParts(first: String, second: String): String = {
     first + "-" + second
   }
 
-  def getTimeValues(startTS: LocalDateTime): (String, String, String, String, String) = {
+  private[framemanager] def getTimeValues(startTS: LocalDateTime): (String, String, String, String, String) = {
     val year = startTS.getYear.toString
     val month = concatenateDateParts(year, TimeTools.leftPad(startTS.getMonthValue.toString))
     val day = concatenateDateParts(month, TimeTools.leftPad(startTS.getDayOfMonth.toString))
@@ -50,7 +50,7 @@ object SparkFrameManager {
     (year, month, day, hour, minute)
   }
 
-  def createDatePath(startTS: LocalDateTime): String = {
+  private[framemanager] def createDatePath(startTS: LocalDateTime): String = {
     val (year, month, day, hour, minute) = getTimeValues(startTS)
 
     concatenatePaths(s"year=$year",
@@ -69,7 +69,7 @@ object SparkFrameManager {
    * @param format     Target's format.
    * @return The concatenated path.
    */
-  def getTablePath(table: Table, fileSystem: Boolean, format: String): String = {
+  private[framemanager] def getTablePath(table: Table, fileSystem: Boolean, format: String): String = {
     if (fileSystem) {
       Paths.get(s"area=${table.getArea}",
         s"vertical=${table.getVertical}",
@@ -91,7 +91,7 @@ object SparkFrameManager {
    * @param fileSystem Whether the path is for a file system or for jdbc.
    * @return The concatenated path.
    */
-  def getDependencyPath(dependency: Dependency, fileSystem: Boolean): String = {
+  private[framemanager] def getDependencyPath(dependency: Dependency, fileSystem: Boolean): String = {
     if (fileSystem) {
       Paths.get(s"area=${dependency.getArea}",
         s"vertical=${dependency.getVertical}",
@@ -103,6 +103,57 @@ object SparkFrameManager {
     else { // jdbc
       "`" + dependency.getArea + "-" + dependency.getVertical + "`.`" + dependency.getTableName + "-" + dependency.getVersion.replace(".", "_") + "`"
     }
+  }
+
+  /**
+   * Checks whether a string is empty (or null because of Java classes).
+   *
+   * @param s String to check.
+   * @return True if null or empty.
+   */
+  private[framemanager] def isStringEmpty(s: String): Boolean = {
+    s == null || s.isEmpty
+  }
+
+  /**
+   * Checks whether a DataFrame contains all time columns.
+   *
+   * @param df DataFrame.
+   * @return True if the df contains all time columns with proper formatting.
+   */
+  private[framemanager] def containsTimeColumns(df: DataFrame): Boolean = {
+    if (!timeColumns.forall(df.columns.contains(_))) {
+      return false
+    }
+    df.cache()
+
+    if (timeColumns.zip(timeColumnsFormats).forall(p => {
+      df
+        .withColumn(p._1 + "_transformed", to_date(col(p._1), p._2))
+        .filter(col(p._1 + "_transformed").isNull)
+        .count == 0
+    })) {
+      return true
+    }
+    false
+  }
+
+  /**
+   * Adds time columns to a DataFrame from a specified timestamp.
+   *
+   * @param frame DataFrame to add columns to.
+   * @param ts    TimeStamp.
+   * @return DataFrame with the time columns.
+   */
+  private[framemanager] def addTimeColumns(frame: DataFrame, ts: LocalDateTime): DataFrame = {
+    val (year, month, day, hour, minute) = getTimeValues(ts)
+
+    frame
+      .withColumn("year", lit(year))
+      .withColumn("month", lit(month))
+      .withColumn("day", lit(day))
+      .withColumn("hour", lit(hour))
+      .withColumn("minute", lit(minute))
   }
 }
 
@@ -116,11 +167,17 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @param endTSExcl              End Timestamp exclusive
    * @param dataFrameReaderOptions Optional Spark reading options.
    * @return DataFrame
+   * @throws IllegalArgumentException In case one or both timestamps are specified but the source select column is empty
    */
   override def loadSourceDataFrame(source: Source,
                                    startTS: Option[LocalDateTime] = Option.empty,
                                    endTSExcl: Option[LocalDateTime] = Option.empty,
                                    dataFrameReaderOptions: Option[Map[String, String]] = Option.empty): DataFrame = {
+    if ((startTS.isDefined || endTSExcl.isDefined) && isStringEmpty(source.getSelectColumn)) {
+      throw new IllegalArgumentException("When one or both of the timestamps are specified, " +
+        "the source.selectColumn needs to be set as well.")
+    }
+
     if (source.getConnection.getType.equals(ConnectionType.JDBC)) {
       loadSourceFromJDBC(source, startTS, endTSExcl, dataFrameReaderOptions)
     } else {
@@ -156,14 +213,14 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
     if (startTS.isDefined && endTSExcl.isDefined) {
       df
-        .filter(col(source.getSelectColumn) >= startTS.get)
-        .filter(col(source.getSelectColumn) < endTSExcl.get)
+        .filter(col(source.getSelectColumn) >= TimeTools.convertTSToString(startTS.get))
+        .filter(col(source.getSelectColumn) < TimeTools.convertTSToString(endTSExcl.get))
     } else if (startTS.isDefined) {
       df
-        .filter(col(source.getSelectColumn) >= startTS.get)
+        .filter(col(source.getSelectColumn) >= TimeTools.convertTSToString(startTS.get))
     } else if (endTSExcl.isDefined) {
       df
-        .filter(col(source.getSelectColumn) < endTSExcl.get)
+        .filter(col(source.getSelectColumn) < TimeTools.convertTSToString(endTSExcl.get))
     } else {
       df
     }
@@ -249,7 +306,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
     val dfReaderWithQuery: DataFrameReader = if (source.getSelectQuery.nonEmpty) {
       val query: String =
-        JDBCTools.queryTable(source.getSelectQuery, startTS, endTSExcl)
+        JDBCTools.fillInQuery(source.getSelectQuery, startTS, endTSExcl)
 
       val dfReaderWithQuery = dfReaderWithUserOptions
         .option("dbtable", query)
@@ -267,7 +324,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           .option("partitionColumn", source.getParallelLoadColumn)
           .option("lowerBound", minId)
           .option("upperBound", maxId)
-      } else if (source.getSelectColumn.nonEmpty && startTS.isDefined && endTSExcl.isDefined) {
+      } else if (!isStringEmpty(source.getSelectColumn) && startTS.isDefined && endTSExcl.isDefined) {
         dfReaderWithQuery
           .option("partitionColumn", source.getSelectColumn)
           .option("lowerBound", TimeTools.convertTSToString(startTS.get))
@@ -284,34 +341,6 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       .load()
 
     df
-  }
-
-  def containsTimeColumns(df: DataFrame): Boolean = {
-    if (!timeColumns.forall(df.columns.contains(_))) {
-      return false
-    }
-    df.cache()
-
-    if (timeColumns.zip(timeColumnsFormats).forall(p => {
-      df
-        .withColumn(p._1 + "_transformed", to_date(col(p._1), p._2))
-        .filter(col(p._1 + "_transformed").isNull)
-        .count == 0
-    })) {
-      return true
-    }
-    false
-  }
-
-  def addTimeColumns(frame: DataFrame, ts: LocalDateTime): DataFrame = {
-    val (year, month, day, hour, minute) = getTimeValues(ts)
-
-    frame
-      .withColumn("year", lit(year))
-      .withColumn("month", lit(month))
-      .withColumn("day", lit(day))
-      .withColumn("hour", lit(hour))
-      .withColumn("minute", lit(minute))
   }
 
   /**

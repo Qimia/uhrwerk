@@ -8,7 +8,7 @@ import java.util.Comparator
 import io.qimia.uhrwerk.common.framemanager.BulkDependencyResult
 import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.tags.{DbTest, Slow}
-import io.qimia.uhrwerk.utils.JDBCTools
+import io.qimia.uhrwerk.utils.{JDBCTools, TimeTools}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
@@ -180,7 +180,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
 
     val dependency = Converters.convertTargetToDependency(target, table)
     val partition = new Partition
-    partition.setPartitionTs(LocalDateTime.of(2020, 2, 4, 10, 30))
+    partition.setPartitionTs(dateTime)
     partition.setPartitionUnit(PartitionUnit.MINUTES)
     val dependencyResult = BulkDependencyResult(Array(dateTime), dependency, connection, Array(partition))
     val loadedDF = manager
@@ -210,18 +210,78 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     assert(a === bSource)
   }
 
+  "source loading with timestamps" should "return proper partitions" in {
+    val spark = getSparkSession
+
+    val manager = new SparkFrameManager(spark)
+    val df = createMockDataFrame(spark)
+    val timestamps = List(LocalDateTime.of(2020, 2, 4, 10, 30),
+      LocalDateTime.of(2020, 2, 4, 10, 45),
+      LocalDateTime.of(2020, 2, 4, 11, 0))
+
+    val dfWithTS: DataFrame = timestamps.map(ts => {
+      df.withColumn("created_at", lit(TimeTools.convertTSToString(ts)))
+    }).reduce((one, two) => one.union(two))
+
+    // save df first with some partitions
+    assert(dfWithTS.count === 300)
+
+    val connection = new Connection
+    connection.setName("testSparkFrameManager")
+    connection.setType(ConnectionType.FS)
+    connection.setPath("src/test/resources/testlake/")
+
+    val target = new Target
+    target.setConnection(connection)
+    target.setFormat("parquet")
+
+    val table = new Table
+    table.setPartitionUnit(PartitionUnit.MINUTES)
+    table.setPartitionSize(15)
+    table.setVersion("1")
+    table.setArea("source")
+    table.setName("sourcenumberone")
+    table.setVertical("testdb")
+    table.setTargets(Array(target))
+
+    manager.writeDataFrame(dfWithTS, table)
+
+    val source = new Source
+    source.setConnection(connection)
+    source.setFormat("parquet")
+    source.setPartitionSize(15)
+    source.setPartitionUnit(PartitionUnit.MINUTES)
+    source.setPath("area=source/vertical=testdb/table=sourcenumberone/version=1/format=parquet")
+    source.setSelectColumn("created_at")
+
+    val dateTime = timestamps.head
+    val loadedDFSourceWithTS = manager.loadSourceDataFrame(source, startTS = Option(dateTime), endTSExcl = Option(dateTime.plusMinutes(source.getPartitionSize)))
+      .drop("created_at")
+      .sort("a", "b", "c")
+    val bSourceWithTS = loadedDFSourceWithTS.collect()
+    val a = df.sort("a", "b", "c").collect()
+    assert(bSourceWithTS === a)
+  }
+
+  "specifying timestamps but not the source select column" should "throw an exception" in {
+    val spark = getSparkSession
+    val manager = new SparkFrameManager(spark)
+
+    assertThrows[IllegalArgumentException](manager.loadSourceDataFrame(new Source, startTS = Option(LocalDateTime.now())))
+  }
+
   "containsTimeColumns" should "return true if all time columns are present" in {
     val spark = getSparkSession
     val ts = LocalDateTime.of(2015, 10, 12, 20, 0)
     val df = createMockDataFrame(spark, Option(ts))
     val manager = new SparkFrameManager(spark)
 
-    assert(manager.containsTimeColumns(df) === true)
-    assert(manager.containsTimeColumns(df.drop("hour")) === false)
-    assert(manager.containsTimeColumns(df.withColumn("day", lit("03"))) === false)
+    assert(SparkFrameManager.containsTimeColumns(df) === true)
+    assert(SparkFrameManager.containsTimeColumns(df.drop("hour")) === false)
+    assert(SparkFrameManager.containsTimeColumns(df.withColumn("day", lit("03"))) === false)
   }
 
-  "load DFs" should "result in quick access to a range of batches" in {
+  "loading bulk dependencies" should "result in quick access to a range of batches" in {
     val spark = getSparkSession
     import spark.implicits._
     val manager = new SparkFrameManager(spark)
@@ -338,7 +398,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     assertThrows[Exception](manager.loadDependencyDataFrame(dependencyResult))
   }
 
-  "writing and loading with options with time columns" should "work" in {
+  "writing and loading with options with time columns" should "save and read a df" in {
     val spark = getSparkSession
 
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)

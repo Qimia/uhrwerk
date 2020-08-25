@@ -2,7 +2,6 @@ package io.qimia.uhrwerk.common.model;
 
 import net.openhft.hashing.LongHashFunction;
 
-import java.nio.file.Paths;
 import java.util.Objects;
 
 public class Dependency implements Comparable<Dependency> {
@@ -106,32 +105,6 @@ public class Dependency implements Comparable<Dependency> {
 
     public void setVersion(String version) {
         this.version = version;
-    }
-
-    /**
-     * Concatenates area, vertical, table, version, and format into a path. Either with slashes for a
-     * file system or with dashes and a dot for jdbc.
-     *
-     * @param fileSystem Whether the path is for a file system or for jdbc.
-     * @return The concatenated path.
-     */
-    public String getPath(Boolean fileSystem) {
-        if (fileSystem) {
-            return Paths.get(
-                    "area=",
-                    area,
-                    "vertical=",
-                    vertical,
-                    "table=",
-                    tableName,
-                    "version=",
-                    version,
-                    "format=",
-                    format)
-                    .toString();
-        } else { // jdbc
-            return area + "-" + vertical + "." + tableName + "-" + version;
-        }
     }
 
     public PartitionTransformType getTransformType() {

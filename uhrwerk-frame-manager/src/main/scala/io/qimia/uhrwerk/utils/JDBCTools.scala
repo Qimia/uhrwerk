@@ -163,19 +163,16 @@ object JDBCTools {
    * @param upperBound    Optional upper bound
    * @return The final query
    */
-  def queryTable(queryTemplate: String,
-                 lowerBound: Option[LocalDateTime] = Option.empty,
-                 upperBound: Option[LocalDateTime] = Option.empty): String = {
-    //    val query = new ST(queryTemplate)
-    //    if (lowerBound.isDefined) {
-    //      query.add("lower_bound", TimeTools.convertTSToString(lowerBound.get))
-    //    }
-    //    if (upperBound.isDefined) {
-    //      query.add("upper_bound", TimeTools.convertTSToString(upperBound.get))
-    //    }
-    //    s"(${query.render}) AS tmp_table"
-
-    // todo implement
-    ""
+  def fillInQuery(queryTemplate: String,
+                  lowerBound: Option[LocalDateTime] = Option.empty,
+                  upperBound: Option[LocalDateTime] = Option.empty): String = {
+    var query = queryTemplate
+    if (lowerBound.isDefined) {
+      query = query.replace("lower_bound", TimeTools.convertTSToString(lowerBound.get))
+    }
+    if (upperBound.isDefined) {
+      query = query.replace("upper_bound", TimeTools.convertTSToString(upperBound.get))
+    }
+    s"($query) AS tmp_table"
   }
 }
