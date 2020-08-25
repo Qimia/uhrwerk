@@ -4,23 +4,29 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.common.metastore.dependency.TableDependencyService
-import io.qimia.uhrwerk.common.model.{Partition, Table}
+import io.qimia.uhrwerk.common.model.{Partition, PartitionUnit, Table, Target}
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
 import io.qimia.uhrwerk.engine.Environment.Ident
-import io.qimia.uhrwerk.engine.tools.{
-  DependencyHelper,
-  SourceHelper,
-  TimeHelper
-}
+import io.qimia.uhrwerk.engine.tools.{DependencyHelper, SourceHelper, TimeHelper}
 import org.apache.spark.sql.DataFrame
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
 
 object TableWrapper {
-  def createPartitions(): Array[Partition] = {
-    val part = new Partition
-    Array(part)
+  def createPartitions(partitions: Array[LocalDateTime],
+                       partitionUnit: PartitionUnit,
+                       partitionSize: Int,
+                       targetId: Long): Array[Partition] = {
+    partitions.map(t => {
+      val newPart = new Partition()
+      newPart.setPartitionTs(t)
+      newPart.setPartitionSize(partitionSize)
+      newPart.setPartitionUnit(partitionUnit)
+      newPart.setTargetId(targetId)
+      newPart.setKey()
+      newPart
+    })
   }
 }
 
@@ -43,6 +49,8 @@ class TableWrapper(metastore: MetaStore,
       startTS: LocalDateTime,
       endTSExcl: Option[LocalDateTime] = Option.empty): Boolean = {
     // TODO: Log start of single task for table here
+    println("Start of Single Run")
+    println(s"TS: ${startTS}")
 
     val inputDepDFs: List[(Ident, DataFrame)] =
       if (dependencyResults.nonEmpty) {
@@ -85,20 +93,21 @@ class TableWrapper(metastore: MetaStore,
         false
       }
     }
-    // TODO: Log Success for metastore here (and write partitions here)
+    println("End of Single Run")
+    // TODO: Proper logging here
     success
   }
 
   /**
     * Process table for given array of partition (start) datetimes
-    * @param partitions Array of localdatetime denoting the starttimes of the partitions
+    * @param partitionsTs Array of localdatetime denoting the starttimes of the partitions
     * @param ex execution context onto which the futures are created
     * @return list of futures for the started tasks
     */
-  def runTasks(partitions: Array[LocalDateTime])(
+  def runTasks(partitionsTs: Array[LocalDateTime])(
       implicit ex: ExecutionContext): List[Future[Unit]] = {
     val dependencyRes =
-      metastore.tableDependencyService.processingPartitions(table, partitions)
+      metastore.tableDependencyService.processingPartitions(table, partitionsTs)
 
     // TODO: Reporting of Missing LocalDateTime?
 
@@ -109,19 +118,25 @@ class TableWrapper(metastore: MetaStore,
     val tasks = groups.map(partitionGroup => {
       val bulkInput =
         DependencyHelper.extractBulkDependencyResult(partitionGroup)
+      println(s"BulkInput length: ${bulkInput.length}")
       val startTs = partitionGroup.head.getPartitionTs
       val endTs = if (partitionGroup.length > 1) {
-        Option(partitionGroup.last.getPartitionTs)
+        val lastInclusivePartitionTs = partitionGroup.last.getPartitionTs
+        val tableDuration = TimeHelper.convertToDuration(table.getPartitionUnit,
+                                                         table.getPartitionSize)
+        Option(lastInclusivePartitionTs.plus(tableDuration))
       } else {
         Option.empty
       }
       Future {
         val res = singleRun(bulkInput, startTs, endTs)
         if (res) {
-          val partitions = TableWrapper.createPartitions()
-          val _ = metastore.partitionService.save(partitions, true)
-          // TODO: Overwrite hardcoded on at the moment
-          // TODO: Need to handle failure to store
+          table.getTargets.foreach((t: Target) => {
+            val partitions = TableWrapper.createPartitions(partitionsTs, table.getPartitionUnit, table.getPartitionSize, t.getTableId)
+            val _ = metastore.partitionService.save(partitions, true)
+            // TODO: Overwrite hardcoded on at the moment
+            // TODO: Need to handle failure to store
+          })
         }
       }
     })

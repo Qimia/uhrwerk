@@ -2,8 +2,8 @@ package io.qimia.uhrwerk.engine.tools
 
 import java.time.{Duration, LocalDateTime}
 
-import io.qimia.uhrwerk.common.metastore.dependency.{TablePartitionResult, TablePartitionResultSet}
-import io.qimia.uhrwerk.common.model.{Partition, PartitionUnit}
+import io.qimia.uhrwerk.common.metastore.dependency.{DependencyResult, TablePartitionResult, TablePartitionResultSet}
+import io.qimia.uhrwerk.common.model.{Connection, Dependency, Partition, PartitionTransformType, PartitionUnit}
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.annotation.tailrec
@@ -104,6 +104,55 @@ class DependencyHelperTest extends AnyFlatSpec {
       partitions(2)(2),
     )
     assert(outRes === expectedRes)
+  }
+
+  "Going from TablePartitionResult to BulkDependencyResult" should "result in the same data on a different axis" in {
+    val conn1 = new Connection()
+    conn1.setName("testConn")
+    val depA = new Dependency()
+    depA.setTableName("sometable")
+    depA.setTransformType(PartitionTransformType.IDENTITY)
+    depA.setTransformPartitionSize(1)
+    val depB = new Dependency()
+    depB.setTableName("anothertable")
+    depB.setTransformType(PartitionTransformType.AGGREGATE)
+    depB.setTransformPartitionSize(2)
+
+
+    val time1 = LocalDateTime.of(2010, 4, 5, 10, 0)
+    val res1 = new TablePartitionResult()
+    res1.setResolved(true)
+    res1.setProcessed(false)
+    res1.setPartitionTs(time1)
+    val res1depA = new DependencyResult()
+    res1depA.setSuccess(true)
+    res1depA.setConnection(conn1)
+    res1depA.setDependency(depA)
+    res1depA.setPartitionTs(time1)
+    res1depA.setSucceeded(Array(time1))
+    val res1depAPart1 = new Partition()
+    res1depAPart1.setPartitionUnit(PartitionUnit.HOURS)
+    res1depAPart1.setPartitionSize(1)
+    res1depAPart1.setPartitionTs(time1)
+    res1depA.setPartitions(Array(res1depAPart1))
+    val res1depB = new DependencyResult()
+    res1depB.setSuccess(true)
+    res1depB.setConnection(conn1)
+    res1depB.setDependency(depB)
+    res1depB.setPartitionTs(time1)
+    res1depB.setSucceeded(Array(time1, LocalDateTime.of(2010, 4, 5, 10, 30)))
+    val res1depBPart1 = new Partition()
+    res1depBPart1.setPartitionUnit(PartitionUnit.MINUTES)
+    res1depBPart1.setPartitionSize(30)
+    res1depBPart1.setPartitionTs(time1)
+    val res1depBPart2 = new Partition()
+    res1depBPart2.setPartitionUnit(PartitionUnit.MINUTES)
+    res1depBPart2.setPartitionSize(30)
+    res1depBPart2.setPartitionTs(LocalDateTime.of(2010, 4, 5, 10, 30))
+    res1depA.setPartitions(Array(res1depBPart1, res1depBPart2))
+    res1.setResolvedDependencies(Array(res1depA, res1depB))
+
+    // TODO add 2 more TablePartitionResult and then use `extractBulkDependencyResult`
   }
 
 }

@@ -17,6 +17,11 @@
             <artifactId>uhrwerk-engine</artifactId>
             <version>${version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.qimia</groupId>
+            <artifactId>uhrwerk-frame-manager</artifactId>
+            <version>${version}</version>
+        </dependency>
 
         <!-- External -->
         <dependency>

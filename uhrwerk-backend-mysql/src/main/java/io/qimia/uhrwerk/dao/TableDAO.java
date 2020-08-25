@@ -182,9 +182,66 @@ public class TableDAO implements TableDependencyService, TableService {
           + "         JOIN TARGET TR on TR.id = D.dependency_target_id\n"
           + "ORDER BY D.id";
 
+  /**
+   * When a table has no dependencies, all we need to do is check if it has already been processed
+   * for each requested partitionTS
+   * @param table table which needs to be processed
+   * @param requestedPartitionTs list of partition starting timestamps
+   * @return all info required for running a table
+   * @throws SQLException
+   */
+  private TablePartitionResultSet processDepLessPartitions(
+          Table table, LocalDateTime[] requestedPartitionTs) throws SQLException {
+    Partition[] processedPartitions =
+            partitionDAO.getPartitions(table.getTargets()[0].getId(), requestedPartitionTs);
+    TreeSet<LocalDateTime> processedTs = new TreeSet<>();
+    for (Partition processedPartition : processedPartitions) {
+      processedTs.add(processedPartition.getPartitionTs());
+    }
+
+    List<LocalDateTime> resolvedTs = new ArrayList<>();
+
+    List<TablePartitionResult> resolved = new ArrayList<>();
+    List<TablePartitionResult> processed = new ArrayList<>();
+
+    for (LocalDateTime requestedPartitionT : requestedPartitionTs) {
+      TablePartitionResult tablePartitionResult = new TablePartitionResult();
+      LocalDateTime partitionTs = requestedPartitionT;
+      tablePartitionResult.setPartitionTs(partitionTs);
+      tablePartitionResult.setResolved(true);
+      tablePartitionResult.setFailedDependencies(new DependencyResult[0]);
+      tablePartitionResult.setResolvedDependencies(new DependencyResult[0]);
+      if (processedTs.contains(partitionTs)) {
+        tablePartitionResult.setProcessed(true);
+        processed.add(tablePartitionResult);
+      } else {
+        tablePartitionResult.setProcessed(false);
+        resolved.add(tablePartitionResult);
+        resolvedTs.add(tablePartitionResult.getPartitionTs());
+      }
+    }
+
+    TablePartitionResultSet tablePartitionResultSet = new TablePartitionResultSet();
+    tablePartitionResultSet.setProcessed(
+            processed.toArray(new TablePartitionResult[processed.size()]));
+    tablePartitionResultSet.setResolved(
+            resolved.toArray(new TablePartitionResult[resolved.size()]));
+    tablePartitionResultSet.setFailed(new TablePartitionResult[0]);
+
+    tablePartitionResultSet.setProcessedTs(
+            processedTs.toArray(new LocalDateTime[processedTs.size()]));
+    tablePartitionResultSet.setResolvedTs(resolvedTs.toArray(new LocalDateTime[resolvedTs.size()]));
+    tablePartitionResultSet.setFailedTs(new LocalDateTime[0]);
+    return tablePartitionResultSet;
+  }
+
   @Override
   public TablePartitionResultSet processingPartitions(
       Table table, LocalDateTime[] requestedPartitionTs) throws SQLException {
+    if ((table.getDependencies() == null) || (table.getDependencies().length == 0)) {
+      return processDepLessPartitions(table, requestedPartitionTs);
+    }
+
     // FIXME which target for the table should be used for getting (already) processed partition of
     // the table
     Partition[] processedPartitions =

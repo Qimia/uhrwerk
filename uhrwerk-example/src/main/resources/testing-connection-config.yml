@@ -7,6 +7,10 @@
     user: root
     pass: mysql
 
-- name: "local_fs"
+- name: "local_fs_lake"
   file:
     path: './example_datalake'
+
+- name: "local_fs_source"
+  file:
+    path: './example_dataset'
