@@ -8,6 +8,7 @@ import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.concurrent.ExecutionContext
+import scala.sys.exit
 
 object LoaderAParq extends App {
 
@@ -35,6 +36,8 @@ object LoaderAParq extends App {
   val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0))
   val singleExecutor = Executors.newSingleThreadExecutor()
   implicit val executorRunner = ExecutionContext.fromExecutor(singleExecutor)
-  wrapper.get.runTasks(runTimes)
+  val results = wrapper.get.runTasksAndWait(runTimes, false)
+  println(results)
 
+  sparkSess.close()
 }

@@ -20,6 +20,6 @@ object DownloadParquetReviews extends App {
     .option("query", "SELECT * FROM review WHERE date >= '2012-05-01' AND date < '2012-05-02'")
     .load()
 
-  jdbcDF.write.parquet("./example_dataset/reviews")
+  jdbcDF.write.parquet("./example_dataset/review")
 
 }

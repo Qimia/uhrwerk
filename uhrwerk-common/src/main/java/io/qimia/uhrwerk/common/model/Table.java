@@ -133,12 +133,20 @@ public class Table {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Table table = (Table) o;
-        Arrays.sort(dependencies);
-        Arrays.sort(table.dependencies);
+        if (dependencies != null) {
+            Arrays.sort(dependencies);
+        }
+        if (table.dependencies != null) {
+            Arrays.sort(table.dependencies);
+        }
         Arrays.sort(targets);
         Arrays.sort(table.targets);
-        Arrays.sort(sources);
-        Arrays.sort(table.sources);
+        if (sources != null) {
+            Arrays.sort(sources);
+        }
+        if (table.sources != null) {
+            Arrays.sort(table.sources);
+        }
 
         return parallelism == table.parallelism
                 && maxBulkSize == table.maxBulkSize

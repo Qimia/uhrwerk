@@ -2,16 +2,21 @@ package io.qimia.uhrwerk.engine
 
 import java.nio.file.Path
 import java.time.LocalDateTime
+import java.util.concurrent.Executors
 
 import io.qimia.uhrwerk.common.metastore.dependency.TableDependencyService
 import io.qimia.uhrwerk.common.model.{Partition, PartitionUnit, Table, Target}
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
 import io.qimia.uhrwerk.engine.Environment.Ident
-import io.qimia.uhrwerk.engine.tools.{DependencyHelper, SourceHelper, TimeHelper}
+import io.qimia.uhrwerk.engine.tools.{
+  DependencyHelper,
+  SourceHelper,
+  TimeHelper
+}
 import org.apache.spark.sql.DataFrame
 
 import scala.collection.mutable
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future, duration}
 
 object TableWrapper {
   def createPartitions(partitions: Array[LocalDateTime],
@@ -104,10 +109,17 @@ class TableWrapper(metastore: MetaStore,
     * @param ex execution context onto which the futures are created
     * @return list of futures for the started tasks
     */
-  def runTasks(partitionsTs: Array[LocalDateTime])(
-      implicit ex: ExecutionContext): List[Future[Unit]] = {
+  def runTasks(partitionsTs: Array[LocalDateTime], overwrite: Boolean = false)(
+      implicit ex: ExecutionContext): List[Future[Boolean]] = {
     val dependencyRes =
       metastore.tableDependencyService.processingPartitions(table, partitionsTs)
+
+    // If no tasks to be done => quit
+    val taskTimes = dependencyRes.getResolvedTs
+    if ((taskTimes == null) || (taskTimes.isEmpty)) {
+      println("All tasks already completed")
+      return Nil
+    }
 
     // TODO: Reporting of Missing LocalDateTime?
 
@@ -132,12 +144,17 @@ class TableWrapper(metastore: MetaStore,
         val res = singleRun(bulkInput, startTs, endTs)
         if (res) {
           table.getTargets.foreach((t: Target) => {
-            val partitions = TableWrapper.createPartitions(partitionsTs, table.getPartitionUnit, table.getPartitionSize, t.getTableId)
-            val _ = metastore.partitionService.save(partitions, true)
+            val partitions =
+              TableWrapper.createPartitions(partitionsTs,
+                                            table.getPartitionUnit,
+                                            table.getPartitionSize,
+                                            t.getTableId)
+            val _ = metastore.partitionService.save(partitions, overwrite)
             // TODO: Overwrite hardcoded on at the moment
             // TODO: Need to handle failure to store
           })
         }
+        true
       }
     })
 
@@ -148,6 +165,26 @@ class TableWrapper(metastore: MetaStore,
       * (this also means giving the user more info there)
       */
     tasks
+  }
+
+  /**
+    * Utility function to create an execution context and block until runTasks is done processing the batches.
+    * See [[io.qimia.uhrwerk.engine.TableWrapper#runTasks]]
+    * @param startTimes sequence of partitionTS which need to be processed
+    * @param threads number of threads used by the threadpool
+    */
+  def runTasksAndWait(startTimes: Array[LocalDateTime],
+                      overwrite: Boolean = false,
+                      threads: Option[Int] = Option.empty): List[Boolean] = {
+
+    implicit val executionContext = if (threads.isEmpty) {
+      ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor())
+    } else {
+      ExecutionContext.fromExecutor(Executors.newFixedThreadPool(threads.get))
+    }
+    val futures = runTasks(startTimes, overwrite)
+    Await.result(Future.sequence(futures),
+                 duration.Duration(24, duration.HOURS))
   }
 
 }
