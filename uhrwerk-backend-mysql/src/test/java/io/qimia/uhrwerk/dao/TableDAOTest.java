@@ -1,7 +1,11 @@
 package io.qimia.uhrwerk.dao;
 
 import io.qimia.uhrwerk.common.metastore.config.ConnectionResult;
+import io.qimia.uhrwerk.common.metastore.config.PartitionResult;
 import io.qimia.uhrwerk.common.metastore.config.TableResult;
+import io.qimia.uhrwerk.common.metastore.dependency.DependencyResult;
+import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResult;
+import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResultSet;
 import io.qimia.uhrwerk.common.model.*;
 import io.qimia.uhrwerk.config.ConnectionBuilder;
 import io.qimia.uhrwerk.config.TableBuilder;
@@ -128,6 +132,7 @@ class TableDAOTest {
     db.prepareStatement("delete from SOURCE").execute();
     db.prepareStatement("delete from DEPENDENCY").execute();
     db.prepareStatement("delete from CONNECTION").execute();
+    db.prepareStatement("delete from PARTITION_").execute();
   }
 
   @org.junit.jupiter.api.AfterEach
@@ -225,34 +230,6 @@ class TableDAOTest {
       assertNull(connResults[i].getOldConnection());
     }
 
-    Table mainTable =
-        (new TableBuilder())
-            .area("TestArea")
-            .vertical("TestVertical")
-            .table("TestMainTable")
-            .version("1.0")
-            .partition()
-            .unit("hours")
-            .size(1)
-            .dependency()
-            .area("TestArea")
-            .vertical("TestVertical")
-            .table("TestDepTable1")
-            .format("parquet")
-            .version("1.0")
-            .transform()
-            .type("identity")
-            .target()
-            .connectionName("S3")
-            .format("parquet")
-            .build();
-
-    TableResult mainTableResult = tableDAO.save(mainTable, true);
-    assertFalse(mainTableResult.isError());
-    assertTrue(mainTableResult.isSuccess());
-    assertNotNull(mainTableResult.getNewResult());
-    assertNull(mainTableResult.getOldResult());
-
     Table depTable1 =
         (new TableBuilder())
             .area("TestArea")
@@ -260,16 +237,16 @@ class TableDAOTest {
             .table("TestDepTable1")
             .version("1.0")
             .partition()
-            .unit("hours")
-            .size(1)
+            .unit("minutes")
+            .size(30)
             .source()
             .connectionName("Test-JDBC-Source1")
             .path("SOURCE_DB.EXT_TABLE1")
             .format("JDBC")
             .version("1.0")
             .partition()
-            .unit("hours")
-            .size(1)
+            .unit("minutes")
+            .size(30)
             .parallelLoad()
             .query("SELECT * FROM SOURCE_DB.EXT_TABLE1")
             .column("Column1")
@@ -286,13 +263,65 @@ class TableDAOTest {
     assertTrue(depTable1Result.isSuccess());
     assertNotNull(depTable1Result.getNewResult());
     assertNull(depTable1Result.getOldResult());
+    assertNotNull(depTable1.getId());
+    assertNotNull(depTable1.getTargets()[0].getId());
+
+    Table mainTable =
+        (new TableBuilder())
+            .area("TestArea")
+            .vertical("TestVertical")
+            .table("TestMainTable")
+            .version("1.0")
+            .partition()
+            .unit("hours")
+            .size(1)
+            .dependency()
+            .area("TestArea")
+            .vertical("TestVertical")
+            .table("TestDepTable1")
+            .format("parquet")
+            .version("1.0")
+            .transform()
+            .type("aggregate")
+            .partition()
+            .size(2)
+            .target()
+            .connectionName("S3")
+            .format("parquet")
+            .build();
+
+    TableResult mainTableResult = tableDAO.save(mainTable, true);
+    assertFalse(mainTableResult.isError());
+    assertTrue(mainTableResult.isSuccess());
+    assertNotNull(mainTableResult.getNewResult());
+    assertNull(mainTableResult.getOldResult());
 
     LocalDateTime start = LocalDateTime.of(2020, 8, 24, 9, 0);
     LocalDateTime end = LocalDateTime.of(2020, 8, 24, 17, 0);
-    Duration duration = Duration.of(30, ChronoUnit.MINUTES);
-    LocalDateTime[] partitionTs = JdbcBackendUtils.getPartitionTs(start, end, duration);
-    for (LocalDateTime ta : partitionTs) {
+    Duration duration1 = Duration.of(30, ChronoUnit.MINUTES);
+
+    LocalDateTime[] partitionTs = JdbcBackendUtils.getPartitionTs(start, end, duration1);
+    for (LocalDateTime ts : partitionTs) {
       Partition partition = new Partition();
+      partition.setTargetId(depTable1.getTargets()[0].getId());
+      partition.setPartitionTs(ts);
+      partition.setKey();
+      PartitionResult partitionResult = partitionDAO.save(partition, true);
+    }
+
+    Duration duration2 = Duration.of(1, ChronoUnit.HOURS);
+    LocalDateTime[] requestedTs = JdbcBackendUtils.getPartitionTs(start, end, duration2);
+
+    TablePartitionResultSet partitionResultSet =
+        tableDAO.processingPartitions(mainTable, requestedTs);
+
+    for (int i = 0; i < partitionResultSet.getResolvedTs().length; i++) {
+      TablePartitionResult partitionResult = partitionResultSet.getResolved()[i];
+      System.out.println(partitionResultSet.getResolvedTs()[i]);
+      DependencyResult resolvedDependency = partitionResult.getResolvedDependencies()[0];
+      for (int j = 0; j < resolvedDependency.getSucceeded().length; j++) {
+        System.out.println(resolvedDependency.getSucceeded()[j]);
+      }
     }
   }
 }

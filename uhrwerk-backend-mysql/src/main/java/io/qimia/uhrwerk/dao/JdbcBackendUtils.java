@@ -71,8 +71,8 @@ public class JdbcBackendUtils {
   public static LocalDateTime[] getPartitionTs(
       LocalDateTime start, LocalDateTime end, Duration duration) {
     int divided = (int) Duration.between(start, end).dividedBy(duration);
-    LocalDateTime[] partitionTs = new LocalDateTime[divided + 1];
-    for (int i = 0; i <= divided; i++) {
+    LocalDateTime[] partitionTs = new LocalDateTime[divided];
+    for (int i = 0; i < divided; i++) {
       partitionTs[i] = start.plus(duration.multipliedBy(i));
     }
     return partitionTs;
