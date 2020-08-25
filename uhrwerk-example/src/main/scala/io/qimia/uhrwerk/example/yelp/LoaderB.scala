@@ -9,15 +9,14 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.concurrent.ExecutionContext
 
-
-object LoaderA extends App {
+object LoaderB extends App {
 
   val sparkSess = SparkSession.builder()
     .appName("loaderA")
     .master("local")
     .getOrCreate()
 
-  def loaderAFunc(in: TaskInput): DataFrame = {
+  def loaderBFunc(in: TaskInput): DataFrame = {
     // The most basic userFunction simply returns the input dataframe
     in.inputFrames.values.head
   }
@@ -26,7 +25,7 @@ object LoaderA extends App {
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml" ,frameManager)
   uhrwerkEnvironment.addConnections("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTable("loader-A.yml", loaderAFunc)
+  val wrapper = uhrwerkEnvironment.addTable("loader-B.yml", loaderBFunc)
 
   val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0))
   val singleExecutor = Executors.newSingleThreadExecutor()

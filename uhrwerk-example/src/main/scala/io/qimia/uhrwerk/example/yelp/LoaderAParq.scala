@@ -27,12 +27,10 @@ object LoaderAParq extends App {
 
   val frameManager = new SparkFrameManager(sparkSess)
 
-  // TODO: Needs framemanager
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
   uhrwerkEnvironment.addConnections("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTable("loader-A-parq.yml", loaderAFunc)
+  val wrapper = uhrwerkEnvironment.addTable("loader-A-parq.yml", loaderAFunc, true)
 
-  // Uncomment and test as soon as framemanager has been merged (test BulkDependencyResult conversions before that)
   val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0))
   val singleExecutor = Executors.newSingleThreadExecutor()
   implicit val executorRunner = ExecutionContext.fromExecutor(singleExecutor)

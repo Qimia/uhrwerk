@@ -9,29 +9,33 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 import scala.concurrent.ExecutionContext
 
-
-object LoaderA extends App {
+object LoaderBParq extends App {
 
   val sparkSess = SparkSession.builder()
-    .appName("loaderA")
-    .master("local")
+    .appName("loaderB")
+    .master("local[3]")
     .getOrCreate()
 
-  def loaderAFunc(in: TaskInput): DataFrame = {
+  def loaderBFunc(in: TaskInput): DataFrame = {
     // The most basic userFunction simply returns the input dataframe
-    in.inputFrames.values.head
+    val aDF = in.inputFrames.values.head
+    aDF.printSchema()
+    aDF.show(10)
+    aDF
   }
 
   val frameManager = new SparkFrameManager(sparkSess)
 
-  val uhrwerkEnvironment = Environment.build("testing-env-config.yml" ,frameManager)
+  // TODO: Needs framemanager
+  val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
   uhrwerkEnvironment.addConnections("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTable("loader-A.yml", loaderAFunc)
+  val wrapper = uhrwerkEnvironment.addTable("loader-B-parq.yml", loaderBFunc, true)
 
   val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0))
   val singleExecutor = Executors.newSingleThreadExecutor()
   implicit val executorRunner = ExecutionContext.fromExecutor(singleExecutor)
-  val results = wrapper.get.runTasksAndWait(runTimes)
+  val results = wrapper.get.runTasksAndWait(runTimes, false)
   println(results)
 
+  sparkSess.close()
 }

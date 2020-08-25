@@ -3,6 +3,7 @@ package io.qimia.uhrwerk.engine
 import io.qimia.uhrwerk.common.framemanager.FrameManager
 import io.qimia.uhrwerk.config.YamlConfigReader
 import io.qimia.uhrwerk.engine.Environment.{Ident, TableIdent}
+import io.qimia.uhrwerk.common.model.{Dependency, Source, Table}
 import org.apache.spark.sql.DataFrame
 
 import scala.collection.mutable
@@ -27,6 +28,21 @@ object Environment {
     val configReader = new YamlConfigReader()
     val metaInfo = configReader.readEnv(envConfigLoc)
     new Environment(MetaStore.build(metaInfo), frameManager: FrameManager)
+  }
+
+  /**
+   * Utility cleaner class that makes sure the sources/dependencies are initialized
+   * @param table table to clean
+   * @return cleaned table
+   */
+  def tableCleaner(table: Table): Table = {
+    if (table.getDependencies == null) {
+      table.setDependencies(new Array[Dependency](0))
+    }
+    if (table.getSources == null) {
+      table.setSources(new Array[Source](0))
+    }
+    table
   }
 }
 
@@ -54,7 +70,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
   def addTable(tableConfigLoc: String,
                userFunc: TaskInput => DataFrame,
                overwrite: Boolean = false): Option[TableWrapper] = {
-    val tableYaml = configReader.readTable(tableConfigLoc)
+    val tableYaml = Environment.tableCleaner(configReader.readTable(tableConfigLoc))
     val storeRes = store.tableService.save(tableYaml, overwrite)
     // TODO: For now everything is overwrite
     if (!storeRes.isSuccess) {

@@ -1,6 +1,6 @@
 area: "staging"
 vertical: "yelp_db"
-table: "table_a_parq"
+table: "table_b_parq"
 version: "1.0"
 parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
 max_bulk_size: 1
@@ -10,7 +10,7 @@ partition:
 
 sources:
   - connection_name: "local_fs_source"
-    path: "review"
+    path: "tip"
     format: "parquet"
     version: "1.0"
     partition:

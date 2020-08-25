@@ -113,11 +113,12 @@ class TableWrapper(metastore: MetaStore,
       implicit ex: ExecutionContext): List[Future[Boolean]] = {
     val dependencyRes =
       metastore.tableDependencyService.processingPartitions(table, partitionsTs)
+    println(s"Failed partitionTs: ${dependencyRes.getFailedTs.mkString(", ")}")
 
     // If no tasks to be done => quit
     val taskTimes = dependencyRes.getResolvedTs
     if ((taskTimes == null) || (taskTimes.isEmpty)) {
-      println("All tasks already completed")
+      println("No tasks ready to run")
       return Nil
     }
 
@@ -148,7 +149,7 @@ class TableWrapper(metastore: MetaStore,
               TableWrapper.createPartitions(partitionsTs,
                                             table.getPartitionUnit,
                                             table.getPartitionSize,
-                                            t.getTableId)
+                                            t.getId)
             val _ = metastore.partitionService.save(partitions, overwrite)
             // TODO: Overwrite hardcoded on at the moment
             // TODO: Need to handle failure to store
