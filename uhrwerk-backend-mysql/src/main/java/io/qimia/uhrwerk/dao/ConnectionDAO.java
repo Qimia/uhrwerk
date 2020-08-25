@@ -215,14 +215,22 @@ public class ConnectionDAO implements ConnectionService {
           return result;
         }
       }
-      Long id = save(connection);
+      save(connection);
       result.setSuccess(true);
-      result.setOldConnection(connection);
     } catch (SQLException e) {
       result.setError(true);
       result.setException(e);
       result.setMessage(e.getMessage());
     }
     return result;
+  }
+
+  public ConnectionResult[] save(Connection[] connections, boolean overwrite) {
+    ConnectionResult[] resultSet = new ConnectionResult[connections.length];
+    for (int i = 0; i < connections.length; i++) {
+      ConnectionResult connResult = save(connections[i], overwrite);
+      resultSet[i] = connResult;
+    }
+    return resultSet;
   }
 }

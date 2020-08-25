@@ -2,6 +2,7 @@ package io.qimia.uhrwerk.dao;
 
 import io.qimia.uhrwerk.common.model.PartitionTransformType;
 import io.qimia.uhrwerk.common.model.PartitionUnit;
+import org.apache.commons.collections.bidimap.DualHashBidiMap;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -65,5 +66,15 @@ public class JdbcBackendUtils {
     }
 
     return null;
+  }
+
+  public static LocalDateTime[] getPartitionTs(
+      LocalDateTime start, LocalDateTime end, Duration duration) {
+    int divided = (int) Duration.between(start, end).dividedBy(duration);
+    LocalDateTime[] partitionTs = new LocalDateTime[divided + 1];
+    for (int i = 0; i <= divided; i++) {
+      partitionTs[i] = start.plus(duration.multipliedBy(i));
+    }
+    return partitionTs;
   }
 }
