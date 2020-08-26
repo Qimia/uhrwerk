@@ -16,12 +16,12 @@ sources:
     partition:
       unit: "days"
       size: 1
-    parallel_load:
-      query: "SELECT id FROM <path> WHERE date >= '<lower_bound>' and date \\< '<upper_bound>'"
-      column: "id"
-      num: 4
+    #    parallel_load:
+    #      query: "SELECT id FROM <path> WHERE date >= '<lower_bound>'" # and date \\< '<upper_bound>'
+    #      column: "id" # the id is string - not supported by spark
+    #      num: 4
     select:
-      query: "SELECT * FROM <path> WHERE date >= '<lower_bound>' and date \\< '<upper_bound>';"
+      query: "SELECT * FROM <path> WHERE date >= '<lower_bound>'" # and date \\< '<upper_bound>'
       column: "date"
 
 targets:
