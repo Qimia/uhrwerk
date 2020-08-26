@@ -3,24 +3,34 @@ package io.qimia.uhrwerk.config;
 import io.qimia.uhrwerk.config.representation.Select;
 
 public class SelectBuilder {
-    private String query;
-    private String column;
+  private SourceBuilder parent;
+  private String query;
+  private String column;
 
-    public SelectBuilder withQuery(String query) {
-        this.query = query;
-        return this;
-    }
+  public SelectBuilder() {}
 
-    public SelectBuilder withColumn(String column) {
-        this.column = column;
-        return this;
-    }
+  public SelectBuilder(SourceBuilder parent) {
+    this.parent = parent;
+  }
 
-    public Select build() {
-        Select select = new Select();
-        select.setColumn(this.column);
-        select.setQuery(this.query);
-        return select;
-    }
+  public SelectBuilder query(String query) {
+    this.query = query;
+    return this;
+  }
+
+  public SelectBuilder column(String column) {
+    this.column = column;
+    return this;
+  }
+
+  public SourceBuilder done() {
+    return this.parent;
+  }
+
+  public Select build() {
+    Select select = new Select();
+    select.setColumn(this.column);
+    select.setQuery(this.query);
+    return select;
+  }
 }
-

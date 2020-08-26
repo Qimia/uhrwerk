@@ -4,23 +4,37 @@ import io.qimia.uhrwerk.config.representation.Partition;
 import io.qimia.uhrwerk.config.representation.Transform;
 
 public class TransformBuilder {
-    private String type;
-    private Partition partition;
+  private String type;
+  private Partition partition;
+  private DependencyBuilder parent;
+  private TransformPartitionBuilder partitionBuilder;
 
-    public TransformBuilder withType(String type) {
-        this.type = type;
-        return this;
-    }
+  public TransformBuilder() {}
 
-    public TransformBuilder withPartition(Partition partition) {
-        this.partition = partition;
-        return this;
-    }
+  public TransformBuilder(DependencyBuilder parent) {
+    this.parent = parent;
+  }
 
-    public Transform build(){
-        Transform transform = new Transform();
-        transform.setPartition(this.partition);
-        transform.setType(this.type);
-        return transform;
-    }
+  public TransformBuilder type(String type) {
+    this.type = type;
+    return this;
+  }
+
+  public TransformPartitionBuilder partition() {
+    this.partitionBuilder = new TransformPartitionBuilder(this);
+    return this.partitionBuilder;
+  }
+
+  public DependencyBuilder done() {
+    this.partition = this.partitionBuilder.build();
+    return this.parent;
+  }
+
+  public Transform build() {
+    Transform transform = new Transform();
+    transform.setPartition(this.partitionBuilder.build());
+    transform.setType(this.type);
+    transform.validate("");
+    return transform;
+  }
 }
