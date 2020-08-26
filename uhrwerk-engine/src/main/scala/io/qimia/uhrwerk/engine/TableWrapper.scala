@@ -89,7 +89,7 @@ class TableWrapper(metastore: MetaStore,
       val frame = userFunc(taskInput)
       // TODO error checking: if target should be on datalake but no frame is given
       // Note: We are responsible for all standard writing of DataFrames
-      frameManager.writeDataFrame(frame, table)
+      frameManager.writeDataFrame(frame, table, Option(startTS))
       true
     } catch {
       case e: Throwable => {
