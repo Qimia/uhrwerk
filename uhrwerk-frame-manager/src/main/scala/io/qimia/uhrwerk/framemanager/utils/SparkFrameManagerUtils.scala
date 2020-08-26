@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.framemanager.utils
 
 import java.nio.file.Paths
+import java.sql.Timestamp
 import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.common.model.{Dependency, PartitionUnit, Table}
@@ -14,6 +15,7 @@ object SparkFrameManagerUtils {
     List("year", "month", "day", "hour", "minute")
   private[framemanager] val timeColumnsFormats =
     List("yyyy", "yyyy-MM", "yyyy-MM-dd", "yyyy-MM-dd-HH", "yyyy-MM-dd-HH-mm")
+  private[framemanager] val timeColumnJDBC = "uhrwerk-timestamp"
 
   /**
    * Concatenates paths into a single string. Handles properly all trailing slashes
@@ -238,6 +240,37 @@ object SparkFrameManagerUtils {
     }
 
     withMinute
+  }
+
+  /**
+   * Adds a jdbc time column (timestamp) to a DataFrame from a specified timestamp.
+   *
+   * @param frame DataFrame to add columns to.
+   * @param ts    TimeStamp.
+   * @return DataFrame with the time columns.
+   */
+  private[framemanager] def addJDBCTimeColumn(
+                                               frame: DataFrame,
+                                               ts: LocalDateTime
+                                             ): DataFrame = {
+    frame.withColumn(timeColumnJDBC, lit(Timestamp.valueOf(ts)))
+  }
+
+  /**
+   * Adds a jdbc time column (timestamp) to a DataFrame from its time columns.
+   *
+   * @param frame          DataFrame to add columns to.
+   * @param timeColumnsCut Cut in the time columns array based on the PartitionUnit.
+   * @return DataFrame with the time columns.
+   */
+  private[framemanager] def addJDBCTimeColumnFromTimeColumns(
+                                                              frame: DataFrame,
+                                                              timeColumnsCut: Int
+                                                            ): DataFrame = {
+    frame.withColumn(
+      timeColumnJDBC,
+      to_timestamp(col(timeColumns(timeColumnsCut - 1)), timeColumnsFormats(timeColumnsCut - 1))
+    )
   }
 
   /**

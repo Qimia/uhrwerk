@@ -119,16 +119,21 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
                                         dataFrameReaderOptions: Option[Map[String, String]] = Option.empty
                                       ): DataFrame = {
     assert(dependencyResult.succeeded.nonEmpty)
+    val isJDBC = dependencyResult.connection.getType.equals(ConnectionType.JDBC)
 
     val filter: Column = dependencyResult.succeeded
-      .map(p => {
-        val (year, month, day, hour, minute) = getTimeValues(p.getPartitionTs)
-        p.getPartitionUnit match {
-          case PartitionUnit.MINUTES => col("minute") === s"$minute"
-          case PartitionUnit.HOURS => col("hour") === s"$hour"
-          case _ => col("day") === s"$day"
+      .map(p =>
+        if (isJDBC) {
+          col(timeColumnJDBC) === TimeTools.convertTSToUTCString(p.getPartitionTs)
+        } else {
+          val (year, month, day, hour, minute) = getTimeValues(p.getPartitionTs)
+          p.getPartitionUnit match {
+            case PartitionUnit.MINUTES => col("minute") === minute
+            case PartitionUnit.HOURS => col("hour") === hour
+            case _ => col("day") === day
+          }
         }
-      })
+      )
       .reduce((a, b) => a || b)
 
     // todo speedup when full year/month/day..
@@ -144,7 +149,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     }
 
     val df =
-      if (dependencyResult.connection.getType.equals(ConnectionType.JDBC)) {
+      if (isJDBC) {
         dfReaderWithUserOptions
           .option("url", dependencyResult.connection.getJdbcUrl)
           .option("driver", dependencyResult.connection.getJdbcDriver)
@@ -231,11 +236,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             .option("partitionColumn", source.getParallelLoadColumn)
             .option("lowerBound", minId)
             .option("upperBound", maxId)
-        } else if (
-          !isStringEmpty(
-            source.getSelectColumn
-          ) && startTS.isDefined && endTSExcl.isDefined
-        ) {
+        } else if (!isStringEmpty(source.getSelectColumn) && startTS.isDefined && endTSExcl.isDefined) {
           dfReaderWithQuery
             .option("partitionColumn", source.getSelectColumn)
             .option("lowerBound", TimeTools.convertTSToUTCString(startTS.get))
@@ -276,7 +277,6 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
                                startTS: Option[LocalDateTime] = Option.empty,
                                dataFrameWriterOptions: Option[Array[Map[String, String]]] = Option.empty
                              ): Unit = {
-    val selectedTimeColumns = timeColumns.slice(0, calculateCutBasedOnPartitionUnit(locationTableInfo.getPartitionUnit))
 
     locationTableInfo.getTargets.zipWithIndex.foreach((item: (Target, Int)) => {
       val target: Target = item._1
@@ -287,6 +287,11 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         )
       }
       val isJDBC = target.getConnection.getType.equals(ConnectionType.JDBC)
+
+      val timeColumnsCut = calculateCutBasedOnPartitionUnit(locationTableInfo.getPartitionUnit)
+      val selectedTimeColumns =
+        timeColumns.slice(0, timeColumnsCut)
+
       val tablePath = getTablePath(locationTableInfo, !isJDBC, target.getFormat)
       val path = if (isJDBC) {
         tablePath
@@ -298,14 +303,18 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         val datePath = createDatePath(startTS.get, locationTableInfo.getPartitionUnit)
 
         if (isJDBC) {
-          val jdbcDF = addTimeColumns(frame, startTS.get, locationTableInfo.getPartitionUnit)
+          val jdbcDF = addJDBCTimeColumn(frame, startTS.get)
 
           (path, jdbcDF)
         } else {
           (concatenatePaths(path, datePath), frame.drop(selectedTimeColumns: _*))
         }
       } else {
-        (path, frame)
+        if (isJDBC && containsTimeColumns(frame, locationTableInfo.getPartitionUnit)) {
+          (path, addJDBCTimeColumnFromTimeColumns(frame, timeColumnsCut))
+        } else {
+          (path, frame)
+        }
       }
 
       val writer = df.write.mode(SaveMode.Append).format(target.getFormat)
@@ -323,12 +332,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       }
 
       val writerWithPartitioning =
-        if (
-          (startTS.isEmpty || isJDBC) && containsTimeColumns(
-            df,
-            locationTableInfo.getPartitionUnit
-          )
-        ) {
+        if (startTS.isEmpty && !isJDBC && containsTimeColumns(df, locationTableInfo.getPartitionUnit)) {
           writerWithOptions
             .partitionBy(selectedTimeColumns: _*)
         } else {

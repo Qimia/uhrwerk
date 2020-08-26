@@ -17,7 +17,7 @@
 
 - name: "yelp_dwh"
   jdbc:
-    jdbc_url: 'jdbc:mysql://localhost:53306/yelp_dwh'
+    jdbc_url: 'jdbc:mysql://localhost:53306'
     jdbc_driver: 'com.mysql.cj.jdbc.Driver'
     user: root
     pass: mysql
