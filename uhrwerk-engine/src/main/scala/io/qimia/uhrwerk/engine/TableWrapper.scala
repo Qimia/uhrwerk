@@ -45,9 +45,11 @@ class TableWrapper(metastore: MetaStore,
 
   /**
     * Single invocation of usercode (possibly bulk-modus)
+    * (Relies on the dependencyResults for getting the dependencies and on the startTS and endTSExcl to get the sources
+    * and write the right partitions
     * @param dependencyResults a list with for each dependency which partitions need to be loaded
-    * @param startTS start timestamp
-    * @param endTSExcl end timestamp exclusive
+    * @param startTS start timestamp of the first partition
+    * @param endTSExcl end timestamp exclusive (next timestamp after the last partition)
     */
   private def singleRun(
       dependencyResults: List[BulkDependencyResult],
@@ -55,7 +57,7 @@ class TableWrapper(metastore: MetaStore,
       endTSExcl: Option[LocalDateTime] = Option.empty): Boolean = {
     // TODO: Log start of single task for table here
     println("Start of Single Run")
-    println(s"TS: ${startTS}")
+    println(s"TS: ${startTS} Optional end-TS: ${endTSExcl}")
 
     val inputDepDFs: List[(Ident, DataFrame)] =
       if (dependencyResults.nonEmpty) {
@@ -133,13 +135,11 @@ class TableWrapper(metastore: MetaStore,
         DependencyHelper.extractBulkDependencyResult(partitionGroup)
       println(s"BulkInput length: ${bulkInput.length}")
       val startTs = partitionGroup.head.getPartitionTs
-      val endTs = if (partitionGroup.length > 1) {
+      val endTs = {
         val lastInclusivePartitionTs = partitionGroup.last.getPartitionTs
         val tableDuration = TimeHelper.convertToDuration(table.getPartitionUnit,
                                                          table.getPartitionSize)
         Option(lastInclusivePartitionTs.plus(tableDuration))
-      } else {
-        Option.empty
       }
       Future {
         val res = singleRun(bulkInput, startTs, endTs)
@@ -178,14 +178,17 @@ class TableWrapper(metastore: MetaStore,
                       overwrite: Boolean = false,
                       threads: Option[Int] = Option.empty): List[Boolean] = {
 
-    implicit val executionContext = if (threads.isEmpty) {
-      ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor())
+    val executor = if (threads.isEmpty) {
+      Executors.newSingleThreadExecutor()
     } else {
-      ExecutionContext.fromExecutor(Executors.newFixedThreadPool(threads.get))
+      Executors.newFixedThreadPool(threads.get)
     }
+    implicit val executionContext = ExecutionContext.fromExecutor(executor)
     val futures = runTasks(startTimes, overwrite)
-    Await.result(Future.sequence(futures),
+    val result = Await.result(Future.sequence(futures),
                  duration.Duration(24, duration.HOURS))
+    executor.shutdown()
+    result
   }
 
 }
