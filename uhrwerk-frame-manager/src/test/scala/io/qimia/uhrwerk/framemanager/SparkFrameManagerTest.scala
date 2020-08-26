@@ -19,6 +19,8 @@ import org.scalatest.{BeforeAndAfterAll, Suite}
 
 import scala.collection.mutable.ListBuffer
 
+import collection.JavaConverters._
+
 trait BuildTeardown extends BeforeAndAfterAll {
   this: Suite =>
 

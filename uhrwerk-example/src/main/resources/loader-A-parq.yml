@@ -3,7 +3,7 @@ vertical: "yelp_db"
 table: "table_a_parq"
 version: "1.0"
 parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
-max_bulk_size: 1
+max_bulk_size: 3
 partition:
   unit: "days"
   size: 1

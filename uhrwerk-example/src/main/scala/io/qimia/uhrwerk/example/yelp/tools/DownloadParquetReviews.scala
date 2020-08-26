@@ -17,7 +17,7 @@ object DownloadParquetReviews extends App {
     .option("url", "jdbc:mysql://localhost:53306/yelp_db")
     .option("user", "root")
     .option("password", "mysql")
-    .option("query", "SELECT * FROM review WHERE date >= '2012-05-01' AND date < '2012-05-02'")
+    .option("query", "SELECT * FROM review WHERE date >= '2012-05-01' AND date < '2012-06-01'")
     .load()
 
   jdbcDF.write.parquet("./example_dataset/review")
