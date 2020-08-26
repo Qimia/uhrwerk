@@ -8,6 +8,7 @@ import java.util.Comparator
 import io.qimia.uhrwerk.common.framemanager.BulkDependencyResult
 import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.common.tools.{JDBCTools, TimeTools}
+import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils
 import io.qimia.uhrwerk.tags.{DbTest, Slow}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions._
@@ -16,7 +17,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
 trait BuildTeardown extends BeforeAndAfterAll {
@@ -88,7 +88,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     import spark.implicits._
     if (dateTime.isDefined) {
       val (year, month, day, hour, minute) =
-        SparkFrameManager.getTimeValues(dateTime.get)
+        SparkFrameManagerUtils.getTimeValues(dateTime.get)
       (1 to 100)
         .map(i => (i, "txt", i * 5, year, month, day, hour, minute))
         .toDF("a", "b", "c", "year", "month", "day", "hour", "minute")
@@ -104,7 +104,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val d = "d/"
     val e = "/e/"
 
-    val result = SparkFrameManager.concatenatePaths(a, b, c, d, e)
+    val result = SparkFrameManagerUtils.concatenatePaths(a, b, c, d, e)
     assert(result === "a/b/c/d/e")
   }
 
@@ -112,7 +112,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val a = "a/b/c/d"
     val e = "e/f/g/h"
 
-    val result = SparkFrameManager.getFullLocation(a, e)
+    val result = SparkFrameManagerUtils.getFullLocation(a, e)
     assert(result === "a/b/c/d/e/f/g/h")
   }
 
@@ -120,17 +120,29 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val month = "2"
     val day = "4"
 
-    val result = SparkFrameManager.concatenateDateParts(month, day)
+    val result = SparkFrameManagerUtils.concatenateDateParts(month, day)
     assert(result === "2-4")
   }
 
   "createDatePath" should "create a date path from timestamp" in {
     val ts = LocalDateTime.of(2020, 2, 4, 10, 30)
 
-    val datePath = SparkFrameManager.createDatePath(ts)
+    val datePath = SparkFrameManagerUtils.createDatePath(ts, PartitionUnit.MINUTES)
 
     assert(
       datePath === "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10/minute=2020-02-04-10-30"
+    )
+
+    val datePathHour = SparkFrameManagerUtils.createDatePath(ts, PartitionUnit.HOURS)
+
+    assert(
+      datePathHour === "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10"
+    )
+
+    val datePathDay = SparkFrameManagerUtils.createDatePath(ts, PartitionUnit.DAYS)
+
+    assert(
+      datePathDay === "year=2020/month=2020-02/day=2020-02-04"
     )
   }
 
@@ -141,12 +153,12 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     table.setName("testsparkframemanager")
     table.setVertical("testdb")
 
-    val tablePath = SparkFrameManager.getTablePath(table, true, "parquet")
+    val tablePath = SparkFrameManagerUtils.getTablePath(table, true, "parquet")
     assert(
       tablePath === "area=staging/vertical=testdb/table=testsparkframemanager/version=1/format=parquet"
     )
 
-    val tablePathJDBC = SparkFrameManager.getTablePath(table, false, "jdbc")
+    val tablePathJDBC = SparkFrameManagerUtils.getTablePath(table, false, "jdbc")
     assert(tablePathJDBC === "`staging-testdb`.`testsparkframemanager-1`")
   }
 
@@ -158,12 +170,12 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     dependency.setVertical("testdb")
     dependency.setFormat("parquet")
 
-    val tablePath = SparkFrameManager.getDependencyPath(dependency, true)
+    val tablePath = SparkFrameManagerUtils.getDependencyPath(dependency, true)
     assert(
       tablePath === "area=staging/vertical=testdb/table=testsparkframemanager/version=1/format=parquet"
     )
 
-    val tablePathJDBC = SparkFrameManager.getDependencyPath(dependency, false)
+    val tablePathJDBC = SparkFrameManagerUtils.getDependencyPath(dependency, false)
     assert(tablePathJDBC === "`staging-testdb`.`testsparkframemanager-1`")
   }
 
@@ -320,7 +332,8 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       )
       .drop("created_at")
       .sort("a", "b", "c")
-    val bSourceWithTS = loadedDFSourceWithTS.collect()
+    assert(SparkFrameManagerUtils.containsTimeColumns(loadedDFSourceWithTS, source.getPartitionUnit))
+    val bSourceWithTS = loadedDFSourceWithTS.drop(SparkFrameManagerUtils.timeColumns: _*).collect()
     val a = df.sort("a", "b", "c").collect()
     assert(bSourceWithTS === a)
 
@@ -343,6 +356,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
         dataFrameReaderOptions = Option(dataFrameOptions)
       )
       .drop("created_at")
+      .drop(SparkFrameManagerUtils.timeColumns: _*)
       .sort("a", "b", "c")
     val bSourceWithTSCsv = loadedDFSourceWithTSCsv.collect()
     assert(bSourceWithTSCsv === a)
@@ -355,6 +369,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
         dataFrameReaderOptions = Option(dataFrameOptions)
       )
       .drop("created_at")
+      .drop(SparkFrameManagerUtils.timeColumns: _*)
       .sort("a", "b", "c")
     val bSourceWithTSCsvStartTs = loadedDFSourceWithTSCsvStartTs.collect()
     assert(bSourceWithTSCsvStartTs === a)
@@ -367,6 +382,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
         dataFrameReaderOptions = Option(dataFrameOptions)
       )
       .drop("created_at")
+      .drop(SparkFrameManagerUtils.timeColumns: _*)
       .sort("a", "b", "c")
     val bSourceWithTSCsvEndTs = loadedDFSourceWithTSCsvEndTs.collect()
     assert(bSourceWithTSCsvEndTs === a)
@@ -391,6 +407,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
         dataFrameReaderOptions = Option(dataFrameOptions)
       )
       .drop("created_at")
+      .drop(SparkFrameManagerUtils.timeColumns: _*)
       .sort("a", "b", "c")
     val bSourceWithTSJDBC = loadedDFSourceWithTSJDBC.collect()
     assert(bSourceWithTSJDBC === a)
@@ -412,11 +429,11 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val df = createMockDataFrame(spark, Option(ts))
     val manager = new SparkFrameManager(spark)
 
-    assert(SparkFrameManager.containsTimeColumns(df, PartitionUnit.MINUTES) === true)
-    assert(SparkFrameManager.containsTimeColumns(df.drop("hour"), PartitionUnit.MINUTES) === false)
-    assert(SparkFrameManager.containsTimeColumns(df.drop("hour"), PartitionUnit.HOURS) === false)
+    assert(SparkFrameManagerUtils.containsTimeColumns(df, PartitionUnit.MINUTES) === true)
+    assert(SparkFrameManagerUtils.containsTimeColumns(df.drop("hour"), PartitionUnit.MINUTES) === false)
+    assert(SparkFrameManagerUtils.containsTimeColumns(df.drop("hour"), PartitionUnit.HOURS) === false)
     assert(
-      SparkFrameManager
+      SparkFrameManagerUtils
         .containsTimeColumns(df.withColumn("day", lit("03")), PartitionUnit.MINUTES) === false
     )
   }
@@ -438,6 +455,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     table.setVertical("db")
     table.setVersion("1")
     table.setTargets(Array(target))
+    table.setPartitionUnit(PartitionUnit.MINUTES)
 
     val batchDates = Array(
       LocalDateTime.of(2015, 10, 12, 20, 0),
@@ -623,6 +641,97 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     assert(a === bSource)
   }
 
+  "writing and loading with options with year-month-day columns" should "save and read a df" in {
+    val spark = getSparkSession
+
+    val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
+    val df = createMockDataFrame(spark, Option(dateTime))
+    val manager = new SparkFrameManager(spark)
+
+    val connection = new Connection
+    connection.setName("testSparkFrameManager")
+    connection.setType(ConnectionType.FS)
+    connection.setPath("src/test/resources/testlake/")
+    val target = new Target
+    target.setConnection(connection)
+    target.setFormat("csv")
+    val table = new Table
+    table.setPartitionUnit(PartitionUnit.DAYS)
+    table.setPartitionSize(1)
+    table.setVersion("1")
+    table.setArea("staging")
+    table.setName("testoptionsonlyday")
+    table.setVertical("testdb")
+    table.setTargets(Array(target))
+
+    val dataFrameOptions =
+      Map("header" -> "true", "delimiter" -> "?", "inferSchema" -> "true")
+    manager.writeDataFrame(
+      df,
+      table,
+      Option(dateTime),
+      Option(Array(dataFrameOptions))
+    )
+
+    val dependency = Converters.convertTargetToDependency(target, table)
+    val partition = new Partition
+    partition.setPartitionTs(LocalDateTime.of(2020, 2, 4, 10, 30))
+    val dependencyResult = BulkDependencyResult(
+      Array(dateTime),
+      dependency,
+      connection,
+      Array(partition)
+    )
+    val loadedDF = manager
+      .loadDependencyDataFrame(dependencyResult, Option(dataFrameOptions))
+
+    val a = df
+      .drop("hour", "minute")
+      .collect()
+    val b = loadedDF
+      .withColumn("year", col("year").cast(StringType))
+      .withColumn("day", col("day").cast(StringType))
+      .sort("a", "b", "c")
+      .collect()
+
+    assert(a === b)
+    assert(SparkFrameManagerUtils.containsTimeColumns(loadedDF, table.getPartitionUnit))
+
+    assert(
+      new File(
+        "src/test/resources/testlake/area=staging/vertical=testdb/table=testoptionsonlyday/version=1/format=csv/" +
+          "year=2020/month=2020-02/day=2020-02-04"
+      ).isDirectory
+    )
+
+    assert(!new File(
+      "src/test/resources/testlake/area=staging/vertical=testdb/table=testoptionsonlyday/version=1/format=csv/" +
+        "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10"
+    ).isDirectory
+    )
+
+    // loading should work also with a Source class
+    val source = new Source
+    source.setPartitionSize(1)
+    source.setPartitionUnit(PartitionUnit.DAYS)
+    source.setConnection(connection)
+    source.setFormat("csv")
+    source.setPath(
+      "area=staging/vertical=testdb/table=testoptionsonlyday/version=1/format=csv"
+    )
+    val loadedDFSource = manager.loadSourceDataFrame(
+      source,
+      dataFrameReaderOptions = Option(dataFrameOptions)
+    )
+    val bSource = loadedDFSource
+      .withColumn("year", col("year").cast(StringType))
+      .withColumn("day", col("day").cast(StringType))
+      .sort("a", "b", "c")
+      .collect()
+    assert(a === bSource)
+    assert(SparkFrameManagerUtils.containsTimeColumns(loadedDFSource, source.getPartitionUnit))
+  }
+
   "save DF to jdbc and load from jdbc" should "return the same df and create the table in the db" taggedAs(Slow, DbTest) in {
     val spark = getSparkSession
 
@@ -659,11 +768,11 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     )
     val loadedDF = manager.loadDependencyDataFrame(dependencyResult)
 
-    SparkFrameManager.timeColumns.foreach(c =>
+    SparkFrameManagerUtils.timeColumns.foreach(c =>
       assert(loadedDF.columns.contains(c))
     )
     val dropped = loadedDF
-      .drop(SparkFrameManager.timeColumns: _*)
+      .drop(SparkFrameManagerUtils.timeColumns: _*)
       .sort("a", "b", "c")
 
     val a = df.collect()
