@@ -157,7 +157,7 @@ object SparkFrameManagerUtils {
     s == null || s.isEmpty
   }
 
-  private def calculateCutBasedOnPartitionUnit(partitionUnit: PartitionUnit): Int = {
+  private[framemanager] def calculateCutBasedOnPartitionUnit(partitionUnit: PartitionUnit): Int = {
     partitionUnit match {
       case PartitionUnit.MINUTES => 5
       case PartitionUnit.HOURS => 4

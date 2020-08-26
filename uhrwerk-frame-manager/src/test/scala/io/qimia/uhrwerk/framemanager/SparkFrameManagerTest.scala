@@ -17,9 +17,8 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
+import scala.collection.JavaConverters.asScalaIteratorConverter
 import scala.collection.mutable.ListBuffer
-
-import collection.JavaConverters._
 
 trait BuildTeardown extends BeforeAndAfterAll {
   this: Suite =>
@@ -64,7 +63,6 @@ trait BuildTeardown extends BeforeAndAfterAll {
       .asScala
       .map(_.toFile)
       .foreach(f => f.delete())
-
   }
 }
 
@@ -647,7 +645,8 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val spark = getSparkSession
 
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
-    val df = createMockDataFrame(spark, Option(dateTime))
+    val df = createMockDataFrame(spark, Option(dateTime)).drop("hour", "minute")
+
     val manager = new SparkFrameManager(spark)
 
     val connection = new Connection
@@ -678,6 +677,8 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val dependency = Converters.convertTargetToDependency(target, table)
     val partition = new Partition
     partition.setPartitionTs(LocalDateTime.of(2020, 2, 4, 10, 30))
+    partition.setPartitionUnit(PartitionUnit.DAYS)
+
     val dependencyResult = BulkDependencyResult(
       Array(dateTime),
       dependency,
@@ -688,7 +689,6 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       .loadDependencyDataFrame(dependencyResult, Option(dataFrameOptions))
 
     val a = df
-      .drop("hour", "minute")
       .collect()
     val b = loadedDF
       .withColumn("year", col("year").cast(StringType))
@@ -696,7 +696,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       .sort("a", "b", "c")
       .collect()
 
-    assert(a === b)
+    assert(b === a)
     assert(SparkFrameManagerUtils.containsTimeColumns(loadedDF, table.getPartitionUnit))
 
     assert(
@@ -706,10 +706,11 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       ).isDirectory
     )
 
-    assert(!new File(
-      "src/test/resources/testlake/area=staging/vertical=testdb/table=testoptionsonlyday/version=1/format=csv/" +
-        "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10"
-    ).isDirectory
+    assert(
+      !new File(
+        "src/test/resources/testlake/area=staging/vertical=testdb/table=testoptionsonlyday/version=1/format=csv/" +
+          "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10"
+      ).isDirectory
     )
 
     // loading should work also with a Source class
@@ -770,9 +771,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     )
     val loadedDF = manager.loadDependencyDataFrame(dependencyResult)
 
-    SparkFrameManagerUtils.timeColumns.foreach(c =>
-      assert(loadedDF.columns.contains(c))
-    )
+    SparkFrameManagerUtils.timeColumns.foreach(c => assert(loadedDF.columns.contains(c)))
     val dropped = loadedDF
       .drop(SparkFrameManagerUtils.timeColumns: _*)
       .sort("a", "b", "c")

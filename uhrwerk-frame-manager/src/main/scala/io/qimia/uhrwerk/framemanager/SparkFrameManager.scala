@@ -276,6 +276,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
                                startTS: Option[LocalDateTime] = Option.empty,
                                dataFrameWriterOptions: Option[Array[Map[String, String]]] = Option.empty
                              ): Unit = {
+    val selectedTimeColumns = timeColumns.slice(0, calculateCutBasedOnPartitionUnit(locationTableInfo.getPartitionUnit))
+
     locationTableInfo.getTargets.zipWithIndex.foreach((item: (Target, Int)) => {
       val target: Target = item._1
       val index: Int = item._2
@@ -300,7 +302,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
           (path, jdbcDF)
         } else {
-          (concatenatePaths(path, datePath), frame.drop(timeColumns: _*))
+          (concatenatePaths(path, datePath), frame.drop(selectedTimeColumns: _*))
         }
       } else {
         (path, frame)
@@ -328,7 +330,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           )
         ) {
           writerWithOptions
-            .partitionBy(timeColumns: _*)
+            .partitionBy(selectedTimeColumns: _*)
         } else {
           writerWithOptions
         }
