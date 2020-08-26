@@ -168,7 +168,10 @@ object SparkFrameManager {
    * @param df DataFrame.
    * @return True if the df contains all time columns with proper formatting.
    */
-  private[framemanager] def containsTimeColumns(df: DataFrame, partitionUnit: PartitionUnit): Boolean = {
+  private[framemanager] def containsTimeColumns(
+                                                 df: DataFrame,
+                                                 partitionUnit: PartitionUnit
+                                               ): Boolean = {
     val cut = partitionUnit match {
       case PartitionUnit.MINUTES => 5
       case PartitionUnit.HOURS => 4
@@ -182,7 +185,8 @@ object SparkFrameManager {
     df.cache()
 
     if (
-      timeColumns.slice(0, cut)
+      timeColumns
+        .slice(0, cut)
         .zip(timeColumnsFormats.slice(0, cut))
         .forall(p => {
           df.withColumn(p._1 + "_transformed", to_date(col(p._1), p._2))
@@ -400,7 +404,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     val dfReaderWithQuery: DataFrameReader =
       if (source.getSelectQuery.nonEmpty) {
         val query: String =
-          JDBCTools.fillInQuery(
+          JDBCTools.createSelectQuery(
             source.getSelectQuery,
             startTS,
             endTSExcl,
@@ -423,7 +427,10 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             source.getParallelLoadColumn,
             source.getParallelLoadQuery,
             startTS,
-            endTSExcl
+            endTSExcl,
+            Option(
+              getFullLocationJDBC(source.getConnection.getPath, source.getPath)
+            )
           )
 
           dfReaderWithQuery
@@ -522,7 +529,12 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       }
 
       val writerWithPartitioning =
-        if ((startTS.isEmpty || isJDBC) && containsTimeColumns(df, locationTableInfo.getPartitionUnit)) {
+        if (
+          (startTS.isEmpty || isJDBC) && containsTimeColumns(
+            df,
+            locationTableInfo.getPartitionUnit
+          )
+        ) {
           writerWithOptions
             .partitionBy(timeColumns: _*)
         } else {

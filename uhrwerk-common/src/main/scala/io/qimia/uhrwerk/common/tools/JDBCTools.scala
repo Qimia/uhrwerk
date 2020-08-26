@@ -1,8 +1,8 @@
 package io.qimia.uhrwerk.common.tools
 
-import java.sql
 import java.sql.DriverManager
 import java.time.LocalDateTime
+import java.{lang, sql}
 
 import io.qimia.uhrwerk.common.model.Connection
 import org.apache.spark.sql.{DataFrameReader, SparkSession}
@@ -76,6 +76,40 @@ object JDBCTools {
   }
 
   /**
+   * Fills in query's parameters if defined.
+   *
+   * @param queryTemplate Query Template.
+   * @param lowerBound    Optional lower bound.
+   * @param upperBound    Optional upper bound.
+   * @param path          Optional path.
+   * @return The enriched query.
+   */
+  def fillInQueryParameters(
+                             queryTemplate: String,
+                             lowerBound: Option[LocalDateTime] = Option.empty,
+                             upperBound: Option[LocalDateTime] = Option.empty,
+                             path: Option[String] = Option.empty
+                           ): String = {
+    var query = queryTemplate
+    if (lowerBound.isDefined) {
+      query = query.replace(
+        "<lower_bound>",
+        TimeTools.convertTSToUTCString(lowerBound.get)
+      )
+    }
+    if (upperBound.isDefined) {
+      query = query.replace(
+        "<upper_bound>",
+        TimeTools.convertTSToUTCString(upperBound.get)
+      )
+    }
+    if (path.isDefined) {
+      query = query.replace("<path>", path.get)
+    }
+    query
+  }
+
+  /**
    * Creates a query to obtain the min and max value of the specified partition column.
    *
    * @param lowerBound             Optional lower bound
@@ -92,22 +126,15 @@ object JDBCTools {
                    partitionQueryTemplate: String,
                    path: Option[String] = Option.empty
                  ): String = {
-    //    val query = new ST(partitionQueryTemplate)
-    //    if (lowerBound.isDefined) {
-    //      query.add("lower_bound", TimeTools.convertTSToString(lowerBound.get))
-    //    }
-    //    if (upperBound.isDefined) {
-    //      query.add("upper_bound", TimeTools.convertTSToString(upperBound.get))
-    //    }
-    //    if (path.isDefined) {
-    //      query.add("path", path.get)
-    //    }
-    //    val partitionQuery = query.render
-    //    s"(SELECT MIN(partition_query_table.$partitionColumn) AS min_id, MAX(partition_query_table.$partitionColumn) AS max_id " +
-    //      s"FROM ($partitionQuery) AS partition_query_table) AS tmp_table"
-
-    // todo implement
-    ""
+    val query =
+      fillInQueryParameters(
+        partitionQueryTemplate,
+        lowerBound,
+        upperBound,
+        path
+      )
+    s"(SELECT MIN(partition_query_table.$partitionColumn) AS min_id, MAX(partition_query_table.$partitionColumn) AS max_id " +
+      s"FROM ($query) AS partition_query_table) AS tmp_table"
   }
 
   /**
@@ -119,6 +146,7 @@ object JDBCTools {
    * @param partitionQuery  Partition query
    * @param lowerBound      Optional lower bound
    * @param upperBound      Optional upper bound
+   * @param path            Optional path
    * @return Min max values as Long
    */
   def minMaxQueryIds(
@@ -127,26 +155,33 @@ object JDBCTools {
                       partitionColumn: String,
                       partitionQuery: String,
                       lowerBound: Option[LocalDateTime] = Option.empty,
-                      upperBound: Option[LocalDateTime] = Option.empty
+                      upperBound: Option[LocalDateTime] = Option.empty,
+                      path: Option[String] = Option.empty
                     ): (Long, Long) = {
     val partitionQueryFilled =
-      minMaxQuery(lowerBound, upperBound, partitionColumn, partitionQuery)
+      minMaxQuery(lowerBound, upperBound, partitionColumn, partitionQuery, path)
     val dbConfig: DataFrameReader = getDbConfig(sparkSessession, connection)
       .option("dbtable", partitionQueryFilled)
       .option("numPartitions", 1)
       .option("fetchsize", 1)
     try {
       val row = dbConfig.load().collect()(0)
-      if (row.get(0).isInstanceOf[java.lang.Long])
-        (row.getLong(0), row.getLong(1))
-      else
-        (
-          row.getAs[java.math.BigDecimal](0).longValue(),
-          row.getAs[java.math.BigDecimal](1).longValue()
-        )
+      row.get(0) match {
+        case _: lang.Long =>
+          (row.getLong(0), row.getLong(1))
+        case _: String =>
+          (row.getString(0).toLong, row.getString(1).toLong)
+        case _ =>
+          (
+            row.getAs[java.math.BigDecimal](0).longValue(),
+            row.getAs[java.math.BigDecimal](1).longValue()
+          )
+      }
     } catch {
-      case _: Exception => {
-        throw new Exception("No rows returned in minMaxQueryIds")
+      case e: Exception => {
+        throw new Exception(
+          "No rows returned in minMaxQueryIds\n" + e.getLocalizedMessage
+        )
       }
     }
   }
@@ -178,28 +213,14 @@ object JDBCTools {
    * @param upperBound    Optional upper bound
    * @return The final query
    */
-  def fillInQuery(
-                   queryTemplate: String,
-                   lowerBound: Option[LocalDateTime] = Option.empty,
-                   upperBound: Option[LocalDateTime] = Option.empty,
-                   path: Option[String] = Option.empty
-                 ): String = {
-    var query = queryTemplate
-    if (lowerBound.isDefined) {
-      query = query.replace(
-        "<lower_bound>",
-        TimeTools.convertTSToUTCString(lowerBound.get)
-      )
-    }
-    if (upperBound.isDefined) {
-      query = query.replace(
-        "<upper_bound>",
-        TimeTools.convertTSToUTCString(upperBound.get)
-      )
-    }
-    if (path.isDefined) {
-      query = query.replace("<path>", path.get)
-    }
+  def createSelectQuery(
+                         queryTemplate: String,
+                         lowerBound: Option[LocalDateTime] = Option.empty,
+                         upperBound: Option[LocalDateTime] = Option.empty,
+                         path: Option[String] = Option.empty
+                       ): String = {
+    val query =
+      fillInQueryParameters(queryTemplate, lowerBound, upperBound, path)
     s"($query) AS tmp_table"
   }
 }
