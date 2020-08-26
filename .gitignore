@@ -134,3 +134,5 @@ buildNumber.properties
 
 *.db
 mysql_datadir/
+example_datalake/
+example_dataset/

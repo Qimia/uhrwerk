@@ -57,11 +57,12 @@ public class TableDAO implements TableDependencyService, TableService {
           tableResult.setOldResult(oldTable);
 
           System.out.println(table.toString());
-                    System.out.println(oldTable.toString());if (!oldTable.equals(table)) {
+          System.out.println(oldTable.toString());
+          if (!oldTable.equals(table)) {
             tableResult.setMessage(
-                String.format(
-                    "A Table with id=%d and different values already exists in the Metastore.",
-                    tableId));
+                    String.format(
+                            "A Table with id=%d and different values already exists in the Metastore.",
+                            tableId));
             tableResult.setError(true);
           } else {
             tableResult.setSuccess(true);
@@ -185,7 +186,8 @@ public class TableDAO implements TableDependencyService, TableService {
   /**
    * When a table has no dependencies, all we need to do is check if it has already been processed
    * for each requested partitionTS
-   * @param table table which needs to be processed
+   *
+   * @param table                table which needs to be processed
    * @param requestedPartitionTs list of partition starting timestamps
    * @return all info required for running a table
    * @throws SQLException

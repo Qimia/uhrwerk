@@ -4,11 +4,10 @@ import io.qimia.uhrwerk.common.metastore.config.PartitionResult;
 import io.qimia.uhrwerk.common.metastore.config.PartitionService;
 import io.qimia.uhrwerk.common.model.Partition;
 import io.qimia.uhrwerk.common.model.PartitionUnit;
+import io.qimia.uhrwerk.common.tools.TimeTools;
 
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -167,7 +166,7 @@ public class PartitionDAO implements PartitionService {
         PreparedStatement select;
         try {
             String formattedStatement = String.format(SELECT_BY_TARGET_ID_AND_TS,
-                    Arrays.stream(partitionTs).map(ts -> "'" + Timestamp.valueOf(ts.atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime()).toString() + "'").collect(Collectors.joining(",")));
+                    Arrays.stream(partitionTs).map(ts -> "'" + TimeTools.convertTSToUTCString(ts) + "'").collect(Collectors.joining(",")));
             select = db.prepareStatement(formattedStatement);
             select.setLong(1, targetId);
 

@@ -1,4 +1,4 @@
-package io.qimia.uhrwerk.utils
+package io.qimia.uhrwerk.common.tools
 
 import java.sql
 import java.sql.DriverManager
@@ -14,7 +14,12 @@ object JDBCTools {
     val jdbcConnection = getJDBCConnection(connection)
 
     val statement = jdbcConnection.createStatement
-    val sqlCommands = Source.fromResource(fileName).mkString.split(";").map(s => s.trim).filter(s => s.length > 0)
+    val sqlCommands = Source
+      .fromResource(fileName)
+      .mkString
+      .split(";")
+      .map(s => s.trim)
+      .filter(s => s.length > 0)
     sqlCommands.foreach(c => {
       //      println(c)
       statement.execute(c)
@@ -80,11 +85,13 @@ object JDBCTools {
    * @param path                   Optional path with format schema.table
    * @return
    */
-  def minMaxQuery(lowerBound: Option[LocalDateTime],
-                  upperBound: Option[LocalDateTime],
-                  partitionColumn: String,
-                  partitionQueryTemplate: String,
-                  path: Option[String] = Option.empty): String = {
+  def minMaxQuery(
+                   lowerBound: Option[LocalDateTime],
+                   upperBound: Option[LocalDateTime],
+                   partitionColumn: String,
+                   partitionQueryTemplate: String,
+                   path: Option[String] = Option.empty
+                 ): String = {
     //    val query = new ST(partitionQueryTemplate)
     //    if (lowerBound.isDefined) {
     //      query.add("lower_bound", TimeTools.convertTSToString(lowerBound.get))
@@ -114,13 +121,16 @@ object JDBCTools {
    * @param upperBound      Optional upper bound
    * @return Min max values as Long
    */
-  def minMaxQueryIds(sparkSessession: SparkSession,
-                     connection: Connection,
-                     partitionColumn: String,
-                     partitionQuery: String,
-                     lowerBound: Option[LocalDateTime] = Option.empty,
-                     upperBound: Option[LocalDateTime] = Option.empty): (Long, Long) = {
-    val partitionQueryFilled = minMaxQuery(lowerBound, upperBound, partitionColumn, partitionQuery)
+  def minMaxQueryIds(
+                      sparkSessession: SparkSession,
+                      connection: Connection,
+                      partitionColumn: String,
+                      partitionQuery: String,
+                      lowerBound: Option[LocalDateTime] = Option.empty,
+                      upperBound: Option[LocalDateTime] = Option.empty
+                    ): (Long, Long) = {
+    val partitionQueryFilled =
+      minMaxQuery(lowerBound, upperBound, partitionColumn, partitionQuery)
     val dbConfig: DataFrameReader = getDbConfig(sparkSessession, connection)
       .option("dbtable", partitionQueryFilled)
       .option("numPartitions", 1)
@@ -130,7 +140,10 @@ object JDBCTools {
       if (row.get(0).isInstanceOf[java.lang.Long])
         (row.getLong(0), row.getLong(1))
       else
-        (row.getAs[java.math.BigDecimal](0).longValue(), row.getAs[java.math.BigDecimal](1).longValue())
+        (
+          row.getAs[java.math.BigDecimal](0).longValue(),
+          row.getAs[java.math.BigDecimal](1).longValue()
+        )
     } catch {
       case _: Exception => {
         throw new Exception("No rows returned in minMaxQueryIds")
@@ -145,9 +158,11 @@ object JDBCTools {
    * @param connection   Connection information
    * @return DataFrameReader
    */
-  def getDbConfig(sparkSession: SparkSession, connection: Connection): DataFrameReader = {
-    sparkSession
-      .read
+  def getDbConfig(
+                   sparkSession: SparkSession,
+                   connection: Connection
+                 ): DataFrameReader = {
+    sparkSession.read
       .format("jdbc")
       .option("url", connection.getJdbcUrl)
       .option("driver", connection.getJdbcDriver)
@@ -163,15 +178,27 @@ object JDBCTools {
    * @param upperBound    Optional upper bound
    * @return The final query
    */
-  def fillInQuery(queryTemplate: String,
-                  lowerBound: Option[LocalDateTime] = Option.empty,
-                  upperBound: Option[LocalDateTime] = Option.empty): String = {
+  def fillInQuery(
+                   queryTemplate: String,
+                   lowerBound: Option[LocalDateTime] = Option.empty,
+                   upperBound: Option[LocalDateTime] = Option.empty,
+                   path: Option[String] = Option.empty
+                 ): String = {
     var query = queryTemplate
     if (lowerBound.isDefined) {
-      query = query.replace("lower_bound", TimeTools.convertTSToString(lowerBound.get))
+      query = query.replace(
+        "<lower_bound>",
+        TimeTools.convertTSToUTCString(lowerBound.get)
+      )
     }
     if (upperBound.isDefined) {
-      query = query.replace("upper_bound", TimeTools.convertTSToString(upperBound.get))
+      query = query.replace(
+        "<upper_bound>",
+        TimeTools.convertTSToUTCString(upperBound.get)
+      )
+    }
+    if (path.isDefined) {
+      query = query.replace("<path>", path.get)
     }
     s"($query) AS tmp_table"
   }
