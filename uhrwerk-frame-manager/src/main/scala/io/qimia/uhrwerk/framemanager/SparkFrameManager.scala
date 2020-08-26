@@ -168,15 +168,22 @@ object SparkFrameManager {
    * @param df DataFrame.
    * @return True if the df contains all time columns with proper formatting.
    */
-  private[framemanager] def containsTimeColumns(df: DataFrame): Boolean = {
-    if (!timeColumns.forall(df.columns.contains(_))) {
+  private[framemanager] def containsTimeColumns(df: DataFrame, partitionUnit: PartitionUnit): Boolean = {
+    val cut = partitionUnit match {
+      case PartitionUnit.MINUTES => 5
+      case PartitionUnit.HOURS => 4
+      case PartitionUnit.DAYS => 3
+      case _ => 2
+    }
+
+    if (!timeColumns.slice(0, cut).forall(df.columns.contains(_))) {
       return false
     }
     df.cache()
 
     if (
-      timeColumns
-        .zip(timeColumnsFormats)
+      timeColumns.slice(0, cut)
+        .zip(timeColumnsFormats.slice(0, cut))
         .forall(p => {
           df.withColumn(p._1 + "_transformed", to_date(col(p._1), p._2))
             .filter(col(p._1 + "_transformed").isNull)
@@ -515,7 +522,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       }
 
       val writerWithPartitioning =
-        if ((startTS.isEmpty || isJDBC) && containsTimeColumns(df)) {
+        if ((startTS.isEmpty || isJDBC) && containsTimeColumns(df, locationTableInfo.getPartitionUnit)) {
           writerWithOptions
             .partitionBy(timeColumns: _*)
         } else {

@@ -52,17 +52,19 @@ public class TableDAO implements TableDependencyService, TableService {
 
     try {
       if (!overwrite) {
+        saveTablesArrays(table, tableResult, overwrite);
         Table oldTable = getById(tableId);
         if (oldTable != null) {
           tableResult.setOldResult(oldTable);
 
-          System.out.println(table.toString());
-          System.out.println(oldTable.toString());
           if (!oldTable.equals(table)) {
-            tableResult.setMessage(
+            var message =
                     String.format(
-                            "A Table with id=%d and different values already exists in the Metastore.",
-                            tableId));
+                            "A Table with id=%d and different values already exists in the Metastore.\n\n"
+                                    + "Passed Table:\n%s\n\n"
+                                    + "Table in the Metastore:\n%s",
+                            tableId, table.toString(), oldTable.toString()); // todo improve finding differences
+            tableResult.setMessage(message);
             tableResult.setError(true);
           } else {
             tableResult.setSuccess(true);
@@ -70,28 +72,11 @@ public class TableDAO implements TableDependencyService, TableService {
 
           return tableResult;
         }
+        saveTable(table);
       } else {
         deleteById(tableId);
-      }
-      saveTable(table);
-      if (table.getTargets() != null && table.getTargets().length > 0) {
-        var targetResult = targetDAO.save(table.getTargets(), tableId, overwrite);
-        tableResult.setTargetResult(targetResult);
-      }
-      if (table.getDependencies() != null && table.getDependencies().length > 0) {
-        var dependencyResult =
-            dependencyDAO.save(
-                table.getDependencies(),
-                tableId,
-                table.getPartitionUnit(),
-                table.getPartitionSize(),
-                overwrite);
-
-        tableResult.setDependencyResult(dependencyResult);
-      }
-      if (table.getSources() != null && table.getSources().length > 0) {
-        var sourceResults = sourceDAO.save(table.getSources(), overwrite);
-        tableResult.setSourceResults(sourceResults);
+        saveTablesArrays(table, tableResult, overwrite);
+        saveTable(table);
       }
       tableResult.setSuccess(true);
     } catch (SQLException | NullPointerException e) {
@@ -101,6 +86,39 @@ public class TableDAO implements TableDependencyService, TableService {
     }
 
     return tableResult;
+  }
+
+  private void saveTablesArrays(Table table, TableResult tableResult, Boolean overwrite) {
+    if (table.getTargets() != null && table.getTargets().length > 0) {
+      var targetResult = targetDAO.save(table.getTargets(), table.getId(), overwrite);
+      tableResult.setTargetResult(targetResult);
+      if (targetResult.isSuccess()) {
+        table.setTargets(targetResult.getStoredTargets());
+      }
+    }
+    if (table.getDependencies() != null && table.getDependencies().length > 0) {
+      var dependencyResult =
+              dependencyDAO.save(
+                      table.getDependencies(),
+                      table.getId(),
+                      table.getPartitionUnit(),
+                      table.getPartitionSize(),
+                      overwrite);
+
+      tableResult.setDependencyResult(dependencyResult);
+      if (dependencyResult.isSuccess()) {
+        table.setDependencies(dependencyResult.getDependenciesSaved());
+      }
+    }
+    if (table.getSources() != null && table.getSources().length > 0) {
+      var sourceResults = sourceDAO.save(table.getSources(), overwrite);
+      tableResult.setSourceResults(sourceResults);
+      for (int i = 0; i < sourceResults.length; i++) {
+        if (sourceResults[i].isSuccess()) {
+          table.getSources()[i] = sourceResults[i].getNewResult();
+        }
+      }
+    }
   }
 
   private void deleteById(Long tableId) throws SQLException {

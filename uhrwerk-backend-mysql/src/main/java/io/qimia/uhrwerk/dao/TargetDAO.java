@@ -147,15 +147,6 @@ public class TargetDAO implements TargetService {
         var saveResult = new TargetResult();
 
         try {
-            if (!overwrite) {
-                Target[] storedTargets = getTargetsByTable(tableId);
-                // WARNING: Assumes Format is unique per table's targets
-                if (storedTargets.length > 0) {
-                    return compareStoredTargets(targets, storedTargets);
-                }
-                // else insert all Target values found
-            }
-
             // enrich targets
             for (Target target : targets) {
                 var shellConn = target.getConnection();
@@ -163,13 +154,25 @@ public class TargetDAO implements TargetService {
                 var newTargetConn = connectionRetriever.getByName(
                         shellConnName);
                 if (newTargetConn == null) {
+                    newTargetConn = connectionRetriever.getById(shellConn.getId());
+                }
+                if (newTargetConn == null) {
                     saveResult.setSuccess(false);
-                    saveResult.setError(false); // todo this might be wrong?
+                    saveResult.setError(true);
                     saveResult.setMessage("Could not find connection " + shellConnName + " for target-format " +
                             target.getFormat());
                     return saveResult;
                 }
                 target.setConnection(newTargetConn);    // warning: mutates targets
+            }
+
+            if (!overwrite) {
+                Target[] storedTargets = getTargetsByTable(tableId);
+                // WARNING: Assumes Format is unique per table's targets
+                if (storedTargets.length > 0) {
+                    return compareStoredTargets(targets, storedTargets);
+                }
+                // else insert all Target values found
             }
 
             if (overwrite) {

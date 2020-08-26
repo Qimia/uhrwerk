@@ -412,11 +412,12 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val df = createMockDataFrame(spark, Option(ts))
     val manager = new SparkFrameManager(spark)
 
-    assert(SparkFrameManager.containsTimeColumns(df) === true)
-    assert(SparkFrameManager.containsTimeColumns(df.drop("hour")) === false)
+    assert(SparkFrameManager.containsTimeColumns(df, PartitionUnit.MINUTES) === true)
+    assert(SparkFrameManager.containsTimeColumns(df.drop("hour"), PartitionUnit.MINUTES) === false)
+    assert(SparkFrameManager.containsTimeColumns(df.drop("hour"), PartitionUnit.HOURS) === false)
     assert(
       SparkFrameManager
-        .containsTimeColumns(df.withColumn("day", lit("03"))) === false
+        .containsTimeColumns(df.withColumn("day", lit("03")), PartitionUnit.MINUTES) === false
     )
   }
 
