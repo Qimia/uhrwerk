@@ -405,6 +405,8 @@ object TimeTools {
       val diffDuration = Duration.between(p, ts)
       val diff = partitionUnit match {
         case "DAYS" => diffDuration.toDays
+        case "HOURS" => diffDuration.toHours
+        case "MINUTES" => diffDuration.toMinutes
         case _ => 0
       }
       if (diff >= 0 && diff < partitionSize) {
