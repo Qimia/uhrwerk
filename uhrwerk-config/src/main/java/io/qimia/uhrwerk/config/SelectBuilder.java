@@ -24,6 +24,7 @@ public class SelectBuilder {
   }
 
   public SourceBuilder done() {
+    this.parent.select(this.build());
     return this.parent;
   }
 

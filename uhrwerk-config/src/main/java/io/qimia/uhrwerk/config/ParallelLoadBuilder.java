@@ -30,6 +30,7 @@ public class ParallelLoadBuilder {
   }
 
   public SourceBuilder done() {
+    this.parent.parallelLoad(this.build());
     return this.parent;
   }
 

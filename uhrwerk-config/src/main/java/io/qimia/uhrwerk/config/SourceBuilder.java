@@ -1,10 +1,13 @@
 package io.qimia.uhrwerk.config;
 
+import io.qimia.uhrwerk.config.representation.ParallelLoad;
+import io.qimia.uhrwerk.config.representation.Partition;
+import io.qimia.uhrwerk.config.representation.Select;
 import io.qimia.uhrwerk.config.representation.Source;
 
 public class SourceBuilder {
   private TableBuilder parent;
-  private SourcePartitionBuilder sourcePartitionBuilder;
+  private SourcePartitionBuilder partitionBuilder;
   private ParallelLoadBuilder parallelLoadBuilder;
   private SelectBuilder selectBuilder;
 
@@ -12,6 +15,9 @@ public class SourceBuilder {
   private String path;
   private String format;
   private String version;
+  private Partition partition;
+  private ParallelLoad parallelLoad;
+  private Select select;
 
   public SourceBuilder() {}
 
@@ -40,8 +46,18 @@ public class SourceBuilder {
   }
 
   public SourcePartitionBuilder partition() {
-    this.sourcePartitionBuilder = new SourcePartitionBuilder(this);
-    return this.sourcePartitionBuilder;
+    this.partitionBuilder = new SourcePartitionBuilder(this);
+    return this.partitionBuilder;
+  }
+
+  public SourceBuilder partition(Partition partition) {
+    this.partition = partition;
+    return this;
+  }
+
+  public SourceBuilder partition(PartitionBuilder partitionBuilder) {
+    this.partition = partitionBuilder.build();
+    return this;
   }
 
   public ParallelLoadBuilder parallelLoad() {
@@ -49,9 +65,29 @@ public class SourceBuilder {
     return this.parallelLoadBuilder;
   }
 
+  public SourceBuilder parallelLoad(ParallelLoad parallelLoad) {
+    this.parallelLoad = parallelLoad;
+    return this;
+  }
+
+  public SourceBuilder parallelLoad(ParallelLoadBuilder parallelLoadBuilder) {
+    this.parallelLoad = parallelLoadBuilder.build();
+    return this;
+  }
+
   public SelectBuilder select() {
     this.selectBuilder = new SelectBuilder(this);
     return this.selectBuilder;
+  }
+
+  public SourceBuilder select(Select select) {
+    this.select = select;
+    return this;
+  }
+
+  public SourceBuilder select(SelectBuilder selectBuilder) {
+    this.select = selectBuilder.build();
+    return this;
   }
 
   public TableBuilder done() {
@@ -64,9 +100,9 @@ public class SourceBuilder {
     source.setPath(this.path);
     source.setFormat(this.format);
     source.setVersion(this.version);
-    source.setPartition(this.sourcePartitionBuilder.build());
-    source.setParallel_load(this.parallelLoadBuilder.build());
-    source.setSelect(this.selectBuilder.build());
+    source.setPartition(this.partition);
+    source.setParallel_load(this.parallelLoad);
+    source.setSelect(this.select);
     source.validate("");
     return source;
   }

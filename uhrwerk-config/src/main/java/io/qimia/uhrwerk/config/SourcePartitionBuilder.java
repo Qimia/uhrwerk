@@ -8,6 +8,7 @@ public class SourcePartitionBuilder extends PartitionBuilder<SourcePartitionBuil
   }
 
   public SourceBuilder done() {
+    this.parent.partition(this.build());
     return this.parent;
   }
 }
