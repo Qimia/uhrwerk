@@ -26,8 +26,7 @@ object CombinerC extends App {
       .withColumnRenamed("text", "othertext")
     val outDF = aDF
       .withColumn("new_id", monotonically_increasing_id())
-      .join(bDF.withColumn("new_id", monotonically_increasing_id()),
-            "new_id" :: Nil)
+      .join(bDF.withColumn("new_id", monotonically_increasing_id()), "new_id" :: Nil)
     outDF.printSchema()
     outDF
   }
@@ -43,8 +42,4 @@ object CombinerC extends App {
   val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0))
   val results = wrapper.get.runTasksAndWait(runTimes, false)
   println(results)
-
-  sparkSess.close()
-  Thread.sleep(5000L)
-  exit(0)
 }

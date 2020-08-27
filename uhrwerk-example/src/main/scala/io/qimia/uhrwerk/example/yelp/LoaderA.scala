@@ -6,8 +6,6 @@ import io.qimia.uhrwerk.engine.{Environment, TaskInput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-import scala.sys.exit
-
 
 
 object LoaderA extends App {
@@ -31,7 +29,4 @@ object LoaderA extends App {
   val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0))
   val results = wrapper.get.runTasksAndWait(runTimes)
   println(results)
-
-  Thread.sleep(5000L)
-  exit(0)
 }

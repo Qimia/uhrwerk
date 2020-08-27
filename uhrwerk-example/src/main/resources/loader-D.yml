@@ -1,23 +1,23 @@
 area: "staging"
 vertical: "yelp_db"
-table: "table_b"
+table: "table_d"
 version: "1.0"
 parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
-max_bulk_size: 1
+max_bulk_size: 6
 partition:
   unit: "days"
   size: 1
 
 sources:
   - connection_name: "yelp_mysql"
-    path: "tip"  # On DB
+    path: "business"
     format: "jdbc"
     version: "1.0"
     partition:
       unit: "days"
       size: 1
     select:
-      query: "SELECT * FROM <path> WHERE date >= '<lower_bound>' and date \\< '<upper_bound>';"
+      query: "business-loader-D.sql"
       column: "date"
 
 targets:
