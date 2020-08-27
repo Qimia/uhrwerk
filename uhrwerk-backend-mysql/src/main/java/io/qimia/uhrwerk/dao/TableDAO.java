@@ -47,6 +47,8 @@ public class TableDAO implements TableDependencyService, TableService {
   @Override
   public TableResult save(Table table, boolean overwrite) {
     TableResult tableResult = new TableResult();
+    tableResult.setSuccess(true);
+    tableResult.setError(false);
     tableResult.setNewResult(table);
     var tableId = table.getId();
 
@@ -65,11 +67,8 @@ public class TableDAO implements TableDependencyService, TableService {
                                     + "Table in the Metastore:\n%s",
                             tableId, table.toString(), oldTable.toString()); // todo improve finding differences
             tableResult.setMessage(message);
-            tableResult.setError(true);
-          } else {
-            tableResult.setSuccess(true);
+            tableResult.setSuccess(false);
           }
-
           return tableResult;
         }
         saveTable(table);
@@ -78,9 +77,9 @@ public class TableDAO implements TableDependencyService, TableService {
         saveTablesArrays(table, tableResult, overwrite);
         saveTable(table);
       }
-      tableResult.setSuccess(true);
     } catch (SQLException | NullPointerException e) {
       tableResult.setError(true);
+      tableResult.setSuccess(false);
       tableResult.setException(e);
       tableResult.setMessage(e.getMessage());
     }
@@ -94,6 +93,9 @@ public class TableDAO implements TableDependencyService, TableService {
       tableResult.setTargetResult(targetResult);
       if (targetResult.isSuccess()) {
         table.setTargets(targetResult.getStoredTargets());
+      } else {
+        tableResult.setSuccess(false);
+        return;
       }
     }
     if (table.getDependencies() != null && table.getDependencies().length > 0) {
@@ -108,6 +110,9 @@ public class TableDAO implements TableDependencyService, TableService {
       tableResult.setDependencyResult(dependencyResult);
       if (dependencyResult.isSuccess()) {
         table.setDependencies(dependencyResult.getDependenciesSaved());
+      } else {
+        tableResult.setSuccess(false);
+        return;
       }
     }
     if (table.getSources() != null && table.getSources().length > 0) {
@@ -116,6 +121,9 @@ public class TableDAO implements TableDependencyService, TableService {
       for (int i = 0; i < sourceResults.length; i++) {
         if (sourceResults[i].isSuccess()) {
           table.getSources()[i] = sourceResults[i].getNewResult();
+        } else {
+          tableResult.setSuccess(false);
+          return;
         }
       }
     }
