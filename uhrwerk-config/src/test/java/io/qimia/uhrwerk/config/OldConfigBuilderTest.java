@@ -7,11 +7,11 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-class ConfigBuilderTest {
+class OldConfigBuilderTest {
   @Test
   public void connectionBuilderTest() {
 
-    Connection[] connection = (new ConnectionBuilder())
+    Connection[] connection = (new OldConnectionBuilder())
             .name("S3")
               .s3()
                 .path("S3Path")
@@ -38,7 +38,7 @@ class ConfigBuilderTest {
   @Test
   public void tableBuilderTest() {
 
-    Table table = (new TableBuilder())
+    Table table = (new OldTableBuilder())
             .area("TableArea")
             .vertical("TableVertical")
             .table("TableTable")
@@ -131,7 +131,7 @@ class ConfigBuilderTest {
   @Test
   public void metastoreBuilderTest() {
 
-    Metastore metastore = (new MetastoreBuilder())
+    Metastore metastore = (new OldMetastoreBuilder())
             .jdbcUrl("url")
             .jdbcDriver("driver")
             .user("user")
@@ -145,7 +145,7 @@ class ConfigBuilderTest {
   @Test
   public void dagBuilderTest() {
 
-    Dag dag = (new DagBuilder())
+    Dag dag = (new OldDagBuilder())
             .connection()
               .name("S3")
               .s3()

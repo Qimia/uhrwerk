@@ -24,6 +24,7 @@ public class TargetBuilder {
   }
 
   public TableBuilder done() {
+    this.parent.target(this.build());
     return this.parent;
   }
 
@@ -31,6 +32,7 @@ public class TargetBuilder {
     var target = new Target();
     target.setConnection_name(this.connectionName);
     target.setFormat(this.format);
+    target.validate("");
     return target;
   }
 }

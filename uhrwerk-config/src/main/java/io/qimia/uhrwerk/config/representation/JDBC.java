@@ -57,4 +57,14 @@ public class JDBC{
             throw new ConfigException("Missing field: " + path + "pass");
         }
     }
+
+    @Override
+    public String toString() {
+        return "JDBC{" +
+                "jdbc_url='" + jdbc_url + '\'' +
+                ", jdbc_driver='" + jdbc_driver + '\'' +
+                ", user='" + user + '\'' +
+                ", pass='" + pass + '\'' +
+                '}';
+    }
 }

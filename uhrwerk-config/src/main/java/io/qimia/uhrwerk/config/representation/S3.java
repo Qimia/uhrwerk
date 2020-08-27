@@ -45,4 +45,14 @@ public class S3{
             throw new ConfigException("Missing field: " + path + "secret_key");
         }
     }
+
+
+    @Override
+    public String toString() {
+        return "S3{" +
+                "path='" + path + '\'' +
+                ", secret_id='" + secret_id + '\'' +
+                ", secret_key='" + secret_key + '\'' +
+                '}';
+    }
 }

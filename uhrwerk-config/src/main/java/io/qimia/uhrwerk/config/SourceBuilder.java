@@ -91,6 +91,7 @@ public class SourceBuilder {
   }
 
   public TableBuilder done() {
+    this.parent.source(this.build());
     return this.parent;
   }
 

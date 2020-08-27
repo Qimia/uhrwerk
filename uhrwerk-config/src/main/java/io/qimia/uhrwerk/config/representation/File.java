@@ -20,4 +20,11 @@ public class File{
             throw new ConfigException("Missing field: " + path + "path");
         }
     }
+
+    @Override
+    public String toString() {
+        return "File{" +
+                "path='" + path + '\'' +
+                '}';
+    }
 }

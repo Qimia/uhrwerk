@@ -32,6 +32,7 @@ public class SelectBuilder {
     Select select = new Select();
     select.setColumn(this.column);
     select.setQuery(this.query);
+    select.validate("");
     return select;
   }
 }

@@ -23,7 +23,6 @@ public class PartitionBuilder<P extends PartitionBuilder<P>> {
     var partition = new Partition();
     partition.setSize(size);
     partition.setUnit(unit);
-    partition.validate("");
     return partition;
   }
 }

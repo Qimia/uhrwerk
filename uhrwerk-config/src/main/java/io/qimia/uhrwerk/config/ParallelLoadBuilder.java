@@ -39,6 +39,7 @@ public class ParallelLoadBuilder {
     parallelLoad.setColumn(this.column);
     parallelLoad.setNum(this.num);
     parallelLoad.setQuery(this.query);
+    parallelLoad.validate("");
     return parallelLoad;
   }
 }

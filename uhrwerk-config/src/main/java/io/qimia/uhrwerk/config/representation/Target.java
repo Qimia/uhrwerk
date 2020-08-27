@@ -35,4 +35,12 @@ public class Target{
             throw new ConfigException("Missing field: " + path + "fomart");
         }
     }
+
+    @Override
+    public String toString() {
+        return "Target{" +
+                "connection_name='" + connection_name + '\'' +
+                ", format='" + format + '\'' +
+                '}';
+    }
 }

@@ -68,4 +68,15 @@ public class Connection{
         }
 
     }
+
+    @Override
+    public String toString() {
+        return "Source{" +
+                "name='" + name + '\'' +
+                ", jdbc='" + jdbc + '\'' +
+                ", s3='" + s3 + '\'' +
+                ", file='" + file + '\'' +
+                '}';
+    }
+
 }

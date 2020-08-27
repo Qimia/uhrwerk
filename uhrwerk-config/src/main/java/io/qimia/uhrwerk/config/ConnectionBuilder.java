@@ -8,139 +8,92 @@ import io.qimia.uhrwerk.config.representation.JDBC;
 import java.util.ArrayList;
 
 public class ConnectionBuilder {
-  private ArrayList<io.qimia.uhrwerk.config.representation.Connection> connectionsList;
-  private io.qimia.uhrwerk.config.representation.Connection[] connections;
+  private DagBuilder parent;
+  private JDBCBuilder jdbcBuilder;
+  private S3Builder s3Builder;
+  private FileBuilder fileBuilder;
 
-  public ConnectionBuilder() {
-    this.connectionsList = new ArrayList<>();
+  private String name;
+  private JDBC jdbc;
+  private S3 s3;
+  private File file;
 
-  }
+  public ConnectionBuilder() {}
+
+  public ConnectionBuilder(DagBuilder parent) { this.parent = parent; }
 
   public ConnectionBuilder name(String name) {
-    Connection connection = new Connection();
-    this.connectionsList.add(connection);
-    this.connectionsList.get(this.connectionsList.size() - 1).setName(name);
+    this.name = name;
     return this;
+  }
+
+  public JDBCBuilder jdbc() {
+    this.jdbcBuilder = new JDBCBuilder(this);
+    return this.jdbcBuilder;
   }
 
   public ConnectionBuilder jdbc(JDBC jdbc) {
-    if (this.connectionsList.size() != 0) {
-      this.connectionsList.get(this.connectionsList.size() - 1).setJdbc(jdbc);
-    }
+    this.jdbc = jdbc;
     return this;
   }
 
-  public ConnectionBuilder jdbc() {
-    if (this.connectionsList.size() != 0) {
-      this.connectionsList.get(this.connectionsList.size() - 1).setJdbc(new JDBC());
-    }
+  public ConnectionBuilder jdbc(JDBCBuilder jdbcBuilder){
+    this.jdbc = jdbcBuilder.build();
     return this;
   }
 
-  public ConnectionBuilder jdbcUrl(String url) {
-    if (this.connectionsList.size() != 0) {
-      if (this.connectionsList.get(this.connectionsList.size() - 1).getJdbc() != null) {
-        this.connectionsList.get(this.connectionsList.size() - 1).getJdbc().setJdbc_url(url);
-      }
-    }
-    return this;
-  }
-
-  public ConnectionBuilder jdbcDriver(String driver) {
-    if (this.connectionsList.size() != 0) {
-      if (this.connectionsList.get(this.connectionsList.size() - 1).getJdbc() != null) {
-        this.connectionsList.get(this.connectionsList.size() - 1).getJdbc().setJdbc_driver(driver);
-      }
-    }
-    return this;
-  }
-
-  public ConnectionBuilder user(String user) {
-    if (this.connectionsList.size() != 0) {
-      if (this.connectionsList.get(this.connectionsList.size() - 1).getJdbc() != null) {
-        this.connectionsList.get(this.connectionsList.size() - 1).getJdbc().setUser(user);
-      }
-    }
-    return this;
-  }
-
-  public ConnectionBuilder pass(String pass) {
-    if (this.connectionsList.size() != 0) {
-      if (this.connectionsList.get(this.connectionsList.size() - 1).getJdbc() != null) {
-        this.connectionsList.get(this.connectionsList.size() - 1).getJdbc().setPass(pass);
-      }
-    }
-    return this;
-  }
-
-  public ConnectionBuilder s3(S3 s3) {
-    if (this.connectionsList.size() != 0) {
-      this.connectionsList.get(this.connectionsList.size() - 1).setS3(s3);
-    }
-    return this;
-  }
-
-  public ConnectionBuilder s3() {
-    if (this.connectionsList.size() != 0) {
-      this.connectionsList.get(this.connectionsList.size() - 1).setS3(new S3());
-    }
-    return this;
-  }
-
-  public ConnectionBuilder path(String path) {
-    if (this.connectionsList.size() != 0) {
-      if (this.connectionsList.get(this.connectionsList.size() - 1).getS3() != null) {
-        if (this.connectionsList.get(this.connectionsList.size() - 1).getS3().getPath() == null) {
-          this.connectionsList.get(this.connectionsList.size() - 1).getS3().setPath(path);
-        }
-      }
-      if (this.connectionsList.get(this.connectionsList.size() - 1).getFile() != null) {
-        if (this.connectionsList.get(this.connectionsList.size() - 1).getFile().getPath() == null) {
-          this.connectionsList.get(this.connectionsList.size() - 1).getFile().setPath(path);
-        }
-      }
-    }
-    return this;
-  }
-
-  public ConnectionBuilder secretId(String secretId) {
-    if (this.connectionsList.size() != 0) {
-      if (this.connectionsList.get(this.connectionsList.size() - 1).getS3() != null) {
-        this.connectionsList.get(this.connectionsList.size() - 1).getS3().setSecret_id(secretId);
-      }
-    }
-    return this;
-  }
-
-  public ConnectionBuilder secretKey(String secretKey) {
-    if (this.connectionsList.size() != 0) {
-      if (this.connectionsList.get(this.connectionsList.size() - 1).getS3() != null) {
-        this.connectionsList.get(this.connectionsList.size() - 1).getS3().setSecret_key(secretKey);
-      }
-    }
-    return this;
+  public FileBuilder file() {
+    this.fileBuilder = new FileBuilder(this);
+    return this.fileBuilder;
   }
 
   public ConnectionBuilder file(File file) {
-    if (this.connectionsList.size() != 0) {
-      this.connectionsList.get(this.connectionsList.size() - 1).setFile(file);
-    }
+    this.file = file;
     return this;
   }
 
-  public ConnectionBuilder file() {
-    if (this.connectionsList.size() != 0) {
-      this.connectionsList.get(this.connectionsList.size() - 1).setFile(new File());
-    }
+  public ConnectionBuilder file(FileBuilder fileBuilder){
+    this.file = fileBuilder.build();
     return this;
   }
 
-  public io.qimia.uhrwerk.common.model.Connection[] build() {
-    if (this.connectionsList != null) {
-      this.connections = new Connection[connectionsList.size()];
-      connectionsList.toArray(this.connections);
+  public S3Builder s3() {
+    this.s3Builder = new S3Builder(this);
+    return this.s3Builder;
+  }
+
+  public ConnectionBuilder s3(S3 s3) {
+    this.s3 = s3;
+    return this;
+  }
+
+  public ConnectionBuilder s3(S3Builder s3Builder){
+    this.s3 = s3Builder.build();
+    return this;
+  }
+
+  public DagBuilder done() {
+    this.parent.connection(this.buildRepresentationConnection());
+    return this.parent;
+  }
+
+    public Connection buildRepresentationConnection() {
+        var connection = new Connection();
+        connection.setName(this.name);
+        connection.setS3(this.s3);
+        connection.setFile(this.file);
+        connection.setJdbc(this.jdbc);
+        return connection;
     }
+
+  public io.qimia.uhrwerk.common.model.Connection build() {
+    var connection = new Connection();
+    connection.setName(this.name);
+    connection.setS3(this.s3);
+    connection.setFile(this.file);
+    connection.setJdbc(this.jdbc);
     YamlConfigReader configReader = new YamlConfigReader();
-    return configReader.getModelConnections(this.connections);
+    return configReader.getModelConnection(connection);
   }
+
 }

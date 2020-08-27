@@ -43,7 +43,7 @@ public class ParallelLoad{
         if(column == null){
             throw new ConfigException("Missing field: " + path + "column");
         }
-        if(num == 0){
+        if(num == null){
             throw new ConfigException("Missing field: " + path + "num");
         }
     }

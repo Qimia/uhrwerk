@@ -60,6 +60,7 @@ public class DependencyBuilder {
   }
 
   public TableBuilder done() {
+    this.parent.dependency(this.build());
     return this.parent;
   }
 

@@ -1,36 +1,43 @@
 package io.qimia.uhrwerk.config;
 
-import io.qimia.uhrwerk.common.model.Metastore;
+import io.qimia.uhrwerk.config.representation.Metastore;
 
 public class MetastoreBuilder {
-    private io.qimia.uhrwerk.config.representation.Metastore metastore;
+    private String jdbcUrl;
+    private String jdbcDriver;
+    private String user;
+    private String pass;
 
-    public MetastoreBuilder() {
-        this.metastore = new io.qimia.uhrwerk.config.representation.Metastore();
-    }
+    public MetastoreBuilder() {}
+
 
     public MetastoreBuilder jdbcUrl(String jdbcUrl){
-        this.metastore.setJdbc_url(jdbcUrl);
+        this.jdbcUrl = jdbcUrl;
         return this;
     }
 
     public MetastoreBuilder jdbcDriver(String jdbcDriver){
-        this.metastore.setJdbc_driver(jdbcDriver);
+        this.jdbcDriver = jdbcDriver;
         return this;
     }
 
     public MetastoreBuilder user(String user){
-        this.metastore.setUser(user);
+        this.user = user;
         return this;
     }
 
     public MetastoreBuilder pass(String pass){
-        this.metastore.setPass(pass);
+        this.pass = pass;
         return this;
     }
 
-    public Metastore build(){
+    public io.qimia.uhrwerk.common.model.Metastore build(){
+        var metastore = new Metastore();
+        metastore.setJdbc_driver(this.jdbcDriver);
+        metastore.setJdbc_url(this.jdbcUrl);
+        metastore.setUser(this.user);
+        metastore.setPass(this.pass);
         YamlConfigReader configReader = new YamlConfigReader();
-        return configReader.getModelMetastore(this.metastore);
+        return configReader.getModelMetastore(metastore);
     }
 }
