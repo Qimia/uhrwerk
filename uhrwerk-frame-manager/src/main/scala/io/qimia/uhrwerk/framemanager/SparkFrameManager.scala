@@ -18,7 +18,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * @param startTS                Batch Timestamp. If not defined, load the full path.
    * @param endTSExcl              End Timestamp exclusive
    * @param dataFrameReaderOptions Optional Spark reading options.
-   * @return DataFrame
+   * @return DataFrame with the uhrwerk time columns added.
    * @throws IllegalArgumentException In case one or both timestamps are specified but the source select column is empty
    */
   override def loadSourceDataFrame(
@@ -261,8 +261,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
     if (!isStringEmpty(source.getSelectColumn) && !containsTimeColumns(df, source.getPartitionUnit)) {
       addTimeColumnsToFromTimestampColumn(df, source.getSelectColumn, source.getPartitionUnit)
+    } else {
+      df
     }
-    df
   }
 
   /**
@@ -309,8 +310,10 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         getFullLocation(target.getConnection.getPath, tablePath)
       }
 
-      val (fullPath, df) = if (startTS.isDefined) {
-        // saving just one partition
+      val dfContainsTimeColumns = containsTimeColumns(frame, locationTableInfo.getPartitionUnit)
+
+      val (fullPath, df) = if (!dfContainsTimeColumns && startTS.isDefined) {
+        // saving just one partition defined in startTS
         val datePath = createDatePath(startTS.get, locationTableInfo.getPartitionUnit)
 
         // for jdbc add a timestamp column and remove all other time columns (year/month/day/hour/minute)
@@ -325,7 +328,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       } else {
         // if jdbc and saving several partitions (the df contains the time columns) - add the timestamp column
         // and remove the time columns
-        if (isJDBC && containsTimeColumns(frame, locationTableInfo.getPartitionUnit)) {
+        if (isJDBC && dfContainsTimeColumns) {
           (path, addJDBCTimeColumnFromTimeColumns(frame, timeColumnsCut).drop(selectedTimeColumns: _*))
         } else {
           (path, frame)
@@ -347,7 +350,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       }
 
       val writerWithPartitioning =
-        if (startTS.isEmpty && !isJDBC && containsTimeColumns(df, locationTableInfo.getPartitionUnit)) {
+        if (!isJDBC && dfContainsTimeColumns) {
           writerWithOptions
             .partitionBy(selectedTimeColumns: _*)
         } else {
