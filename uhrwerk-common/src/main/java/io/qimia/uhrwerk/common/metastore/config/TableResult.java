@@ -47,7 +47,6 @@ public class TableResult {
 
     public void setSuccess(boolean success) {
         this.success = success;
-        this.error = !success;
     }
 
     public boolean isError() {
@@ -56,7 +55,6 @@ public class TableResult {
 
     public void setError(boolean error) {
         this.error = error;
-        this.success = !error;
     }
 
     public String getMessage() {

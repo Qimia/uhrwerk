@@ -36,6 +36,8 @@ object DownsampleE  extends App {
     LocalDateTime.of(2012, 5, 1, 0, 0),
     LocalDateTime.of(2012, 5, 4, 0, 0),
   )
-  val results = wrapper.get.runTasksAndWait(runTimes, false)
-  println(results)
+  if (wrapper.isDefined) {
+    val results = wrapper.get.runTasksAndWait(runTimes, false)
+    println(results)
+  }
 }

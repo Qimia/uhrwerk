@@ -12,12 +12,12 @@ dependencies:
   - area: "staging"
     vertical: "yelp_db"
     table: "table_d"
-    format: "jdbc"
+    format: "parquet"
     version: "1.0"
     transform:
       type: "aggregate"
       partition:
-        size: 6
+        size: 3
 
 
 targets:

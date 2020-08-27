@@ -214,7 +214,7 @@ class TableDAOTest {
     result = tableDAO.save(table, false);
 
     System.out.println(result.getMessage());
-    assertTrue(result.isError());
+    assertFalse(result.isSuccess());
   }
 
   @Test
