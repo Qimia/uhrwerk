@@ -25,14 +25,24 @@ public class TransformBuilder {
     return this.partitionBuilder;
   }
 
+  public TransformBuilder partition(Partition partition) {
+    this.partition = partition;
+    return this;
+  }
+
+  public TransformBuilder partition(PartitionBuilder partitionBuilder) {
+    this.partition = partitionBuilder.build();
+    return this;
+  }
+
   public DependencyBuilder done() {
-    this.partition = this.partitionBuilder.build();
+    this.parent.transform(this.build());
     return this.parent;
   }
 
   public Transform build() {
     Transform transform = new Transform();
-    transform.setPartition(this.partitionBuilder.build());
+    transform.setPartition(this.partition);
     transform.setType(this.type);
     transform.validate("");
     return transform;

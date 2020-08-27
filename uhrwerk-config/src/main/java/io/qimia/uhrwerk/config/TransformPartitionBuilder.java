@@ -8,6 +8,7 @@ public class TransformPartitionBuilder extends PartitionBuilder<TransformPartiti
   }
 
   public TransformBuilder done() {
+    this.parent.partition(this.build());
     return this.parent;
   }
 }

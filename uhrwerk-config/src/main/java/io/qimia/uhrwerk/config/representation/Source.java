@@ -104,4 +104,17 @@ public class Source{
             select.validate(path);
         }
     }
+
+    @Override
+    public String toString() {
+        return "Source{" +
+                "connection_name='" + connection_name + '\'' +
+                ", path='" + path + '\'' +
+                ", format='" + format + '\'' +
+                ", version='" + version + '\'' +
+                ", partition=" + partition +
+                ", parallel_load=" + parallel_load +
+                ", select=" + select +
+                '}';
+    }
 }

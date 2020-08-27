@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.config;
 
 import io.qimia.uhrwerk.config.representation.Dependency;
+import io.qimia.uhrwerk.config.representation.Transform;
 
 public class DependencyBuilder {
   private TableBuilder parent;
@@ -10,6 +11,7 @@ public class DependencyBuilder {
   private String table;
   private String format;
   private String version;
+  private Transform transform;
 
   public DependencyBuilder() {}
 
@@ -47,6 +49,16 @@ public class DependencyBuilder {
     return this.transformBuilder;
   }
 
+  public DependencyBuilder transform(Transform transform) {
+    this.transform = transform;
+    return this;
+  }
+
+  public DependencyBuilder transform(TransformBuilder transformBuilder) {
+    this.transform = transformBuilder.build();
+    return this;
+  }
+
   public TableBuilder done() {
     return this.parent;
   }
@@ -58,7 +70,7 @@ public class DependencyBuilder {
     dependency.setTable(this.table);
     dependency.setFormat(this.format);
     dependency.setVersion(this.version);
-    dependency.setTransform(this.transformBuilder.build());
+    dependency.setTransform(this.transform);
     dependency.validate("");
     return dependency;
   }

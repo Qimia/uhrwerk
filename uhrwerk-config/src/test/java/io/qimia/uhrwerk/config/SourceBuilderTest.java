@@ -30,6 +30,29 @@ class SourceBuilderTest {
   }
 
   @Test
+  void nestedBuildTest1() {
+
+    var partition = new PartitionBuilder<>().unit("hours").size(1).build();
+
+    var parallelLoad =
+        new ParallelLoadBuilder().query("Select * from TableA").column("id").num(8).build();
+
+    var select = new SelectBuilder().query("SELECT * FROM TableA").column("created_ts").build();
+
+    var source =
+        new SourceBuilder()
+            .connectionName("connection")
+            .path("table")
+            .format("JDBC")
+            .version("1.0")
+            .partition(partition)
+            .parallelLoad(parallelLoad)
+            .select(select)
+            .build();
+    System.out.println(source);
+  }
+
+  @Test
   void nestedBuildTest2() {
 
     var partition = new PartitionBuilder<>().unit("hours").size(1);

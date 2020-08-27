@@ -39,4 +39,12 @@ public class Transform{
             }
         }
     }
+
+    @Override
+    public String toString() {
+        return "Transform{" +
+                "type='" + type + '\'' +
+                ", partition=" + partition +
+                '}';
+    }
 }

@@ -47,4 +47,13 @@ public class ParallelLoad{
             throw new ConfigException("Missing field: " + path + "num");
         }
     }
+
+    @Override
+    public String toString() {
+        return "ParallelLoad{" +
+                "query='" + query + '\'' +
+                ", column='" + column + '\'' +
+                ", num=" + num +
+                '}';
+    }
 }

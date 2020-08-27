@@ -35,4 +35,12 @@ public class Select{
             throw new ConfigException("Missing field: " + path + "column");
         }
     }
+
+    @Override
+    public String toString() {
+        return "Select{" +
+                "query='" + query + '\'' +
+                ", column='" + column + '\'' +
+                '}';
+    }
 }
