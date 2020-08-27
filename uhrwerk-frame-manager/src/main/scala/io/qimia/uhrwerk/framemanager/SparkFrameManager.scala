@@ -61,9 +61,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    */
   private def loadDataFrameFromFileSystem(
                                            source: Source,
-                                           startTS: Option[LocalDateTime] = Option.empty,
-                                           endTSExcl: Option[LocalDateTime] = Option.empty,
-                                           dataFrameReaderOptions: Option[Map[String, String]] = Option.empty
+                                           startTS: Option[LocalDateTime],
+                                           endTSExcl: Option[LocalDateTime],
+                                           dataFrameReaderOptions: Option[Map[String, String]]
                                          ): DataFrame = {
     val fullLocation =
       getFullLocation(source.getConnection.getPath, source.getPath)
@@ -100,8 +100,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       df
     }
 
-    if (source.getSelectColumn != null && !containsTimeColumns(filteredDf, source.getPartitionUnit)) {
-      addTimeColumnsToSource(filteredDf, source.getSelectColumn, source.getPartitionUnit)
+    if (!isStringEmpty(source.getSelectColumn) && !containsTimeColumns(filteredDf, source.getPartitionUnit)) {
+      addTimeColumnsToFromTimestampColumn(filteredDf, source.getSelectColumn, source.getPartitionUnit)
     } else {
       filteredDf
     }
@@ -170,7 +170,14 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           )
       }
 
-    df.filter(filter)
+    val filtered = df.filter(filter)
+
+    if (isJDBC) {
+      addTimeColumnsToFromTimestampColumn(filtered, timeColumnJDBC, dependencyResult.succeeded.head.getPartitionUnit)
+        .drop(timeColumnJDBC)
+    } else {
+      filtered
+    }
   }
 
   /**
@@ -186,9 +193,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    */
   private def loadSourceFromJDBC(
                                   source: Source,
-                                  startTS: Option[LocalDateTime] = Option.empty,
-                                  endTSExcl: Option[LocalDateTime] = Option.empty,
-                                  dataFrameReaderOptions: Option[Map[String, String]] = Option.empty
+                                  startTS: Option[LocalDateTime],
+                                  endTSExcl: Option[LocalDateTime],
+                                  dataFrameReaderOptions: Option[Map[String, String]]
                                 ): DataFrame = {
 
     val dfReader: DataFrameReader =
@@ -217,7 +224,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           .option(
             "numPartitions",
             source.getParallelLoadNum
-          ) // todo is this what I think it is?
+          )
 
         if (!isStringEmpty(source.getParallelLoadQuery)) {
           val (minId, maxId) = JDBCTools.minMaxQueryIds(
@@ -252,6 +259,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     val df: DataFrame = dfReaderWithQuery
       .load()
 
+    if (!isStringEmpty(source.getSelectColumn) && !containsTimeColumns(df, source.getPartitionUnit)) {
+      addTimeColumnsToFromTimestampColumn(df, source.getSelectColumn, source.getPartitionUnit)
+    }
     df
   }
 
@@ -300,18 +310,23 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       }
 
       val (fullPath, df) = if (startTS.isDefined) {
+        // saving just one partition
         val datePath = createDatePath(startTS.get, locationTableInfo.getPartitionUnit)
 
+        // for jdbc add a timestamp column and remove all other time columns (year/month/day/hour/minute)
         if (isJDBC) {
-          val jdbcDF = addJDBCTimeColumn(frame, startTS.get)
+          val jdbcDF = addJDBCTimeColumn(frame, startTS.get).drop(selectedTimeColumns: _*)
 
           (path, jdbcDF)
+          // for fs remove all time columns (year/month/day/hour/minute)
         } else {
           (concatenatePaths(path, datePath), frame.drop(selectedTimeColumns: _*))
         }
       } else {
+        // if jdbc and saving several partitions (the df contains the time columns) - add the timestamp column
+        // and remove the time columns
         if (isJDBC && containsTimeColumns(frame, locationTableInfo.getPartitionUnit)) {
-          (path, addJDBCTimeColumnFromTimeColumns(frame, timeColumnsCut))
+          (path, addJDBCTimeColumnFromTimeColumns(frame, timeColumnsCut).drop(selectedTimeColumns: _*))
         } else {
           (path, frame)
         }

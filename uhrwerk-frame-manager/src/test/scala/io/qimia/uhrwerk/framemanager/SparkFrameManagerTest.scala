@@ -411,6 +411,35 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       .sort("a", "b", "c")
     val bSourceWithTSJDBC = loadedDFSourceWithTSJDBC.collect()
     assert(bSourceWithTSJDBC === a)
+
+    // without options
+    val loadedDFSourceWithTSJDBCWithoutOptions = manager
+      .loadSourceDataFrame(
+        sourceJDBC,
+        startTS = Option(dateTime),
+        endTSExcl = Option(dateTime.plusMinutes(sourceJDBC.getPartitionSize))
+      )
+      .drop("created_at")
+      .drop(SparkFrameManagerUtils.timeColumns: _*)
+      .sort("a", "b", "c")
+    val bSourceWithTSJDBCWithoutOptions = loadedDFSourceWithTSJDBCWithoutOptions.collect()
+    assert(bSourceWithTSJDBCWithoutOptions === a)
+
+    // with a partition query
+    sourceJDBC.setParallelLoadColumn("a")
+    sourceJDBC.setParallelLoadNum(20)
+    sourceJDBC.setParallelLoadQuery("select a from <path> where created_at >= '<lower_bound>' and created_at < '<upper_bound>'")
+    val loadedDFSourceWithTSJDBCWithPartitioning = manager
+      .loadSourceDataFrame(
+        sourceJDBC,
+        startTS = Option(dateTime),
+        endTSExcl = Option(dateTime.plusMinutes(sourceJDBC.getPartitionSize))
+      )
+      .drop("created_at")
+      .drop(SparkFrameManagerUtils.timeColumns: _*)
+      .sort("a", "b", "c")
+    val bSourceWithTSJDBCWithPartitioning = loadedDFSourceWithTSJDBCWithPartitioning.collect()
+    assert(bSourceWithTSJDBCWithPartitioning === a)
   }
 
   "specifying timestamps but not the source select column" should "throw an exception" in {
