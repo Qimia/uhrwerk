@@ -97,7 +97,7 @@ class TableWrapper(metastore: MetaStore,
       // TODO error checking: if target should be on datalake but no frame is given
       // Note: We are responsible for all standard writing of DataFrames
       if (!frame.isEmpty) {
-        frameManager.writeDataFrame(frame, table, Array(startTs))
+        frameManager.writeDataFrame(frame, table, partitionTS)
       }
       true
     } catch {
@@ -138,25 +138,24 @@ class TableWrapper(metastore: MetaStore,
       tableDuration,
       table.getMaxBulkSize)
     val tasks = groups.map(partitionGroup => {
-      val localPartitionTs = partitionGroup.map(_.getPartitionTs)
+      val localGroupTs = partitionGroup.map(_.getPartitionTs)
       val bulkInput =
         DependencyHelper.extractBulkDependencyResult(partitionGroup)
       println(s"BulkInput length: ${bulkInput.length}")
       Future {
-        val res = singleRun(bulkInput, localPartitionTs)
+        val res = singleRun(bulkInput, localGroupTs)
         if (res) {
           table.getTargets.foreach((t: Target) => {
             val partitions =
-              TableWrapper.createPartitions(localPartitionTs,
+              TableWrapper.createPartitions(localGroupTs,
                                             table.getPartitionUnit,
                                             table.getPartitionSize,
                                             t.getId)
             val _ = metastore.partitionService.save(partitions, overwrite)
-            // TODO: Overwrite hardcoded on at the moment
             // TODO: Need to handle failure to store
           })
         }
-        true
+        res
       }
     })
 

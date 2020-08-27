@@ -1,0 +1,25 @@
+area: "combining"
+vertical: "yelp_db"
+table: "table_f"
+version: "1.0"
+parallelism: 1
+max_bulk_size: 1
+partition:
+  unit: "days"
+  size: 1
+
+dependencies:
+  - area: "staging"
+    vertical: "yelp_db"
+    table: "table_d"
+    format: "parquet"
+    version: "1.0"
+    transform:
+      type: "window"
+      partition:
+        size: 3
+
+
+targets:
+  - connection_name: "local_fs_lake"
+    format: "parquet"

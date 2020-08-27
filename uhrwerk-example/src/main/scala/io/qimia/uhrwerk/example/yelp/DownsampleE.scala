@@ -10,7 +10,7 @@ import org.apache.spark.sql.functions.{max, min}
 
 object DownsampleE  extends App {
   val sparkSess = SparkSession.builder()
-    .appName("loaderD")
+    .appName("DownsampleE")
     .master("local")
     .getOrCreate()
 

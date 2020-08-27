@@ -39,7 +39,13 @@ object CombinerC extends App {
   val wrapper =
     uhrwerkEnvironment.addTable("combiner-C-parq.yml", CombinerCFunc, true)
 
-  val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0))
+  val runTimes = Array(
+    LocalDateTime.of(2012, 5, 1, 0, 0),
+    LocalDateTime.of(2012, 5, 2, 0, 0),
+    LocalDateTime.of(2012, 5, 3, 0, 0),
+    LocalDateTime.of(2012, 5, 4, 0, 0),
+    LocalDateTime.of(2012, 5, 5, 0, 0)
+  )
   val results = wrapper.get.runTasksAndWait(runTimes, false)
   println(results)
 }
