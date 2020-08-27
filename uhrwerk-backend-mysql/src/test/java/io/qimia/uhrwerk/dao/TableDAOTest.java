@@ -249,7 +249,7 @@ class TableDAOTest {
   void tableBuilderTest() throws SQLException {
     Connection[] connections =
         (new ConnectionBuilder())
-            .name("JDBC")
+            .name("Test-JDBC-Source1")
             .jdbc()
             .jdbcUrl("url")
             .jdbcDriver("driver")

@@ -12,7 +12,7 @@ dependencies:
   - area: "staging"
     vertical: "yelp_db"
     table: "table_a_parq"
-    format: "jdbc"
+    format: "parquet"
     version: "1.0"
     transform:
       type: "identity"

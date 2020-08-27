@@ -72,7 +72,6 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
                overwrite: Boolean = false): Option[TableWrapper] = {
     val tableYaml = Environment.tableCleaner(configReader.readTable(tableConfigLoc))
     val storeRes = store.tableService.save(tableYaml, overwrite)
-    // TODO: For now everything is overwrite
     if (!storeRes.isSuccess) {
       // TODO: Expand the handling of store failures
       System.err.println("Storing table failed:")
