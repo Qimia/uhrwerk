@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.framemanager
 
+import java.sql.Timestamp
 import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
@@ -7,7 +8,7 @@ import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.common.tools.{JDBCTools, TimeTools}
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils._
 import org.apache.spark.sql._
-import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.{col, udf}
 
 class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
@@ -101,7 +102,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     }
 
     if (!isStringEmpty(source.getSelectColumn) && !containsTimeColumns(filteredDf, source.getPartitionUnit)) {
-      addTimeColumnsToFromTimestampColumn(filteredDf, source.getSelectColumn, source.getPartitionUnit)
+      addTimeColumnsToDFFromTimestampColumn(filteredDf, source.getSelectColumn, source.getPartitionUnit)
     } else {
       filteredDf
     }
@@ -173,7 +174,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     val filtered = df.filter(filter)
 
     if (isJDBC) {
-      addTimeColumnsToFromTimestampColumn(filtered, timeColumnJDBC, dependencyResult.succeeded.head.getPartitionUnit)
+      addTimeColumnsToDFFromTimestampColumn(filtered, timeColumnJDBC, dependencyResult.succeeded.head.getPartitionUnit)
         .drop(timeColumnJDBC)
     } else {
       filtered
@@ -260,7 +261,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       .load()
 
     if (!isStringEmpty(source.getSelectColumn) && !containsTimeColumns(df, source.getPartitionUnit)) {
-      addTimeColumnsToFromTimestampColumn(df, source.getSelectColumn, source.getPartitionUnit)
+      addTimeColumnsToDFFromTimestampColumn(df, source.getSelectColumn, source.getPartitionUnit)
     } else {
       df
     }
@@ -276,7 +277,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    *
    * @param frame                  DataFrame to save
    * @param locationTableInfo      Location Info
-   * @param partitionTS                Start Timestamp, optional
+   * @param partitionTS            Start Timestamp, optional
    * @param dataFrameWriterOptions Optional array of Spark writing options.
    *                               If the array has only one item (one map), this one is used for all targets.
    *                               If the array has as many items as there are targets,
@@ -312,9 +313,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
       val dfContainsTimeColumns = containsTimeColumns(frame, locationTableInfo.getPartitionUnit)
 
-      val (fullPath, df) = if (!dfContainsTimeColumns && partitionTS.isEmpty) {
+      val (fullPath, df) = if (!dfContainsTimeColumns && !partitionTS.isEmpty) {
         // saving just one partition defined in startTS
-        val datePath = createDatePath(partitionTS.head, locationTableInfo.getPartitionUnit)
 
         // for jdbc add a timestamp column and remove all other time columns (year/month/day/hour/minute)
         if (isJDBC) {
@@ -323,15 +323,51 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           (path, jdbcDF)
           // for fs remove all time columns (year/month/day/hour/minute)
         } else {
+          val datePath = createDatePath(partitionTS.head, locationTableInfo.getPartitionUnit)
+
           (concatenatePaths(path, datePath), frame.drop(selectedTimeColumns: _*))
         }
       } else {
-        // if jdbc and saving several partitions (the df contains the time columns) - add the timestamp column
-        // and remove the time columns
-        if (isJDBC && dfContainsTimeColumns) {
-          (path, addJDBCTimeColumnFromTimeColumns(frame, timeColumnsCut).drop(selectedTimeColumns: _*))
+        // if it is not identity, need to rewrite the values in the time columns
+        if (locationTableInfo.getPartitionSize != 1) {
+          val partitionUnit = locationTableInfo.getPartitionUnit.toString
+          val partitionSize = locationTableInfo.getPartitionSize
+          val dfWithNewTimeColumnsTmp = addJDBCTimeColumnFromTimeColumns(frame, timeColumnsCut)
+            .drop(selectedTimeColumns: _*)
+            .withColumn(
+              timeColumnJDBC,
+              udf { x: Timestamp =>
+                Timestamp.valueOf(
+                  TimeTools.getAggregateForTimestamp(
+                    partitionTS,
+                    x.toLocalDateTime,
+                    partitionUnit,
+                    partitionSize
+                  )
+                )
+              }.apply(col(timeColumnJDBC))
+            )
+
+          if (isJDBC) {
+            (path, dfWithNewTimeColumnsTmp)
+          } else {
+            (
+              path,
+              addTimeColumnsToDFFromTimestampColumn(
+                dfWithNewTimeColumnsTmp,
+                timeColumnJDBC,
+                locationTableInfo.getPartitionUnit
+              ).drop(timeColumnJDBC)
+            )
+          }
         } else {
-          (path, frame)
+          // if jdbc and saving several partitions (the df contains the time columns) - add the timestamp column
+          // and remove the time columns
+          if (isJDBC && dfContainsTimeColumns) {
+            (path, addJDBCTimeColumnFromTimeColumns(frame, timeColumnsCut).drop(selectedTimeColumns: _*))
+          } else {
+            (path, frame)
+          }
         }
       }
 

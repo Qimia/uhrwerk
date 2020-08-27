@@ -252,9 +252,7 @@ object TimeTools {
       .map(x => smallerDuration.multipliedBy(x.toLong))
 
     largeBatchList
-      .map(ts =>
-        durationAdditions.map(dur => ts.plus(dur))
-      ) // List of list of smaller subbatches
+      .map(ts => durationAdditions.map(dur => ts.plus(dur))) // List of list of smaller subbatches
       .filter(smallTimeList => {
         if (smallTimeList.forall(smallTS => smallBatches.contains(smallTS))) {
           true // if subbatches are all present continue
@@ -395,5 +393,25 @@ object TimeTools {
     }
     outArray.append(singleGroup)
     outArray.toArray
+  }
+
+  def getAggregateForTimestamp(
+                                partitionTS: Array[LocalDateTime],
+                                ts: LocalDateTime,
+                                partitionUnit: String,
+                                partitionSize: Int
+                              ): LocalDateTime = {
+    for (p <- partitionTS) {
+      val diffDuration = Duration.between(p, ts)
+      val diff = partitionUnit match {
+        case "DAYS" => diffDuration.toDays
+        case _ => 0
+      }
+      if (diff >= 0 && diff < partitionSize) {
+        return p
+      }
+    }
+
+    ts
   }
 }

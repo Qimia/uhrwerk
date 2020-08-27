@@ -281,11 +281,11 @@ object SparkFrameManagerUtils {
    * @param partitionUnit Partition Unit.
    * @return Enriched DataFrame.
    */
-  private[framemanager] def addTimeColumnsToFromTimestampColumn(
-                                                                 df: DataFrame,
-                                                                 selectColumn: String,
-                                                                 partitionUnit: PartitionUnit
-                                                               ): DataFrame = {
+  private[framemanager] def addTimeColumnsToDFFromTimestampColumn(
+                                                                   df: DataFrame,
+                                                                   selectColumn: String,
+                                                                   partitionUnit: PartitionUnit
+                                                                 ): DataFrame = {
     val withDay = df
       .withColumn("year", year(col(selectColumn)))
       .withColumn("month", concat(col("year"), lit("-"), leftPad(month(col(selectColumn)))))
