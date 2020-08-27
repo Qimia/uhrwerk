@@ -276,7 +276,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    *
    * @param frame                  DataFrame to save
    * @param locationTableInfo      Location Info
-   * @param startTS                Start Timestamp, optional
+   * @param partitionTS                Start Timestamp, optional
    * @param dataFrameWriterOptions Optional array of Spark writing options.
    *                               If the array has only one item (one map), this one is used for all targets.
    *                               If the array has as many items as there are targets,
@@ -285,7 +285,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   override def writeDataFrame(
                                frame: DataFrame,
                                locationTableInfo: Table,
-                               startTS: Option[LocalDateTime] = Option.empty,
+                               partitionTS: Array[LocalDateTime],
                                dataFrameWriterOptions: Option[Array[Map[String, String]]] = Option.empty
                              ): Unit = {
 
@@ -312,13 +312,13 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
       val dfContainsTimeColumns = containsTimeColumns(frame, locationTableInfo.getPartitionUnit)
 
-      val (fullPath, df) = if (!dfContainsTimeColumns && startTS.isDefined) {
+      val (fullPath, df) = if (!dfContainsTimeColumns && partitionTS.isEmpty) {
         // saving just one partition defined in startTS
-        val datePath = createDatePath(startTS.get, locationTableInfo.getPartitionUnit)
+        val datePath = createDatePath(partitionTS.head, locationTableInfo.getPartitionUnit)
 
         // for jdbc add a timestamp column and remove all other time columns (year/month/day/hour/minute)
         if (isJDBC) {
-          val jdbcDF = addJDBCTimeColumn(frame, startTS.get).drop(selectedTimeColumns: _*)
+          val jdbcDF = addJDBCTimeColumn(frame, partitionTS.head).drop(selectedTimeColumns: _*)
 
           (path, jdbcDF)
           // for fs remove all time columns (year/month/day/hour/minute)

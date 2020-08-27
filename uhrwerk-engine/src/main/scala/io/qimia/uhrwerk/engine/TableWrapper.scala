@@ -48,16 +48,21 @@ class TableWrapper(metastore: MetaStore,
     * (Relies on the dependencyResults for getting the dependencies and on the startTS and endTSExcl to get the sources
     * and write the right partitions
     * @param dependencyResults a list with for each dependency which partitions need to be loaded
-    * @param startTS start timestamp of the first partition
-    * @param endTSExcl end timestamp exclusive (next timestamp after the last partition)
+    * @param partitionTS a list of partition starting timestamps
     */
   private def singleRun(
       dependencyResults: List[BulkDependencyResult],
-      startTS: LocalDateTime,
-      endTSExcl: Option[LocalDateTime] = Option.empty): Boolean = {
+      partitionTS: Array[LocalDateTime]): Boolean = {
     // TODO: Log start of single task for table here
+    val startTs = partitionTS.head
+    val endTs = {
+      val lastInclusivePartitionTs = partitionTS.last
+      val tableDuration = TimeHelper.convertToDuration(table.getPartitionUnit,
+        table.getPartitionSize)
+      Option(lastInclusivePartitionTs.plus(tableDuration))
+    }
     println("Start of Single Run")
-    println(s"TS: ${startTS} Optional end-TS: ${endTSExcl}")
+    println(s"TS: ${startTs} Optional end-TS: ${endTs}")
 
     val inputDepDFs: List[(Ident, DataFrame)] =
       if (dependencyResults.nonEmpty) {
@@ -76,7 +81,7 @@ class TableWrapper(metastore: MetaStore,
         sources
           .map(s => {
             val df =
-              frameManager.loadSourceDataFrame(s, Option(startTS), endTSExcl)
+              frameManager.loadSourceDataFrame(s, Option(startTs), endTs)
             val id = SourceHelper.extractSourceIdent(s)
             id -> df
           })
@@ -92,12 +97,12 @@ class TableWrapper(metastore: MetaStore,
       // TODO error checking: if target should be on datalake but no frame is given
       // Note: We are responsible for all standard writing of DataFrames
       if (!frame.isEmpty) {
-        frameManager.writeDataFrame(frame, table, Option(startTS))
+        frameManager.writeDataFrame(frame, table, Array(startTs))
       }
       true
     } catch {
       case e: Throwable => {
-        System.err.println("Task failed: " + startTS.toString)
+        System.err.println("Task failed: " + startTs.toString)
         e.printStackTrace()
         false
       }
@@ -133,22 +138,16 @@ class TableWrapper(metastore: MetaStore,
       tableDuration,
       table.getMaxBulkSize)
     val tasks = groups.map(partitionGroup => {
+      val localPartitionTs = partitionGroup.map(_.getPartitionTs)
       val bulkInput =
         DependencyHelper.extractBulkDependencyResult(partitionGroup)
       println(s"BulkInput length: ${bulkInput.length}")
-      val startTs = partitionGroup.head.getPartitionTs
-      val endTs = {
-        val lastInclusivePartitionTs = partitionGroup.last.getPartitionTs
-        val tableDuration = TimeHelper.convertToDuration(table.getPartitionUnit,
-                                                         table.getPartitionSize)
-        Option(lastInclusivePartitionTs.plus(tableDuration))
-      }
       Future {
-        val res = singleRun(bulkInput, startTs, endTs)
+        val res = singleRun(bulkInput, localPartitionTs)
         if (res) {
           table.getTargets.foreach((t: Target) => {
             val partitions =
-              TableWrapper.createPartitions(partitionsTs,
+              TableWrapper.createPartitions(localPartitionTs,
                                             table.getPartitionUnit,
                                             table.getPartitionSize,
                                             t.getId)

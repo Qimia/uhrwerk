@@ -202,7 +202,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     table.setTargets(Array(target))
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
 
-    manager.writeDataFrame(df, table, Option(dateTime))
+    manager.writeDataFrame(df, table, Array(dateTime))
 
     val dependency = Converters.convertTargetToDependency(target, table)
     val partition = new Partition
@@ -308,6 +308,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     manager.writeDataFrame(
       dfWithTS,
       table,
+      Array(),
       dataFrameWriterOptions = Option(
         Array(Map[String, String](), dataFrameOptions, Map[String, String]())
       )
@@ -493,7 +494,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     batchDates.foreach(bd => {
       println(bd)
       val df = createMockDataFrame(spark, Option(bd))
-      manager.writeDataFrame(df, table, Option(bd))
+      manager.writeDataFrame(df, table, Array(bd))
     })
 
     val dependency = Converters.convertTargetToDependency(target, table)
@@ -616,7 +617,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     manager.writeDataFrame(
       df,
       table,
-      Option(dateTime),
+      Array(dateTime),
       Option(Array(dataFrameOptions))
     )
 
@@ -699,7 +700,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     manager.writeDataFrame(
       df,
       table,
-      Option(dateTime),
+      Array(dateTime),
       Option(Array(dataFrameOptions))
     )
 
@@ -789,7 +790,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     partition.setPartitionTs(dateTime)
     partition.setKey()
 
-    manager.writeDataFrame(df, table, startTS = Option(dateTime))
+    manager.writeDataFrame(df, table, partitionTS = Array(dateTime))
 
     val dependency = Converters.convertTargetToDependency(target, table)
     val dependencyResult = BulkDependencyResult(
