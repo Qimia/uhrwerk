@@ -137,7 +137,7 @@ class DagBuilderTest {
             .type("temporal_aggregate")
             .partition()
             .size(4)
-            .unit("hours")
+            .unit("days")
             .done()
             .done()
             .done()
@@ -151,7 +151,7 @@ class DagBuilderTest {
   @Test
   void nestedBuildTest1() {
 
-    Table table = new TableBuilder()
+    Table table1 = new TableBuilder()
             .area("TableArea")
             .vertical("TableVertical")
             .table("TableTable")
@@ -259,6 +259,19 @@ class DagBuilderTest {
             .done()
             .buildRepresentationTable();
 
+
+    Table table2 = new Table();
+    table2.setTargets(table1.getTargets());
+    table2.setDependencies(table1.getDependencies());
+    table2.setSources(table1.getSources());
+    table2.setPartition(table1.getPartition());
+    table2.setMax_bulk_size(table1.getMax_bulk_size());
+    table2.setParallelism(table1.getParallelism());
+    table2.setVersion(table1.getVersion());
+    table2.setVertical(table1.getVertical());
+    table2.setTable(table1.getTable());
+    table2.setArea("somedifferent");
+
     var connection1 = new ConnectionBuilder()
             .name("s3")
             .s3()
@@ -276,8 +289,9 @@ class DagBuilderTest {
             .done()
             .buildRepresentationConnection();
 
-    var tables = new Table[1];
-    tables[0] = table;
+    var tables = new Table[2];
+    tables[0] = table1;
+    tables[1] = table2;
 
     var connections = new Connection[2];
     connections[0] = connection1;
