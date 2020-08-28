@@ -18,17 +18,17 @@ public class PartitionDurationTest {
         depCheck1.transformType = PartitionTransformType.IDENTITY;
         depCheck1.dependencyTablePartitionSize = 15;
         depCheck1.dependencyTablePartitionUnit = PartitionUnit.MINUTES;
-        assertTrue(PartitionDurationTester.checkDependency(tableDur1, depCheck1));
+        assertTrue(PartitionDurationTester.checkPartitionedDependency(tableDur1, depCheck1));
 
         var tableDur2 = Duration.ofHours(1);
-        assertFalse(PartitionDurationTester.checkDependency(tableDur2, depCheck1));
+        assertFalse(PartitionDurationTester.checkPartitionedDependency(tableDur2, depCheck1));
 
         var depCheck2 = new PartitionDurationTester.PartitionTestDependencyInput();
         depCheck2.dependencyTableName = "check2";
         depCheck2.transformType = PartitionTransformType.IDENTITY;
         depCheck2.dependencyTablePartitionSize = 1;
         depCheck2.dependencyTablePartitionUnit = PartitionUnit.HOURS;
-        assertTrue(PartitionDurationTester.checkDependency(tableDur2, depCheck2));
+        assertTrue(PartitionDurationTester.checkPartitionedDependency(tableDur2, depCheck2));
 
         var tableDur3 = Duration.ofDays(7 * 3);
         var depCheck3 = new PartitionDurationTester.PartitionTestDependencyInput();
@@ -36,7 +36,7 @@ public class PartitionDurationTest {
         depCheck3.transformType = PartitionTransformType.IDENTITY;
         depCheck3.dependencyTablePartitionSize = 3;
         depCheck3.dependencyTablePartitionUnit = PartitionUnit.WEEKS;
-        assertTrue(PartitionDurationTester.checkDependency(tableDur3, depCheck3));
+        assertTrue(PartitionDurationTester.checkPartitionedDependency(tableDur3, depCheck3));
     }
 
     @Test
@@ -48,7 +48,7 @@ public class PartitionDurationTest {
         depCheck1.transformSize = 10;
         depCheck1.dependencyTablePartitionSize = 20;
         depCheck1.dependencyTablePartitionUnit = PartitionUnit.MINUTES;
-        assertTrue(PartitionDurationTester.checkDependency(tableDur1, depCheck1));
+        assertTrue(PartitionDurationTester.checkPartitionedDependency(tableDur1, depCheck1));
     }
 
     @Test
@@ -60,10 +60,10 @@ public class PartitionDurationTest {
         depCheck1.transformSize = 2;
         depCheck1.dependencyTablePartitionSize = 20;
         depCheck1.dependencyTablePartitionUnit = PartitionUnit.MINUTES;
-        assertFalse(PartitionDurationTester.checkDependency(tableDur1, depCheck1));
+        assertFalse(PartitionDurationTester.checkPartitionedDependency(tableDur1, depCheck1));
 
         var tableDur2 = Duration.ofMinutes(40);
-        assertTrue(PartitionDurationTester.checkDependency(tableDur2, depCheck1));
+        assertTrue(PartitionDurationTester.checkPartitionedDependency(tableDur2, depCheck1));
 
         var tableDur3 = Duration.ofHours(6);
         var depCheck3 = new PartitionDurationTester.PartitionTestDependencyInput();
@@ -72,7 +72,7 @@ public class PartitionDurationTest {
         depCheck3.transformSize = 24;
         depCheck3.dependencyTablePartitionSize = 15;
         depCheck3.dependencyTablePartitionUnit = PartitionUnit.MINUTES;
-        assertTrue(PartitionDurationTester.checkDependency(tableDur3, depCheck3));
+        assertTrue(PartitionDurationTester.checkPartitionedDependency(tableDur3, depCheck3));
     }
 
     @Test

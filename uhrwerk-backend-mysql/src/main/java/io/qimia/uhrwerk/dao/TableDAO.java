@@ -7,11 +7,9 @@ import io.qimia.uhrwerk.common.metastore.dependency.TableDependencyService;
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResult;
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResultSet;
 import io.qimia.uhrwerk.common.model.*;
+import io.qimia.uhrwerk.common.model.Connection;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -99,11 +97,18 @@ public class TableDAO implements TableDependencyService, TableService {
       }
     }
     if (table.getDependencies() != null && table.getDependencies().length > 0) {
+      var tablePartitionUnit = table.getPartitionUnit();
+      Optional<PartitionUnit> inPartitionUnit;
+      if (tablePartitionUnit == null) {
+        inPartitionUnit = Optional.empty();
+      } else {
+        inPartitionUnit = Optional.of(tablePartitionUnit);
+      }
       var dependencyResult =
               dependencyDAO.save(
                       table.getDependencies(),
                       table.getId(),
-                      table.getPartitionUnit(),
+                      inPartitionUnit,
                       table.getPartitionSize(),
                       overwrite);
 
@@ -146,7 +151,12 @@ public class TableDAO implements TableDependencyService, TableService {
     insert.setString(3, table.getVertical());
     insert.setString(4, table.getName());
     insert.setString(5, table.getVersion());
-    insert.setString(6, table.getPartitionUnit().name());
+    var partitionUnit = table.getPartitionUnit();
+    if (partitionUnit == null) {
+      insert.setNull(6, Types.VARCHAR);
+    } else {
+      insert.setString(6, partitionUnit.name());
+    }
     insert.setInt(7, table.getPartitionSize());
     insert.setInt(8, table.getParallelism());
     insert.setInt(9, table.getMaxBulkSize());
@@ -175,7 +185,10 @@ public class TableDAO implements TableDependencyService, TableService {
       res.setArea(record.getString("area"));
       res.setVertical(record.getString("vertical"));
       res.setName(record.getString("name"));
-      res.setPartitionUnit(PartitionUnit.valueOf(record.getString("partition_unit")));
+      var partitionUnit = record.getString("partition_unit");
+      if ((partitionUnit != null) && (!partitionUnit.equals(""))) {
+        res.setPartitionUnit(PartitionUnit.valueOf(partitionUnit));
+      }
       res.setPartitionSize(record.getInt("partition_size"));
       res.setParallelism(record.getInt("parallelism"));
       res.setMaxBulkSize(record.getInt("max_bulk_size"));

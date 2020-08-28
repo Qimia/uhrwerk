@@ -158,7 +158,7 @@ public class TargetDAO implements TargetService {
                 }
                 if (newTargetConn == null) {
                     saveResult.setSuccess(false);
-                    saveResult.setError(true);
+                    saveResult.setError(false);
                     saveResult.setMessage("Could not find connection " + shellConnName + " for target-format " +
                             target.getFormat());
                     return saveResult;
