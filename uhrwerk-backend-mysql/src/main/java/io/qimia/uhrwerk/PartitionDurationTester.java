@@ -68,6 +68,9 @@ public class PartitionDurationTester {
    */
   public static boolean checkPartitionedDependency(
       Duration tablePartitionSize, PartitionTestDependencyInput testObj) {
+    if (testObj.dependencyTablePartitionUnit == null) {
+      return false;
+    }
     Duration dependencyTableSize =
         convertToDuration(
             testObj.dependencyTablePartitionUnit, testObj.dependencyTablePartitionSize);
@@ -79,6 +82,16 @@ public class PartitionDurationTester {
       return dependencyTableSize.equals(Duration.ofMinutes(minutesDividedOfTable));
     }
     return false;
+  }
+
+  /**
+   * Check for a single unpartitioned dependency if the table is actually unpartitioned
+   * @param testObj Dependency's partitioning information
+   * @return true if they match up, false if not
+   */
+  public static boolean checkUnpartitionedDependency(PartitionTestDependencyInput testObj) {
+    assert (testObj.transformType == null) : "Not an unpartitioned dependency";
+    return (testObj.dependencyTablePartitionUnit == null);
   }
 
   /**
@@ -104,11 +117,14 @@ public class PartitionDurationTester {
     ArrayList<String> badTables = new ArrayList<>();
     Duration tableDuration = convertToDuration(tablePartitionUnit, tablePartitionSize);
     for (PartitionTestDependencyInput testDependency : dependencies) {
+      boolean checkRes;
       if (testDependency.transformType != null) {
-        var checkRes = checkPartitionedDependency(tableDuration, testDependency);
-        if (!checkRes) {
-          badTables.add(testDependency.dependencyTableName);
-        }
+        checkRes = checkPartitionedDependency(tableDuration, testDependency);
+      } else {
+        checkRes = checkUnpartitionedDependency(testDependency);
+      }
+      if (!checkRes) {
+        badTables.add(testDependency.dependencyTableName);
       }
       // if it is an unpartitioned dependency then existing is enough
       // (and any partitioned table can be loaded as an unpartitioned one)

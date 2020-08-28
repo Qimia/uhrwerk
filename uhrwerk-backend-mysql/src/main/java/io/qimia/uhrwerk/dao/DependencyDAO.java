@@ -88,10 +88,11 @@ public class DependencyDAO implements DependencyStoreService {
       result.success = false;
       problemString.append("dependency: ").append(newDepName).append("\thas a different version\n");
     }
-    if (!trueDep.getTransformType().equals(newDep.getTransformType())) {
+    if (trueDep.getTransformType() != newDep.getTransformType()) {
       result.success = false;
       problemString.append("dependency: ").append(newDepName).append("\thas a different type\n");
     }
+
     if (trueDep.getTransformPartitionSize() != newDep.getTransformPartitionSize()) {
       result.success = false;
       problemString.append("dependency: ").append(newDepName).append("\thas a different size\n");
@@ -287,11 +288,11 @@ public class DependencyDAO implements DependencyStoreService {
       statement.setLong(2, dependency.getTableId());
       statement.setLong(3, dependency.getDependencyTargetId());
       statement.setLong(4, dependency.getDependencyTableId());
-      var transformType = dependency.getTransformType().toString();
-      if ((transformType == null) || transformType.equals("")) {
+      var transformType = dependency.getTransformType();
+      if (transformType == null) {
         statement.setNull(5, Types.VARCHAR);
       } else {
-        statement.setString(5, transformType);
+        statement.setString(5, transformType.toString());
       }
       var tranformPartitionUnit = dependency.getTransformPartitionUnit();
       if (tranformPartitionUnit != null) {
@@ -362,18 +363,40 @@ public class DependencyDAO implements DependencyStoreService {
       return result;
     }
 
-
     if (partitionUnit.isPresent()) {
       // Check dependency sizes (abort if size does not match)
       var sizeTestResult =
-              checkPartitionSizes(dependencies, partitionUnit.get(), partitionSize, tableSearchRes.foundTables);
+          checkPartitionSizes(
+              dependencies, partitionUnit.get(), partitionSize, tableSearchRes.foundTables);
       if (!sizeTestResult.success) {
         result.setSuccess(false);
         result.setError(false);
         result.setMessage(
-                "Tables "
-                        + Arrays.toString(sizeTestResult.badTableNames)
-                        + " have the wrong partition duration");
+            String.format(
+                "Tables %s have the wrong partition duration",
+                Arrays.toString(sizeTestResult.badTableNames)));
+        return result;
+      }
+    } else {
+      // Check if there are any dependencies which have a transformation (and/or are themselves partitioned)
+      boolean problem = false;
+      ArrayList<String> problemDependencies = new ArrayList<>();
+      var tablePartitionLookup = new HashMap<Long, TablePartRes>();
+      for (TablePartRes foundTable : tableSearchRes.foundTables) {
+        tablePartitionLookup.put(foundTable.tableId, foundTable);
+      }
+      for (Dependency checkDep : dependencies) {
+        TablePartRes connectedTable = tablePartitionLookup.get(checkDep.getDependencyTableId());
+        if ((checkDep.getTransformType() != null) || (connectedTable.partitionUnit != null)) {
+          problem = true;
+          problemDependencies.add(checkDep.getTableName());
+        }
+      }
+      if (problem) {
+        result.setSuccess(false);
+        result.setError(false);
+        result.setMessage(
+            "Tables " + String.join(", ", problemDependencies) + " have a partitioning");
         return result;
       }
     }
