@@ -2,6 +2,8 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
+import java.util.Arrays;
+
 public class Dependency {
 
   private String area;
@@ -74,6 +76,9 @@ public class Dependency {
     }
     if (format == null) {
       throw new ConfigException("Missing field: " + path + "format");
+    }
+    if (!Arrays.asList("json", "parquet", "jdbc", "orc", "libsvm", "csv", "text" , "avro").contains(format)) {
+      throw new ConfigException("Wrong format! '" + format + "' is not allowed in " + path + "format");
     }
     if (version == null) {
       throw new ConfigException("Missing field: " + path + "version");

@@ -2,6 +2,8 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
+import java.util.Arrays;
+
 public class Transform{
 
     private String type;
@@ -29,6 +31,9 @@ public class Transform{
         path += "transform/";
         if(type == null){
             throw new ConfigException("Missing field: " + path + "type");
+        }
+        if (!Arrays.asList("identity", "aggregate", "window", "temporal_aggregate").contains(type)) {
+            throw new ConfigException("Wrong type! '" + type + "' is not allowed in " + path + "type");
         }
         if(!type.equals("identity")){
             if(partition == null){

@@ -2,6 +2,8 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
+import java.util.Arrays;
+
 public class Partition {
 
   private String unit;
@@ -30,6 +32,9 @@ public class Partition {
     if (unit == null) {
       throw new ConfigException("Missing field: " + path + "unit");
     }
+    if (!Arrays.asList("weeks","days","hours","minutes").contains(unit)) {
+      throw new ConfigException("Wrong unit! '" + unit + "' is not allowed in " + path + "unit");
+    }
     if (size == null) {
       throw new ConfigException("Missing field: " + path + "size");
     }
@@ -40,6 +45,9 @@ public class Partition {
     if (type.equals("temporal_aggregate")) {
       if (unit == null) {
         throw new ConfigException("Missing field: " + path + "unit");
+      }
+      if (!Arrays.asList("weeks","days","hours","minutes").contains(unit)) {
+        throw new ConfigException("Wrong unit! '" + unit + "' is not allowed in " + path + "unit");
       }
     }
     if (size == 0) {
