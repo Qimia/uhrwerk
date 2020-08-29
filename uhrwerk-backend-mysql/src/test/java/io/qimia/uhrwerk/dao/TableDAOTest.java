@@ -8,6 +8,8 @@ import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResult;
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResultSet;
 import io.qimia.uhrwerk.common.model.*;
 import io.qimia.uhrwerk.config.ConnectionBuilder;
+import io.qimia.uhrwerk.config.DependencyBuilder;
+import io.qimia.uhrwerk.config.SourceBuilder;
 import io.qimia.uhrwerk.config.TableBuilder;
 import org.junit.jupiter.api.Test;
 
@@ -157,7 +159,7 @@ class TableDAOTest {
 
     assertTrue(result.isSuccess());
     Arrays.stream(result.getSourceResults())
-            .forEach(sourceResult -> assertTrue(sourceResult.isSuccess()));
+        .forEach(sourceResult -> assertTrue(sourceResult.isSuccess()));
 
     assertTrue(result.getTargetResult().isSuccess());
 
@@ -195,7 +197,7 @@ class TableDAOTest {
     System.out.println(result2.getMessage());
     assertTrue(result2.isSuccess());
     Arrays.stream(result2.getSourceResults())
-            .forEach(sourceResult -> assertTrue(sourceResult.isSuccess()));
+        .forEach(sourceResult -> assertTrue(sourceResult.isSuccess()));
 
     assertTrue(result2.getTargetResult().isSuccess());
 
@@ -248,19 +250,25 @@ class TableDAOTest {
   @Test
   void tableBuilderTest() throws SQLException {
     Connection[] connections =
-        (new ConnectionBuilder())
-            .name("Test-JDBC-Source1")
-            .jdbc()
-            .jdbcUrl("url")
-            .jdbcDriver("driver")
-            .user("user")
-            .pass("pass")
-            .name("S3")
-            .s3()
-            .path("S3Path")
-            .secretId("ID")
-            .secretKey("key")
-            .build();
+        new Connection[] {
+          (new ConnectionBuilder())
+              .name("Test-JDBC-Source1")
+              .jdbc()
+              .jdbcUrl("url")
+              .jdbcDriver("driver")
+              .user("user")
+              .pass("pass")
+              .done()
+              .build(),
+          (new ConnectionBuilder())
+              .name("S3")
+              .s3()
+              .path("S3Path")
+              .secretId("ID")
+              .secretKey("key")
+              .done()
+              .build()
+        };
 
     ConnectionResult[] connResults = connectionDAO.save(connections, true);
     for (int i = 0; i < connResults.length; i++) {
@@ -268,6 +276,27 @@ class TableDAOTest {
       assertNotNull(connResults[i].getNewConnection());
       assertNull(connResults[i].getOldConnection());
     }
+
+    var source1 =
+        (new SourceBuilder())
+            .connectionName("Test-JDBC-Source1")
+            .path("SOURCE_DB.EXT_TABLE1")
+            .format("JDBC")
+            .version("1.0")
+            .partition()
+            .unit("minutes")
+            .size(30)
+            .done()
+            .parallelLoad()
+            .query("SELECT * FROM SOURCE_DB.EXT_TABLE1")
+            .column("Column1")
+            .num(8)
+            .done()
+            .select()
+            .query("SELECT * FROM SOURCE_DB.EXT_TABLE1")
+            .column("created_ts")
+            .done()
+            .build();
 
     Table depTable1 =
         (new TableBuilder())
@@ -278,24 +307,12 @@ class TableDAOTest {
             .partition()
             .unit("minutes")
             .size(30)
-            .source()
-            .connectionName("Test-JDBC-Source1")
-            .path("SOURCE_DB.EXT_TABLE1")
-            .format("JDBC")
-            .version("1.0")
-            .partition()
-            .unit("minutes")
-            .size(30)
-            .parallelLoad()
-            .query("SELECT * FROM SOURCE_DB.EXT_TABLE1")
-            .column("Column1")
-            .num(8)
-            .select()
-            .query("SELECT * FROM SOURCE_DB.EXT_TABLE1")
-            .column("created_ts")
+            .done()
+            .source(source1)
             .target()
             .connectionName("S3")
             .format("parquet")
+            .done()
             .build();
     TableResult depTable1Result = tableDAO.save(depTable1, true);
     assertFalse(depTable1Result.isError());
@@ -304,6 +321,21 @@ class TableDAOTest {
     assertNull(depTable1Result.getOldResult());
     assertNotNull(depTable1.getId());
     assertNotNull(depTable1.getTargets()[0].getId());
+
+    var dep1 =
+        (new DependencyBuilder())
+            .area("TestArea")
+            .vertical("TestVertical")
+            .table("TestDepTable1")
+            .format("parquet")
+            .version("1.0")
+            .transform()
+            .type("aggregate")
+            .partition()
+            .size(2)
+            .done()
+            .done()
+            .build();
 
     Table mainTable =
         (new TableBuilder())
@@ -314,19 +346,12 @@ class TableDAOTest {
             .partition()
             .unit("hours")
             .size(1)
-            .dependency()
-            .area("TestArea")
-            .vertical("TestVertical")
-            .table("TestDepTable1")
-            .format("parquet")
-            .version("1.0")
-            .transform()
-            .type("aggregate")
-            .partition()
-            .size(2)
+            .done()
+            .dependency(dep1)
             .target()
             .connectionName("S3")
             .format("parquet")
+            .done()
             .build();
 
     TableResult mainTableResult = tableDAO.save(mainTable, true);

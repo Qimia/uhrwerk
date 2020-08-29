@@ -4,11 +4,13 @@ import io.qimia.uhrwerk.common.metastore.config.ConnectionResult;
 import io.qimia.uhrwerk.common.metastore.config.ConnectionService;
 import io.qimia.uhrwerk.common.model.Connection;
 import io.qimia.uhrwerk.common.model.ConnectionType;
+import io.qimia.uhrwerk.config.ConnectionBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,8 +18,7 @@ class ConnectionDAOTest {
 
   java.sql.Connection db;
   ConnectionService service;
-  String[] connNames = {"S3","JDBC","file"};
-
+  String[] connNames = {"S3", "JDBC", "file"};
 
   @org.junit.jupiter.api.BeforeEach
   void setUp() throws SQLException {
@@ -62,28 +63,38 @@ class ConnectionDAOTest {
     System.out.println(result.getNewConnection());
   }
 
-
   @Test
   void insertFullConnection() {
-    Connection[] conn = (new io.qimia.uhrwerk.config.ConnectionBuilder())
+
+    var conns = new ArrayList<Connection>();
+    var connection1 =
+        (new ConnectionBuilder())
             .name(connNames[0])
             .s3()
             .path("S3Path")
             .secretId("ID")
             .secretKey("key")
+            .done()
+            .build();
+    conns.add(connection1);
+
+    var connection2 =
+        (new ConnectionBuilder())
             .name(connNames[1])
             .jdbc()
             .jdbcUrl("url")
             .jdbcDriver("driver")
             .user("user")
             .pass("pass2")
-            .name(connNames[2])
-            .file()
-            .path("filePath")
+            .done()
             .build();
+    conns.add(connection2);
 
-    for (Connection c : conn)
-    {
+    var connection3 =
+        (new ConnectionBuilder()).name(connNames[2]).file().path("filePath").done().build();
+    conns.add(connection3);
+
+    for (Connection c : conns) {
       ConnectionResult result = service.save(c, true);
       assertTrue(result.isSuccess());
       assertNotNull(result.getNewConnection());
@@ -99,14 +110,12 @@ class ConnectionDAOTest {
       for (String n : connNames) {
         Connection con = service.getByName(n);
         System.out.println(con);
-        assertEquals(n,con.getName());
+        assertEquals(n, con.getName());
       }
     } catch (SQLException e) {
       System.out.println("caught in Connection.");
     }
-
   }
-
 
   @Test
   void getByIDConnection() {
@@ -117,33 +126,28 @@ class ConnectionDAOTest {
         testCon.setKey();
         Connection con = service.getById(testCon.getId());
         System.out.println(con);
-        assertEquals(testCon.getId(),con.getId());
+        assertEquals(testCon.getId(), con.getId());
       }
     } catch (SQLException e) {
       System.out.println("caught in Connection.");
     }
-
   }
-
 
   @Test
-  void getDependency() {
-
-  }
+  void getDependency() {}
 
   @Test
   void getByStatementConnection() {
     try {
-        PreparedStatement statement = db.prepareStatement("SELECT * FROM CONNECTION WHERE NAME in ();");
-        Connection[] con = service.getConnections(statement);
-      for (int i=0;i<con.length; i++) {
+      PreparedStatement statement =
+          db.prepareStatement("SELECT * FROM CONNECTION WHERE NAME in ();");
+      Connection[] con = service.getConnections(statement);
+      for (int i = 0; i < con.length; i++) {
         System.out.println(con[i]);
-        assertEquals(connNames[i],con[i].getName());
+        assertEquals(connNames[i], con[i].getName());
       }
     } catch (SQLException e) {
       System.out.println("caught in Connection.");
     }
-
   }
-
 }
