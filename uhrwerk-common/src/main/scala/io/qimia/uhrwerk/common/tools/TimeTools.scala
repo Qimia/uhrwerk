@@ -1,8 +1,9 @@
-package io.qimia.uhrwerk.utils
+package io.qimia.uhrwerk.common.tools
 
+import java.sql.Timestamp
+import java.time._
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.time.{Duration, LocalDateTime, LocalTime}
 
 import io.qimia.uhrwerk.common.model.PartitionUnit
 
@@ -41,6 +42,16 @@ object TimeTools {
   def convertTSToString(date: LocalDateTime): String =
     date.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
 
+  def convertTSToUTCString(date: LocalDateTime): String =
+    Timestamp
+      .valueOf(
+        date
+          .atZone(ZoneId.systemDefault)
+          .withZoneSameInstant(ZoneOffset.UTC)
+          .toLocalDateTime
+      )
+      .toString
+
   // TODO: Durations now have to be exact minutes or hours or days (what if it isn't??)
 
   /**
@@ -60,7 +71,8 @@ object TimeTools {
                              ts: LocalDateTime,
                              unit: PartitionUnit,
                              size: Int,
-                             partitionCount: Int): (LocalDateTime, LocalDateTime) = {
+                             partitionCount: Int
+                           ): (LocalDateTime, LocalDateTime) = {
     val durationObj = convertDurationStrToObj(unit, size)
     val multipliedDuration = durationObj.multipliedBy(partitionCount)
 
@@ -68,7 +80,8 @@ object TimeTools {
     val isHour = multipliedDuration.minusHours(1).getSeconds == 0
     val isDay = multipliedDuration.minusDays(1).getSeconds == 0
     val correctNumberOfDays = ts.getMonth.length(
-      ((ts.getYear % 4 == 0) && (ts.getYear % 100 != 0)) || (ts.getYear % 400 == 0))
+      ((ts.getYear % 4 == 0) && (ts.getYear % 100 != 0)) || (ts.getYear % 400 == 0)
+    )
     val isMonth = multipliedDuration
       .minusDays(correctNumberOfDays)
       .getSeconds == 0
@@ -112,16 +125,20 @@ object TimeTools {
    */
   def getRangeFromWindow(
                           ts: LocalDateTime,
-                          unit: PartitionUnit, size: Int,
-                          partitionCount: Int): (LocalDateTime, LocalDateTime) = {
+                          unit: PartitionUnit,
+                          size: Int,
+                          partitionCount: Int
+                        ): (LocalDateTime, LocalDateTime) = {
     if (partitionCount <= 1) {
       throw new Exception("partitionCount must be bigger than 1")
     }
     val durationObj = convertDurationStrToObj(unit, size)
     val multipliedDuration = durationObj.multipliedBy(partitionCount - 1)
 
-    (ts.minusMinutes(multipliedDuration.toMinutes),
-      ts.plusMinutes(durationObj.toMinutes))
+    (
+      ts.minusMinutes(multipliedDuration.toMinutes),
+      ts.plusMinutes(durationObj.toMinutes)
+    )
   }
 
   /**
@@ -177,9 +194,11 @@ object TimeTools {
    * @param batchSize
    * @return
    */
-  def convertRangeToBatch(startDate: LocalDateTime,
-                          endDate: LocalDateTime,
-                          batchSize: Duration): List[LocalDateTime] = {
+  def convertRangeToBatch(
+                           startDate: LocalDateTime,
+                           endDate: LocalDateTime,
+                           batchSize: Duration
+                         ): List[LocalDateTime] = {
 
     val batches = new ListBuffer[LocalDateTime]()
 
@@ -203,14 +222,18 @@ object TimeTools {
 
   // Create a small batch list from a more course one (for taking in smaller dependencies)
   // Assumes the large-batches are already ordered in time
-  def convertToSmallerBatchList(largeBatchList: List[LocalDateTime],
-                                runBatchSize: Duration,
-                                divideBy: Int): List[LocalDateTime] = {
+  def convertToSmallerBatchList(
+                                 largeBatchList: List[LocalDateTime],
+                                 runBatchSize: Duration,
+                                 divideBy: Int
+                               ): List[LocalDateTime] = {
     val smallerDuration = runBatchSize.dividedBy(divideBy)
     val durationAdditions = (0 until divideBy).toList
       .map(x => smallerDuration.multipliedBy(x.toLong))
-    for (batch <- largeBatchList;
-         durationAdd <- durationAdditions)
+    for (
+      batch <- largeBatchList;
+      durationAdd <- durationAdditions
+    )
       yield {
         batch.plus(durationAdd)
       }
@@ -222,7 +245,8 @@ object TimeTools {
                                 largeBatchList: List[LocalDateTime],
                                 runBatchSize: Duration,
                                 divideBy: Int,
-                                smallBatches: Set[LocalDateTime]): List[LocalDateTime] = {
+                                smallBatches: Set[LocalDateTime]
+                              ): List[LocalDateTime] = {
     val smallerDuration = runBatchSize.dividedBy(divideBy)
     val durationAdditions = (0 until divideBy).toList
       .map(x => smallerDuration.multipliedBy(x.toLong))
@@ -240,9 +264,11 @@ object TimeTools {
   }
 
   // Adds windowSize - 1 batches to the front of the batchList for windowed dependencies
-  def convertToWindowBatchList(largeBatchList: List[LocalDateTime],
-                               stepBatchSize: Duration,
-                               windowSize: Int): List[LocalDateTime] = {
+  def convertToWindowBatchList(
+                                largeBatchList: List[LocalDateTime],
+                                stepBatchSize: Duration,
+                                windowSize: Int
+                              ): List[LocalDateTime] = {
     val timeSubtractions = (-windowSize + 1 until 0)
       .map(stepBatchSize.multipliedBy(_))
       .map(largeBatchList.head.plus(_))
@@ -250,8 +276,10 @@ object TimeTools {
   }
 
   // Remove added window elements from the list (reverse of creating the window list)
-  def cleanWindowBatchList[T](windowedBatchList: List[T],
-                              windowSize: Int): List[T] =
+  def cleanWindowBatchList[T](
+                               windowedBatchList: List[T],
+                               windowSize: Int
+                             ): List[T] =
     windowedBatchList.drop(windowSize - 1)
 
   def divisibleBy(big: Duration, small: Duration): Boolean =
@@ -309,8 +337,10 @@ object TimeTools {
    * @param partitionSize Duration (step-size between 2 localdatetimes)
    * @return True for no-gaps
    */
-  def checkIsSequentialIncreasing(in: Seq[LocalDateTime],
-                                  partitionSize: Duration): Boolean = {
+  def checkIsSequentialIncreasing(
+                                   in: Seq[LocalDateTime],
+                                   partitionSize: Duration
+                                 ): Boolean = {
     if (in.length == 1) {
       return true
     }
@@ -331,9 +361,11 @@ object TimeTools {
    * @param maxSize       max number of partitions in a
    * @return Array of int showing the size of the different groups
    */
-  def groupSequentialIncreasing(in: Seq[LocalDateTime],
-                                partitionSize: Duration,
-                                maxSize: Int): Array[Int] = {
+  def groupSequentialIncreasing(
+                                 in: Seq[LocalDateTime],
+                                 partitionSize: Duration,
+                                 maxSize: Int
+                               ): Array[Int] = {
     val outArray: mutable.ArrayBuffer[Int] =
       new ArrayBuffer[Int]
 
@@ -361,5 +393,27 @@ object TimeTools {
     }
     outArray.append(singleGroup)
     outArray.toArray
+  }
+
+  def getAggregateForTimestamp(
+                                partitionTS: Array[LocalDateTime],
+                                ts: LocalDateTime,
+                                partitionUnit: String,
+                                partitionSize: Int
+                              ): LocalDateTime = {
+    for (p <- partitionTS) {
+      val diffDuration = Duration.between(p, ts)
+      val diff = partitionUnit match {
+        case "DAYS" => diffDuration.toDays
+        case "HOURS" => diffDuration.toHours
+        case "MINUTES" => diffDuration.toMinutes
+        case _ => 0
+      }
+      if (diff >= 0 && diff < partitionSize) {
+        return p
+      }
+    }
+
+    ts
   }
 }

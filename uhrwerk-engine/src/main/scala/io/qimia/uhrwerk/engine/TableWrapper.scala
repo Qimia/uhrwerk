@@ -45,17 +45,24 @@ class TableWrapper(metastore: MetaStore,
 
   /**
     * Single invocation of usercode (possibly bulk-modus)
+    * (Relies on the dependencyResults for getting the dependencies and on the startTS and endTSExcl to get the sources
+    * and write the right partitions
     * @param dependencyResults a list with for each dependency which partitions need to be loaded
-    * @param startTS start timestamp
-    * @param endTSExcl end timestamp exclusive
+    * @param partitionTS a list of partition starting timestamps
     */
   private def singleRun(
       dependencyResults: List[BulkDependencyResult],
-      startTS: LocalDateTime,
-      endTSExcl: Option[LocalDateTime] = Option.empty): Boolean = {
+      partitionTS: Array[LocalDateTime]): Boolean = {
     // TODO: Log start of single task for table here
+    val startTs = partitionTS.head
+    val endTs = {
+      val lastInclusivePartitionTs = partitionTS.last
+      val tableDuration = TimeHelper.convertToDuration(table.getPartitionUnit,
+        table.getPartitionSize)
+      Option(lastInclusivePartitionTs.plus(tableDuration))
+    }
     println("Start of Single Run")
-    println(s"TS: ${startTS}")
+    println(s"TS: ${startTs} Optional end-TS: ${endTs}")
 
     val inputDepDFs: List[(Ident, DataFrame)] =
       if (dependencyResults.nonEmpty) {
@@ -74,7 +81,7 @@ class TableWrapper(metastore: MetaStore,
         sources
           .map(s => {
             val df =
-              frameManager.loadSourceDataFrame(s, Option(startTS), endTSExcl)
+              frameManager.loadSourceDataFrame(s, Option(startTs), endTs)
             val id = SourceHelper.extractSourceIdent(s)
             id -> df
           })
@@ -89,11 +96,13 @@ class TableWrapper(metastore: MetaStore,
       val frame = userFunc(taskInput)
       // TODO error checking: if target should be on datalake but no frame is given
       // Note: We are responsible for all standard writing of DataFrames
-      frameManager.writeDataFrame(frame, table)
+      if (!frame.isEmpty) {
+        frameManager.writeDataFrame(frame, table, partitionTS)
+      }
       true
     } catch {
       case e: Throwable => {
-        System.err.println("Task failed: " + startTS.toString)
+        System.err.println("Task failed: " + startTs.toString)
         e.printStackTrace()
         false
       }
@@ -129,33 +138,24 @@ class TableWrapper(metastore: MetaStore,
       tableDuration,
       table.getMaxBulkSize)
     val tasks = groups.map(partitionGroup => {
+      val localGroupTs = partitionGroup.map(_.getPartitionTs)
       val bulkInput =
         DependencyHelper.extractBulkDependencyResult(partitionGroup)
       println(s"BulkInput length: ${bulkInput.length}")
-      val startTs = partitionGroup.head.getPartitionTs
-      val endTs = if (partitionGroup.length > 1) {
-        val lastInclusivePartitionTs = partitionGroup.last.getPartitionTs
-        val tableDuration = TimeHelper.convertToDuration(table.getPartitionUnit,
-                                                         table.getPartitionSize)
-        Option(lastInclusivePartitionTs.plus(tableDuration))
-      } else {
-        Option.empty
-      }
       Future {
-        val res = singleRun(bulkInput, startTs, endTs)
+        val res = singleRun(bulkInput, localGroupTs)
         if (res) {
           table.getTargets.foreach((t: Target) => {
             val partitions =
-              TableWrapper.createPartitions(partitionsTs,
+              TableWrapper.createPartitions(localGroupTs,
                                             table.getPartitionUnit,
                                             table.getPartitionSize,
                                             t.getId)
             val _ = metastore.partitionService.save(partitions, overwrite)
-            // TODO: Overwrite hardcoded on at the moment
             // TODO: Need to handle failure to store
           })
         }
-        true
+        res
       }
     })
 
@@ -178,14 +178,17 @@ class TableWrapper(metastore: MetaStore,
                       overwrite: Boolean = false,
                       threads: Option[Int] = Option.empty): List[Boolean] = {
 
-    implicit val executionContext = if (threads.isEmpty) {
-      ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor())
+    val executor = if (threads.isEmpty) {
+      Executors.newSingleThreadExecutor()
     } else {
-      ExecutionContext.fromExecutor(Executors.newFixedThreadPool(threads.get))
+      Executors.newFixedThreadPool(threads.get)
     }
+    implicit val executionContext = ExecutionContext.fromExecutor(executor)
     val futures = runTasks(startTimes, overwrite)
-    Await.result(Future.sequence(futures),
+    val result = Await.result(Future.sequence(futures),
                  duration.Duration(24, duration.HOURS))
+    executor.shutdown()
+    result
   }
 
 }

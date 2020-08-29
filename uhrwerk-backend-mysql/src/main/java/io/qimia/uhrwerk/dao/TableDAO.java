@@ -7,11 +7,9 @@ import io.qimia.uhrwerk.common.metastore.dependency.TableDependencyService;
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResult;
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResultSet;
 import io.qimia.uhrwerk.common.model.*;
+import io.qimia.uhrwerk.common.model.Connection;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -47,59 +45,93 @@ public class TableDAO implements TableDependencyService, TableService {
   @Override
   public TableResult save(Table table, boolean overwrite) {
     TableResult tableResult = new TableResult();
+    tableResult.setSuccess(true);
+    tableResult.setError(false);
     tableResult.setNewResult(table);
     var tableId = table.getId();
 
     try {
       if (!overwrite) {
+        saveTablesArrays(table, tableResult, overwrite);
         Table oldTable = getById(tableId);
         if (oldTable != null) {
           tableResult.setOldResult(oldTable);
 
-          System.out.println(table.toString());
-                    System.out.println(oldTable.toString());if (!oldTable.equals(table)) {
-            tableResult.setMessage(
-                String.format(
-                    "A Table with id=%d and different values already exists in the Metastore.",
-                    tableId));
-            tableResult.setError(true);
-          } else {
-            tableResult.setSuccess(true);
+          if (!oldTable.equals(table)) {
+            var message =
+                    String.format(
+                            "A Table with id=%d and different values already exists in the Metastore.\n\n"
+                                    + "Passed Table:\n%s\n\n"
+                                    + "Table in the Metastore:\n%s",
+                            tableId, table.toString(), oldTable.toString()); // todo improve finding differences
+            tableResult.setMessage(message);
+            tableResult.setSuccess(false);
           }
-
           return tableResult;
         }
+        saveTable(table);
       } else {
         deleteById(tableId);
+        saveTablesArrays(table, tableResult, overwrite);
+        saveTable(table);
       }
-      saveTable(table);
-      if (table.getTargets() != null && table.getTargets().length > 0) {
-        var targetResult = targetDAO.save(table.getTargets(), tableId, overwrite);
-        tableResult.setTargetResult(targetResult);
-      }
-      if (table.getDependencies() != null && table.getDependencies().length > 0) {
-        var dependencyResult =
-            dependencyDAO.save(
-                table.getDependencies(),
-                tableId,
-                table.getPartitionUnit(),
-                table.getPartitionSize(),
-                overwrite);
-
-        tableResult.setDependencyResult(dependencyResult);
-      }
-      if (table.getSources() != null && table.getSources().length > 0) {
-        var sourceResults = sourceDAO.save(table.getSources(), overwrite);
-        tableResult.setSourceResults(sourceResults);
-      }
-      tableResult.setSuccess(true);
     } catch (SQLException | NullPointerException e) {
       tableResult.setError(true);
+      tableResult.setSuccess(false);
       tableResult.setException(e);
       tableResult.setMessage(e.getMessage());
     }
 
     return tableResult;
+  }
+
+  private void saveTablesArrays(Table table, TableResult tableResult, Boolean overwrite) {
+    if (table.getTargets() != null && table.getTargets().length > 0) {
+      var targetResult = targetDAO.save(table.getTargets(), table.getId(), overwrite);
+      tableResult.setTargetResult(targetResult);
+      if (targetResult.isSuccess()) {
+        table.setTargets(targetResult.getStoredTargets());
+      } else {
+        tableResult.setSuccess(false);
+        return;
+      }
+    }
+    if (table.getDependencies() != null && table.getDependencies().length > 0) {
+      var tablePartitionUnit = table.getPartitionUnit();
+      Optional<PartitionUnit> inPartitionUnit;
+      if (tablePartitionUnit == null) {
+        inPartitionUnit = Optional.empty();
+      } else {
+        inPartitionUnit = Optional.of(tablePartitionUnit);
+      }
+      var dependencyResult =
+              dependencyDAO.save(
+                      table.getDependencies(),
+                      table.getId(),
+                      inPartitionUnit,
+                      table.getPartitionSize(),
+                      overwrite);
+
+      tableResult.setDependencyResult(dependencyResult);
+      if (dependencyResult.isSuccess()) {
+        table.setDependencies(dependencyResult.getDependenciesSaved());
+      } else {
+        tableResult.setSuccess(false);
+        return;
+      }
+    }
+    if (table.getSources() != null && table.getSources().length > 0) {
+      var sourceResults = sourceDAO.save(table.getSources(), overwrite);
+      tableResult.setSourceResults(sourceResults);
+      for (int i = 0; i < sourceResults.length; i++) {
+        if (sourceResults[i].isSuccess()) {
+          table.getSources()[i] = sourceResults[i].getNewResult();
+        } else {
+          tableResult.setSuccess(false);
+          return;
+        }
+      }
+    }
   }
 
   private void deleteById(Long tableId) throws SQLException {
@@ -119,7 +151,12 @@ public class TableDAO implements TableDependencyService, TableService {
     insert.setString(3, table.getVertical());
     insert.setString(4, table.getName());
     insert.setString(5, table.getVersion());
-    insert.setString(6, table.getPartitionUnit().name());
+    var partitionUnit = table.getPartitionUnit();
+    if (partitionUnit == null) {
+      insert.setNull(6, Types.VARCHAR);
+    } else {
+      insert.setString(6, partitionUnit.name());
+    }
     insert.setInt(7, table.getPartitionSize());
     insert.setInt(8, table.getParallelism());
     insert.setInt(9, table.getMaxBulkSize());
@@ -148,7 +185,10 @@ public class TableDAO implements TableDependencyService, TableService {
       res.setArea(record.getString("area"));
       res.setVertical(record.getString("vertical"));
       res.setName(record.getString("name"));
-      res.setPartitionUnit(PartitionUnit.valueOf(record.getString("partition_unit")));
+      var partitionUnit = record.getString("partition_unit");
+      if ((partitionUnit != null) && (!partitionUnit.equals(""))) {
+        res.setPartitionUnit(PartitionUnit.valueOf(partitionUnit));
+      }
       res.setPartitionSize(record.getInt("partition_size"));
       res.setParallelism(record.getInt("parallelism"));
       res.setMaxBulkSize(record.getInt("max_bulk_size"));
@@ -185,7 +225,8 @@ public class TableDAO implements TableDependencyService, TableService {
   /**
    * When a table has no dependencies, all we need to do is check if it has already been processed
    * for each requested partitionTS
-   * @param table table which needs to be processed
+   *
+   * @param table                table which needs to be processed
    * @param requestedPartitionTs list of partition starting timestamps
    * @return all info required for running a table
    * @throws SQLException

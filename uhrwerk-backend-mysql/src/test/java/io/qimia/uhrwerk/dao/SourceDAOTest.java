@@ -227,6 +227,39 @@ public class SourceDAOTest {
     }
 
     @Test
+    void getWithOnlyConnectionNameShouldFillInTheRest() throws SQLException {
+        Table table = generateTable();
+
+        TableDAO tableDAO = new TableDAO(db);
+        tableDAO.save(table, true);
+
+        Connection connection = generateConnection();
+
+        ConnectionDAO connectionDAO = new ConnectionDAO(db);
+        connectionDAO.save(connection, true);
+
+        Source source = generateSource();
+        Connection onlyName = new Connection();
+        onlyName.setName(connection.getName());
+        source.setConnection(onlyName);
+
+        SourceResult result = service.save(source, true);
+
+        assertTrue(result.isSuccess());
+        assertEquals(connection, result.getNewResult().getConnection());
+
+        // works also with id
+        Connection onlyId = new Connection();
+        onlyId.setId(connection.getId());
+        source.setConnection(onlyId);
+
+        SourceResult result2 = service.save(source, true);
+
+        assertTrue(result2.isSuccess());
+        assertEquals(connection, result2.getNewResult().getConnection());
+    }
+
+    @Test
     void insertWithNoTableShouldFail() {
         Connection connection = generateConnection();
 

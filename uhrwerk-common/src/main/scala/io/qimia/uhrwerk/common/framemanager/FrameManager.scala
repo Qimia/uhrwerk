@@ -19,6 +19,6 @@ trait FrameManager {
 
   def writeDataFrame(frame: DataFrame,
                      locationTableInfo: Table,
-                     startTS: Option[LocalDateTime] = Option.empty,
+                     partitionTS: Array[LocalDateTime],
                      dataFrameWriterOptions: Option[Array[Map[String, String]]] = Option.empty): Unit
 }

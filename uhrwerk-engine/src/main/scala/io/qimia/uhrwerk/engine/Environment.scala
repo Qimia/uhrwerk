@@ -1,8 +1,9 @@
 package io.qimia.uhrwerk.engine
 
 import io.qimia.uhrwerk.common.framemanager.FrameManager
+import io.qimia.uhrwerk.common.metastore.config.TableResult
 import io.qimia.uhrwerk.config.YamlConfigReader
-import io.qimia.uhrwerk.engine.Environment.{Ident, TableIdent}
+import io.qimia.uhrwerk.engine.Environment.{Ident, TableIdent, reportProblems}
 import io.qimia.uhrwerk.common.model.{Dependency, Source, Table}
 import org.apache.spark.sql.DataFrame
 
@@ -44,6 +45,50 @@ object Environment {
     }
     table
   }
+
+  /**
+   * Report table save problems to user over std.err
+   * @param badTableResult Unsuccessful table store result
+   */
+  def reportProblems(badTableResult: TableResult): Unit = {
+    System.err.println("Storing table failed:")
+    val tableStoreMsg = badTableResult.getMessage
+    if ((tableStoreMsg != null) && (tableStoreMsg.length > 0)) {
+      System.err.println(tableStoreMsg)
+    }
+    if (badTableResult.isError) {
+      badTableResult.getException.printStackTrace()
+    }
+    val targetResult = badTableResult.getTargetResult
+    if (targetResult != null) {
+      if (!targetResult.isSuccess) {
+        System.err.println(targetResult.getMessage)
+      }
+      if (targetResult.isError) {
+        targetResult.getException.printStackTrace()
+      }
+    }
+    val dependencyResult = badTableResult.getDependencyResult
+    if (dependencyResult != null) {
+      if (!dependencyResult.isSuccess) {
+        System.err.println(dependencyResult.getMessage)
+      }
+      if (dependencyResult.isError) {
+        dependencyResult.getException.printStackTrace()
+      }
+    }
+    val sourceResults = badTableResult.getSourceResults
+    if ((sourceResults != null) && sourceResults.nonEmpty) {
+      sourceResults.foreach(sr => {
+        if (!sr.isSuccess) {
+          System.err.println(sr.getMessage)
+        }
+        if (sr.isError) {
+          sr.getException.printStackTrace()
+        }
+      })
+    }
+  }
 }
 
 class Environment(store: MetaStore, frameManager: FrameManager) {
@@ -72,14 +117,9 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
                overwrite: Boolean = false): Option[TableWrapper] = {
     val tableYaml = Environment.tableCleaner(configReader.readTable(tableConfigLoc))
     val storeRes = store.tableService.save(tableYaml, overwrite)
-    // TODO: For now everything is overwrite
     if (!storeRes.isSuccess) {
       // TODO: Expand the handling of store failures
-      System.err.println("Storing table failed:")
-      System.err.println(storeRes.getMessage)
-      if (storeRes.isError) {
-        storeRes.getException.printStackTrace()
-      }
+      reportProblems(storeRes)
       return Option.empty
     }
     val storedTable = storeRes.getNewResult

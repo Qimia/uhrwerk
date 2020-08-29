@@ -157,11 +157,49 @@ class TableDAOTest {
 
     assertTrue(result.isSuccess());
     Arrays.stream(result.getSourceResults())
-        .forEach(sourceResult -> assertTrue(sourceResult.isSuccess()));
+            .forEach(sourceResult -> assertTrue(sourceResult.isSuccess()));
 
     assertTrue(result.getTargetResult().isSuccess());
 
     assertTrue(result.getDependencyResult().isSuccess());
+
+    //    // try to save again unchanged but with only ids in the arrays
+    //    var sourceId = table.getSources()[0].getId();
+    //    var source = new Source();
+    //    source.setId(sourceId);
+    //    table.getSources()[0] = source;
+    //
+    //    var dependencyId = table.getDependencies()[0].getId();
+    //    var dependency = new Dependency();
+    //    dependency.setId(dependencyId);
+    //    table.getDependencies()[0] = dependency;
+    //
+    //    var targetId = table.getTargets()[0].getId();
+    //    var target = new Target();
+    //    target.setId(targetId);
+    //    table.getTargets()[0] = target;
+
+    // try to save again unchanged but only with connection ids in sources and targets
+    var connectionId = table.getSources()[0].getConnection().getId();
+    var connection = new Connection();
+    connection.setId(connectionId);
+    table.getSources()[0].setConnection(connection);
+
+    var targetConnectionId = table.getTargets()[0].getConnection().getId();
+    var connectionTarget = new Connection();
+    connectionTarget.setId(targetConnectionId);
+    table.getTargets()[0].setConnection(connectionTarget);
+
+    var result2 = tableDAO.save(table, false);
+
+    System.out.println(result2.getMessage());
+    assertTrue(result2.isSuccess());
+    Arrays.stream(result2.getSourceResults())
+            .forEach(sourceResult -> assertTrue(sourceResult.isSuccess()));
+
+    assertTrue(result2.getTargetResult().isSuccess());
+
+    assertTrue(result2.getDependencyResult().isSuccess());
   }
 
   @Test
@@ -175,7 +213,8 @@ class TableDAOTest {
     table.setParallelism(9874263);
     result = tableDAO.save(table, false);
 
-    assertTrue(result.isError());
+    System.out.println(result.getMessage());
+    assertFalse(result.isSuccess());
   }
 
   @Test
@@ -210,7 +249,7 @@ class TableDAOTest {
   void tableBuilderTest() throws SQLException {
     Connection[] connections =
         (new ConnectionBuilder())
-            .name("JDBC")
+            .name("Test-JDBC-Source1")
             .jdbc()
             .jdbcUrl("url")
             .jdbcDriver("driver")

@@ -1,13 +1,11 @@
 package io.qimia.uhrwerk.example.yelp
 
 import java.time.LocalDateTime
-import java.util.concurrent.Executors
 
 import io.qimia.uhrwerk.engine.{Environment, TaskInput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
-import scala.concurrent.ExecutionContext
 
 
 object LoaderA extends App {
@@ -29,9 +27,6 @@ object LoaderA extends App {
   val wrapper = uhrwerkEnvironment.addTable("loader-A.yml", loaderAFunc)
 
   val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0))
-  val singleExecutor = Executors.newSingleThreadExecutor()
-  implicit val executorRunner = ExecutionContext.fromExecutor(singleExecutor)
   val results = wrapper.get.runTasksAndWait(runTimes)
   println(results)
-
 }

@@ -5,23 +5,22 @@ import java.time.LocalDateTime
 import io.qimia.uhrwerk.engine.{Environment, TaskInput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.functions.{max, min}
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.functions.{max, min}
 
-
-object LoaderBParq extends App {
-  Logger.getLogger("org").setLevel(Level.WARN)
-  Logger.getLogger("akka").setLevel(Level.ERROR)
-
+object DownsampleE  extends App {
   val sparkSess = SparkSession.builder()
-    .appName("loaderB")
-    .master("local[3]")
+    .appName("DownsampleE")
+    .master("local")
     .getOrCreate()
 
-  def loaderBFunc(in: TaskInput): DataFrame = {
-    // The most basic userFunction simply returns the input dataframe
+//  Logger.getLogger("org").setLevel(Level.WARN)
+//  Logger.getLogger("akka").setLevel(Level.ERROR)
+
+
+  def loaderAFunc(in: TaskInput): DataFrame = {
     val aDF = in.inputFrames.values.head
-    aDF.select("day").agg(min("day"), max("day")).show()
+    aDF.select("date").agg(min("date"), max("date")).show()
     aDF.printSchema()
     aDF.show(10)
     aDF
@@ -31,16 +30,14 @@ object LoaderBParq extends App {
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
   uhrwerkEnvironment.addConnections("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTable("loader-B-parq.yml", loaderBFunc, true)
+  val wrapper = uhrwerkEnvironment.addTable("downsample-E.yml", loaderAFunc, true)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 1, 0, 0),
-    LocalDateTime.of(2012, 5, 2, 0, 0),
-    LocalDateTime.of(2012, 5, 3, 0, 0),
     LocalDateTime.of(2012, 5, 4, 0, 0),
-    LocalDateTime.of(2012, 5, 5, 0, 0)
   )
-  val results = wrapper.get.runTasksAndWait(runTimes, false)
-  println(results)
-
+  if (wrapper.isDefined) {
+    val results = wrapper.get.runTasksAndWait(runTimes, false)
+    println(results)
+  }
 }

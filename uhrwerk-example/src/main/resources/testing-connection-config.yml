@@ -14,3 +14,10 @@
 - name: "local_fs_source"
   file:
     path: './example_dataset'
+
+- name: "yelp_dwh"
+  jdbc:
+    jdbc_url: 'jdbc:mysql://localhost:53306'
+    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    user: root
+    pass: mysql

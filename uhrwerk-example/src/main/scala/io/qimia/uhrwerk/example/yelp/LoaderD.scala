@@ -8,20 +8,21 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.functions.{max, min}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
+import scala.sys.exit
 
-object LoaderBParq extends App {
+object LoaderD extends App {
+  val sparkSess = SparkSession.builder()
+    .appName("loaderD")
+    .master("local")
+    .getOrCreate()
+
   Logger.getLogger("org").setLevel(Level.WARN)
   Logger.getLogger("akka").setLevel(Level.ERROR)
 
-  val sparkSess = SparkSession.builder()
-    .appName("loaderB")
-    .master("local[3]")
-    .getOrCreate()
 
-  def loaderBFunc(in: TaskInput): DataFrame = {
-    // The most basic userFunction simply returns the input dataframe
+  def loaderAFunc(in: TaskInput): DataFrame = {
     val aDF = in.inputFrames.values.head
-    aDF.select("day").agg(min("day"), max("day")).show()
+    aDF.select("date").agg(min("date"), max("date")).show()
     aDF.printSchema()
     aDF.show(10)
     aDF
@@ -29,18 +30,18 @@ object LoaderBParq extends App {
 
   val frameManager = new SparkFrameManager(sparkSess)
 
-  val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
+  val uhrwerkEnvironment = Environment.build("testing-env-config.yml" ,frameManager)
   uhrwerkEnvironment.addConnections("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTable("loader-B-parq.yml", loaderBFunc, true)
+  val wrapper = uhrwerkEnvironment.addTable("loader-D.yml", loaderAFunc, true)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 1, 0, 0),
     LocalDateTime.of(2012, 5, 2, 0, 0),
     LocalDateTime.of(2012, 5, 3, 0, 0),
     LocalDateTime.of(2012, 5, 4, 0, 0),
-    LocalDateTime.of(2012, 5, 5, 0, 0)
+    LocalDateTime.of(2012, 5, 5, 0, 0),
+    LocalDateTime.of(2012, 5, 6, 0, 0)
   )
   val results = wrapper.get.runTasksAndWait(runTimes, false)
   println(results)
-
 }

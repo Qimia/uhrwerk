@@ -1,0 +1,24 @@
+area: "test"
+vertical: "test_db"
+table: "tab4"
+version: "1.0"
+parallelism: 1
+max_bulk_size: 1
+partition:
+  unit: "hours"
+  size: 4
+
+dependencies:
+  - area: "test"
+    vertical: "test_db"
+    table: "tab1"
+    format: "parquet"
+    version: "1.0"
+    transform:
+      type: "aggregate"
+      partition:
+        size: 8
+
+targets:
+  - connection_name: "test2"
+    format: "parquet"
