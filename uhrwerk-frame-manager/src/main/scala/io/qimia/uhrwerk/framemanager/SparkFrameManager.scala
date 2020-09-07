@@ -274,7 +274,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * 1.1 Identity transformation
    * 1.1.1 File system => columns are normally used for partitioning
    * 1.1.2 JDBC => one time stamp column is created from the time columns and that is then used for saving
-   * 1.2 Not identity => a new timestamp column is created based on the partitionTS so that it fits into the aggregate or window
+   * 1.2 Not identity => a new timestamp column is created based on the partitionTS so that it fits into the aggregate
    * 1.2.1 File system => time columns are created from the timestamp column
    * 1.2.2 JDBC => the DF is saved used the timestamp column
    * 2. Time columns are missing in the DF and partitionTS contains at least one item => time columns are created
@@ -334,7 +334,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         }
       } else if (dfContainsTimeColumns) {
         // if it is not identity, need to rewrite the values in the time columns
-        if (locationTableInfo.getPartitionSize != 1) {
+        if (partitionTS.length > 1) {
           val partitionUnit = locationTableInfo.getPartitionUnit.toString
           val partitionSize = locationTableInfo.getPartitionSize
           val dfWithNewTimeColumnsTmp = addJDBCTimeColumnFromTimeColumns(frame, timeColumnsCut)
@@ -368,7 +368,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         } else {
           // if jdbc and saving several partitions (the df contains the time columns) - add the timestamp column
           // and remove the time columns
-          if (isJDBC && dfContainsTimeColumns) {
+          if (isJDBC) {
             (path, addJDBCTimeColumnFromTimeColumns(frame, timeColumnsCut).drop(selectedTimeColumns: _*))
           } else {
             (path, frame)

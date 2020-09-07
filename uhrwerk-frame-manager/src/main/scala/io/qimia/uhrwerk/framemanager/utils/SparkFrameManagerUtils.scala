@@ -11,11 +11,11 @@ import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Column, DataFrame}
 
 object SparkFrameManagerUtils {
-  private[framemanager] val timeColumns =
+  private[framemanager] val timeColumns: List[String] =
     List("year", "month", "day", "hour", "minute")
-  private[framemanager] val timeColumnsFormats =
+  private[framemanager] val timeColumnsFormats: List[String] =
     List("yyyy", "yyyy-MM", "yyyy-MM-dd", "yyyy-MM-dd-HH", "yyyy-MM-dd-HH-mm")
-  private[framemanager] val timeColumnJDBC = "uhrwerk-timestamp"
+  private[framemanager] val timeColumnJDBC: String = "uhrwerk-timestamp"
 
   /**
    * Concatenates paths into a single string. Handles properly all trailing slashes

@@ -97,88 +97,6 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     }
   }
 
-  "concatenatePaths" should "properly concatenate paths" in {
-    val a = "a"
-    val b = "b"
-    val c = "/c"
-    val d = "d/"
-    val e = "/e/"
-
-    val result = SparkFrameManagerUtils.concatenatePaths(a, b, c, d, e)
-    assert(result === "a/b/c/d/e")
-  }
-
-  "getFullLocation" should "properly concatenate paths" in {
-    val a = "a/b/c/d"
-    val e = "e/f/g/h"
-
-    val result = SparkFrameManagerUtils.getFullLocation(a, e)
-    assert(result === "a/b/c/d/e/f/g/h")
-  }
-
-  "concatenateDateParts" should "join two date parts" in {
-    val month = "2"
-    val day = "4"
-
-    val result = SparkFrameManagerUtils.concatenateDateParts(month, day)
-    assert(result === "2-4")
-  }
-
-  "createDatePath" should "create a date path from timestamp" in {
-    val ts = LocalDateTime.of(2020, 2, 4, 10, 30)
-
-    val datePath = SparkFrameManagerUtils.createDatePath(ts, PartitionUnit.MINUTES)
-
-    assert(
-      datePath === "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10/minute=2020-02-04-10-30"
-    )
-
-    val datePathHour = SparkFrameManagerUtils.createDatePath(ts, PartitionUnit.HOURS)
-
-    assert(
-      datePathHour === "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10"
-    )
-
-    val datePathDay = SparkFrameManagerUtils.createDatePath(ts, PartitionUnit.DAYS)
-
-    assert(
-      datePathDay === "year=2020/month=2020-02/day=2020-02-04"
-    )
-  }
-
-  "getTablePath" should "create a table path" in {
-    val table = new Table
-    table.setVersion("1")
-    table.setArea("staging")
-    table.setName("testsparkframemanager")
-    table.setVertical("testdb")
-
-    val tablePath = SparkFrameManagerUtils.getTablePath(table, true, "parquet")
-    assert(
-      tablePath === "area=staging/vertical=testdb/table=testsparkframemanager/version=1/format=parquet"
-    )
-
-    val tablePathJDBC = SparkFrameManagerUtils.getTablePath(table, false, "jdbc")
-    assert(tablePathJDBC === "`staging-testdb`.`testsparkframemanager-1`")
-  }
-
-  "getDependencyPath" should "create a dependency path" in {
-    val dependency = new Dependency
-    dependency.setVersion("1")
-    dependency.setArea("staging")
-    dependency.setTableName("testsparkframemanager")
-    dependency.setVertical("testdb")
-    dependency.setFormat("parquet")
-
-    val tablePath = SparkFrameManagerUtils.getDependencyPath(dependency, true)
-    assert(
-      tablePath === "area=staging/vertical=testdb/table=testsparkframemanager/version=1/format=parquet"
-    )
-
-    val tablePathJDBC = SparkFrameManagerUtils.getDependencyPath(dependency, false)
-    assert(tablePathJDBC === "`staging-testdb`.`testsparkframemanager-1`")
-  }
-
   "save DF to Lake and load from lake" should "return the same df and create the right folderstructure" taggedAs Slow in {
     val spark = getSparkSession
 
@@ -429,7 +347,9 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     // with a partition query
     sourceJDBC.setParallelLoadColumn("a")
     sourceJDBC.setParallelLoadNum(20)
-    sourceJDBC.setParallelLoadQuery("select a from <path> where created_at >= '<lower_bound>' and created_at < '<upper_bound>'")
+    sourceJDBC.setParallelLoadQuery(
+      "select a from <path> where created_at >= '<lower_bound>' and created_at < '<upper_bound>'"
+    )
     val loadedDFSourceWithTSJDBCWithPartitioning = manager
       .loadSourceDataFrame(
         sourceJDBC,
@@ -450,21 +370,6 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     assertThrows[IllegalArgumentException](
       manager
         .loadSourceDataFrame(new Source, startTS = Option(LocalDateTime.now()))
-    )
-  }
-
-  "containsTimeColumns" should "return true if all time columns are present" in {
-    val spark = getSparkSession
-    val ts = LocalDateTime.of(2015, 10, 12, 20, 0)
-    val df = createMockDataFrame(spark, Option(ts))
-    val manager = new SparkFrameManager(spark)
-
-    assert(SparkFrameManagerUtils.containsTimeColumns(df, PartitionUnit.MINUTES) === true)
-    assert(SparkFrameManagerUtils.containsTimeColumns(df.drop("hour"), PartitionUnit.MINUTES) === false)
-    assert(SparkFrameManagerUtils.containsTimeColumns(df.drop("hour"), PartitionUnit.HOURS) === false)
-    assert(
-      SparkFrameManagerUtils
-        .containsTimeColumns(df.withColumn("day", lit("03")), PartitionUnit.MINUTES) === false
     )
   }
 
@@ -603,6 +508,12 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val target = new Target
     target.setConnection(connection)
     target.setFormat("csv")
+
+    val connectionJDBC = getJDBCConnection
+    val targetJDBC = new Target
+    targetJDBC.setConnection(connectionJDBC)
+    targetJDBC.setFormat("jdbc")
+
     val table = new Table
     table.setPartitionUnit(PartitionUnit.MINUTES)
     table.setPartitionSize(30)
@@ -610,7 +521,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     table.setArea("staging")
     table.setName("testoptions")
     table.setVertical("testdb")
-    table.setTargets(Array(target))
+    table.setTargets(Array(target, targetJDBC))
 
     val dataFrameOptions =
       Map("header" -> "true", "delimiter" -> "?", "inferSchema" -> "true")
@@ -809,5 +720,96 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val a = df.collect()
     val b = dropped.collect()
     assert(a === b)
+  }
+
+  "writeDataFrame" should "throw an exception when one of the targets is missing a connection" in {
+    val target = new Target
+    target.setFormat("jdbc")
+    val table = new Table
+    table.setPartitionUnit(PartitionUnit.MINUTES)
+    table.setPartitionSize(15)
+    table.setVersion("1.0")
+    table.setArea("staging")
+    table.setName("framemanagertabletest")
+    table.setVertical("dbname")
+    table.setTargets(Array(target))
+
+    val spark = getSparkSession
+    val manager = new SparkFrameManager(spark)
+
+    assertThrows[IllegalArgumentException](manager.writeDataFrame(null, table, null))
+  }
+
+  "saving several partitions into aggregates" should "result into proper partitioning" in {
+    val spark = getSparkSession
+    val manager = new SparkFrameManager(spark)
+
+    val hours = List(15, 16)
+    val minutes = List(0, 15, 30, 45)
+
+    val df: DataFrame = hours
+      .map(h =>
+        minutes.map(m => {
+          println(h + " - " + m)
+          val dt = LocalDateTime.of(2020, 9, 7, h, m)
+          createMockDataFrame(spark, Option(dt))
+        })
+      )
+      .reduce((a, b) => a.union(b))
+      .reduce((a, b) => a.union(b))
+
+    df.select("year", "month", "day", "hour", "minute").distinct().show()
+
+    val connection = new Connection
+    connection.setName("testSparkFrameManagerAggregation")
+    connection.setType(ConnectionType.FS)
+    connection.setPath("src/test/resources/testlake/")
+    val target = new Target
+    target.setConnection(connection)
+    target.setFormat("parquet")
+
+    val connectionJDBC = getJDBCConnection
+    val targetJDBC = new Target
+    targetJDBC.setConnection(connectionJDBC)
+    targetJDBC.setFormat("jdbc")
+
+    val table = new Table
+    table.setPartitionUnit(PartitionUnit.MINUTES)
+    table.setPartitionSize(45)
+    table.setVersion("1")
+    table.setArea("staging")
+    table.setName("testaggregates")
+    table.setVertical("testdb")
+    table.setTargets(Array(target, targetJDBC))
+
+    val aggTS = Array(
+      LocalDateTime.of(2020, 9, 7, 15, 0),
+      LocalDateTime.of(2020, 9, 7, 15, 45),
+      LocalDateTime.of(2020, 9, 7, 16, 30)
+    )
+
+    manager.writeDataFrame(df, table, aggTS)
+
+    assert(
+      aggTS.forall(ts =>
+        new File(
+          "src/test/resources/testlake/area=staging/vertical=testdb/table=testaggregates/version=1/format=parquet/" +
+            SparkFrameManagerUtils.createDatePath(ts, PartitionUnit.MINUTES)
+        ).isDirectory
+      )
+    )
+
+    val loadedDF = spark.read
+      .parquet(
+        "src/test/resources/testlake/area=staging/vertical=testdb/table=testaggregates/version=1/format=parquet/"
+      )
+      .cache
+
+    assert(loadedDF.count === df.count)
+    assert(
+      loadedDF
+        .select("year", "month", "day", "hour", "minute")
+        .except(df.select("year", "month", "day", "hour", "minute"))
+        .count === 0)
   }
 }

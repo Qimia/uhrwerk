@@ -431,7 +431,7 @@ class TimeToolsTest extends AnyFlatSpec {
     assertResult(Array(1, 2, 1, 3, 1))(groupedToo)
   }
 
-  "getAggregateForTimestamp" should "properly assign a timestamp into its aggregate" in {
+  "getAggregateForTimestamp with days" should "properly assign a timestamp into its aggregate" in {
     val partitionTS = Array(
       LocalDateTime.of(2012, 5, 1, 0, 0),
       LocalDateTime.of(2012, 5, 4, 0, 0)
@@ -491,6 +491,88 @@ class TimeToolsTest extends AnyFlatSpec {
         partitionUnit,
         partitionSize
       ) === LocalDateTime.of(2012, 5, 4, 0, 0)
+    )
+  }
+
+  "getAggregateForTimestamp with minutes" should "properly assign a timestamp into its aggregate" in {
+    val partitionTS = Array(
+      LocalDateTime.of(2020, 9, 7, 15, 0),
+      LocalDateTime.of(2020, 9, 7, 15, 45),
+      LocalDateTime.of(2020, 9, 7, 16, 30)
+    )
+    val partitionUnit = PartitionUnit.MINUTES.toString
+    val partitionSize = 45
+
+    assert(
+      TimeTools.getAggregateForTimestamp(
+        partitionTS,
+        LocalDateTime.of(2020, 9, 7, 15, 0),
+        partitionUnit,
+        partitionSize
+      ) === LocalDateTime.of(2020, 9, 7, 15, 0)
+    )
+
+    assert(
+      TimeTools.getAggregateForTimestamp(
+        partitionTS,
+        LocalDateTime.of(2020, 9, 7, 15, 15),
+        partitionUnit,
+        partitionSize
+      ) === LocalDateTime.of(2020, 9, 7, 15, 0)
+    )
+
+    assert(
+      TimeTools.getAggregateForTimestamp(
+        partitionTS,
+        LocalDateTime.of(2020, 9, 7, 15, 30),
+        partitionUnit,
+        partitionSize
+      ) === LocalDateTime.of(2020, 9, 7, 15, 0)
+    )
+
+    assert(
+      TimeTools.getAggregateForTimestamp(
+        partitionTS,
+        LocalDateTime.of(2020, 9, 7, 15, 45),
+        partitionUnit,
+        partitionSize
+      ) === LocalDateTime.of(2020, 9, 7, 15, 45)
+    )
+
+    assert(
+      TimeTools.getAggregateForTimestamp(
+        partitionTS,
+        LocalDateTime.of(2020, 9, 7, 16, 0),
+        partitionUnit,
+        partitionSize
+      ) === LocalDateTime.of(2020, 9, 7, 15, 45)
+    )
+
+    assert(
+      TimeTools.getAggregateForTimestamp(
+        partitionTS,
+        LocalDateTime.of(2020, 9, 7, 16, 15),
+        partitionUnit,
+        partitionSize
+      ) === LocalDateTime.of(2020, 9, 7, 15, 45)
+    )
+
+    assert(
+      TimeTools.getAggregateForTimestamp(
+        partitionTS,
+        LocalDateTime.of(2020, 9, 7, 16, 30),
+        partitionUnit,
+        partitionSize
+      ) === LocalDateTime.of(2020, 9, 7, 16, 30)
+    )
+
+    assert(
+      TimeTools.getAggregateForTimestamp(
+        partitionTS,
+        LocalDateTime.of(2020, 9, 7, 16, 45),
+        partitionUnit,
+        partitionSize
+      ) === LocalDateTime.of(2020, 9, 7, 16, 30)
     )
   }
 }
