@@ -270,14 +270,19 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   /**
    * Saves a table to all its targets.
    * Four possible scenarios regarding the timestamp:
-   * 1. startTS is provided and time columns (year, month, day, hour, minute) are in the DF => those columns are dropped
-   * 2. startTS is provided and time columns are not in the DF => the DF is normally saved
-   * 3. startTS is not provided and time columns with a proper format are in the DF => those columns are used as partitioning
-   * 4. startTS is not provided and time columns are not in the DF => no partitioning is used
+   * 1. Time columns (up to these five: year, month, day, hour, minute) are in the DF
+   * 1.1 Identity transformation
+   * 1.1.1 File system => columns are normally used for partitioning
+   * 1.1.2 JDBC => one time stamp column is created from the time columns and that is then used for saving
+   * 1.2 Not identity => a new timestamp column is created based on the partitionTS so that it fits into the aggregate or window
+   * 1.2.1 File system => time columns are created from the timestamp column
+   * 1.2.2 JDBC => the DF is saved used the timestamp column
+   * 2. Time columns are missing in the DF and partitionTS contains at least one item => time columns are created
+   * 3. partitionTS is empty and time columns are not in the DF => no partitioning is used
    *
-   * @param frame                  DataFrame to save
-   * @param locationTableInfo      Location Info
-   * @param partitionTS            Start Timestamp, optional
+   * @param frame                  DataFrame to save.
+   * @param locationTableInfo      Location Info.
+   * @param partitionTS            An array of timestamps (partitions).
    * @param dataFrameWriterOptions Optional array of Spark writing options.
    *                               If the array has only one item (one map), this one is used for all targets.
    *                               If the array has as many items as there are targets,
@@ -314,7 +319,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       val dfContainsTimeColumns = containsTimeColumns(frame, locationTableInfo.getPartitionUnit)
 
       val (fullPath, df) = if (!dfContainsTimeColumns && !partitionTS.isEmpty) {
-        // saving just one partition defined in startTS
+        // if time columns are missing, saving just one partition defined in the partitionTS array
 
         // for jdbc add a timestamp column and remove all other time columns (year/month/day/hour/minute)
         if (isJDBC) {
@@ -327,7 +332,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
           (concatenatePaths(path, datePath), frame.drop(selectedTimeColumns: _*))
         }
-      } else {
+      } else if (dfContainsTimeColumns) {
         // if it is not identity, need to rewrite the values in the time columns
         if (locationTableInfo.getPartitionSize != 1) {
           val partitionUnit = locationTableInfo.getPartitionUnit.toString
@@ -369,6 +374,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             (path, frame)
           }
         }
+      } else {
+        // no time columns, nothing in partitionTS
+        (path, frame)
       }
 
       val writer = df.write.mode(SaveMode.Append).format(target.getFormat)
