@@ -14,11 +14,21 @@
     <properties>
         <scala.compat.version>2.12</scala.compat.version>
         <scala.version>2.12.11</scala.version>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <spark.version>3.0.0</spark.version>
+        <mysql.version>8.0.21</mysql.version>
+        <junit.jupiter.version>5.6.2</junit.jupiter.version>
     </properties>
 
     <!-- sub modules -->
     <modules>
-        <module>uhrwerk-core</module>
+        <module>uhrwerk-common</module>
+        <module>uhrwerk-config</module>
+        <module>uhrwerk-backend-mysql</module>
+        <module>uhrwerk-frame-manager</module>
+        <module>uhrwerk-engine</module>
+        <module>uhrwerk-example</module>
     </modules>
 
     <dependencies>

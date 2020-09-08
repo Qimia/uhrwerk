@@ -131,3 +131,8 @@ buildNumber.properties
 ### Scala ###
 
 # End of https://www.toptal.com/developers/gitignore/api/java,scala,intellij+all,maven
+
+*.db
+mysql_datadir/
+example_datalake/
+example_dataset/

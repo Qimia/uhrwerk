@@ -1,0 +1,25 @@
+area: "staging"
+vertical: "yelp_db"
+table: "table_d"
+version: "1.0"
+parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+max_bulk_size: 6
+partition:
+  unit: "days"
+  size: 1
+
+sources:
+  - connection_name: "yelp_mysql"
+    path: "business"
+    format: "jdbc"
+    version: "1.0"
+    partition:
+      unit: "days"
+      size: 1
+    select:
+      query: "business-loader-D.sql"
+      column: "date"
+
+targets:
+  - connection_name: "local_fs_lake"
+    format: "parquet"

@@ -1,0 +1,98 @@
+connections:
+  - name: "mysql1"
+    jdbc:
+      jdbc_url: 'jdbc:mysql://localhost:3306'
+      jdbc_driver: 'com.mysql.jdbc.Driver'
+      user: root
+      pass: mysql
+
+  - name: "s3_test"
+    s3:
+      path: "s3://bucketname/somesuffix/"
+      secret_id: blabla
+      secret_key: yaya
+
+  - name: "local_filesystem_test"
+    file:
+      path: '/path/to/local/datalake'
+
+tables:
+  - area: processing
+    vertical: sourcedb_1
+    table: load_a_table
+    version: "1.0"
+    parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 12
+    partition:
+      unit: "hours"
+      size: 4
+    sources:
+      - connection_name: connection_name
+        path: staging_source_table  # On DB
+        format: "jdbc"
+        version: 1
+        partition:
+          unit: "hours"
+          size: 6
+        parallel_load:
+          query: "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'"
+          column: "id"
+          num: 8
+        select:
+          query: "config/table_test_2_select_query.sql"
+          column: "created_at"
+    targets:
+      - connection_name: connection_name2
+        format: "parquet"
+  - area: processing
+    vertical: sourcedb_1
+    table: load_a_table
+    version: "1.0"
+    parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 12
+    partition:
+      unit: "hours"
+      size: 4
+
+    dependencies:
+      - area: staging
+        vertical: sourcedb_1
+        table: tableOne  # On DB
+        format: "jdbc"
+        version: "1.0"
+        transform:
+          type: "identity"
+          partition:
+            size: 4
+      - area: staging
+        vertical: sourcedb_1
+        table: tableOne  # On DB
+        format: "jdbc"
+        version: "1.0"
+        transform:
+          type: "aggregate"
+          partition:
+            size: 4
+      - area: staging
+        vertical: sourcedb_1
+        table: tableOne  # On DB
+        format: "jdbc"
+        version: "1.0"
+        transform:
+          type: "window"
+          partition:
+            size: 4
+      - area: staging
+        vertical: sourcedb_1
+        table: tableOne  # On DB
+        format: "jdbc"
+        version: "1.0"
+        transform:
+          type: "temporal_aggregate"
+          partition:
+            unit: "days"
+            size: 1
+
+    targets:
+      - connection_name: connection_name2
+        format: "parquet"

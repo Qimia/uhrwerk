@@ -1,0 +1,23 @@
+# Connection info for EnvironmentTableTest
+
+- name: "test1"
+  jdbc:
+    jdbc_url: 'jdbc:test1'
+    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    user: usertest1
+    pass: passtest1
+
+- name: "test2"
+  file:
+    path: 'test2path'
+
+- name: "test3"
+  jdbc:
+    jdbc_url: 'jdbc:test3'
+    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    user: usertest1
+    pass: passtest1
+
+- name: "test4"
+  file:
+    path: 'test4path'
