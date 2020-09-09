@@ -28,3 +28,10 @@
     jdbc_driver: 'com.mysql.cj.jdbc.Driver'
     user: root
     pass: mysql
+
+- name: "retail_mysql2"
+  jdbc:
+    jdbc_url: 'jdbc:mysql://localhost:43306/qimia_olap'
+    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    user: root
+    pass: mysql
