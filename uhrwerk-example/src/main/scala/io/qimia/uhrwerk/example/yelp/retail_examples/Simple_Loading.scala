@@ -23,10 +23,11 @@ object Simple_Loading extends App {
   val wrapper = uhrwerkEnvironment.addTable("retail_examples/simple_loading.yml", transformationFunction)
 
   val runTimes = Array(
-    LocalDateTime.of(2012, 5, 1, 0, 0),
-    LocalDateTime.of(2012, 5, 8, 0, 0),
-    LocalDateTime.of(2012, 5, 15, 0, 0),
-    LocalDateTime.of(2012, 5, 22, 0, 0)
+    LocalDateTime.of(2020, 6, 1, 0, 0),
+    LocalDateTime.of(2020, 6, 2, 0, 0),
+    LocalDateTime.of(2020, 6, 3, 0, 0),
+    LocalDateTime.of(2020, 6, 4, 0, 0),
+    LocalDateTime.of(2020, 6, 5, 0, 0)
   )
 
   val results = wrapper.get.runTasksAndWait(runTimes)

@@ -1,24 +1,24 @@
 area: "staging"
 vertical: "retail"
-table: "employee"
+table: "sales"
 version: "1.0"
 parallelism: 1
 max_bulk_size: 1
 partition:
   unit: "days"
-  size: 7
+  size: 1
 
 sources:
   - connection_name: "retail_mysql"
-    path: "employee"
+    path: "sales"
     format: "jdbc"
     version: "1.0"
     partition:
       unit: "days"
       size: 1
     select:
-      query: "SELECT * FROM <path> WHERE employed_since >= '<lower_bound>' and employed_since \\< '<upper_bound>';"
-      column: "employed_since"
+      query: "SELECT * FROM <path> WHERE selling_date >= '<lower_bound>' and selling_date < '<upper_bound>'"
+      column: "selling_date"
 
 targets:
   - connection_name: "local_fs_lake"
