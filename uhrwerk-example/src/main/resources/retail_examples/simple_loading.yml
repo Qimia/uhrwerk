@@ -1,0 +1,25 @@
+area: "staging"
+vertical: "retail"
+table: "employee"
+version: "1.0"
+parallelism: 1
+max_bulk_size: 1
+partition:
+  unit: "days"
+  size: 7
+
+sources:
+  - connection_name: "retail_mysql"
+    path: "employee"
+    format: "jdbc"
+    version: "1.0"
+    partition:
+      unit: "days"
+      size: 1
+    select:
+      query: "SELECT * FROM <path> WHERE employed_since >= '<lower_bound>' and employed_since \\< '<upper_bound>';"
+      column: "employed_since"
+
+targets:
+  - connection_name: "local_fs_lake"
+    format: "parquet"
