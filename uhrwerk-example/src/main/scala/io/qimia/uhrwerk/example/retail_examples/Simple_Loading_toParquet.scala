@@ -1,7 +1,8 @@
-package io.qimia.uhrwerk.example.yelp.retail_examples
+package io.qimia.uhrwerk.example.retail_examples
 
 import java.time.LocalDateTime
 
+import io.qimia.uhrwerk.engine.Environment.{SourceIdent, TableIdent}
 import io.qimia.uhrwerk.engine.{Environment, TaskInput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -13,7 +14,12 @@ object Simple_Loading_toParquet extends App {
     .getOrCreate()
 
   def transformationFunction(in: TaskInput): DataFrame = {
-    in.inputFrames.values.head
+    //in.inputFrames.values.head
+    val ident = new SourceIdent("retail_mysql","qimia_oltp.sales","jdbc")
+    in.inputFrames.get(ident) match {
+      case Some(x) => x
+      case None => throw new Exception("Table not found")
+    }
   }
 
   val frameManager = new SparkFrameManager(sparkSess)

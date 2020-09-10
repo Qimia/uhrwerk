@@ -10,7 +10,7 @@ partition:
 
 sources:
   - connection_name: "retail_mysql"
-    path: "sales"
+    path: "qimia_oltp.sales"
     format: "jdbc"
     version: "1.0"
     partition:
