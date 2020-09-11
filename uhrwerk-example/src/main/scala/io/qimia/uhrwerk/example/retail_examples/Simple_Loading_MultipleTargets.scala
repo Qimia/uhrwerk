@@ -25,12 +25,12 @@ object Simple_Loading_MultipleTargets extends App {
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
   uhrwerkEnvironment.addConnections("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTable("retail_examples_simple_loading_multiple_targets.yml", udf, true)
+  val wrapper = uhrwerkEnvironment.addTable("retail_examples/simple_loading_multiple_targets.yml", udf, true)
 
   val runTimes = Array(
     LocalDateTime.of(2020, 6, 1, 0, 0),
     LocalDateTime.of(2020, 6, 2, 0, 0),
-    LocalDateTime.of(2020, 6, 3, 0, 0),
+    LocalDateTime.of(2020, 6, 3, 0, 0)
   )
 
   val results = wrapper.get.runTasksAndWait(runTimes)
