@@ -1,0 +1,25 @@
+area: "staging"
+vertical: "retail"
+table: "storeDim"
+version: "1.0"
+parallelism: 1
+max_bulk_size: 1
+partition:
+  unit: "days"
+  size: 1
+
+- sources:
+    - connection_name: "retail_mysql"
+      path: "qimia_oltp.stores"
+      format: "jdbc"
+      version: "1.0"
+      partition:
+        unit: "days"
+        size: 1
+      select:
+        query: "storeDim-loader.sql"
+        column: "selling_date"
+
+- targets:
+    - connection_name: "retail_mysql"
+      format: "jdbc"
