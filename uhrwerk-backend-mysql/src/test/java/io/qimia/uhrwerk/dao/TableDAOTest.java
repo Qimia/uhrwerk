@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.dao;
 
+import io.qimia.uhrwerk.ConnectionHelper;
 import io.qimia.uhrwerk.common.metastore.config.ConnectionResult;
 import io.qimia.uhrwerk.common.metastore.config.PartitionResult;
 import io.qimia.uhrwerk.common.metastore.config.TableResult;
@@ -13,7 +14,6 @@ import io.qimia.uhrwerk.config.SourceBuilder;
 import io.qimia.uhrwerk.config.TableBuilder;
 import org.junit.jupiter.api.Test;
 
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -52,6 +52,7 @@ class TableDAOTest {
     table.setParallelism(8);
     table.setMaxBulkSize(96);
     table.setVersion("1.0");
+    table.setPartitioned(true);
     table.setKey();
 
     table.setSources(generateSources(table.getId()));
@@ -122,8 +123,7 @@ class TableDAOTest {
   @org.junit.jupiter.api.BeforeEach
   void setUp() throws SQLException {
     this.db =
-        DriverManager.getConnection(
-            "jdbc:mysql://localhost:53306/UHRWERK_METASTORE", "UHRWERK_USER", "Xq92vFqEKF7TB8H9");
+            ConnectionHelper.getConnection();
     this.tableDAO = new TableDAO(db);
     this.connectionDAO = new ConnectionDAO(db);
     this.partitionDAO = new PartitionDAO(db);
@@ -145,10 +145,12 @@ class TableDAOTest {
   @Test
   void saveTable() {
     var table = SourceDAOTest.generateTable();
+    table.setPartitioned(false);
     var tableResult = tableDAO.save(table, true);
 
     assertTrue(tableResult.isSuccess());
     assertFalse(tableResult.isError());
+    assertEquals(table, tableResult.getNewResult());
   }
 
   @Test
@@ -157,6 +159,7 @@ class TableDAOTest {
 
     var result = tableDAO.save(table, false);
 
+    System.out.println(result.getMessage());
     assertTrue(result.isSuccess());
     Arrays.stream(result.getSourceResults())
         .forEach(sourceResult -> assertTrue(sourceResult.isSuccess()));
@@ -212,7 +215,7 @@ class TableDAOTest {
 
     assertTrue(result.isSuccess());
 
-    table.setParallelism(9874263);
+    table.setPartitioned(false);
     result = tableDAO.save(table, false);
 
     System.out.println(result.getMessage());
@@ -279,9 +282,9 @@ class TableDAOTest {
 
     var source1 =
         (new SourceBuilder())
-            .connectionName("Test-JDBC-Source1")
-            .path("SOURCE_DB.EXT_TABLE1")
-            .format("JDBC")
+                .connectionName("Test-JDBC-Source1")
+                .path("SOURCE_DB.EXT_TABLE1")
+                .format("jdbc")
             .version("1.0")
             .partition()
             .unit("minutes")
@@ -387,5 +390,15 @@ class TableDAOTest {
         System.out.println(resolvedDependency.getSucceeded()[j]);
       }
     }
+  }
+
+  @Test
+  void savingPartitionedSourceForUnpartitionedTableShouldFail() {
+    var table = generateTable();
+    table.setPartitioned(false);
+
+    var result = tableDAO.save(table, false);
+
+    assertFalse(result.isSuccess());
   }
 }

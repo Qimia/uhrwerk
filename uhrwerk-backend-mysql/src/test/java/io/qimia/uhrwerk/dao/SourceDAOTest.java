@@ -1,11 +1,11 @@
 package io.qimia.uhrwerk.dao;
 
+import io.qimia.uhrwerk.ConnectionHelper;
 import io.qimia.uhrwerk.common.metastore.config.SourceResult;
 import io.qimia.uhrwerk.common.metastore.config.SourceService;
 import io.qimia.uhrwerk.common.model.*;
 import org.junit.jupiter.api.Test;
 
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,6 +24,7 @@ public class SourceDAOTest {
         table.setParallelism(8);
         table.setMaxBulkSize(96);
         table.setVersion("1.0");
+        table.setPartitioned(true);
         table.setKey();
 
         return table;
@@ -49,6 +50,7 @@ public class SourceDAOTest {
         source.setPartitionUnit(PartitionUnit.DAYS);
         source.setPartitionSize(1);
         source.setParallelLoadNum(40);
+        source.setPartitioned(true);
         source.setKey();
         return source;
     }
@@ -56,8 +58,7 @@ public class SourceDAOTest {
     @org.junit.jupiter.api.BeforeEach
     void setUp() throws SQLException {
         db =
-                DriverManager.getConnection(
-                        "jdbc:mysql://localhost:53306/UHRWERK_METASTORE", "UHRWERK_USER", "Xq92vFqEKF7TB8H9");
+                ConnectionHelper.getConnection();
         service = new SourceDAO(db);
     }
 
@@ -87,7 +88,7 @@ public class SourceDAOTest {
 
         Source source = generateSource();
 
-        SourceResult result = service.save(source, true);
+        SourceResult result = service.save(source, table, true);
 
         assertTrue(result.isSuccess());
         assertFalse(result.isError());
@@ -112,8 +113,8 @@ public class SourceDAOTest {
 
         Source source = generateSource();
 
-        service.save(source, false);
-        SourceResult resultSame = service.save(source, false);
+        service.save(source, table, false);
+        SourceResult resultSame = service.save(source, table, false);
 
         System.out.println(resultSame.getMessage());
         assertTrue(resultSame.isSuccess());
@@ -122,9 +123,10 @@ public class SourceDAOTest {
         assertEquals(source, resultSame.getOldResult());
         assertEquals(source, resultSame.getNewResult());
 
-        source.setPath("different-path");
-        SourceResult resultDifferent = service.save(source, false);
-        assertTrue(resultDifferent.isError());
+//        source.setPath("different-path");
+        source.setPartitioned(false);
+        SourceResult resultDifferent = service.save(source, table, false);
+        assertFalse(resultDifferent.isError());
         assertFalse(resultDifferent.isSuccess());
         assertNotNull(resultDifferent.getNewResult());
         assertEquals(source, resultDifferent.getNewResult());
@@ -146,7 +148,7 @@ public class SourceDAOTest {
 
         Source source = generateSource();
 
-        SourceResult result = service.save(source, true);
+        SourceResult result = service.save(source, table, true);
 
         assertTrue(result.isSuccess());
         assertFalse(result.isError());
@@ -158,7 +160,7 @@ public class SourceDAOTest {
         source.setPath("new-path");
         source.setSelectColumn("column");
 
-        SourceResult resultChanged = service.save(source, true);
+        SourceResult resultChanged = service.save(source, table, true);
 
         assertTrue(resultChanged.isSuccess());
         assertFalse(resultChanged.isError());
@@ -177,7 +179,7 @@ public class SourceDAOTest {
 
         Source source = generateSource();
 
-        SourceResult result = service.save(source, true);
+        SourceResult result = service.save(source, table, true);
 
         // without foreign keys this should fail as well
         System.out.println(result.getMessage());
@@ -188,7 +190,7 @@ public class SourceDAOTest {
         assertEquals(source, result.getNewResult());
 
         source.setConnection(null);
-        SourceResult resultConnectionNull = service.save(source, true);
+        SourceResult resultConnectionNull = service.save(source, table, true);
 
         // with connection null this should fail
         System.out.println(resultConnectionNull.getMessage());
@@ -213,7 +215,7 @@ public class SourceDAOTest {
 
         Source source = generateSource();
 
-        SourceResult result = service.save(source, true);
+        SourceResult result = service.save(source, table, true);
 
         System.out.println(result.getMessage());
         assertTrue(result.isSuccess());
@@ -243,7 +245,7 @@ public class SourceDAOTest {
         onlyName.setName(connection.getName());
         source.setConnection(onlyName);
 
-        SourceResult result = service.save(source, true);
+        SourceResult result = service.save(source, table, true);
 
         assertTrue(result.isSuccess());
         assertEquals(connection, result.getNewResult().getConnection());
@@ -253,7 +255,7 @@ public class SourceDAOTest {
         onlyId.setId(connection.getId());
         source.setConnection(onlyId);
 
-        SourceResult result2 = service.save(source, true);
+        SourceResult result2 = service.save(source, table, true);
 
         assertTrue(result2.isSuccess());
         assertEquals(connection, result2.getNewResult().getConnection());
@@ -268,7 +270,7 @@ public class SourceDAOTest {
 
         Source source = generateSource();
 
-        SourceResult result = service.save(source, true);
+        SourceResult result = service.save(source, null, true);
 
         // without foreign keys this should work
         System.out.println(result.getMessage());
@@ -280,7 +282,7 @@ public class SourceDAOTest {
         System.out.println(result.getMessage());
 
         source.setTableId(null);
-        SourceResult resultConnectionNull = service.save(source, true);
+        SourceResult resultConnectionNull = service.save(source, null, true);
 
         // with table id = null this should fail
         assertTrue(resultConnectionNull.isError());
@@ -307,7 +309,7 @@ public class SourceDAOTest {
 
         Source source = generateSource();
 
-        service.save(source, false);
+        service.save(source, table, false);
 
         connection.setName("connection2");
         connection.setKey();
@@ -317,7 +319,7 @@ public class SourceDAOTest {
         // in practice, the source's key should get regenerated and it's then a completely different object
 
         // updating a source where the connection changed
-        SourceResult result = service.save(source, true);
+        SourceResult result = service.save(source, table, true);
 
         System.out.println(result.getMessage());
         assertTrue(result.isSuccess());
@@ -348,7 +350,7 @@ public class SourceDAOTest {
         source3.setPath("path3");
         Source[] sources = {source1, source2, source3};
 
-        SourceResult[] results = service.save(sources, true);
+        SourceResult[] results = service.save(sources, table, true);
         assertEquals(results.length, sources.length);
 
         for (int i = 0; i < results.length; i++) {

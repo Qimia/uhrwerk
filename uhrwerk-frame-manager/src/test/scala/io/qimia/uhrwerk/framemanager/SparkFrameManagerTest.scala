@@ -25,6 +25,7 @@ trait BuildTeardown extends BeforeAndAfterAll {
 
   val DATABASE_NAME: String = "staging-dbname"
   val DATABASE_NAME2: String = "source-testdb"
+  val DATABASE_NAME3: String = "staging-testdb"
 
   override def afterAll() {
     val foldersToClean: ListBuffer[Path] = new ListBuffer[Path]
@@ -33,6 +34,7 @@ trait BuildTeardown extends BeforeAndAfterAll {
     val conn = getJDBCConnection
     JDBCTools.dropJDBCDatabase(conn, DATABASE_NAME)
     JDBCTools.dropJDBCDatabase(conn, DATABASE_NAME2)
+    JDBCTools.dropJDBCDatabase(conn, DATABASE_NAME3)
     foldersToClean.foreach(p => {
       try {
         cleanFolder(p)
@@ -361,6 +363,35 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       .sort("a", "b", "c")
     val bSourceWithTSJDBCWithPartitioning = loadedDFSourceWithTSJDBCWithPartitioning.collect()
     assert(bSourceWithTSJDBCWithPartitioning === a)
+
+    // reading the whole dataframe
+    sourceJDBC.setParallelLoadColumn(null)
+    sourceJDBC.setParallelLoadNum(0)
+    sourceJDBC.setParallelLoadQuery(null)
+    sourceJDBC.setSelectColumn(null)
+    sourceJDBC.setSelectQuery(null)
+
+    val loadedWholeDF = manager
+      .loadSourceDataFrame(
+        sourceJDBC
+      )
+      .drop(SparkFrameManagerUtils.timeColumns: _*)
+      .sort("a", "b", "c")
+    val bWholeDF = loadedWholeDF.collect()
+    val dfWithTSCollected = dfWithTS.sort("a", "b", "c").collect()
+    assert(bWholeDF === dfWithTSCollected)
+
+    // reading the whole dataframe with select query
+    sourceJDBC.setSelectQuery("select * from <path>")
+
+    val loadedWholeDFQuery = manager
+      .loadSourceDataFrame(
+        sourceJDBC
+      )
+      .drop(SparkFrameManagerUtils.timeColumns: _*)
+      .sort("a", "b", "c")
+    val bWholeDFQuery = loadedWholeDFQuery.collect()
+    assert(bWholeDFQuery === dfWithTSCollected)
   }
 
   "specifying timestamps but not the source select column" should "throw an exception" in {
@@ -740,7 +771,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     assertThrows[IllegalArgumentException](manager.writeDataFrame(null, table, null))
   }
 
-  "saving several partitions into aggregates" should "result into proper partitioning" in {
+  "saving several partitions into aggregates" should "result into proper partitioning" taggedAs Slow in {
     val spark = getSparkSession
     val manager = new SparkFrameManager(spark)
 
@@ -810,6 +841,89 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       loadedDF
         .select("year", "month", "day", "hour", "minute")
         .except(df.select("year", "month", "day", "hour", "minute"))
-        .count === 0)
+        .count === 0
+    )
+  }
+
+  "writing and loading unpartitioned data" should "save and read a df" in {
+    val spark = getSparkSession
+
+    val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
+    val df = createMockDataFrame(spark)
+    val manager = new SparkFrameManager(spark)
+
+    val connection = new Connection
+    connection.setName("testSparkFrameManagerUnpartitioned")
+    connection.setType(ConnectionType.FS)
+    connection.setPath("src/test/resources/testlake/")
+    val target = new Target
+    target.setConnection(connection)
+    target.setFormat("parquet")
+
+    val connectionJDBC = getJDBCConnection
+    val targetJDBC = new Target
+    targetJDBC.setConnection(connectionJDBC)
+    targetJDBC.setFormat("jdbc")
+
+    val table = new Table
+    table.setPartitioned(false)
+    table.setPartitionUnit(PartitionUnit.MINUTES)
+    table.setVersion("1")
+    table.setArea("staging")
+    table.setName("testunpartitioned")
+    table.setVertical("testdb")
+    table.setTargets(Array(target, targetJDBC))
+
+    manager.writeDataFrame(
+      df,
+      table,
+      Array(dateTime)
+    )
+
+    val dependency = Converters.convertTargetToDependency(target, table)
+    dependency.setTransformType(PartitionTransformType.NONE)
+    val partition = new Partition
+    partition.setPartitionTs(dateTime)
+    val dependencyResult = BulkDependencyResult(
+      Array(dateTime),
+      dependency,
+      connection,
+      Array(partition)
+    )
+    val loadedDF = manager
+      .loadDependencyDataFrame(dependencyResult)
+
+    val a = df
+      .collect()
+    val b = loadedDF
+      .sort("a", "b", "c")
+      .collect()
+
+    assert(b === a)
+
+    assert(
+      new File(
+        "src/test/resources/testlake/area=staging/vertical=testdb/table=testunpartitioned/version=1/format=parquet/" +
+          "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10/minute=2020-02-04-10-30"
+      ).isDirectory
+    )
+
+    // loading should work also with jdbc
+    val dependencyJDBC = Converters.convertTargetToDependency(targetJDBC, table)
+    dependencyJDBC.setTransformType(PartitionTransformType.NONE)
+    val dependencyResultJDBC = BulkDependencyResult(
+      Array(dateTime),
+      dependencyJDBC,
+      connectionJDBC,
+      Array(partition)
+    )
+    val loadedDFJDBC = manager
+      .loadDependencyDataFrame(dependencyResultJDBC)
+
+    val bJDBC = loadedDFJDBC
+      .sort("a", "b", "c")
+      .collect()
+
+    assert(bJDBC === a)
   }
 }

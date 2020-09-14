@@ -221,6 +221,7 @@ public class ConnectionDAO implements ConnectionService {
       result.setSuccess(true);
     } catch (SQLException e) {
       result.setError(true);
+      result.setSuccess(false);
       result.setException(e);
       result.setMessage(e.getMessage());
     }

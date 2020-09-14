@@ -112,6 +112,7 @@ public class PartitionDurationTest {
   void unpartitionedDependencyCheck() {
     PartitionUnit outTablePU = PartitionUnit.HOURS;
     int outTablePS = 1;
+
     var depA = new PartitionDurationTester.PartitionTestDependencyInput();
     depA.dependencyTableName = "depA";
     depA.transformType = PartitionTransformType.IDENTITY;
@@ -119,7 +120,7 @@ public class PartitionDurationTest {
     depA.dependencyTablePartitionUnit = PartitionUnit.MINUTES;
     var depB = new PartitionDurationTester.PartitionTestDependencyInput();
     depB.dependencyTableName = "depB";
-    depB.transformType = null;
+    depB.transformType = PartitionTransformType.NONE;
     depB.dependencyTablePartitionUnit = null;
     var deps = new PartitionDurationTester.PartitionTestDependencyInput[] {depA, depB};
     var res = PartitionDurationTester.checkDependencies(outTablePU, outTablePS, deps);
@@ -131,7 +132,8 @@ public class PartitionDurationTest {
     assertFalse(res2.success);
 
     // Dep defined as unpartitioned but the table is partitioned
-    depB.transformType = null;
+    depB.transformType = PartitionTransformType.NONE;
+    depB.dependencyTablePartitioned = true;
     depB.dependencyTablePartitionUnit = PartitionUnit.HOURS;
     depB.dependencyTablePartitionSize = 1;
     var res3 = PartitionDurationTester.checkDependencies(outTablePU, outTablePS, deps);

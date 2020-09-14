@@ -4,9 +4,10 @@ import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.engine.{Environment, TaskInput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
+import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{max, min}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object WindowF extends App {
   val sparkSess = SparkSession.builder()
@@ -23,7 +24,7 @@ object WindowF extends App {
     aDF.select("date").agg(min("date"), max("date")).show()
     aDF.printSchema()
     aDF.show(10)
-    aDF
+    aDF.drop(SparkFrameManagerUtils.timeColumns: _*)
   }
 
   val frameManager = new SparkFrameManager(sparkSess)

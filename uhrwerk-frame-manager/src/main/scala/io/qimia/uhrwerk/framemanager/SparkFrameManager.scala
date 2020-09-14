@@ -109,11 +109,11 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   }
 
   /**
-   * Loads all partitions from the succeeded partitions of the DependencyResult
+   * Loads all partitions from the succeeded partitions of the DependencyResult.
    *
-   * @param dependencyResult       DependencyResult
+   * @param dependencyResult       DependencyResult.
    * @param dataFrameReaderOptions Optional Spark reading options.
-   * @return DataFrame
+   * @return DataFrame.
    */
   override def loadDependencyDataFrame(
                                         dependencyResult: BulkDependencyResult,
@@ -131,7 +131,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           p.getPartitionUnit match {
             case PartitionUnit.MINUTES => col("minute") === minute
             case PartitionUnit.HOURS => col("hour") === hour
-            case _ => col("day") === day
+            case PartitionUnit.DAYS => col("day") === day
+            case _ => col("minute") === minute // unpartitioned
           }
         }
       )
@@ -173,11 +174,19 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
     val filtered = df.filter(filter)
 
-    if (isJDBC) {
-      addTimeColumnsToDFFromTimestampColumn(filtered, timeColumnJDBC, dependencyResult.succeeded.head.getPartitionUnit)
-        .drop(timeColumnJDBC)
-    } else {
+    if (dependencyResult.dependency.getTransformType.equals(PartitionTransformType.NONE)) {
+      // unpartitioned data, remove all time columns
       filtered
+        .drop(timeColumnJDBC)
+        .drop(timeColumns: _*)
+    } else {
+      // partitioned data
+      if (isJDBC) {
+        addTimeColumnsToDFFromTimestampColumn(filtered, timeColumnJDBC, dependencyResult.succeeded.head.getPartitionUnit)
+          .drop(timeColumnJDBC)
+      } else {
+        filtered
+      }
     }
   }
 
@@ -209,7 +218,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     }
 
     val dfReaderWithQuery: DataFrameReader =
-      if (source.getSelectQuery.nonEmpty) {
+      if (!isStringEmpty(source.getSelectQuery)) {
         val query: String =
           JDBCTools.createSelectQuery(
             source.getSelectQuery,
@@ -271,13 +280,14 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    * Saves a table to all its targets.
    * Four possible scenarios regarding the timestamp:
    * 1. Time columns (up to these five: year, month, day, hour, minute) are in the DF
-   * 1.1 Identity transformation
+   * 1.1 Identity transformation (partitionSize = 1)
    * 1.1.1 File system => columns are normally used for partitioning
    * 1.1.2 JDBC => one time stamp column is created from the time columns and that is then used for saving
    * 1.2 Not identity => a new timestamp column is created based on the partitionTS so that it fits into the aggregate
    * 1.2.1 File system => time columns are created from the timestamp column
    * 1.2.2 JDBC => the DF is saved used the timestamp column
-   * 2. Time columns are missing in the DF and partitionTS contains at least one item => time columns are created
+   * 2. Time columns are missing in the DF and partitionTS contains at least one item => time columns are created.
+   * This can mean that the table is also unpartitioned but this makes no difference for saving the data.
    * 3. partitionTS is empty and time columns are not in the DF => no partitioning is used
    *
    * @param frame                  DataFrame to save.
@@ -334,7 +344,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         }
       } else if (dfContainsTimeColumns) {
         // if it is not identity, need to rewrite the values in the time columns
-        if (partitionTS.length > 1) {
+        if (locationTableInfo.getPartitionSize > 1) {
           val partitionUnit = locationTableInfo.getPartitionUnit.toString
           val partitionSize = locationTableInfo.getPartitionSize
           val dfWithNewTimeColumnsTmp = addJDBCTimeColumnFromTimeColumns(frame, timeColumnsCut)
