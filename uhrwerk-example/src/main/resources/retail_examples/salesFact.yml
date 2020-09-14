@@ -1,6 +1,6 @@
 area: "staging"
 vertical: "retail"
-table: "employeeDim"
+table: "salesFacts"
 version: "1.0"
 parallelism: 1
 max_bulk_size: 1
@@ -10,16 +10,16 @@ partition:
 
 sources:
   - connection_name: "retail_mysql"
-    path: "qimia_oltp.employees"
+    path: "qimia_oltp.sales_items"
     format: "jdbc"
     version: "1.0"
     partition:
       unit: "days"
       size: 1
     select:
-      query: "retail_examples/employeeDim-loader.sql"
+      query: "retail_examples/salesFact-loader.sql"
       column: "selling_date"
 
 targets:
-    - connection_name: "retail_mysql"
-      format: "jdbc"
+  - connection_name: "retail_mysql"
+    format: "jdbc"

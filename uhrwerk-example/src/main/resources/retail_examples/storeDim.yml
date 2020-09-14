@@ -8,18 +8,18 @@ partition:
   unit: "days"
   size: 1
 
-- sources:
-    - connection_name: "retail_mysql"
-      path: "qimia_oltp.stores"
-      format: "jdbc"
-      version: "1.0"
-      partition:
-        unit: "days"
-        size: 1
-      select:
-        query: "storeDim-loader.sql"
-        column: "selling_date"
+sources:
+  - connection_name: "retail_mysql"
+    path: "qimia_oltp.stores"
+    format: "jdbc"
+    version: "1.0"
+    partition:
+      unit: "days"
+      size: 1
+    select:
+      query: "retail_examples/storeDim-loader.sql"
+      column: "selling_date"
 
-- targets:
+targets:
     - connection_name: "retail_mysql"
       format: "jdbc"

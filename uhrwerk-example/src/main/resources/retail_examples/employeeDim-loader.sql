@@ -1,4 +1,4 @@
-SELECT e.*
+SELECT e.*, sa.selling_date
 FROM qimia_oltp.sales sa
 JOIN qimia_oltp.stores_employees se
 ON sa.store = se.store_id
