@@ -1,9 +1,9 @@
 package io.qimia.uhrwerk.dao;
 
+import io.qimia.uhrwerk.ConnectionHelper;
 import io.qimia.uhrwerk.common.model.*;
 import org.junit.jupiter.api.Test;
 
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
@@ -17,9 +17,7 @@ public class DependencyDAOTest {
 
   @org.junit.jupiter.api.BeforeEach
   void setUp() throws SQLException {
-    db =
-        DriverManager.getConnection(
-            "jdbc:mysql://localhost:53306/UHRWERK_METASTORE", "UHRWERK_USER", "Xq92vFqEKF7TB8H9");
+    db = ConnectionHelper.getConnection();
 
     // Setup 2 tables to depend on with targets (which have a connection)
     var conn = new Connection();
@@ -37,15 +35,16 @@ public class DependencyDAOTest {
     tableDepA.setVertical("vertical1");
     tableDepA.setName("name1");
     tableDepA.setVersion("1.0");
+    tableDepA.setPartitioned(true);
     tableDepA.setPartitionSize(1);
     tableDepA.setPartitionUnit(PartitionUnit.HOURS);
     tableDepA.setKey();
     Statement b = db.createStatement();
     b.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, partition_unit, partition_size, parallelism, max_bulk_size)"
             + "VALUES ("
             + tableDepA.getId()
-            + ", 'area1', 'vertical1', 'name1', '1.0', 'HOURS', 1, 1, 1)");
+            + ", 'area1', 'vertical1', 'name1', '1.0', TRUE, 'HOURS', 1, 1, 1)");
     b.close();
 
     var depATarget = new Target();
@@ -69,15 +68,16 @@ public class DependencyDAOTest {
     tableDepB.setVertical("vertical1");
     tableDepB.setName("name2");
     tableDepB.setVersion("1.0");
+    tableDepB.setPartitioned(true);
     tableDepB.setPartitionSize(1);
     tableDepB.setPartitionUnit(PartitionUnit.HOURS);
     tableDepB.setKey();
     Statement d = db.createStatement();
     d.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, partition_unit, partition_size, parallelism, max_bulk_size)"
             + "VALUES ("
             + tableDepB.getId()
-            + ", 'area1', 'vertical1', 'name2', '1.0', 'HOURS', 1, 1, 1)");
+            + ", 'area1', 'vertical1', 'name2', '1.0', TRUE, 'HOURS', 1, 1, 1)");
     d.close();
 
     var depBTarget = new Target();
@@ -101,14 +101,14 @@ public class DependencyDAOTest {
     tableDepC.setVertical("vertical1");
     tableDepC.setName("name3");
     tableDepC.setVersion("1.0");
-    // TableC doesn't have a partitioning scheme
+    tableDepC.setPartitioned(false);
     tableDepC.setKey();
     Statement f = db.createStatement();
     f.executeUpdate(
-            "INSERT INTO TABLE_(id, area, vertical, name, version, parallelism, max_bulk_size)"
-                    + "VALUES ("
-                    + tableDepC.getId()
-                    + ", 'area1', 'vertical1', 'name3', '1.0', 1, 1)");
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, parallelism, max_bulk_size)"
+            + "VALUES ("
+            + tableDepC.getId()
+            + ", 'area1', 'vertical1', 'name3', '1.0', FALSE, 1, 1)");
     f.close();
 
     var depCTarget = new Target();
@@ -117,14 +117,14 @@ public class DependencyDAOTest {
     depCTarget.setKey();
     Statement g = db.createStatement();
     g.executeUpdate(
-            "INSERT INTO TARGET (id, table_id, connection_id, format)"
-                    + "VALUES ("
-                    + depCTarget.getId()
-                    + ","
-                    + tableDepC.getId()
-                    + ","
-                    + conn.getId()
-                    + ", 'parquet')");
+        "INSERT INTO TARGET (id, table_id, connection_id, format)"
+            + "VALUES ("
+            + depCTarget.getId()
+            + ","
+            + tableDepC.getId()
+            + ","
+            + conn.getId()
+            + ", 'parquet')");
     g.close();
   }
 
@@ -162,15 +162,16 @@ public class DependencyDAOTest {
     newTable.setVertical("vertical1");
     newTable.setName("name4");
     newTable.setVersion("1.0");
+    newTable.setPartitioned(true);
     newTable.setPartitionUnit(PartitionUnit.HOURS);
     newTable.setPartitionSize(1);
     newTable.setKey();
     Statement setupTableStm = db.createStatement();
     setupTableStm.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, partition_unit, partition_size, parallelism, max_bulk_size)"
             + "VALUES ("
             + newTable.getId()
-            + ", 'area1', 'vertical1', 'name4', '1.0', 'HOURS', 1, 1, 1)");
+            + ", 'area1', 'vertical1', 'name4', '1.0', TRUE, 'HOURS', 1, 1, 1)");
     setupTableStm.close();
     return newTable;
   }
@@ -209,6 +210,7 @@ public class DependencyDAOTest {
     depC.setTableName("name3");
     depC.setVersion("1.0");
     depC.setFormat("parquet");
+    depC.setTransformType(PartitionTransformType.NONE);
     depC.setTableId(tableId);
     depC.setKey();
     return new Dependency[] {depA, depB, depC};
@@ -232,7 +234,7 @@ public class DependencyDAOTest {
   void findCorrectTest() throws SQLException {
     Table newTable = insertTestTable();
     Dependency[] dependencies = createThreeDependencies(newTable.getId());
-    Dependency[] partitionedDependency = new Dependency[]{dependencies[0], dependencies[1]};
+    Dependency[] partitionedDependency = new Dependency[] {dependencies[0], dependencies[1]};
     newTable.setDependencies(partitionedDependency);
 
     DependencyDAO dao = new DependencyDAO(db);
@@ -324,13 +326,7 @@ public class DependencyDAOTest {
     newTable.setDependencies(dependencies);
 
     DependencyDAO dao = new DependencyDAO(db);
-    var saveRes =
-        dao.save(
-            dependencies,
-            newTable.getId(),
-            Optional.of(newTable.getPartitionUnit()),
-            newTable.getPartitionSize(),
-            true);
+    var saveRes = dao.save(newTable, true);
     assertTrue(saveRes.isSuccess());
     assertFalse(saveRes.isError());
     assertEquals(3, saveRes.getDependenciesSaved().length);
@@ -348,13 +344,7 @@ public class DependencyDAOTest {
 
     DependencyDAO dao = new DependencyDAO(db);
     // First use normal save method to store dependencies
-    var saveRes =
-        dao.save(
-            dependencies,
-            newTable.getId(),
-            Optional.of(newTable.getPartitionUnit()),
-            newTable.getPartitionSize(),
-            true);
+    var saveRes = dao.save(newTable, true);
     assertTrue(saveRes.isSuccess());
 
     var checkRes = dao.checkExistingDependencies(newTable.getId(), dependencies);
@@ -372,14 +362,14 @@ public class DependencyDAOTest {
     unpartitionedTable.setVertical("vertical1");
     unpartitionedTable.setName("name5");
     unpartitionedTable.setVersion("1.0");
-    // don't set any partitioning info
+    unpartitionedTable.setPartitioned(false);
     unpartitionedTable.setKey();
     Statement setupTableStm = db.createStatement();
     setupTableStm.executeUpdate(
-            "INSERT INTO TABLE_(id, area, vertical, name, version, parallelism, max_bulk_size)"
-                    + "VALUES ("
-                    + unpartitionedTable.getId()
-                    + ", 'area1', 'vertical1', 'name5', '1.0', 1, 1)");
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, parallelism, max_bulk_size)"
+            + "VALUES ("
+            + unpartitionedTable.getId()
+            + ", 'area1', 'vertical1', 'name5', '1.0', FALSE, 1, 1)");
     setupTableStm.close();
 
     var depA = new Dependency();
@@ -392,28 +382,16 @@ public class DependencyDAOTest {
     depA.setTransformPartitionSize(1);
     depA.setTableId(unpartitionedTable.getId());
     depA.setKey();
-    var dependencies = new Dependency[]{depA};
+    var dependencies = new Dependency[] {depA};
     unpartitionedTable.setDependencies(dependencies);
 
     DependencyDAO dao = new DependencyDAO(db);
     // First use normal save method to store dependencies
-    var saveRes =
-            dao.save(
-                    dependencies,
-                    unpartitionedTable.getId(),
-                    Optional.empty(),
-                    1,
-                    true);
+    var saveRes = dao.save(unpartitionedTable, true);
     assertFalse(saveRes.isSuccess());
 
-    depA.setTransformType(null);
-    var saveRes2 =
-            dao.save(
-                    dependencies,
-                    unpartitionedTable.getId(),
-                    Optional.empty(),
-                    1,
-                    true);
+    depA.setTransformType(PartitionTransformType.NONE);
+    var saveRes2 = dao.save(unpartitionedTable, true);
     assertFalse(saveRes2.isSuccess());
   }
 

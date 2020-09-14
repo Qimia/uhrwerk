@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
+
 class YamlConfigReaderTest {
   @Test
   public void readConnectionsTest() {
@@ -46,7 +47,14 @@ class YamlConfigReaderTest {
     Dag dag =
             (new YamlConfigReader()).readDag("config/dag-config.yml");
       System.out.println(dag);
+      assertEquals(true, dag.getTables()[0].isPartitioned());
+      assertEquals(false, dag.getTables()[1].isPartitioned());
+      assertEquals(true, dag.getTables()[0].getSources()[0].isPartitioned());
+      assertEquals(false, dag.getTables()[0].getSources()[1].isPartitioned());
+      assertEquals(PartitionTransformType.NONE, dag.getTables()[1].getDependencies()[0].getTransformType());
+      assertEquals(PartitionTransformType.IDENTITY, dag.getTables()[1].getDependencies()[1].getTransformType());
   }
+
 
   @Test
   public void readEnvTest() {

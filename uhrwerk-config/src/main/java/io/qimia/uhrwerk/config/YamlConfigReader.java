@@ -57,8 +57,11 @@ public class YamlConfigReader {
       tab.setVersion(table.getVersion());
       tab.setParallelism(table.getParallelism());
       tab.setMaxBulkSize(table.getMax_bulk_size());
-      tab.setPartitionUnit(getModelPartitionUnit(table.getPartition().getUnit()));
-      tab.setPartitionSize(table.getPartition().getSize());
+      if (table.getPartition() != null) {
+        tab.setPartitionUnit(getModelPartitionUnit(table.getPartition().getUnit()));
+        tab.setPartitionSize(table.getPartition().getSize());
+        tab.setPartitioned(true);
+      }
       tab.setKey();
       Source[] sources = table.getSources();
       if (sources != null) {
@@ -76,8 +79,11 @@ public class YamlConfigReader {
           source.setConnection(conn);
           source.setPath(sources[j].getPath());
           source.setFormat(sources[j].getFormat());
-          source.setPartitionUnit(getModelPartitionUnit(sources[j].getPartition().getUnit()));
-          source.setPartitionSize(sources[j].getPartition().getSize());
+          if (sources[j].getPartition() != null) {
+            source.setPartitionUnit(getModelPartitionUnit(sources[j].getPartition().getUnit()));
+            source.setPartitionSize(sources[j].getPartition().getSize());
+            source.setPartitioned(true);
+          }
           if (sources[j].getParallel_load() != null){
             source.setParallelLoadQuery(readQueryOrFileLines(sources[j].getParallel_load().getQuery()));
             source.setParallelLoadColumn(sources[j].getParallel_load().getColumn());
@@ -124,6 +130,7 @@ public class YamlConfigReader {
           dep.setTableName(dependencies[j].getTable());
           dep.setFormat(dependencies[j].getFormat());
           dep.setVersion(dependencies[j].getVersion());
+          if (dependencies[j].getTransform() != null) {
           switch (dependencies[j].getTransform().getType()) {
             case "identity":
               dep.setTransformType(PartitionTransformType.IDENTITY);
@@ -145,6 +152,13 @@ public class YamlConfigReader {
               dep.setTransformPartitionUnit(getModelPartitionUnit(dependencies[j].getTransform().getPartition().getUnit()));
               dep.setTransformPartitionSize(dependencies[j].getTransform().getPartition().getSize());
               break;
+            case "none":
+              dep.setTransformType(PartitionTransformType.NONE);
+              break;
+          }
+          }
+          else {
+            dep.setTransformType(PartitionTransformType.NONE);
           }
           dep.setKey();
         }

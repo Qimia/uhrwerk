@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.dao;
 
+import io.qimia.uhrwerk.ConnectionHelper;
 import io.qimia.uhrwerk.common.metastore.config.ConnectionResult;
 import io.qimia.uhrwerk.common.metastore.config.ConnectionService;
 import io.qimia.uhrwerk.common.model.Connection;
@@ -7,7 +8,6 @@ import io.qimia.uhrwerk.common.model.ConnectionType;
 import io.qimia.uhrwerk.config.ConnectionBuilder;
 import org.junit.jupiter.api.Test;
 
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -23,8 +23,7 @@ class ConnectionDAOTest {
   @org.junit.jupiter.api.BeforeEach
   void setUp() throws SQLException {
     db =
-        DriverManager.getConnection(
-            "jdbc:mysql://localhost:53306/UHRWERK_METASTORE", "UHRWERK_USER", "Xq92vFqEKF7TB8H9");
+            ConnectionHelper.getConnection();
     service = new ConnectionDAO(db);
   }
 

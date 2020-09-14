@@ -136,3 +136,6 @@ buildNumber.properties
 mysql_datadir/
 example_datalake/
 example_dataset/
+
+uhrwerk-backend-mysql/src/main/resources/create_metastore_db_mysql_unit_tests.sql
+uhrwerk-backend-mysql/src/main/resources/metastore_ddl_mysql_unit_tests.sql

@@ -14,17 +14,17 @@ import java.util.List;
 
 public class PartitionDependencyDAO implements PartitionDependencyService {
 
-    public static String INSERT_PARTDEP = "INSERT INTO PARTITION_DEPENDENCY (id, partition_id, dependency_partition_id) " +
+    private static String INSERT_PARTDEP = "INSERT INTO PARTITION_DEPENDENCY (id, partition_id, dependency_partition_id) " +
             "VALUES (?, ?, ?)";
 
-    public static String REMOVE_PARTDEP = "DELETE FROM PARTITION_DEPENDENCY WHERE id = ?";
+    private static String REMOVE_PARTDEP = "DELETE FROM PARTITION_DEPENDENCY WHERE id = ?";
 
-    public static String REMOVE_PARTDEP_BY_PART_ID = "DELETE FROM PARTITION_DEPENDENCY WHERE partition_id = ?";
+    private static String REMOVE_PARTDEP_BY_PART_ID = "DELETE FROM PARTITION_DEPENDENCY WHERE partition_id = ?";
 
-    public static String GET_DEP_PART_ID_BY_PART_ID = "SELECT dependency_partition_id FROM PARTITION_DEPENDENCY " +
+    private static String GET_DEP_PART_ID_BY_PART_ID = "SELECT dependency_partition_id FROM PARTITION_DEPENDENCY " +
             "WHERE partition_id = ?";
 
-    public static String GET_PART_ID_BY_DEP_PART_ID = "SELECT partition_id FROM PARTITION_DEPENDENCY " +
+    private static String GET_PART_ID_BY_DEP_PART_ID = "SELECT partition_id FROM PARTITION_DEPENDENCY " +
             "WHERE dependency_partition_id = ?";
 
     private java.sql.Connection db;
@@ -33,7 +33,7 @@ public class PartitionDependencyDAO implements PartitionDependencyService {
         this.db = db;
     }
 
-    public void store(long childPartitionId, DependencyResult dependency) throws SQLException {
+    private void store(long childPartitionId, DependencyResult dependency) throws SQLException {
         PreparedStatement statement = db.prepareStatement(INSERT_PARTDEP);
         for (Partition p : dependency.getPartitions()) {
             long parentId = p.getId();
@@ -45,7 +45,7 @@ public class PartitionDependencyDAO implements PartitionDependencyService {
         statement.executeBatch();
     }
 
-    public void storeAll(long childPartitionId, DependencyResult[] dependencies) throws SQLException {
+    private void storeAll(long childPartitionId, DependencyResult[] dependencies) throws SQLException {
         PreparedStatement statement = db.prepareStatement(INSERT_PARTDEP);
         for (DependencyResult dependency : dependencies) {
             for (Partition p : dependency.getPartitions()) {
@@ -66,7 +66,7 @@ public class PartitionDependencyDAO implements PartitionDependencyService {
      * @param dependency       DependencyResult object with one or more partitions
      * @throws SQLException
      */
-    public void removeByCombination(Long childPartitionId, DependencyResult dependency) throws SQLException {
+    private void removeByCombination(Long childPartitionId, DependencyResult dependency) throws SQLException {
         PreparedStatement statement = db.prepareStatement(REMOVE_PARTDEP);
         for (Partition p : dependency.getPartitions()) {
             long id = PartitionDependencyHash.generateId(childPartitionId, p.getId());
@@ -82,7 +82,7 @@ public class PartitionDependencyDAO implements PartitionDependencyService {
      * @param childPartitionId id of the child partition
      * @throws SQLException
      */
-    public void removeByChildId(Long childPartitionId) throws SQLException {
+    private void removeByChildId(Long childPartitionId) throws SQLException {
         PreparedStatement statement = db.prepareStatement(REMOVE_PARTDEP_BY_PART_ID);
         statement.setLong(1, childPartitionId);
         statement.executeUpdate();
@@ -98,6 +98,7 @@ public class PartitionDependencyDAO implements PartitionDependencyService {
      * @param overwrite        overwrite previously found dependencies or not
      * @return PartitionDependencyResult denoting success or what kind of error was generated
      */
+    @Override
     public PartitionDependencyResult save(Long childPartitionId, DependencyResult dependency, boolean overwrite) {
         PartitionDependencyResult saveResult = new PartitionDependencyResult();
         try {
@@ -124,6 +125,7 @@ public class PartitionDependencyDAO implements PartitionDependencyService {
      * @param dependency       DependencyResult object with information about which partitions were used for this dependency
      * @return PartitionDependencyResult denoting success or what kind of error was generated
      */
+    @Override
     public PartitionDependencyResult remove(Long childPartitionId, DependencyResult dependency) {
         PartitionDependencyResult saveResult = new PartitionDependencyResult();
         try {
@@ -148,6 +150,7 @@ public class PartitionDependencyDAO implements PartitionDependencyService {
      * @param overwrite        overwrite previously found dependencies or not
      * @return PartitionDependencyResult denoting success or what kind of error was generated
      */
+    @Override
     public PartitionDependencyResult saveAll(Long childPartitionId, DependencyResult[] dependencies, boolean overwrite) {
         PartitionDependencyResult saveResult = new PartitionDependencyResult();
         try {
@@ -173,6 +176,7 @@ public class PartitionDependencyDAO implements PartitionDependencyService {
      * @param childPartitionId id of child partition
      * @return PartitionDependencyResult denoting success or what kind of error was generated
      */
+    @Override
     public PartitionDependencyResult removeAll(Long childPartitionId) {
         PartitionDependencyResult saveResult = new PartitionDependencyResult();
         try {
@@ -190,11 +194,12 @@ public class PartitionDependencyDAO implements PartitionDependencyService {
 
     /**
      * Get all partition (ids) which depend on a particular partition (id)
+     *
      * @param parentId id of the
      * @return
      * @throws SQLException
      */
-    public List<Long> getChildIds(long parentId) throws SQLException {
+    protected List<Long> getChildIds(long parentId) throws SQLException {
         ArrayList<Long> childIds = new ArrayList<>();
         PreparedStatement statement = db.prepareStatement(GET_PART_ID_BY_DEP_PART_ID);
         statement.setLong(1, parentId);
@@ -207,11 +212,12 @@ public class PartitionDependencyDAO implements PartitionDependencyService {
 
     /**
      * Get all dependency partition (ids) which are required by a partition (id)
+     *
      * @param childId
      * @return
      * @throws SQLException
      */
-    public List<Long> getParentIds(long childId) throws SQLException {
+    protected List<Long> getParentIds(long childId) throws SQLException {
         ArrayList<Long> parentIds = new ArrayList<>();
         PreparedStatement statement = db.prepareStatement(GET_DEP_PART_ID_BY_PART_ID);
         statement.setLong(1, childId);
@@ -227,6 +233,7 @@ public class PartitionDependencyDAO implements PartitionDependencyService {
      * @param childPartition a partition with partition dependencies
      * @return
      */
+    @Override
     public List<Partition> getParentPartitions(Partition childPartition) {
         PartitionDAO partitionRetriever = new PartitionDAO(db);
         ArrayList<Partition> parentPartitions = new ArrayList<>();;

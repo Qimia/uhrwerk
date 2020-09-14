@@ -9,90 +9,110 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 
 public class Partition implements Comparable<Partition> {
-    Long id;
-    Long targetId;
-    LocalDateTime partitionTs;
-    PartitionUnit partitionUnit;
-    int partitionSize;
+  Long id;
+  Long targetId;
+  LocalDateTime partitionTs;
+  PartitionUnit partitionUnit;
+  int partitionSize;
+  boolean partitioned = true;
 
-    public void setKey() {
-        StringBuilder res =
-                new StringBuilder().append(targetId).append(partitionTs.toEpochSecond(ZoneOffset.UTC));
-        long id = LongHashFunction.xx().hashChars(res);
-        this.setId(id);
-    }
+  public boolean isPartitioned() {
+    return partitioned;
+  }
 
-    public Long getId() {
-        return id;
-    }
+  public void setPartitioned(boolean partitioned) {
+    this.partitioned = partitioned;
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public void setKey() {
+    StringBuilder res =
+            new StringBuilder()
+                    .append(targetId)
+                    .append(partitionTs.toEpochSecond(ZoneOffset.UTC))
+                    .append(partitioned);
+    long id = LongHashFunction.xx().hashChars(res);
+    this.setId(id);
+  }
 
-    public Long getTargetId() {
-        return targetId;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public void setTargetId(Long targetId) {
-        this.targetId = targetId;
-    }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public LocalDateTime getPartitionTs() {
-        return partitionTs;
-    }
+  public Long getTargetId() {
+    return targetId;
+  }
 
-    public void setPartitionTs(LocalDateTime partitionTs) {
-        this.partitionTs = partitionTs;
-        ZonedDateTime partitionTsUTC = this.partitionTs.atZone(ZoneId.of("UTC"));
-    }
+  public void setTargetId(Long targetId) {
+    this.targetId = targetId;
+  }
 
-    public PartitionUnit getPartitionUnit() {
-        return partitionUnit;
-    }
+  public LocalDateTime getPartitionTs() {
+    return partitionTs;
+  }
 
-    public void setPartitionUnit(PartitionUnit partitionUnit) {
-        this.partitionUnit = partitionUnit;
-    }
+  public void setPartitionTs(LocalDateTime partitionTs) {
+    this.partitionTs = partitionTs;
+    ZonedDateTime partitionTsUTC = this.partitionTs.atZone(ZoneId.of("UTC"));
+  }
 
-    public int getPartitionSize() {
-        return partitionSize;
-    }
+  public PartitionUnit getPartitionUnit() {
+    return partitionUnit;
+  }
 
-    public void setPartitionSize(int partitionSize) {
-        this.partitionSize = partitionSize;
-    }
+  public void setPartitionUnit(PartitionUnit partitionUnit) {
+    this.partitionUnit = partitionUnit;
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Partition partition = (Partition) o;
-        return partitionSize == partition.partitionSize &&
-                Objects.equals(id, partition.id) &&
-                Objects.equals(targetId, partition.targetId) &&
-                Objects.equals(partitionTs, partition.partitionTs) &&
-                partitionUnit == partition.partitionUnit;
-    }
+  public int getPartitionSize() {
+    return partitionSize;
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, targetId, partitionTs, partitionUnit, partitionSize);
-    }
+  public void setPartitionSize(int partitionSize) {
+    this.partitionSize = partitionSize;
+  }
 
-    @Override
-    public String toString() {
-        return "Partition{" +
-                "id=" + id +
-                ", targetId=" + targetId +
-                ", partitionTs=" + partitionTs +
-                ", partitionUnit=" + partitionUnit +
-                ", partitionSize=" + partitionSize +
-                '}';
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Partition partition = (Partition) o;
+    return partitionSize == partition.partitionSize
+            && partitioned == partition.partitioned
+            && Objects.equals(id, partition.id)
+            && Objects.equals(targetId, partition.targetId)
+            && Objects.equals(partitionTs, partition.partitionTs)
+            && partitionUnit == partition.partitionUnit;
+  }
 
-    @Override
-    public int compareTo(Partition o) {
-        return this.getId().compareTo(o.getId());
-    }
+  @Override
+  public String toString() {
+    return "Partition{"
+            + "id="
+            + id
+            + ", targetId="
+            + targetId
+            + ", partitionTs="
+            + partitionTs
+            + ", partitionUnit="
+            + partitionUnit
+            + ", partitionSize="
+            + partitionSize
+            + ", partitioned="
+            + partitioned
+            + '}';
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id, targetId, partitionTs, partitionUnit, partitionSize, partitioned);
+  }
+
+  @Override
+  public int compareTo(Partition o) {
+    return this.getId().compareTo(o.getId());
+  }
 }

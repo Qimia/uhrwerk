@@ -1,11 +1,15 @@
 package io.qimia.uhrwerk.dao;
 
+import io.qimia.uhrwerk.ConnectionHelper;
 import io.qimia.uhrwerk.common.metastore.dependency.DependencyResult;
 import io.qimia.uhrwerk.common.model.Partition;
 import io.qimia.uhrwerk.common.model.PartitionUnit;
 import org.junit.jupiter.api.Test;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 
@@ -17,11 +21,7 @@ public class PartitionDependencyDAOTest {
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() throws SQLException {
-        db = DriverManager.getConnection(
-                "jdbc:mysql://localhost:53306/UHRWERK_METASTORE",
-                "UHRWERK_USER",
-                "Xq92vFqEKF7TB8H9"
-        );
+        db = ConnectionHelper.getConnection();
     }
 
     @org.junit.jupiter.api.AfterEach

@@ -11,7 +11,7 @@ import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Column, DataFrame}
 
 object SparkFrameManagerUtils {
-  private[framemanager] val timeColumns: List[String] =
+  val timeColumns: List[String] =
     List("year", "month", "day", "hour", "minute")
   private[framemanager] val timeColumnsFormats: List[String] =
     List("yyyy", "yyyy-MM", "yyyy-MM-dd", "yyyy-MM-dd-HH", "yyyy-MM-dd-HH-mm")
@@ -164,7 +164,7 @@ object SparkFrameManagerUtils {
       case PartitionUnit.MINUTES => 5
       case PartitionUnit.HOURS => 4
       case PartitionUnit.DAYS => 3
-      case _ => 2
+      case _ => 5
     }
   }
 

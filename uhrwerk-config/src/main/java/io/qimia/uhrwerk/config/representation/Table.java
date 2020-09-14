@@ -124,10 +124,7 @@ public class Table{
         if(max_bulk_size == null){
             throw new ConfigException("Missing field: " + path + "max_bulk_size");
         }
-        if(partition == null){
-            throw new ConfigException("Missing field: " + path + "partition");
-        }
-        else{
+        if(partition != null){
             partition.validate(path);
         }
         if(sources==null && dependencies==null){
