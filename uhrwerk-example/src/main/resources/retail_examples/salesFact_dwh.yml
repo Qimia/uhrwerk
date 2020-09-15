@@ -1,0 +1,44 @@
+area: "dwh"
+vertical: "retail"
+table: "salesFact"
+version: "1.0"
+parallelism: 1
+max_bulk_size: 1
+partition:
+  unit: "days"
+  size: 1
+
+dependencies:
+  - area: "staging"
+    vertical: "retail"
+    table: "salesFact"
+    format: "jdbc"
+    version: "1.0"
+    transform:
+      type: "identity"
+  - area: "staging"
+    vertical: "retail"
+    table: "productDim"
+    format: "jdbc"
+    version: "1.0"
+    transform:
+      type: "identity"
+  - area: "staging"
+    vertical: "retail"
+    table: "employeeDim"
+    format: "jdbc"
+    version: "1.0"
+    transform:
+      type: "identity"
+  - area: "staging"
+    vertical: "retail"
+    table: "productDim"
+    format: "jdbc"
+    version: "1.0"
+    transform:
+      type: "identity"
+
+targets:
+  - connection_name: "retail_mysql"
+    format: "jdbc"
+

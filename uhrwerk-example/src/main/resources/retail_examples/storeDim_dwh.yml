@@ -9,13 +9,13 @@ partition:
   size: 1
 
 dependencies:
-  area: "staging"
-  vertical: "retail"
-  table: "storeDim"
-  format: "jdbc"
-  version: "1.0"
-  transform:
-    type: "identity"
+  - area: "staging"
+    vertical: "retail"
+    table: "storeDim"
+    format: "jdbc"
+    version: "1.0"
+    transform:
+      type: "identity"
 
 targets:
   - connection_name: "retail_mysql"

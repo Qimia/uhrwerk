@@ -2,11 +2,11 @@ package io.qimia.uhrwerk.example.retail_examples
 
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.engine.Environment.SourceIdent
+import io.qimia.uhrwerk.engine.Environment.{SourceIdent, TableIdent}
 import io.qimia.uhrwerk.engine.{Environment, TaskInput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.sql.functions.{hash, col}
+import org.apache.spark.sql.functions.{col, hash}
 
 object LoadDims extends App {
   val sparkSess = SparkSession.builder().appName("loadDims").master("local").getOrCreate()
@@ -42,8 +42,6 @@ object LoadDims extends App {
     simpleHashLoad(SourceIdent("retail_mysql", "qimia_oltp.employees", "jdbc"), "employeeKey"))
   val storeWrapper = uhrwerkEnvironment.addTable("retail_examples/storeDim.yml",
     simpleHashLoad(SourceIdent("retail_mysql", "qimia_oltp.stores", "jdbc"), "storeKey"))
-  val salesWrapper = uhrwerkEnvironment.addTable("retail_examples/salesFact.yml",
-    simpleLoad(SourceIdent("retail_mysql", "qimia_oltp.sales_items", "jdbc")))
 
   val runTimes = Array(
     LocalDateTime.of(2020,6,1,0,0),
@@ -54,10 +52,10 @@ object LoadDims extends App {
   val prodResult = prodWrapper.get.runTasksAndWait(runTimes)
   val employeeResult = employeeWrapper.get.runTasksAndWait(runTimes)
   val storeResult = storeWrapper.get.runTasksAndWait(runTimes)
-  val salesResult = salesWrapper.get.runTasksAndWait(runTimes)
+
 
   println(s"Product Dimension processed: ${prodResult}")
   println(s"Employee Dimension processed: ${employeeResult}")
   println(s"Store Dimension processed: ${storeResult}")
-  println(s"Sales Fact processed: ${salesResult}")
+
 }
