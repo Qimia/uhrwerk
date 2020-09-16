@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
 import io.qimia.uhrwerk.common.model.Source;
+import io.qimia.uhrwerk.common.model.Table;
 
 import java.sql.SQLException;
 
@@ -14,7 +15,7 @@ public interface SourceService {
      * @param overwrite Whether to overwrite non-essential fields.
      * @return SourceResult.
      */
-    SourceResult save(Source source, boolean overwrite);
+    SourceResult save(Source source, Table table, boolean overwrite);
 
     /**
      * Saves several Sources into the Metastore.
@@ -27,7 +28,7 @@ public interface SourceService {
      * @param overwrite Whether to overwrite non-essential fields.
      * @return An array with SourceResults.
      */
-    SourceResult[] save(Source[] sources, boolean overwrite);
+    SourceResult[] save(Source[] sources, Table table, boolean overwrite);
 
     /**
      * Returns all sources belonging to a table.

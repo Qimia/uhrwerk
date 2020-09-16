@@ -6,6 +6,7 @@ import io.qimia.uhrwerk.common.metastore.config.DependencyStoreService;
 import io.qimia.uhrwerk.common.model.Dependency;
 import io.qimia.uhrwerk.common.model.PartitionTransformType;
 import io.qimia.uhrwerk.common.model.PartitionUnit;
+import io.qimia.uhrwerk.common.model.Table;
 
 import java.sql.*;
 import java.util.*;
@@ -13,13 +14,13 @@ import java.util.stream.Collectors;
 
 public class DependencyDAO implements DependencyStoreService {
 
-  private static final String GET_TABLE_N_TARGET =
-      "SELECT tab.id, tab.name, tab.partition_unit, tab.partition_size"
+  private static final String GET_TABLE_BY_TARGET =
+      "SELECT tab.id, tab.name, tab.partitioned, tab.partition_unit, tab.partition_size"
           + " FROM TARGET tar JOIN TABLE_ tab ON tar.table_id = tab.id WHERE tar.id IN (%s)";
 
-  private static String checkTableNTargetQuery(Long[] targetIds) {
+  private static String checkTableByTargetQuery(Long[] targetIds) {
     var concatIds = Arrays.toString(targetIds);
-    return String.format(GET_TABLE_N_TARGET, concatIds.substring(1, concatIds.length() - 1));
+    return String.format(GET_TABLE_BY_TARGET, concatIds.substring(1, concatIds.length() - 1));
   }
 
   private static final String DELETE_DEPENDENCIES = "DELETE FROM DEPENDENCY WHERE table_id = ?";
@@ -137,6 +138,7 @@ public class DependencyDAO implements DependencyStoreService {
       // TODO: Doesn't support transform-partition-unit (and transforms using that) for now
       newTest.dependencyTablePartitionSize = tableRes.partitionSize;
       newTest.dependencyTablePartitionUnit = tableRes.partitionUnit;
+      newTest.dependencyTablePartitioned = tableRes.partitioned;
       partitionTestInputs.add(newTest);
     }
     return PartitionDurationTester.checkDependencies(
@@ -210,6 +212,7 @@ public class DependencyDAO implements DependencyStoreService {
 
   static class TablePartRes {
     public Long tableId;
+    public boolean partitioned;
     public PartitionUnit partitionUnit;
     public int partitionSize;
   }
@@ -241,7 +244,7 @@ public class DependencyDAO implements DependencyStoreService {
     // to full table info
 
     Statement statement = db.createStatement();
-    String query = DependencyDAO.checkTableNTargetQuery(targetIds);
+    String query = DependencyDAO.checkTableByTargetQuery(targetIds);
     ResultSet rs = statement.executeQuery(query);
 
     ArrayList<TablePartRes> foundTables = new ArrayList<>(dependencies.length);
@@ -253,6 +256,7 @@ public class DependencyDAO implements DependencyStoreService {
         singleRes.partitionUnit = PartitionUnit.valueOf(partitionUnit.toUpperCase());
       }
       singleRes.partitionSize = rs.getInt("tab.partition_size");
+      singleRes.partitioned = rs.getBoolean("tab.partitioned");
       namesToFind.remove(rs.getString("tab.name"));
       foundTables.add(singleRes);
     }
@@ -288,12 +292,7 @@ public class DependencyDAO implements DependencyStoreService {
       statement.setLong(2, dependency.getTableId());
       statement.setLong(3, dependency.getDependencyTargetId());
       statement.setLong(4, dependency.getDependencyTableId());
-      var transformType = dependency.getTransformType();
-      if (transformType == null) {
-        statement.setNull(5, Types.VARCHAR);
-      } else {
-        statement.setString(5, transformType.toString());
-      }
+      statement.setString(5, dependency.getTransformType().toString());
       var tranformPartitionUnit = dependency.getTransformPartitionUnit();
       if (tranformPartitionUnit != null) {
         statement.setString(6, tranformPartitionUnit.toString());
@@ -309,28 +308,21 @@ public class DependencyDAO implements DependencyStoreService {
   /**
    * Save all dependencies for a given table
    *
-   * @param dependencies All dependencies for a given table
-   * @param tableId the table id for that table
-   * @param partitionUnit partition unit for checking the dependant's table partition unit
-   * @param partitionSize partition size for checking the dependant's table partition size
+   * @param table the table
    * @param overwrite overwrite the previously stored dependencies or not
    * @return DependencyStoreResult object with stored objects, info about success, exceptions and
    *     other results
    */
   @Override
-  public DependencyStoreResult save(
-      Dependency[] dependencies,
-      Long tableId,
-      Optional<PartitionUnit> partitionUnit,
-      int partitionSize,
-      boolean overwrite) {
+  public DependencyStoreResult save(Table table, boolean overwrite) {
     // Assumes that new version means new tableId and thus any dependencies for the old version
     // won't be found
     DependencyStoreResult result = new DependencyStoreResult();
+    var dependencies = table.getDependencies();
 
     if (!overwrite) {
       // check if there are stored dependencies and if they are correct
-      ExistingDepRes checkDeps = checkExistingDependencies(tableId, dependencies);
+      ExistingDepRes checkDeps = checkExistingDependencies(table.getId(), dependencies);
       if (checkDeps.found && !checkDeps.correct) {
         result.setSuccess(false);
         result.setError(false);
@@ -363,11 +355,14 @@ public class DependencyDAO implements DependencyStoreService {
       return result;
     }
 
-    if (partitionUnit.isPresent()) {
+    if (table.isPartitioned()) {
       // Check dependency sizes (abort if size does not match)
       var sizeTestResult =
           checkPartitionSizes(
-              dependencies, partitionUnit.get(), partitionSize, tableSearchRes.foundTables);
+              dependencies,
+              table.getPartitionUnit(),
+              table.getPartitionSize(),
+              tableSearchRes.foundTables);
       if (!sizeTestResult.success) {
         result.setSuccess(false);
         result.setError(false);
@@ -378,7 +373,8 @@ public class DependencyDAO implements DependencyStoreService {
         return result;
       }
     } else {
-      // Check if there are any dependencies which have a transformation (and/or are themselves partitioned)
+      // Check if there are any dependencies which have a transformation (and/or are themselves
+      // partitioned)
       boolean problem = false;
       ArrayList<String> problemDependencies = new ArrayList<>();
       var tablePartitionLookup = new HashMap<Long, TablePartRes>();
@@ -387,7 +383,8 @@ public class DependencyDAO implements DependencyStoreService {
       }
       for (Dependency checkDep : dependencies) {
         TablePartRes connectedTable = tablePartitionLookup.get(checkDep.getDependencyTableId());
-        if ((checkDep.getTransformType() != null) || (connectedTable.partitionUnit != null)) {
+        if (!checkDep.getTransformType().equals(PartitionTransformType.NONE)
+            || (connectedTable.partitioned)) {
           problem = true;
           problemDependencies.add(checkDep.getTableName());
         }
@@ -396,16 +393,16 @@ public class DependencyDAO implements DependencyStoreService {
         result.setSuccess(false);
         result.setError(false);
         result.setMessage(
-            "Tables " + String.join(", ", problemDependencies) + " have a partitioning");
+            "Tables " + String.join(", ", problemDependencies) + " have a partitioning problem");
         return result;
       }
     }
-    // If it is an unpartition unit, the fact that they exist should be enough
+    // If it is a table without partitioning, the fact that they exist should be enough
 
-    // Delete all old dependencies and insert new list
+    // Delete all old dependencies (in case of overwrite) and insert new list
     try {
       if (overwrite) {
-        deleteAllDependencies(tableId);
+        deleteAllDependencies(table.getId());
       }
       insertDependencies(dependencies);
       result.setSuccess(true);

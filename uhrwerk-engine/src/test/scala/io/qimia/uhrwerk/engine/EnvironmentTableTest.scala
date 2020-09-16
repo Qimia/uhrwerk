@@ -2,10 +2,10 @@ package io.qimia.uhrwerk.engine
 
 import java.sql.DriverManager
 
-import org.scalatest.flatspec.AnyFlatSpec
 import io.qimia.uhrwerk.common.model.{Metastore => MetastoreConnInfo}
 import org.apache.spark.sql.DataFrame
 import org.scalatest.BeforeAndAfterEach
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * These are large integration tests which depend on config reading, model storing,
@@ -13,8 +13,10 @@ import org.scalatest.BeforeAndAfterEach
   */
 class EnvironmentTableTest extends AnyFlatSpec with BeforeAndAfterEach {
 
+  val metastoreUrl = "jdbc:mysql://localhost:53306/UHRWERK_METASTORE_UNIT_TESTS"
+
   val testConnInfo = new MetastoreConnInfo
-  testConnInfo.setJdbc_url("jdbc:mysql://localhost:53306/UHRWERK_METASTORE")
+  testConnInfo.setJdbc_url(metastoreUrl)
   testConnInfo.setJdbc_driver("com.mysql.cj.jdbc.Driver")
   testConnInfo.setUser("UHRWERK_USER")
   testConnInfo.setPass("Xq92vFqEKF7TB8H9")
@@ -27,7 +29,7 @@ class EnvironmentTableTest extends AnyFlatSpec with BeforeAndAfterEach {
   override protected def afterEach(): Unit = {
     try super.afterEach()
     val db =
-      DriverManager.getConnection("jdbc:mysql://localhost:53306/UHRWERK_METASTORE", "UHRWERK_USER", "Xq92vFqEKF7TB8H9")
+      DriverManager.getConnection(metastoreUrl, "UHRWERK_USER", "Xq92vFqEKF7TB8H9")
     val deleteDependencyStm = db.createStatement
     deleteDependencyStm.execute("DELETE FROM DEPENDENCY")
     deleteDependencyStm.close()

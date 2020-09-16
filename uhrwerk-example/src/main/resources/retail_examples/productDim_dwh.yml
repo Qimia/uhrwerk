@@ -2,9 +2,6 @@ area: "dwh"
 vertical: "sales"
 table: "productDim"
 version: "1.0"
-partition:
-  unit: "days"
-  size: 1
 
 dependencies:
   - area: "staging"
@@ -12,8 +9,6 @@ dependencies:
     table: "productDim"
     format: "jdbc"
     version: "1.0"
-    transform:
-      type: "identity"
 
 targets:
   - connection_name: "retail_examples"

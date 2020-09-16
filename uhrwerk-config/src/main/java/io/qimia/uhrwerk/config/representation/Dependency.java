@@ -83,9 +83,7 @@ public class Dependency {
     if (version == null) {
       throw new ConfigException("Missing field: " + path + "version");
     }
-    if (transform == null) {
-      throw new ConfigException("Missing field: " + path + "transform");
-    } else {
+    if (transform != null) {
       transform.validate(path);
     }
   }

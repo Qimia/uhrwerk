@@ -41,6 +41,13 @@ tables:
         select:
           query: "config/table_test_2_select_query.sql"
           column: "created_at"
+      - connection_name: connection_name2
+        path: staging_source_table  # On DB
+        format: "jdbc"
+        version: 1
+        select:
+          query: "config/table_test_2_select_query.sql"
+          column: "created_at"
     targets:
       - connection_name: connection_name2
         format: "parquet"
@@ -50,11 +57,13 @@ tables:
     version: "1.0"
     parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
     max_bulk_size: 12
-    partition:
-      unit: "hours"
-      size: 4
 
     dependencies:
+      - area: staging
+        vertical: sourcedb_1
+        table: tableOne  # On DB
+        format: "jdbc"
+        version: "1.0"
       - area: staging
         vertical: sourcedb_1
         table: tableOne  # On DB

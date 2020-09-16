@@ -106,7 +106,7 @@ object JDBCTools {
     if (path.isDefined) {
       query = query.replace("<path>", path.get)
     }
-    query
+    query.replace(";", "")
   }
 
   /**

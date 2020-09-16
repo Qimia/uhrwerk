@@ -91,22 +91,21 @@ public class Source{
             throw new ConfigException("Missing field: " + path + "version");
         }
         if(partition == null){
-            throw new ConfigException("Missing field: " + path + "partition");
+            if(select != null){
+                select.validateUnpartitioned(path);
+            }
         }
         else{
             partition.validate(path);
+            if(select == null){
+                throw new ConfigException("Missing field: " + path + "select");
+            }
+            else{
+                select.validate(path);
+            }
         }
         if(parallel_load != null){
             parallel_load.validate(path);
-        }
-        //else {
-        //    throw new ConfigException("Missing field: " + path + "parallel_load");
-        //}
-        if(select == null){
-            throw new ConfigException("Missing field: " + path + "select");
-        }
-        else{
-            select.validate(path);
         }
     }
 

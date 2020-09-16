@@ -5,8 +5,8 @@ import java.time.LocalDateTime
 import io.qimia.uhrwerk.engine.{Environment, TaskInput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{max, min}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object DownsampleE  extends App {
   val sparkSess = SparkSession.builder()
@@ -14,7 +14,7 @@ object DownsampleE  extends App {
     .master("local")
     .getOrCreate()
 
-//  Logger.getLogger("org").setLevel(Level.WARN)
+  Logger.getLogger("org").setLevel(Level.WARN)
 //  Logger.getLogger("akka").setLevel(Level.ERROR)
 
 

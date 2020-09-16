@@ -4,9 +4,6 @@ table: "employeeDim"
 version: "1.0"
 parallelism: 1
 max_bulk_size: 1
-partition:
-  unit: "days"
-  size: 1
 
 dependencies:
   - area: "staging"
@@ -14,8 +11,6 @@ dependencies:
     table: "employeeDim"
     format: "jdbc"
     version: "1.0"
-    transform:
-      type: "identity"
 
 targets:
   - connection_name: "retail_mysql"

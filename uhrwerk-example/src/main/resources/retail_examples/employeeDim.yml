@@ -4,21 +4,14 @@ table: "employeeDim"
 version: "1.0"
 parallelism: 1
 max_bulk_size: 1
-partition:
-  unit: "days"
-  size: 1
 
 sources:
   - connection_name: "retail_mysql"
     path: "qimia_oltp.employees"
     format: "jdbc"
     version: "1.0"
-    partition:
-      unit: "days"
-      size: 1
     select:
       query: "retail_examples/employeeDim-loader.sql"
-      column: "selling_date"
 
 targets:
     - connection_name: "retail_mysql"

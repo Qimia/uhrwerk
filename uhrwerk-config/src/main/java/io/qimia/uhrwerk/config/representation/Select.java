@@ -34,6 +34,13 @@ public class Select{
         if(column == null){
             throw new ConfigException("Missing field: " + path + "column");
         }
+
+    }
+    public void validateUnpartitioned(String path){
+        path += "select/";
+        if(query == null){
+            throw new ConfigException("Missing field: " + path + "query");
+        }
     }
 
     @Override
