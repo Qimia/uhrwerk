@@ -11,7 +11,7 @@ partition:
 dependencies:
   - area: "staging"
     vertical: "retail"
-    table: "salesFact"
+    table: "salesFacts"
     format: "jdbc"
     version: "1.0"
     transform:
@@ -32,7 +32,7 @@ dependencies:
       type: "identity"
   - area: "staging"
     vertical: "retail"
-    table: "productDim"
+    table: "storeDim"
     format: "jdbc"
     version: "1.0"
     transform:

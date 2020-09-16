@@ -46,13 +46,12 @@ object LoadDims extends App {
   val runTimes = Array(
     LocalDateTime.of(2020,6,1,0,0),
     LocalDateTime.of(2020,6,2,0,0),
-    LocalDateTime.of(2020,6,1,0,0)
+    LocalDateTime.of(2020, 6, 3, 0, 0)
   )
 
   val prodResult = prodWrapper.get.runTasksAndWait(runTimes)
   val employeeResult = employeeWrapper.get.runTasksAndWait(runTimes)
   val storeResult = storeWrapper.get.runTasksAndWait(runTimes)
-
 
   println(s"Product Dimension processed: ${prodResult}")
   println(s"Employee Dimension processed: ${employeeResult}")

@@ -1,8 +1,9 @@
 package io.qimia.uhrwerk.example.retail_examples
 
+import java.time.LocalDateTime
+
 import io.qimia.uhrwerk.engine.Environment.{SourceIdent, TableIdent}
 import io.qimia.uhrwerk.engine.{Environment, TaskInput}
-import io.qimia.uhrwerk.example.retail_examples.LoadDims.{runTimes, simpleLoad, sparkSess, uhrwerkEnvironment}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -17,12 +18,11 @@ object LoadFacts extends App {
         case None => throw new Exception(s"Table ${ident.toString} not found!")
       }
     }
-
     udf
   }
 
   def computeFactTable(in: TaskInput): DataFrame = {
-    val facts = in.inputFrames.get(TableIdent("staging", "retail", "salesFact", "1.0")) match {
+    val facts = in.inputFrames.get(TableIdent("staging", "retail", "salesFacts", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception(s"Table salesFact not found!")
     }
@@ -39,7 +39,15 @@ object LoadFacts extends App {
       case None => throw new Exception(s"Table productDim not found!")
     }
 
-    facts.as("f").join(productDim.as("p"), col("f.product_id") === ("p.product_id"))
+    facts.show(20)
+    productDim.show(20)
+
+    val pfacts = facts.as("f").join(productDim.as("p"), col("f.product_id") === col("p.product_id"))
+      .select("f.product_id", "f.quantity", "f.sales_id", "f.cashier", "f.store", "f.selling_date", "f.year",
+        "f.month", "f.day", "p.productKey")
+
+    pfacts.show(20)
+    pfacts
   }
 
   val frameManager = new SparkFrameManager(sparkSess)
@@ -50,6 +58,12 @@ object LoadFacts extends App {
   val salesWrapper = uhrwerkEnvironment.addTable("retail_examples/salesFact.yml",
     simpleLoad(SourceIdent("retail_mysql", "qimia_oltp.sales_items", "jdbc")))
   val salesFactWrapper = uhrwerkEnvironment.addTable("retail_examples/salesFact_dwh.yml", computeFactTable)
+
+  val runTimes = Array(
+    LocalDateTime.of(2020, 6, 1, 0, 0),
+    LocalDateTime.of(2020, 6, 2, 0, 0),
+    LocalDateTime.of(2020, 6, 3, 0, 0)
+  )
 
   val salesResult = salesWrapper.get.runTasksAndWait(runTimes)
   val salesFactResult = salesFactWrapper.get.runTasksAndWait(runTimes)
