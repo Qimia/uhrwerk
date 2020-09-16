@@ -9,7 +9,11 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions.{col, hash}
 
 object LoadDims extends App {
-  val sparkSess = SparkSession.builder().appName("loadDims").master("local").getOrCreate()
+  val sparkSess = SparkSession.builder()
+    .appName("loadDims")
+    .master("local[*]")
+    .config("driver-memory", "6g")
+    .getOrCreate()
 
   def simpleLoad(ident: SourceIdent): (TaskInput => DataFrame) = {
     def udf(in: TaskInput): DataFrame = {
@@ -18,6 +22,7 @@ object LoadDims extends App {
         case None => throw new Exception(s"Table ${ident.toString} not found!")
       }
     }
+
     udf
   }
 
@@ -44,9 +49,7 @@ object LoadDims extends App {
     simpleHashLoad(SourceIdent("retail_mysql", "qimia_oltp.stores", "jdbc"), "storeKey"))
 
   val runTimes = Array(
-    LocalDateTime.of(2020,6,1,0,0),
-    LocalDateTime.of(2020,6,2,0,0),
-    LocalDateTime.of(2020, 6, 3, 0, 0)
+    LocalDateTime.of(2020, 6, 1, 0, 0)
   )
 
   val prodResult = prodWrapper.get.runTasksAndWait(runTimes)
