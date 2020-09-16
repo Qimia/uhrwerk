@@ -6,10 +6,10 @@ docker build -t retail-mysql .
 echo "-- running the docker image --"
 
 docker run -d \
-     --name retail_mysql \
-     -e MYSQL_ROOT_PASSWORD=mysql \
-     -p 43306:3306 \
-     retail-mysql
+  --name retail_mysql \
+  -e MYSQL_ROOT_PASSWORD=mysql \
+  -p 43306:3306 \
+  retail-mysql
 
 sleep 5
 
