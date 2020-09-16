@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.framemanager
 
-import io.qimia.uhrwerk.common.model.{Dependency, Table, Target}
+import io.qimia.uhrwerk.common.model.{Dependency, PartitionTransformType, Table, Target}
 
 object Converters {
 
@@ -13,7 +13,7 @@ object Converters {
     dependency.setTableName(table.getName)
     dependency.setTransformPartitionSize(table.getPartitionSize)
     dependency.setTransformPartitionUnit(table.getPartitionUnit)
-    //    dependency.setTransformType(table.get)
+    dependency.setTransformType(PartitionTransformType.IDENTITY)
     dependency
   }
 

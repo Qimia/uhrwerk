@@ -1,10 +1,10 @@
 package io.qimia.uhrwerk.dao;
 
+import io.qimia.uhrwerk.ConnectionHelper;
 import io.qimia.uhrwerk.common.metastore.config.PartitionResult;
 import io.qimia.uhrwerk.common.model.*;
 import org.junit.jupiter.api.Test;
 
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -66,6 +66,7 @@ public class PartitionDAOTest {
         partition.setPartitionTs(timestamps[5]);
         partition.setPartitionUnit(table.getPartitionUnit());
         partition.setPartitionSize(table.getPartitionSize());
+        partition.setPartitioned(false);
         partition.setKey();
 
         return partition;
@@ -81,11 +82,7 @@ public class PartitionDAOTest {
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() throws SQLException {
-        db = DriverManager.getConnection(
-                "jdbc:mysql://localhost:53306/UHRWERK_METASTORE",
-                "UHRWERK_USER",
-                "Xq92vFqEKF7TB8H9"
-        );
+        db = ConnectionHelper.getConnection();
     }
 
     @org.junit.jupiter.api.AfterEach
@@ -169,7 +166,7 @@ public class PartitionDAOTest {
         new TableDAO(db).save(table, true); // target should be saved here
 
         partitionResult = partitionDAO.save(partition, false);
-        assertTrue(partitionResult.isError());
+        assertFalse(partitionResult.isError());
         assertFalse(partitionResult.isSuccess());
         assertNotNull(partitionResult.getNewResult());
         System.out.println(partitionResult.getMessage());
@@ -221,6 +218,8 @@ public class PartitionDAOTest {
 
         Partition[] partitionsSubset = Arrays.copyOfRange(partitions, 2, 4);
 
+        Partition expectedLatestPartition = partitions[partitions.length - 1];
+
         Partition[] foundPartitions = partitionDAO.getPartitions(target.getId(), timestamps);
 
         assertEquals(timestamps.length, foundPartitions.length);
@@ -240,6 +239,11 @@ public class PartitionDAOTest {
         System.out.println(Arrays.toString(foundPartitionsSubset));
         System.out.println(Arrays.toString(partitionsSubset));
         assertTrue(Arrays.equals(foundPartitionsSubset, partitionsSubset));
+
+        // getting the latest partition
+        Partition latestPartition = partitionDAO.getLatestUnpartitioned(target.getId());
+        assertNotNull(latestPartition);
+        assertEquals(expectedLatestPartition, latestPartition);
 
         // missing target
         assertEquals(0, partitionDAO.getPartitions(1234L, timestamps).length);

@@ -1,15 +1,18 @@
 package io.qimia.uhrwerk.config;
 
 import io.qimia.uhrwerk.common.model.Dag;
+import io.qimia.uhrwerk.common.model.PartitionTransformType;
 import io.qimia.uhrwerk.config.representation.Table;
 import io.qimia.uhrwerk.config.representation.Connection;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class DagBuilderTest {
 
   @Test
-  public void tableBuilderTest() {
+  public void dagBuilderTest() {
 
     Dag dag = (new DagBuilder())
             .connection()
@@ -303,6 +306,174 @@ class DagBuilderTest {
             .build();
 
     System.out.println(dag);
+  }
+
+  @Test
+  void nestedBuildTest2() {
+
+    Table table1 = new TableBuilder()
+            .area("TableArea")
+            .vertical("TableVertical")
+            .table("TableTable")
+            .version("TableVersion")
+            .parallelism(2)
+            .maxBulkSize(2)
+            .source()
+            .connectionName("SourceConnection1")
+            .path("SourcePath1")
+            .format("jdbc")
+            .version("1.0")
+            .partition()
+            .unit("days")
+            .size(10)
+            .done()
+            .parallelLoad()
+            .query("SELECT * FROM BLA1")
+            .column("Column1")
+            .num(10)
+            .done()
+            .select()
+            .query("config/table_test_2_select_query.sql")
+            .column("created_at")
+            .done()
+            .done()
+            .source()
+            .connectionName("SourceConnection2")
+            .path("SourcePath2")
+            .format("jdbc")
+            .version("1.0")
+            //.parallel_load()
+            //  .query("SELECT * FROM BLA2")
+            //  .column("Column2")
+            //  .num(5)
+            .select()
+            .query("SELECT * FROM BLA3")
+            .column("Column3")
+            .done()
+            .done()
+            .target()
+            .connectionName("TargetConnection1")
+            .format("jdbc")
+            .done()
+            .target()
+            .connectionName("TargetConnection2")
+            .format("jdbc")
+            .done()
+            .dependency()
+            .area("DepArea0")
+            .version("0.1")
+            .vertical("DepVertical0")
+            .table("DepTableTable0")
+            .format("jdbc")
+            .done()
+            .dependency()
+            .area("DepArea1")
+            .version("1.1")
+            .vertical("DepVertical1")
+            .table("DepTableTable1")
+            .format("jdbc")
+            .transform()
+            .type("identity")
+            .done()
+            .done()
+            .dependency()
+            .area("DepArea2")
+            .version("1.2")
+            .vertical("DepVertical2")
+            .table("DepTableTable2")
+            .format("jdbc")
+            .transform()
+            .type("window")
+            .partition()
+            .size(5)
+            .done()
+            .done()
+            .done()
+            .dependency()
+            .area("DepArea3")
+            .version("1.3")
+            .vertical("DepVertical3")
+            .table("DepTableTable3")
+            .format("jdbc")
+            .transform()
+            .type("aggregate")
+            .partition()
+            .size(2)
+            .done()
+            .done()
+            .done()
+            .dependency()
+            .area("DepArea4")
+            .version("1.4")
+            .vertical("DepVertical4")
+            .table("DepTableTable4")
+            .format("jdbc")
+            .transform()
+            .type("temporal_aggregate")
+            .partition()
+            .size(4)
+            .unit("hours")
+            .done()
+            .done()
+            .done()
+            .buildRepresentationTable();
+
+
+    var partition =
+            new PartitionBuilder<>()
+                    .unit("days")
+                    .size(10)
+                    .build();
+
+    Table table2 = new Table();
+    table2.setTargets(table1.getTargets());
+    table2.setDependencies(table1.getDependencies());
+    table2.setSources(table1.getSources());
+    table2.setPartition(partition);
+    table2.setMax_bulk_size(table1.getMax_bulk_size());
+    table2.setParallelism(table1.getParallelism());
+    table2.setVersion(table1.getVersion());
+    table2.setVertical(table1.getVertical());
+    table2.setTable(table1.getTable());
+    table2.setArea("somedifferent");
+
+    var connection1 = new ConnectionBuilder()
+            .name("s3")
+            .s3()
+            .path("s3Path")
+            .secretKey("secretKey")
+            .secretId("secretID")
+            .done()
+            .buildRepresentationConnection();
+
+
+    var connection2 = new ConnectionBuilder()
+            .name("file")
+            .file()
+            .path("filePath")
+            .done()
+            .buildRepresentationConnection();
+
+    var tables = new Table[2];
+    tables[0] = table1;
+    tables[1] = table2;
+
+    var connections = new Connection[2];
+    connections[0] = connection1;
+    connections[1] = connection2;
+
+    var dag = new DagBuilder()
+            .tables(tables)
+            .connections(connections)
+            .build();
+
+    System.out.println(dag);
+    assertEquals(false, dag.getTables()[0].isPartitioned());
+    assertEquals(true, dag.getTables()[1].isPartitioned());
+    assertEquals(true, dag.getTables()[0].getSources()[0].isPartitioned());
+    assertEquals(false, dag.getTables()[0].getSources()[1].isPartitioned());
+    assertEquals(PartitionTransformType.NONE, dag.getTables()[1].getDependencies()[0].getTransformType());
+    assertEquals(PartitionTransformType.IDENTITY, dag.getTables()[1].getDependencies()[1].getTransformType());
   }
 
 }

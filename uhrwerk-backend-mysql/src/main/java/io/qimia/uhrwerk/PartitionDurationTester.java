@@ -52,6 +52,7 @@ public class PartitionDurationTester {
    */
   public static class PartitionTestDependencyInput {
     public String dependencyTableName;
+    public boolean dependencyTablePartitioned;
     public PartitionUnit dependencyTablePartitionUnit;
     public int dependencyTablePartitionSize;
 
@@ -86,17 +87,19 @@ public class PartitionDurationTester {
 
   /**
    * Check for a single unpartitioned dependency if the table is actually unpartitioned
+   *
    * @param testObj Dependency's partitioning information
    * @return true if they match up, false if not
    */
   public static boolean checkUnpartitionedDependency(PartitionTestDependencyInput testObj) {
-    assert (testObj.transformType == null) : "Not an unpartitioned dependency";
-    return (testObj.dependencyTablePartitionUnit == null);
+    assert (testObj.transformType.equals(PartitionTransformType.NONE))
+        : "Not an unpartitioned dependency";
+    return (!testObj.dependencyTablePartitioned);
   }
 
   /**
    * Check for an array of Dependencies (with included Table partition information) if they are
-   * correct for a given target table's partition size
+   * correct for a given target table's partition size. This only works for partitioned tables.
    *
    * @param tablePartitionUnit Unit of time for denoting the target table's partition size
    * @param tablePartitionSize Count denoting how many PartitionUnit makes up the target table's
@@ -118,10 +121,10 @@ public class PartitionDurationTester {
     Duration tableDuration = convertToDuration(tablePartitionUnit, tablePartitionSize);
     for (PartitionTestDependencyInput testDependency : dependencies) {
       boolean checkRes;
-      if (testDependency.transformType != null) {
-        checkRes = checkPartitionedDependency(tableDuration, testDependency);
-      } else {
+      if (testDependency.transformType.equals(PartitionTransformType.NONE)) {
         checkRes = checkUnpartitionedDependency(testDependency);
+      } else {
+        checkRes = checkPartitionedDependency(tableDuration, testDependency);
       }
       if (!checkRes) {
         badTables.add(testDependency.dependencyTableName);

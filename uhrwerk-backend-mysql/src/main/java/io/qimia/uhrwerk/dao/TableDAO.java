@@ -6,12 +6,15 @@ import io.qimia.uhrwerk.common.metastore.dependency.DependencyResult;
 import io.qimia.uhrwerk.common.metastore.dependency.TableDependencyService;
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResult;
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResultSet;
-import io.qimia.uhrwerk.common.model.*;
 import io.qimia.uhrwerk.common.model.Connection;
+import io.qimia.uhrwerk.common.model.*;
 
 import java.sql.*;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class TableDAO implements TableDependencyService, TableService {
 
@@ -23,7 +26,7 @@ public class TableDAO implements TableDependencyService, TableService {
   private final SourceDAO sourceDAO;
 
   private static final String SELECT_BY_ID =
-      "SELECT id, area, vertical, name, partition_unit, partition_size, parallelism, max_bulk_size, version\n"
+          "SELECT id, area, vertical, name, partition_unit, partition_size, parallelism, max_bulk_size, version, partitioned\n"
           + "FROM TABLE_\n"
           + "WHERE id = ?";
 
@@ -37,8 +40,8 @@ public class TableDAO implements TableDependencyService, TableService {
   }
 
   private static final String INSERT =
-      "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size) "
-          + "VALUES(?,?,?,?,?,?,?,?,?)";
+          "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, partitioned) "
+                  + "VALUES(?,?,?,?,?,?,?,?,?,?)";
 
   private static final String DELETE_BY_ID = "DELETE FROM TABLE_ WHERE id = ?";
 
@@ -59,11 +62,13 @@ public class TableDAO implements TableDependencyService, TableService {
 
           if (!oldTable.equals(table)) {
             var message =
-                    String.format(
-                            "A Table with id=%d and different values already exists in the Metastore.\n\n"
-                                    + "Passed Table:\n%s\n\n"
-                                    + "Table in the Metastore:\n%s",
-                            tableId, table.toString(), oldTable.toString()); // todo improve finding differences
+                String.format(
+                    "A Table with id=%d and different values already exists in the Metastore.\n\n"
+                        + "Passed Table:\n%s\n\n"
+                        + "Table in the Metastore:\n%s",
+                    tableId,
+                    table.toString(),
+                    oldTable.toString()); // todo improve finding differences
             tableResult.setMessage(message);
             tableResult.setSuccess(false);
           }
@@ -97,20 +102,7 @@ public class TableDAO implements TableDependencyService, TableService {
       }
     }
     if (table.getDependencies() != null && table.getDependencies().length > 0) {
-      var tablePartitionUnit = table.getPartitionUnit();
-      Optional<PartitionUnit> inPartitionUnit;
-      if (tablePartitionUnit == null) {
-        inPartitionUnit = Optional.empty();
-      } else {
-        inPartitionUnit = Optional.of(tablePartitionUnit);
-      }
-      var dependencyResult =
-              dependencyDAO.save(
-                      table.getDependencies(),
-                      table.getId(),
-                      inPartitionUnit,
-                      table.getPartitionSize(),
-                      overwrite);
+      var dependencyResult = dependencyDAO.save(table, overwrite);
 
       tableResult.setDependencyResult(dependencyResult);
       if (dependencyResult.isSuccess()) {
@@ -121,7 +113,7 @@ public class TableDAO implements TableDependencyService, TableService {
       }
     }
     if (table.getSources() != null && table.getSources().length > 0) {
-      var sourceResults = sourceDAO.save(table.getSources(), overwrite);
+      var sourceResults = sourceDAO.save(table.getSources(), table, overwrite);
       tableResult.setSourceResults(sourceResults);
       for (int i = 0; i < sourceResults.length; i++) {
         if (sourceResults[i].isSuccess()) {
@@ -160,6 +152,7 @@ public class TableDAO implements TableDependencyService, TableService {
     insert.setInt(7, table.getPartitionSize());
     insert.setInt(8, table.getParallelism());
     insert.setInt(9, table.getMaxBulkSize());
+    insert.setBoolean(10, table.isPartitioned());
     insert.executeUpdate();
   }
 
@@ -193,48 +186,117 @@ public class TableDAO implements TableDependencyService, TableService {
       res.setParallelism(record.getInt("parallelism"));
       res.setMaxBulkSize(record.getInt("max_bulk_size"));
       res.setVersion(record.getString("version"));
+      res.setPartitioned(record.getBoolean("partitioned"));
 
       return res;
     }
     return null;
   }
 
-  private static final String SELECT_TABLE_PARTITION_SPEC =
-      "SELECT D.id,\n"
-          + "       TR.id,\n"
-          + "       D.dependency_target_id,\n"
-          + "       T.partition_unit,\n"
-          + "       T.partition_size,\n"
-          + "       D.transform_type,\n"
-          + "       D.transform_partition_unit,\n"
-          + "       D.transform_partition_size,\n"
-          + "       TR.connection_id\n"
-          + "FROM TABLE_ T\n"
-          + "         JOIN (SELECT d.id,\n"
-          + "                      d.dependency_table_id,\n"
-          + "                      d.dependency_target_id,\n"
-          + "                      transform_type,\n"
-          + "                      transform_partition_unit,\n"
-          + "                      transform_partition_size\n"
-          + "               FROM TABLE_ t\n"
-          + "                        JOIN DEPENDENCY d on t.id = d.table_id\n"
-          + "               WHERE t.id = ?) AS D ON D.dependency_table_id = T.id\n"
-          + "         JOIN TARGET TR on TR.id = D.dependency_target_id\n"
-          + "ORDER BY D.id";
+  /**
+   * Adapted version of {@link #processingPartitions processingPartitions} When a table does not
+   * have a partitioning-scheme itself, this checks if itself has been processed and if not, if the
+   * dependencies have been processed (Current version checks if it has been processed at any time)
+   *
+   * @param table table which needs to be processed
+   * @return same TablePartitionResultSet but with a single reference to failed or succeeded result
+   */
+  private TablePartitionResultSet processPartitionlessTable(Table table, LocalDateTime requestTime) throws SQLException {
+    assert (!table.isPartitioned()) : "Table can't be partitioned for partitionless processing";
+    var singleResult = new TablePartitionResult();
+    var resultSet = new TablePartitionResultSet();
+    // FIXME checks only the first target of the table (see FIXME normal processingPartitions)
+    Partition processedPartition =
+        partitionDAO.getLatestUnpartitioned(table.getTargets()[0].getId());
+    if (processedPartition != null) {
+      // If partition found -> check if it has been processed in the last 1 minute
+
+      Duration requestDiff = Duration.between(processedPartition.getPartitionTs(), requestTime);
+      if (requestDiff.toSeconds() < 60L) {
+        // Warning !! (Does **not** add dependency and resolution info)
+        singleResult.setProcessed(true);
+        singleResult.setPartitionTs(processedPartition.getPartitionTs());
+        resultSet.setProcessed(new TablePartitionResult[] {singleResult});
+        resultSet.setProcessedTs(new LocalDateTime[] {processedPartition.getPartitionTs()});
+        return resultSet;
+      }
+      // If not last-1-minute than continue as if none were found
+    }
+    singleResult.setProcessed(false);
+
+    // If there are no dependencies then this table is resolved and ready to run
+    if ((table.getDependencies() == null) || (table.getDependencies().length == 0)) {
+      singleResult.setResolved(true);
+      singleResult.setPartitionTs(requestTime);
+      singleResult.setResolvedDependencies(new DependencyResult[0]);
+      singleResult.setFailedDependencies(new DependencyResult[0]);
+      resultSet.setResolved(new TablePartitionResult[] {singleResult});
+      resultSet.setResolvedTs(new LocalDateTime[] {requestTime});
+      return resultSet;
+    }
+
+    List<TablePartitionSpec> tablePartitionSpecs = getTablePartitionSpecs(table);
+    Connection[] connections = this.connectionDAO.getTableDependenciesConnections(table.getId());
+    Map<Long, Connection> connectionsMap =
+        Arrays.stream(connections).collect(Collectors.toMap(Connection::getId, x -> x));
+    Map<Long, Dependency> dependenciesMap =
+        Arrays.stream(table.getDependencies()).collect(Collectors.toMap(Dependency::getId, x -> x));
+
+    // Go over each dependency (+ spec) and check if it's there or not
+    ArrayList<DependencyResult> resolvedDependencies = new ArrayList<>();
+    ArrayList<DependencyResult> failedDependencies = new ArrayList<>();
+    boolean singleSuccess = true;
+    for (int j = 0; j < tablePartitionSpecs.size(); j++) {
+      var spec = tablePartitionSpecs.get(j);
+      assert (spec.transformType.equals(PartitionTransformType.NONE))
+          : "Can't have partitioned dependencies for tables without partitioning";
+
+      DependencyResult dependencyResult = new DependencyResult();
+      dependencyResult.setConnection(connectionsMap.get(spec.connectionId));
+      dependencyResult.setDependency(dependenciesMap.get(spec.dependencyId));
+
+      Partition depPartition = partitionDAO.getLatestUnpartitioned(spec.targetId);
+      if (depPartition == null) {
+        dependencyResult.setSuccess(false);
+        dependencyResult.setFailed(new LocalDateTime[] {requestTime});
+        failedDependencies.add(dependencyResult);
+        singleSuccess = false;
+      } else {
+        dependencyResult.setSuccess(true);
+        dependencyResult.setSucceeded(new LocalDateTime[] {depPartition.getPartitionTs()});
+        dependencyResult.setPartitionTs(depPartition.getPartitionTs());
+        dependencyResult.setPartitions(new Partition[] {depPartition});
+        resolvedDependencies.add(dependencyResult);
+      }
+    }
+    singleResult.setResolvedDependencies(resolvedDependencies.toArray(new DependencyResult[0]));
+    singleResult.setFailedDependencies(failedDependencies.toArray(new DependencyResult[0]));
+    singleResult.setResolved(singleSuccess);
+    singleResult.setPartitionTs(requestTime);
+    if (singleSuccess) {
+      resultSet.setResolved(new TablePartitionResult[] {singleResult});
+      resultSet.setResolvedTs(new LocalDateTime[] {requestTime});
+    } else {
+      resultSet.setFailed(new TablePartitionResult[] {singleResult});
+      resultSet.setFailedTs(new LocalDateTime[] {requestTime});
+    }
+    return resultSet;
+  }
 
   /**
-   * When a table has no dependencies, all we need to do is check if it has already been processed
-   * for each requested partitionTS
+   * Adapted version of {@link #processingPartitions processingPartitions} When a table has no
+   * dependencies, all we need to do is check if current table has already been processed for each
+   * requested partitionTS
    *
-   * @param table                table which needs to be processed
+   * @param table table which needs to be processed
    * @param requestedPartitionTs list of partition starting timestamps
    * @return all info required for running a table
    * @throws SQLException
    */
   private TablePartitionResultSet processDepLessPartitions(
-          Table table, LocalDateTime[] requestedPartitionTs) throws SQLException {
+      Table table, LocalDateTime[] requestedPartitionTs) {
     Partition[] processedPartitions =
-            partitionDAO.getPartitions(table.getTargets()[0].getId(), requestedPartitionTs);
+        partitionDAO.getPartitions(table.getTargets()[0].getId(), requestedPartitionTs);
     TreeSet<LocalDateTime> processedTs = new TreeSet<>();
     for (Partition processedPartition : processedPartitions) {
       processedTs.add(processedPartition.getPartitionTs());
@@ -264,25 +326,40 @@ public class TableDAO implements TableDependencyService, TableService {
 
     TablePartitionResultSet tablePartitionResultSet = new TablePartitionResultSet();
     tablePartitionResultSet.setProcessed(
-            processed.toArray(new TablePartitionResult[processed.size()]));
+        processed.toArray(new TablePartitionResult[processed.size()]));
     tablePartitionResultSet.setResolved(
-            resolved.toArray(new TablePartitionResult[resolved.size()]));
+        resolved.toArray(new TablePartitionResult[resolved.size()]));
     tablePartitionResultSet.setFailed(new TablePartitionResult[0]);
 
     tablePartitionResultSet.setProcessedTs(
-            processedTs.toArray(new LocalDateTime[processedTs.size()]));
+        processedTs.toArray(new LocalDateTime[processedTs.size()]));
     tablePartitionResultSet.setResolvedTs(resolvedTs.toArray(new LocalDateTime[resolvedTs.size()]));
     tablePartitionResultSet.setFailedTs(new LocalDateTime[0]);
     return tablePartitionResultSet;
   }
 
+  /**
+   * Find out which partitions have already been processed for the current table, which are ready to
+   * be processed and which ones can't be processed yet. This check is being done on a list of given
+   * partitions which the caller want to check.
+   *
+   * @param table a Table which needs to be processed / produced
+   * @param requestedPartitionTs which partitions need to be processed for this table
+   * @return TablePartitionResultSet containing all info required for the processing and failure
+   *     reporting
+   * @throws SQLException
+   */
   @Override
   public TablePartitionResultSet processingPartitions(
       Table table, LocalDateTime[] requestedPartitionTs) throws SQLException {
+    if (!table.isPartitioned()) {
+        return processPartitionlessTable(table, requestedPartitionTs[0]);
+    }
     if ((table.getDependencies() == null) || (table.getDependencies().length == 0)) {
       return processDepLessPartitions(table, requestedPartitionTs);
     }
 
+    // Check what partitions have already been processed
     // FIXME which target for the table should be used for getting (already) processed partition of
     // the table
     Partition[] processedPartitions =
@@ -292,6 +369,7 @@ public class TableDAO implements TableDependencyService, TableService {
       processedTs.add(processedPartitions[i].getPartitionTs());
     }
 
+    // Get full spec-objects for each of the dependencies + store all connections
     List<TablePartitionSpec> tablePartitionSpecs = getTablePartitionSpecs(table);
     Connection[] connections = this.connectionDAO.getTableDependenciesConnections(table.getId());
     Map<Long, Connection> connectionsMap = new HashMap<>();
@@ -299,52 +377,117 @@ public class TableDAO implements TableDependencyService, TableService {
       connectionsMap.put(connections[i].getId(), connections[i]);
     }
 
+    Dependency[] tableDependencies = table.getDependencies();
+    if (tablePartitionSpecs.size() != tableDependencies.length) {
+      System.err.println("Could not find all specifications for all dependencies in metastore");
+      return buildResultSet(new LocalDateTime[0], new DependencyResult[0][0], new TreeSet<>());
+    }
     Map<Long, Dependency> dependenciesMap = new HashMap<>();
-    for (int i = 0; i < table.getDependencies().length; i++) {
-      dependenciesMap.put(table.getDependencies()[i].getId(), table.getDependencies()[i]);
+    for (int i = 0; i < tableDependencies.length; i++) {
+      dependenciesMap.put(tableDependencies[i].getId(), tableDependencies[i]);
     }
 
     DependencyResult[][] dependencyResults =
         new DependencyResult[requestedPartitionTs.length][tablePartitionSpecs.size()];
     for (int j = 0; j < tablePartitionSpecs.size(); j++) {
       TablePartitionSpec spec = tablePartitionSpecs.get(j);
-      LocalDateTime[][] partitionTs =
-          JdbcBackendUtils.dependencyPartitions(
-              requestedPartitionTs,
-              table.getPartitionUnit(),
-              table.getPartitionSize(),
-              spec.partitionUnit,
-              spec.partitionSize,
-              spec.transformType,
-              spec.transformSize,
-              spec.transformUnit);
-      for (int i = 0; i < partitionTs.length; i++) {
-        Partition[] depPartitions = partitionDAO.getPartitions(spec.getTargetId(), partitionTs[i]);
-        DependencyResult dependencyResult = new DependencyResult();
-        dependencyResult.setConnection(connectionsMap.get(spec.connectionId));
-        dependencyResult.setDependency(dependenciesMap.get(spec.dependencyId));
-        if (depPartitions != null && depPartitions.length == spec.getTransformSize()) {
-          dependencyResult.setSuccess(true);
-          dependencyResult.setSucceeded(partitionTs[i]);
-          dependencyResult.setPartitions(depPartitions);
-        } else {
-          List<LocalDateTime> succeeded = new ArrayList<>();
-          if (depPartitions != null && depPartitions.length > 0) {
-            dependencyResult.setPartitions(depPartitions);
-            for (Partition partition : depPartitions) {
-              LocalDateTime ts = partition.getPartitionTs();
-              succeeded.add(ts);
-            }
-          }
-          TreeSet<LocalDateTime> failed = new TreeSet<>(Arrays.asList(partitionTs[i]));
-          failed.removeAll(succeeded);
+      if (spec.transformType.equals(PartitionTransformType.NONE)) {
+        // If not partitioned then check single
+
+        Partition depPartition = partitionDAO.getLatestUnpartitioned(spec.getTargetId());
+        if (depPartition == null) {
+          // If there is nothing, set all to unsuccessful
+          DependencyResult dependencyResult = new DependencyResult();
+          dependencyResult.setConnection(connectionsMap.get(spec.connectionId));
+          dependencyResult.setDependency(dependenciesMap.get(spec.dependencyId));
           dependencyResult.setSuccess(false);
-          dependencyResult.setFailed(failed.toArray(new LocalDateTime[failed.size()]));
-          dependencyResult.setSucceeded(succeeded.toArray(new LocalDateTime[succeeded.size()]));
+          dependencyResult.setFailed(new LocalDateTime[] {});
+          for (int i = 0; i < requestedPartitionTs.length; i++) {
+            dependencyResults[i][j] = dependencyResult;
+          }
+        } else {
+          // If there is something, check for every requested partition ->
+          // Is the found dependency-partition's startTS equal or after the endpoint of that partition
+          LocalDateTime depPartitionSnapshotTime = depPartition.getPartitionTs();
+          ChronoUnit tableChronoUnit = ChronoUnit.valueOf(table.getPartitionUnit().name());
+          Duration tableDuration = Duration.of(table.getPartitionSize(), tableChronoUnit);
+          for (int i = 0; i < requestedPartitionTs.length; i++) {
+            DependencyResult dependencyResult = new DependencyResult();
+            dependencyResult.setConnection(connectionsMap.get(spec.connectionId));
+            dependencyResult.setDependency(dependenciesMap.get(spec.dependencyId));
+
+            LocalDateTime requestedPartitionEndTs = requestedPartitionTs[i].plus(tableDuration);
+            if (depPartitionSnapshotTime.isEqual(requestedPartitionEndTs) || depPartitionSnapshotTime.isAfter(requestedPartitionEndTs)) {
+              dependencyResult.setSuccess(true);
+              dependencyResult.setSucceeded(new LocalDateTime[] {depPartition.getPartitionTs()});
+              dependencyResult.setPartitionTs(depPartitionSnapshotTime);
+              dependencyResult.setPartitions(new Partition[] {depPartition});
+            } else {
+              dependencyResult.setSuccess(false);
+              dependencyResult.setFailed(new LocalDateTime[] {depPartitionSnapshotTime});
+              dependencyResult.setPartitionTs(depPartitionSnapshotTime);
+              dependencyResult.setPartitions(new Partition[] {depPartition});
+            }
+            dependencyResults[i][j] = dependencyResult;
+          }
         }
-        dependencyResults[i][j] = dependencyResult;
+      } else {
+        // partitioned so first create list of which partitions to check
+        LocalDateTime[][] partitionTs =
+            JdbcBackendUtils.dependencyPartitions(
+                requestedPartitionTs,
+                table.getPartitionUnit(),
+                table.getPartitionSize(),
+                spec.partitionUnit,
+                spec.partitionSize,
+                spec.transformType,
+                spec.transformSize,
+                spec.transformUnit);
+        for (int i = 0; i < partitionTs.length; i++) {
+          // each partition spec check every partition
+          Partition[] depPartitions =
+              partitionDAO.getPartitions(spec.getTargetId(), partitionTs[i]);
+          DependencyResult dependencyResult = new DependencyResult();
+          dependencyResult.setConnection(connectionsMap.get(spec.connectionId));
+          dependencyResult.setDependency(dependenciesMap.get(spec.dependencyId));
+          if (depPartitions != null && depPartitions.length == spec.getTransformSize()) {
+            dependencyResult.setSuccess(true);
+            dependencyResult.setSucceeded(partitionTs[i]);
+            dependencyResult.setPartitions(depPartitions);
+          } else {
+            List<LocalDateTime> succeeded = new ArrayList<>();
+            if (depPartitions != null && depPartitions.length > 0) {
+              dependencyResult.setPartitions(depPartitions);
+              for (Partition partition : depPartitions) {
+                LocalDateTime ts = partition.getPartitionTs();
+                succeeded.add(ts);
+              }
+            }
+            TreeSet<LocalDateTime> failed = new TreeSet<>(Arrays.asList(partitionTs[i]));
+            failed.removeAll(succeeded);
+            dependencyResult.setSuccess(false);
+            dependencyResult.setFailed(failed.toArray(new LocalDateTime[failed.size()]));
+            dependencyResult.setSucceeded(succeeded.toArray(new LocalDateTime[succeeded.size()]));
+          }
+          dependencyResults[i][j] = dependencyResult;
+        }
       }
     }
+    return buildResultSet(requestedPartitionTs, dependencyResults, processedTs);
+  }
+
+  /**
+   * Build a TablePartitionResultSet out of DependencyResults and processed timestamps
+   *
+   * @param requestedPartitionTs Originally requested partition timestamps for processing
+   * @param dependencyResults DependencyResults size [# requested partitions][# of dependencies]
+   * @param processedTs Which timestamps have already been
+   * @return
+   */
+  public static TablePartitionResultSet buildResultSet(
+      LocalDateTime[] requestedPartitionTs,
+      DependencyResult[][] dependencyResults,
+      Set<LocalDateTime> processedTs) {
     List<LocalDateTime> resolvedTs = new ArrayList<>();
     List<LocalDateTime> failedTs = new ArrayList<>();
 
@@ -360,19 +503,19 @@ public class TableDAO implements TableDependencyService, TableService {
       boolean success = true;
       List<DependencyResult> resolvedDependencies = new ArrayList<>();
       List<DependencyResult> failedDependencies = new ArrayList<>();
-      for (int j = 0; j < results.length; j++) {
-        success &= results[j].isSuccess();
-        if (results[j].isSuccess()) resolvedDependencies.add(results[j]);
-        else failedDependencies.add(results[j]);
+      for (DependencyResult result : results) {
+        success &= result.isSuccess();
+        if (result.isSuccess()) resolvedDependencies.add(result);
+        else failedDependencies.add(result);
       }
       if (success) {
         tablePartitionResult.setResolved(true);
         tablePartitionResult.setResolvedDependencies(results);
       } else {
         tablePartitionResult.setResolvedDependencies(
-            resolvedDependencies.toArray(new DependencyResult[resolvedDependencies.size()]));
+            resolvedDependencies.toArray(new DependencyResult[0]));
         tablePartitionResult.setFailedDependencies(
-            failedDependencies.toArray(new DependencyResult[failedDependencies.size()]));
+            failedDependencies.toArray(new DependencyResult[0]));
       }
       if (processedTs.contains(partitionTs)) {
         tablePartitionResult.setProcessed(true);
@@ -386,19 +529,47 @@ public class TableDAO implements TableDependencyService, TableService {
       }
     }
     TablePartitionResultSet tablePartitionResultSet = new TablePartitionResultSet();
-    tablePartitionResultSet.setProcessed(
-        processed.toArray(new TablePartitionResult[processed.size()]));
-    tablePartitionResultSet.setResolved(
-        resolved.toArray(new TablePartitionResult[resolved.size()]));
+    tablePartitionResultSet.setProcessed(processed.toArray(new TablePartitionResult[0]));
+    tablePartitionResultSet.setResolved(resolved.toArray(new TablePartitionResult[0]));
     tablePartitionResultSet.setFailed(failed.toArray(new TablePartitionResult[failed.size()]));
 
-    tablePartitionResultSet.setProcessedTs(
-        processedTs.toArray(new LocalDateTime[processedTs.size()]));
-    tablePartitionResultSet.setResolvedTs(resolvedTs.toArray(new LocalDateTime[resolvedTs.size()]));
-    tablePartitionResultSet.setFailedTs(failedTs.toArray(new LocalDateTime[failedTs.size()]));
+    tablePartitionResultSet.setProcessedTs(processedTs.toArray(new LocalDateTime[0]));
+    tablePartitionResultSet.setResolvedTs(resolvedTs.toArray(new LocalDateTime[0]));
+    tablePartitionResultSet.setFailedTs(failedTs.toArray(new LocalDateTime[0]));
     return tablePartitionResultSet;
   }
 
+  private static final String SELECT_TABLE_PARTITION_SPEC =
+      "SELECT D.id,\n"
+          + "       TR.id,\n"
+          + "       T.id,\n"
+          + "       T.partition_unit,\n"
+          + "       T.partition_size,\n"
+          + "       D.transform_type,\n"
+          + "       D.transform_partition_unit,\n"
+          + "       D.transform_partition_size,\n"
+          + "       TR.connection_id\n"
+          + "FROM TABLE_ T\n"
+          + "         JOIN (SELECT d.id,\n"
+          + "                      d.dependency_table_id,\n"
+          + "                      d.dependency_target_id,\n"
+          + "                      transform_type,\n"
+          + "                      transform_partition_unit,\n"
+          + "                      transform_partition_size\n"
+          + "               FROM TABLE_ t\n"
+          + "                        JOIN DEPENDENCY d on t.id = d.table_id\n"
+          + "               WHERE t.id = ?) AS D ON D.dependency_table_id = T.id\n"
+          + "         JOIN TARGET TR on TR.id = D.dependency_target_id\n"
+          + "ORDER BY D.id";
+
+  /**
+   * Find the specifications for each of the dependencies for a table
+   *
+   * @param table child-table for which the specifications need to be found
+   * @return List of specifications containing partitioning + transform info per dependency('s
+   *     table)
+   * @throws SQLException
+   */
   private List<TablePartitionSpec> getTablePartitionSpecs(Table table) throws SQLException {
     PreparedStatement partitionSpecs =
         db.prepareStatement(SELECT_TABLE_PARTITION_SPEC, Statement.RETURN_GENERATED_KEYS);
@@ -409,7 +580,11 @@ public class TableDAO implements TableDependencyService, TableService {
       long dependencyId = resultSet.getLong(1);
       long targetId = resultSet.getLong(2);
       long tableId = resultSet.getLong(3);
-      PartitionUnit partitionUnit = PartitionUnit.valueOf(resultSet.getString(4));
+      String specTablePartitionUnit = resultSet.getString(4);
+      PartitionUnit partitionUnit = null;
+      if (specTablePartitionUnit != null) {
+        partitionUnit = PartitionUnit.valueOf(specTablePartitionUnit);
+      }
       int partitionSize = resultSet.getInt(5);
       PartitionTransformType transformType = PartitionTransformType.valueOf(resultSet.getString(6));
       String transformUnitStr = resultSet.getString(7);

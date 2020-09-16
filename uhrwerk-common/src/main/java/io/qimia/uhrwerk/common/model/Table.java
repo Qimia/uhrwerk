@@ -16,6 +16,7 @@ public class Table {
     int maxBulkSize;
     PartitionUnit partitionUnit;
     int partitionSize;
+    boolean partitioned = false;
     Dependency[] dependencies;
     Source[] sources;
     Target[] targets;
@@ -127,6 +128,14 @@ public class Table {
         this.targets = targets;
     }
 
+    public boolean isPartitioned() {
+        return partitioned;
+    }
+
+    public void setPartitioned(boolean partitioned) {
+        this.partitioned = partitioned;
+    }
+
     @Override
     public boolean equals(Object o) {
 
@@ -198,6 +207,8 @@ public class Table {
                 + partitionUnit
                 + ", partitionSize="
                 + partitionSize
+                + ", partitioned="
+                + partitioned
                 + ", dependencies="
                 + Arrays.toString(dependencies)
                 + ", sources="
