@@ -24,7 +24,6 @@ object LoadDims extends App {
         case None => throw new Exception(s"Table ${ident.toString} not found!")
       }
     }
-
     udf
   }
 

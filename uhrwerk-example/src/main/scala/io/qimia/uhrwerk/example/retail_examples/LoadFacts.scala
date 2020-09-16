@@ -47,12 +47,17 @@ object LoadFacts extends App {
     facts.show(20)
     productDim.show(20)
 
-    val pfacts = facts.as("f").join(productDim.as("p"), col("f.product_id") === col("p.product_id"))
+    val pFacts = facts.as("f").join(productDim.as("p"), col("f.product_id") === col("p.product_id"))
       .select("f.product_id", "f.quantity", "f.sales_id", "f.cashier", "f.store", "f.selling_date", "f.year",
         "f.month", "f.day", "p.productKey")
 
-    pfacts.show(20)
-    pfacts
+    pFacts.show(20)
+
+    val sFacts = pFacts.as("p").join(storeDim.as("s"), col("p.store") === col("s.store_id"))
+      .select("p.product_id", "p.quantity", "p.sales_id", "p.cashier", "p.store", "p.selling_date", "p.year",
+        "p.month", "p.day", "p.productKey", "p.storeKey")
+
+    sFacts
   }
 
   val frameManager = new SparkFrameManager(sparkSess)
