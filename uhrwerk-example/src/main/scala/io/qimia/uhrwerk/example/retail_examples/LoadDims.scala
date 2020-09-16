@@ -15,17 +15,6 @@ object LoadDims extends App {
     .config("driver-memory", "6g")
     .getOrCreate()
 
-  def simpleLoad(ident: SourceIdent): (TaskInput => DataFrame) = {
-    def udf(in: TaskInput): DataFrame = {
-      in.inputFrames.get(ident) match {
-        case Some(x) => x
-        case None => throw new Exception(s"Table ${ident.toString} not found!")
-      }
-    }
-
-    udf
-  }
-
   def simpleHashLoad(ident: SourceIdent, colName: String): (TaskInput => DataFrame) = {
     def udf(in: TaskInput): DataFrame = {
       in.inputFrames.get(ident) match {

@@ -1,3 +1,4 @@
-FROM mysql:5.7.20
+FROM mysql:8.0.21
 COPY oltpSchema.sql /db-data/
 COPY artificial_data.sql /db-data/
+COPY foreignKeys.sql /db-data/

@@ -1,24 +1,22 @@
-Create SCHEMA IF NOT EXISTS qimia_oltp;
+create SCHEMA IF NOT EXISTS qimia_oltp;
 
-#SET FOREIGN_KEY_CHECKS = 0;
+drop table IF EXISTS qimia_oltp.stores CASCADE;
+drop table IF EXISTS qimia_oltp.employees CASCADE;
+drop table IF EXISTS qimia_oltp.discounts CASCADE;
+drop table IF EXISTS qimia_oltp.sales_items CASCADE;
+drop table IF EXISTS qimia_oltp.stores_employees CASCADE;
+drop table IF EXISTS qimia_oltp.products CASCADE;
+drop table IF EXISTS qimia_oltp.sales CASCADE;
+drop table IF EXISTS qimia_oltp.suppliers CASCADE;
+drop table IF EXISTS qimia_oltp.currency CASCADE;
 
-DROP TABLE IF EXISTS qimia_oltp.stores;
-DROP TABLE IF EXISTS qimia_oltp.employees;
-DROP TABLE IF EXISTS qimia_oltp.discounts;
-DROP TABLE IF EXISTS qimia_oltp.sales_items;
-DROP TABLE IF EXISTS qimia_oltp.stores_employees;
-DROP TABLE IF EXISTS qimia_oltp.products;
-DROP TABLE IF EXISTS qimia_oltp.sales;
-DROP TABLE IF EXISTS qimia_oltp.suppliers;
-DROP TABLE IF EXISTS qimia_oltp.currency;
-
-CREATE TABLE IF NOT EXISTS qimia_oltp.currency (
+create TABLE IF NOT EXISTS qimia_oltp.currency (
     country VARCHAR(50) PRIMARY KEY
     ,currency_name VARCHAR(255)
     ,exchange_rate float
 );
 
-CREATE TABLE IF NOT EXISTS qimia_oltp.stores (
+create TABLE IF NOT EXISTS qimia_oltp.stores (
 	store_id INT PRIMARY KEY
 	,store_name VARCHAR (255)
 	,address VARCHAR (255)
@@ -31,10 +29,9 @@ CREATE TABLE IF NOT EXISTS qimia_oltp.stores (
 	,last_redesigned date
 	,selling_square_footage int
 	,total_square_footage int
-	#,FOREIGN KEY (country) REFERENCES qimia_oltp.currency (country)
 );
 
-CREATE TABLE IF NOT EXISTS qimia_oltp.employees (
+create TABLE IF NOT EXISTS qimia_oltp.employees (
     employee_id INT PRIMARY KEY
     ,first_name VARCHAR(255)
     ,last_name VARCHAR(255)
@@ -48,10 +45,9 @@ CREATE TABLE IF NOT EXISTS qimia_oltp.employees (
     ,country VARCHAR(50)
     ,employed_since date
     ,supervisor INT
-    #,FOREIGN KEY (country) REFERENCES qimia_oltp.currency (country)
 );
 
-CREATE TABLE IF NOT EXISTS qimia_oltp.suppliers (
+create TABLE IF NOT EXISTS qimia_oltp.suppliers (
     supplier_id INT PRIMARY KEY
     ,company_name VARCHAR(255)
     ,bank_account VARCHAR(255)
@@ -62,10 +58,9 @@ CREATE TABLE IF NOT EXISTS qimia_oltp.suppliers (
     ,latitude float
 	,longitude float
     ,country VARCHAR(255)
-    #,FOREIGN KEY (country) REFERENCES qimia_oltp.currency (country)
 );
 
-CREATE TABLE IF NOT EXISTS qimia_oltp.products (
+create TABLE IF NOT EXISTS qimia_oltp.products (
     product_id VARCHAR(50) PRIMARY KEY
     ,brand VARCHAR(255)
     ,type VARCHAR(255)
@@ -78,54 +73,32 @@ CREATE TABLE IF NOT EXISTS qimia_oltp.products (
     ,purchase_price float
     ,selling_price float
     ,supplier INT
-    #,FOREIGN KEY (supplier) REFERENCES qimia_oltp.suppliers (supplier_id)
 );
 
-CREATE TABLE IF NOT EXISTS qimia_oltp.sales (
+create TABLE IF NOT EXISTS qimia_oltp.sales (
     sales_id INT PRIMARY KEY
     ,cashier INT
     ,store INT
     ,selling_date date
-    #,FOREIGN KEY (cashier) REFERENCES qimia_oltp.employees (employee_id),
-    #,FOREIGN KEY (store) REFERENCES qimia_oltp.stores (store_id)
+    ,INDEX (selling_date)
 );
 
-CREATE TABLE IF NOT EXISTS qimia_oltp.sales_items (
+create TABLE IF NOT EXISTS qimia_oltp.sales_items (
     sales_id INT
     ,product_id VARCHAR(50)
     ,quantity INT
-    #,FOREIGN KEY (sales_id) REFERENCES qimia_oltp.sales (sales_id),
-    #,FOREIGN KEY (product_id) REFERENCES qimia_oltp.products (product_id)
 );
 
-CREATE TABLE IF NOT EXISTS qimia_oltp.discounts (
+create TABLE IF NOT EXISTS qimia_oltp.discounts (
     store_id INT
     ,product_id VARCHAR(50)
     ,percentage float
     ,start_date date
     ,end_date date
-    #,FOREIGN KEY (store_id) REFERENCES qimia_oltp.stores (store_id),
-    #,FOREIGN KEY (product_id) REFERENCES qimia_oltp.products (product_id)
 );
 
-
-
-CREATE TABLE IF NOT EXISTS qimia_oltp.stores_employees (
+create TABLE IF NOT EXISTS qimia_oltp.stores_employees (
     store_id INT
     ,employee_id INT
-    #,FOREIGN KEY (store_id) REFERENCES qimia_oltp.stores (store_id),
-    #,FOREIGN KEY (employee_id) REFERENCES qimia_oltp.employees (employee_id)
 );
 
-
-TRUNCATE TABLE qimia_oltp.stores;
-TRUNCATE TABLE qimia_oltp.employees;
-TRUNCATE TABLE qimia_oltp.discounts;
-TRUNCATE TABLE qimia_oltp.sales_items;
-TRUNCATE TABLE qimia_oltp.stores_employees;
-TRUNCATE TABLE qimia_oltp.products;
-TRUNCATE TABLE qimia_oltp.sales;
-TRUNCATE TABLE qimia_oltp.suppliers;
-TRUNCATE TABLE qimia_oltp.currency;
-
-#SET FOREIGN_KEY_CHECKS = 1;
