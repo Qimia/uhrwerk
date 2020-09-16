@@ -14,6 +14,6 @@ docker run -d \
 sleep 5
 
 echo "-- Building the Schema --"
-docker exec -it retail_mysql bash -c "mysql < /db-data/oltpSchema.sql -u root -p"
+docker exec -it retail_mysql bash -c "mysql < /db-data/oltpSchema.sql -u root --password=mysql"
 echo "-- Creating the articifial data"
-docker exec -it retail_mysql bash -c "mysql < /db-data/artificial_data.sql -u root -p"
+docker exec -it retail_mysql bash -c "mysql < /db-data/artificial_data.sql -u root --password=mysql"
