@@ -10,8 +10,6 @@ sources:
     path: "qimia_oltp.employees"
     format: "jdbc"
     version: "1.0"
-    select:
-      query: "retail_examples/employeeDim-loader.sql"
 
 targets:
     - connection_name: "retail_mysql"
