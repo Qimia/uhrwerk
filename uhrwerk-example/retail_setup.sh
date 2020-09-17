@@ -5,6 +5,7 @@ docker build -t retail-mysql .
 
 echo "-- running the docker image --"
 
+docker kill retail_mysql
 docker rm retail_mysql
 docker run -d \
   --name retail_mysql \
@@ -12,11 +13,11 @@ docker run -d \
   -p 43306:3306 \
   retail-mysql
 
-sleep 10
+sleep 15
 
 echo "-- Building the Schema --"
 docker exec -it retail_mysql bash -c "mysql < /db-data/oltpSchema.sql -u root --password=mysql"
-echo "-- Creating the articifial data"
+echo "-- Creating the artificial data"
 docker exec -it retail_mysql bash -c "mysql < /db-data/artificial_data.sql -u root --password=mysql"
 echo "-- Setting foreign keys"
 docker exec -it retail_mysql bash -c "mysql < /db-data/foreignKeys.sql -u root --password=mysql"

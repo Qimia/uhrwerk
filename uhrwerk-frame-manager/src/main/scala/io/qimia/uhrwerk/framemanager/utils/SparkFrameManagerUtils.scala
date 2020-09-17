@@ -116,9 +116,13 @@ object SparkFrameManagerUtils {
         )
         .toString
     } else { // jdbc
-      "`" + table.getArea + "_" + table.getVertical + "`.`" + table.getName + "_" + table.getVersion
-        .replace(".", "_") + "`"
+      val (tableSchema, tableName) = getJDBCTableSchemaAndName(table)
+      "`" + tableSchema + "`.`" + tableName + "`"
     }
+  }
+
+  private[framemanager] def getJDBCTableSchemaAndName(table: Table): (String, String) = {
+    (table.getArea + "_" + table.getVertical, table.getName + "_" + table.getVersion.replace(".", "_"))
   }
 
   /**

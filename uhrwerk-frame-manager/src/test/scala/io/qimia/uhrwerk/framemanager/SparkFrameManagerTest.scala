@@ -394,13 +394,16 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     assert(bWholeDFQuery === dfWithTSCollected)
   }
 
-  "specifying timestamps but not the source select column" should "throw an exception" in {
+  "specifying timestamps but not the source select column for partitioned sources" should "throw an exception" in {
     val spark = getSparkSession
     val manager = new SparkFrameManager(spark)
 
+    val source = new Source
+    source.setPartitioned(true)
+
     assertThrows[IllegalArgumentException](
       manager
-        .loadSourceDataFrame(new Source, startTS = Option(LocalDateTime.now()))
+        .loadSourceDataFrame(source, startTS = Option(LocalDateTime.now()))
     )
   }
 
