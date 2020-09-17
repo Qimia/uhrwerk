@@ -39,25 +39,29 @@ object LoadFacts extends App {
       case Some(x) => x
       case None => throw new Exception(s"Table storeDim not found!")
     }
+    val storeEmployees = in.inputFrames.get(SourceIdent("retail_mysql", "qimia_oltp.stores_eymploees", "jdbc")) match {
+      case Some(x) => x
+      case None => throw new Exception(s"Table storeEmployees not found")
+    }
     val productDim = in.inputFrames.get(TableIdent("staging", "retail", "productDim", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception(s"Table productDim not found!")
     }
 
-    facts.show(20)
-    productDim.show(20)
-
     val pFacts = facts.as("f").join(productDim.as("p"), col("f.product_id") === col("p.product_id"))
       .select("f.product_id", "f.quantity", "f.sales_id", "f.cashier", "f.store", "f.selling_date", "f.year",
         "f.month", "f.day", "p.productKey")
-
-    pFacts.show(20)
 
     val sFacts = pFacts.as("p").join(storeDim.as("s"), col("p.store") === col("s.store_id"))
       .select("p.product_id", "p.quantity", "p.sales_id", "p.cashier", "p.store", "p.selling_date", "p.year",
         "p.month", "p.day", "p.productKey", "p.storeKey")
 
-    sFacts
+    val eFacts = sFacts.as("s").join(storeEmployees.as("se"), col("s.store") === col("se.store_id"))
+      .join(employeeDim.as("e"), col("se.employee_id") === col("e.employee_id"))
+      .select("s.product_id", "s.quantity", "s.sales_id", "s.cashier", "s.store", "s.selling_date", "s.year",
+        "s.month", "s.days", "s.produtKey", "s.storeKey", "e.employeeKey")
+
+    eFacts
   }
 
   val frameManager = new SparkFrameManager(sparkSess)

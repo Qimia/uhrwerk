@@ -8,6 +8,12 @@ partition:
   unit: "days"
   size: 1
 
+sources:
+  - connectionName: "retail_mysql"
+    path: "qimia_oltp.stores_employees"
+    format: "jdbc"
+    version: "1.0"
+
 dependencies:
   - area: "staging"
     vertical: "retail"
