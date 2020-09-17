@@ -30,8 +30,8 @@ object LoaderBParq extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnections("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTable("loader-B-parq.yml", loaderBFunc, true)
+  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("loader-B-parq.yml", loaderBFunc, true)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 1, 0, 0),

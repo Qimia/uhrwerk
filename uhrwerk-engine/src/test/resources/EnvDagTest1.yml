@@ -1,0 +1,178 @@
+connections:
+  - name: "test1"
+    jdbc:
+      jdbc_url: 'jdbc:test1'
+      jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+      user: usertest1
+      pass: passtest1
+
+  - name: "test2"
+    file:
+      path: 'test2path'
+
+  - name: "test3"
+    jdbc:
+      jdbc_url: 'jdbc:test3'
+      jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+      user: usertest1
+      pass: passtest1
+
+  - name: "test4"
+    file:
+      path: 'test4path'
+
+tables:
+  - area: loading
+    vertical: sourcedb_1
+    table: load_a_table1
+    version: "1.0"
+    parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 1
+    partition:
+      unit: "hours"
+      size: 1
+    sources:
+      - connection_name: test1
+        path: staging_source_table  # On DB
+        format: "jdbc"
+        version: 1
+        partition:
+          unit: "hours"
+          size: 1
+        parallel_load:
+          query: "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'"
+          column: "id"
+          num: 1
+        select:
+          query: "SELECT * FROM <path> WHERE date >= '<lower_bound>' and date < '<upper_bound>'"
+          column: "created_at"
+    targets:
+      - connection_name: test2
+        format: "parquet"
+
+  - area: loading
+    vertical: sourcedb_1
+    table: load_a_table2
+    version: "1.0"
+    parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 1
+    sources:
+    - connection_name: test2
+      path: staging_source_table  # On DB
+      format: "csv"
+      version: 1
+      select:
+        query:  "SELECT * FROM <path> WHERE date >= '<lower_bound>' and date < '<upper_bound>'"
+    targets:
+    - connection_name: test2
+      format: "parquet"
+
+  - area: loading
+    vertical: sourcedb_1
+    table: load_a_table3
+    version: "1.0"
+    parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 2
+    partition:
+      unit: "days"
+      size: 1
+    sources:
+    - connection_name: test1
+      path: staging_source_table  # On DB
+      format: "jdbc"
+      version: 1
+      partition:
+        unit: "days"
+        size: 1
+      select:
+        query: "SELECT * FROM <path> WHERE date >= '<lower_bound>' and date < '<upper_bound>'"
+        column: "created_at"
+    targets:
+    - connection_name: test2
+      format: "parquet"
+
+  - area: processing
+    vertical: sourcedb_1
+    table: process_a_table1
+    version: "1.0"
+    parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 4
+    partition:
+      unit: "hours"
+      size: 1
+    dependencies:
+      - area: loading
+        vertical: sourcedb_1
+        table: load_a_table1  # On DB
+        format: "parquet"
+        version: "1.0"
+        transform:
+          type: "identity"
+    targets:
+      - connection_name: test4
+        format: "parquet"
+
+  - area: processing
+    vertical: sourcedb_1
+    table: process_a_table2
+    version: "1.0"
+    parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 2
+    dependencies:
+    - area: loading
+      vertical: sourcedb_1
+      table: load_a_table2  # On DB
+      format: "parquet"
+      version: "1.0"
+    targets:
+    - connection_name: test4
+      format: "parquet"
+
+  - area: processing
+    vertical: sourcedb_1
+    table: process_a_table3
+    version: "1.0"
+    parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 2
+    partition:
+      unit: "days"
+      size: 2
+    dependencies:
+    - area: loading
+      vertical: sourcedb_1
+      table: load_a_table3  # On DB
+      format: "parquet"
+      version: "1.0"
+      transform:
+        type: "aggregate"
+        partition:
+          size: 2
+
+    targets:
+    - connection_name: test4
+      format: "parquet"
+
+
+  - area: final
+    vertical: sourcedb_1
+    table: finalize_a_table1
+    version: "1.0"
+    parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 2
+    partition:
+      unit: "days"
+      size: 2
+    dependencies:
+    - area: processing
+      vertical: sourcedb_1
+      table: process_a_table3  # On DB
+      format: "parquet"
+      version: "1.0"
+      transform:
+        type: "window"
+        partition:
+          size: 2
+
+    targets:
+    - connection_name: test4
+      format: "parquet"

@@ -47,8 +47,8 @@ object LoaderJ extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnections("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTable("loader-J.yml", transformationFunction)
+  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("loader-J.yml", transformationFunction)
 
   val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0))
   val now = LocalDateTime.now()

@@ -1,16 +1,16 @@
-package io.qimia.uhrwerk.example.yelp
+package io.qimia.uhrwerk.example.retail
 
 import java.time.LocalDateTime
 
+import io.qimia.uhrwerk.engine.dag.{DagTaskBuilder, DagTaskDispatcher}
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
-
-object LoaderB extends App {
+object LoaderStores extends App {
 
   val sparkSess = SparkSession.builder()
-    .appName("loaderA")
+    .appName("loaderB")
     .master("local")
     .getOrCreate()
 
@@ -23,10 +23,15 @@ object LoaderB extends App {
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml" ,frameManager)
   uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTableFile("loader-B.yml", loaderBFunc)
+  val wrapper = uhrwerkEnvironment.addTableFile("LoadTableStoresTest.yml", loaderBFunc, true).get
 
-  val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0))
-  val results = wrapper.get.runTasksAndWait(runTimes)
-  println(results)
 
+  val dagTaskBuilder = new DagTaskBuilder(uhrwerkEnvironment)
+  val taskList = dagTaskBuilder.buildTaskListFromTable(
+    wrapper,
+    LocalDateTime.of(2020, 6, 1, 0, 0),
+    LocalDateTime.of(2020, 6, 6, 0, 0)
+  )
+  taskList.foreach(tup => print(tup))
+  DagTaskDispatcher.runTasksParallel(taskList, 2)
 }
