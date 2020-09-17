@@ -7,15 +7,16 @@ partition:
   size: 3
 
 dependencies:
-  area: "dwh"
-  vertical: "retail"
-  table: "salesFact"
-  version: "1.0"
-  transform:
-    type: "aggregate"
-    unit: "days"
-    size: 1
+  - area: "dwh"
+    vertical: "retail"
+    table: "salesFact"
+    version: "1.0"
+    format: "jdbc"
+    transform:
+      type: "aggregate"
+      partition:
+        size: 3
 
-target:
-  - connection_name: "retail-mysql"
+targets:
+  - connection_name: "retail_mysql"
     format: "jdbc"

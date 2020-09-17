@@ -28,11 +28,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
                                     endTSExcl: Option[LocalDateTime] = Option.empty,
                                     dataFrameReaderOptions: Option[Map[String, String]] = Option.empty
                                   ): DataFrame = {
-    if (
-      (startTS.isDefined || endTSExcl.isDefined) && isStringEmpty(
-        source.getSelectColumn
-      )
-    ) {
+    if ((startTS.isDefined || endTSExcl.isDefined) && source.isPartitioned && isStringEmpty(source.getSelectColumn)) {
       throw new IllegalArgumentException(
         "When one or both of the timestamps are specified, " +
           "the source.selectColumn needs to be set as well."
@@ -269,7 +265,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           .option("dbtable", source.getPath) // area-vertical.tableName-version
       }
 
-    println("Loading source")
+    println(s"Loading source ${source.getPath}")
 
     val df: DataFrame = dfReaderWithQuery
       .load()

@@ -17,7 +17,7 @@ sources:
       unit: "days"
       size: 1
     select:
-      query: "retail_examples/salesFact-loader.sql"
+      query: "retail_examples/staging/retail/salesFact-loader.sql"
       column: "selling_date"
 
 targets:

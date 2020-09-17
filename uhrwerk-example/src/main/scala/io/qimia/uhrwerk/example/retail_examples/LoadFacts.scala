@@ -5,15 +5,18 @@ import java.time.LocalDateTime
 import io.qimia.uhrwerk.engine.Environment.{SourceIdent, TableIdent}
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
+import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, count, sum}
-import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object LoadFacts extends App {
   val sparkSess = SparkSession.builder()
     .appName("loadDims")
     .master("local[*]")
-    .config("driver-memory", "6g")
+    .config("driver-memory", "4g")
     .getOrCreate()
+
+  Logger.getLogger("org").setLevel(Level.WARN)
 
   def simpleLoad(ident: SourceIdent): (TaskInput => TaskOutput) = {
     def udf(in: TaskInput): TaskOutput = {
@@ -39,7 +42,7 @@ object LoadFacts extends App {
       case Some(x) => x
       case None => throw new Exception(s"Table storeDim not found!")
     }
-    val storeEmployees = in.loadedInputFrames.get(SourceIdent("retail_mysql", "qimia_oltp.stores_eymploees", "jdbc")) match {
+    val storeEmployees = in.loadedInputFrames.get(SourceIdent("retail_mysql", "qimia_oltp.stores_employees", "jdbc")) match {
       case Some(x) => x
       case None => throw new Exception(s"Table storeEmployees not found")
     }
@@ -54,12 +57,12 @@ object LoadFacts extends App {
 
     val sFacts = pFacts.as("p").join(storeDim.as("s"), col("p.store") === col("s.store_id"))
       .select("p.product_id", "p.quantity", "p.sales_id", "p.cashier", "p.store", "p.selling_date", "p.year",
-        "p.month", "p.day", "p.productKey", "p.storeKey")
+        "p.month", "p.day", "p.productKey", "s.storeKey")
 
     val eFacts = sFacts.as("s").join(storeEmployees.as("se"), col("s.store") === col("se.store_id"))
       .join(employeeDim.as("e"), col("se.employee_id") === col("e.employee_id"))
       .select("s.product_id", "s.quantity", "s.sales_id", "s.cashier", "s.store", "s.selling_date", "s.year",
-        "s.month", "s.days", "s.produtKey", "s.storeKey", "e.employeeKey")
+        "s.month", "s.day", "s.productKey", "s.storeKey", "e.employeeKey")
 
     TaskOutput(eFacts)
   }

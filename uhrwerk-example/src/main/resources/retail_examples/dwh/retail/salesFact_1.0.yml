@@ -9,7 +9,7 @@ partition:
   size: 1
 
 sources:
-  - connectionName: "retail_mysql"
+  - connection_name: "retail_mysql"
     path: "qimia_oltp.stores_employees"
     format: "jdbc"
     version: "1.0"
