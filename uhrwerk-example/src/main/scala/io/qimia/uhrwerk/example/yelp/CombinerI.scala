@@ -15,14 +15,14 @@ object CombinerI extends App {
   Logger.getLogger("org").setLevel(Level.WARN)
 
   def transformationFunction(in: TaskInput): TaskOutput = {
-    TaskOutput(in.loadedInputFrames.head._2)
+    TaskOutput(in.getFrameByName("table_g"))
   }
 
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnections("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTable("combiner-I.yml", transformationFunction)
+  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("combiner-I.yml", transformationFunction)
 
   val results = wrapper.get.runTasksAndWait()
   println(results)

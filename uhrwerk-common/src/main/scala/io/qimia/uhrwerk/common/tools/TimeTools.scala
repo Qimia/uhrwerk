@@ -15,21 +15,21 @@ object TimeTools {
   case class DurationTuple(count: Int, durationUnit: PartitionUnit)
 
   /**
-   * Checks whether the duration size is days.
-   *
-   * @param batchDuration Duration to check.
-   * @return True/False
-   */
+    * Checks whether the duration size is days.
+    *
+    * @param batchDuration Duration to check.
+    * @return True/False
+    */
   def isDurationSizeDays(batchDuration: Duration): Boolean = {
     convertDurationToStr(batchDuration).contains("d")
   }
 
   /**
-   * Converts a string duration into a batch size as integer.
-   *
-   * @param duration String duration.
-   * @return Batch size as Int.
-   */
+    * Converts a string duration into a batch size as integer.
+    *
+    * @param duration String duration.
+    * @return Batch size as Int.
+    */
   def convertDurationToBatchSize(duration: String): Int = {
     duration.slice(0, duration.length - 1).toInt
   }
@@ -55,30 +55,30 @@ object TimeTools {
   // TODO: Durations now have to be exact minutes or hours or days (what if it isn't??)
 
   /**
-   * Returns min and max (exclusive) timestamps for a specified aggregate.
-   * E.g. with input (LocalDateTime.of(2020, 1, 1, 8, 45, 23), "15m", 4) returns
-   * (LocalDateTime.of(2020, 1, 1, 8, 0), LocalDateTime.of(2020, 1, 1, 9, 0))
-   * It is only allowed to go to a full hour, full day or a full month.
-   * The underlying batch size can differ though, e.g. going both from "15m" and "30m" to "1h" is feasible.
-   *
-   * @param ts             TimeStamp that is taken as the basis of the aggregate.
-   * @param partitionCount The multiplier of the duration - the result needs to give a full aggregate.
-   *                       E.g. "15m" * 5 is not valid.
-   * @return A tuple with min and max timestamps of the aggregate.
-   * @throws UnsupportedOperationException if the aggregate is not valid, e.g. "1h" * 7 -> not a full day
-   */
+    * Returns min and max (exclusive) timestamps for a specified aggregate.
+    * E.g. with input (LocalDateTime.of(2020, 1, 1, 8, 45, 23), "15m", 4) returns
+    * (LocalDateTime.of(2020, 1, 1, 8, 0), LocalDateTime.of(2020, 1, 1, 9, 0))
+    * It is only allowed to go to a full hour, full day or a full month.
+    * The underlying batch size can differ though, e.g. going both from "15m" and "30m" to "1h" is feasible.
+    *
+    * @param ts             TimeStamp that is taken as the basis of the aggregate.
+    * @param partitionCount The multiplier of the duration - the result needs to give a full aggregate.
+    *                       E.g. "15m" * 5 is not valid.
+    * @return A tuple with min and max timestamps of the aggregate.
+    * @throws UnsupportedOperationException if the aggregate is not valid, e.g. "1h" * 7 -> not a full day
+    */
   def getRangeFromAggregate(
-                             ts: LocalDateTime,
-                             unit: PartitionUnit,
-                             size: Int,
-                             partitionCount: Int
-                           ): (LocalDateTime, LocalDateTime) = {
-    val durationObj = convertDurationStrToObj(unit, size)
+      ts: LocalDateTime,
+      unit: PartitionUnit,
+      size: Int,
+      partitionCount: Int
+  ): (LocalDateTime, LocalDateTime) = {
+    val durationObj        = convertDurationStrToObj(unit, size)
     val multipliedDuration = durationObj.multipliedBy(partitionCount)
 
     // checking for validity
     val isHour = multipliedDuration.minusHours(1).getSeconds == 0
-    val isDay = multipliedDuration.minusDays(1).getSeconds == 0
+    val isDay  = multipliedDuration.minusDays(1).getSeconds == 0
     val correctNumberOfDays = ts.getMonth.length(
       ((ts.getYear % 4 == 0) && (ts.getYear % 100 != 0)) || (ts.getYear % 400 == 0)
     )
@@ -109,30 +109,30 @@ object TimeTools {
   }
 
   /**
-   * Returns min and max (exclusive) timestamps for a specified window.
-   * The function supposes that {@code duration} is the minimum batch size as it has no other information.
-   * Example: with input (LocalDateTime.of(2020, 1, 1, 8, 45), "15m", 4) returns
-   * (LocalDateTime.of(2020, 1, 1, 8, 0), LocalDateTime.of(2020, 1, 1, 9, 0)).
-   * With input (LocalDateTime.of(2020, 1, 1, 8, 30), "1h", 3) returns
-   * (LocalDateTime.of(2020, 1, 1, 6, 30), LocalDateTime.of(2020, 1, 1, 9, 30)).
-   *
-   * @param ts             TimeStamp that is taken as the max timestamp of the window.
-   *                       As the reading works with the interval (min - inclusive, max - exclusive),
-   *                       the {@code duration} is added to create the max timestamp.
-   * @param partitionCount The multiplier of the duration.
-   * @return A tuple with min and max timestamps of the window.
-   * @throws Exception when {@code partitionCount} is not >1 as the function doesn't make sense then.
-   */
+    * Returns min and max (exclusive) timestamps for a specified window.
+    * The function supposes that {@code duration} is the minimum batch size as it has no other information.
+    * Example: with input (LocalDateTime.of(2020, 1, 1, 8, 45), "15m", 4) returns
+    * (LocalDateTime.of(2020, 1, 1, 8, 0), LocalDateTime.of(2020, 1, 1, 9, 0)).
+    * With input (LocalDateTime.of(2020, 1, 1, 8, 30), "1h", 3) returns
+    * (LocalDateTime.of(2020, 1, 1, 6, 30), LocalDateTime.of(2020, 1, 1, 9, 30)).
+    *
+    * @param ts             TimeStamp that is taken as the max timestamp of the window.
+    *                       As the reading works with the interval (min - inclusive, max - exclusive),
+    *                       the {@code duration} is added to create the max timestamp.
+    * @param partitionCount The multiplier of the duration.
+    * @return A tuple with min and max timestamps of the window.
+    * @throws Exception when {@code partitionCount} is not >1 as the function doesn't make sense then.
+    */
   def getRangeFromWindow(
-                          ts: LocalDateTime,
-                          unit: PartitionUnit,
-                          size: Int,
-                          partitionCount: Int
-                        ): (LocalDateTime, LocalDateTime) = {
+      ts: LocalDateTime,
+      unit: PartitionUnit,
+      size: Int,
+      partitionCount: Int
+  ): (LocalDateTime, LocalDateTime) = {
     if (partitionCount <= 1) {
       throw new Exception("partitionCount must be bigger than 1")
     }
-    val durationObj = convertDurationStrToObj(unit, size)
+    val durationObj        = convertDurationStrToObj(unit, size)
     val multipliedDuration = durationObj.multipliedBy(partitionCount - 1)
 
     (
@@ -142,10 +142,10 @@ object TimeTools {
   }
 
   /**
-   * Go from a string representation of a duration to a duration object
-   *
-   * @return Duration object
-   */
+    * Go from a string representation of a duration to a duration object
+    *
+    * @return Duration object
+    */
   def convertDurationStrToObj(unit: PartitionUnit, size: Int): Duration = {
     Duration.of(size, ChronoUnit.valueOf(unit.name()))
 
@@ -156,7 +156,7 @@ object TimeTools {
       case 'm' => PartitionUnit.MINUTES
       case 'h' => PartitionUnit.HOURS
       case 'd' => PartitionUnit.DAYS
-      case _ => throw new RuntimeException("Unknown duration format")
+      case _   => throw new RuntimeException("Unknown duration format")
     }
     val count = duration.substring(0, duration.length() - 1).toInt
     DurationTuple(count, temporalPart)
@@ -181,29 +181,29 @@ object TimeTools {
 
   // Convert a localtime to a batch number (for when batches are smaller than an hour)
   def getBatchInHourNumber(time: LocalTime, duration: Duration): Long = {
-    val minuteHand = time.getMinute
+    val minuteHand     = time.getMinute
     val minuteDuration = duration.toMinutes
     minuteHand / minuteDuration
   }
 
   /**
-   * Go from range to a list of dates (with a given batchsize) (start inclusive end exclusive)
-   *
-   * @param startDate
-   * @param endDate
-   * @param batchSize
-   * @return
-   */
+    * Go from range to a list of dates (with a given batchsize) (start inclusive end exclusive)
+    *
+    * @param startDate
+    * @param endDate
+    * @param batchSize
+    * @return
+    */
   def convertRangeToBatch(
-                           startDate: LocalDateTime,
-                           endDate: LocalDateTime,
-                           batchSize: Duration
-                         ): List[LocalDateTime] = {
+      startDate: LocalDateTime,
+      endDate: LocalDateTime,
+      batchSize: Duration
+  ): List[LocalDateTime] = {
 
     val batches = new ListBuffer[LocalDateTime]()
 
     var tempStart = startDate
-    var active = true
+    var active    = true
     while (active) {
       var tempEnd = tempStart.plus(batchSize)
       if (tempStart.isAfter(startDate) || tempStart.isEqual(startDate)) {
@@ -223,17 +223,15 @@ object TimeTools {
   // Create a small batch list from a more course one (for taking in smaller dependencies)
   // Assumes the large-batches are already ordered in time
   def convertToSmallerBatchList(
-                                 largeBatchList: List[LocalDateTime],
-                                 runBatchSize: Duration,
-                                 divideBy: Int
-                               ): List[LocalDateTime] = {
+      largeBatchList: List[LocalDateTime],
+      runBatchSize: Duration,
+      divideBy: Int
+  ): List[LocalDateTime] = {
     val smallerDuration = runBatchSize.dividedBy(divideBy)
     val durationAdditions = (0 until divideBy).toList
       .map(x => smallerDuration.multipliedBy(x.toLong))
-    for (
-      batch <- largeBatchList;
-      durationAdd <- durationAdditions
-    )
+    for (batch       <- largeBatchList;
+         durationAdd <- durationAdditions)
       yield {
         batch.plus(durationAdd)
       }
@@ -242,11 +240,11 @@ object TimeTools {
   // See for a list of larger batches if a list of smaller batches (with a given big-batch-duration and divideBy)
   // which of those large batches have all the smaller batches present
   def filterBySmallerBatchList(
-                                largeBatchList: List[LocalDateTime],
-                                runBatchSize: Duration,
-                                divideBy: Int,
-                                smallBatches: Set[LocalDateTime]
-                              ): List[LocalDateTime] = {
+      largeBatchList: List[LocalDateTime],
+      runBatchSize: Duration,
+      divideBy: Int,
+      smallBatches: Set[LocalDateTime]
+  ): List[LocalDateTime] = {
     val smallerDuration = runBatchSize.dividedBy(divideBy)
     val durationAdditions = (0 until divideBy).toList
       .map(x => smallerDuration.multipliedBy(x.toLong))
@@ -265,10 +263,10 @@ object TimeTools {
 
   // Adds windowSize - 1 batches to the front of the batchList for windowed dependencies
   def convertToWindowBatchList(
-                                largeBatchList: List[LocalDateTime],
-                                stepBatchSize: Duration,
-                                windowSize: Int
-                              ): List[LocalDateTime] = {
+      largeBatchList: List[LocalDateTime],
+      stepBatchSize: Duration,
+      windowSize: Int
+  ): List[LocalDateTime] = {
     val timeSubtractions = (-windowSize + 1 until 0)
       .map(stepBatchSize.multipliedBy(_))
       .map(largeBatchList.head.plus(_))
@@ -277,9 +275,9 @@ object TimeTools {
 
   // Remove added window elements from the list (reverse of creating the window list)
   def cleanWindowBatchList[T](
-                               windowedBatchList: List[T],
-                               windowSize: Int
-                             ): List[T] =
+      windowedBatchList: List[T],
+      windowSize: Int
+  ): List[T] =
     windowedBatchList.drop(windowSize - 1)
 
   def divisibleBy(big: Duration, small: Duration): Boolean =
@@ -295,16 +293,16 @@ object TimeTools {
   }
 
   /**
-   * Convert batch start timestamp to postfix needed for reading single batch
-   *
-   * @param date     DateTime
-   * @param duration Duration
-   * @return String postfix
-   */
+    * Convert batch start timestamp to postfix needed for reading single batch
+    *
+    * @param date     DateTime
+    * @param duration Duration
+    * @return String postfix
+    */
   def dateTimeToPostFix(date: LocalDateTime, duration: Duration): String = {
-    val year = date.getYear
+    val year  = date.getYear
     val month = leftPad(date.getMonthValue.toString)
-    val day = leftPad(date.getDayOfMonth.toString)
+    val day   = leftPad(date.getDayOfMonth.toString)
     if (duration.toHours >= Duration.ofDays(1).toHours) {
       return s"${year}-${month}-${day}"
     }
@@ -318,29 +316,29 @@ object TimeTools {
   }
 
   /**
-   * Convert batch start timestamp to date
-   *
-   * @param date DateTime
-   * @return String date
-   */
+    * Convert batch start timestamp to date
+    *
+    * @param date DateTime
+    * @return String date
+    */
   def dateTimeToDate(date: LocalDateTime): String = {
-    val year = date.getYear
+    val year  = date.getYear
     val month = leftPad(date.getMonthValue.toString)
-    val day = leftPad(date.getDayOfMonth.toString)
+    val day   = leftPad(date.getDayOfMonth.toString)
     s"${year}-${month}-${day}"
   }
 
   /**
-   * Check if there are gaps in a list of LocalDateTime or if they are all in order and increasing
-   *
-   * @param in            A sequence for LocalDateTime
-   * @param partitionSize Duration (step-size between 2 localdatetimes)
-   * @return True for no-gaps
-   */
+    * Check if there are gaps in a list of LocalDateTime or if they are all in order and increasing
+    *
+    * @param in            A sequence for LocalDateTime
+    * @param partitionSize Duration (step-size between 2 localdatetimes)
+    * @return True for no-gaps
+    */
   def checkIsSequentialIncreasing(
-                                   in: Seq[LocalDateTime],
-                                   partitionSize: Duration
-                                 ): Boolean = {
+      in: Seq[LocalDateTime],
+      partitionSize: Duration
+  ): Boolean = {
     if (in.length == 1) {
       return true
     }
@@ -353,23 +351,23 @@ object TimeTools {
   }
 
   /**
-   * Group together partitions when they are sequential upto a certain max number per group.
-   * If there are gaps then they can't be grouped.
-   *
-   * @param in            total sequency of LocalDateTime that could be grouped together
-   * @param partitionSize Duration between two partitions
-   * @param maxSize       max number of partitions in a
-   * @return Array of int showing the size of the different groups
-   */
+    * Group together partitions when they are sequential upto a certain max number per group.
+    * If there are gaps then they can't be grouped.
+    *
+    * @param in            total sequency of LocalDateTime that could be grouped together
+    * @param partitionSize Duration between two partitions
+    * @param maxSize       max number of partitions in a
+    * @return Array of int showing the size of the different groups
+    */
   def groupSequentialIncreasing(
-                                 in: Seq[LocalDateTime],
-                                 partitionSize: Duration,
-                                 maxSize: Int
-                               ): Array[Int] = {
+      in: Seq[LocalDateTime],
+      partitionSize: Duration,
+      maxSize: Int
+  ): Array[Int] = {
     val outArray: mutable.ArrayBuffer[Int] =
       new ArrayBuffer[Int]
 
-    var singleGroup = 0
+    var singleGroup                   = 0
     var lastDt: Option[LocalDateTime] = Option.empty
     for (dt <- in) {
       if (singleGroup == 0) {
@@ -396,18 +394,18 @@ object TimeTools {
   }
 
   def getAggregateForTimestamp(
-                                partitionTS: Array[LocalDateTime],
-                                ts: LocalDateTime,
-                                partitionUnit: String,
-                                partitionSize: Int
-                              ): LocalDateTime = {
+      partitionTS: Array[LocalDateTime],
+      ts: LocalDateTime,
+      partitionUnit: String,
+      partitionSize: Int
+  ): LocalDateTime = {
     for (p <- partitionTS) {
       val diffDuration = Duration.between(p, ts)
       val diff = partitionUnit match {
-        case "DAYS" => diffDuration.toDays
-        case "HOURS" => diffDuration.toHours
+        case "DAYS"    => diffDuration.toDays
+        case "HOURS"   => diffDuration.toHours
         case "MINUTES" => diffDuration.toMinutes
-        case _ => 0
+        case _         => 0
       }
       if (diff >= 0 && diff < partitionSize) {
         return p

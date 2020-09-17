@@ -1,0 +1,24 @@
+area: "aggregate"
+vertical: "qimia_oltp"
+table: "table_agg_parq"
+version: "1.0"
+parallelism: 1
+max_bulk_size: 1
+partition:
+  unit: "days"
+  size: 2
+
+dependencies:
+  - area: "staging"
+    vertical: "qimia_oltp"
+    table: "sales"
+    format: "parquet"
+    version: "1.0"
+    transform:
+      type: "aggregate"
+      partition:
+        size: 2
+
+targets:
+  - connection_name: "local_fs_lake"
+    format: "parquet"
