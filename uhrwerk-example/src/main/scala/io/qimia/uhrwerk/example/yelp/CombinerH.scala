@@ -18,12 +18,8 @@ object CombinerH extends App {
   Logger.getLogger("org").setLevel(Level.WARN)
 
   def transformationFunction(in: TaskInput): TaskOutput = {
-    val review = in.loadedInputFrames.find(t => t._1.asInstanceOf[TableIdent].name.equals("table_a_parq")).get._2.as("review")
-    val user = in.loadedInputFrames
-      .find(t => t._1.asInstanceOf[TableIdent].name.equals("table_g"))
-      .get
-      ._2
-      .as("user")
+    val review = in.getTableFrame("staging", "yelp_db", "table_a_parq").as("review")
+    val user = in.getTableFrame("staging", "yelp_db", "table_g").as("user")
       .drop("funny", "cool", "useful")
       .withColumnRenamed("id", "user_id")
 
@@ -33,8 +29,8 @@ object CombinerH extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnections("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTable("combiner-H.yml", transformationFunction)
+  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("combiner-H.yml", transformationFunction)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 1, 0, 0),

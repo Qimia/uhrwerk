@@ -14,11 +14,11 @@ import scala.concurrent._
 
 object TableWrapper {
   def createPartitions(
-                        partitions: Array[LocalDateTime],
-                        partitionUnit: PartitionUnit,
-                        partitionSize: Int,
-                        targetId: Long
-                      ): Array[Partition] = {
+      partitions: Array[LocalDateTime],
+      partitionUnit: PartitionUnit,
+      partitionSize: Int,
+      targetId: Long
+  ): Array[Partition] = {
     partitions.map(t => {
       val newPart = new Partition()
       newPart.setPartitionTs(t)
@@ -32,7 +32,7 @@ object TableWrapper {
 }
 
 class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => TaskOutput, frameManager: FrameManager) {
-
+  val wrappedTable = table
   val tableDuration: Duration = if (table.isPartitioned) {
     TimeHelper.convertToDuration(table.getPartitionUnit, table.getPartitionSize)
   } else {
@@ -176,8 +176,7 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
             partitions
               .zip(partitionGroup)
               .map(x =>
-                metastore.partitionDependencyService.saveAll(x._1.getId, x._2.getResolvedDependencies, overwrite)
-              )
+                metastore.partitionDependencyService.saveAll(x._1.getId, x._2.getResolvedDependencies, overwrite))
             // TODO: Need to handle failure to store
           })
         }
@@ -202,10 +201,10 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
    * @param threads    number of threads used by the threadpool
    */
   def runTasksAndWait(
-                       startTimes: Array[LocalDateTime] = Array(),
-                       overwrite: Boolean = false,
-                       threads: Option[Int] = Option.empty
-                     ): List[Boolean] = {
+      startTimes: Array[LocalDateTime] = Array(),
+      overwrite: Boolean = false,
+      threads: Option[Int] = Option.empty
+  ): List[Boolean] = {
     val startTimesAdjusted = if (startTimes.isEmpty) {
       if (!table.isPartitioned) {
         Array(LocalDateTime.now())

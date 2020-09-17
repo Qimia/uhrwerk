@@ -18,7 +18,7 @@ object DownsampleE  extends App {
 //  Logger.getLogger("akka").setLevel(Level.ERROR)
 
 
-  def loaderAFunc(in: TaskInput): TaskOutput = {
+  def loaderEFunc(in: TaskInput): TaskOutput = {
     val aDF = in.loadedInputFrames.values.head
     aDF.select("date").agg(min("date"), max("date")).show()
     aDF.printSchema()
@@ -29,8 +29,8 @@ object DownsampleE  extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnections("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTable("downsample-E.yml", loaderAFunc, true)
+  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("downsample-E.yml", loaderEFunc, true)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 1, 0, 0),

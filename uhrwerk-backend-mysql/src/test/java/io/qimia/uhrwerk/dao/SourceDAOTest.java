@@ -74,7 +74,7 @@ public class SourceDAOTest {
     }
 
     @Test
-    void insert() throws SQLException {
+    void insert() {
         // first a connection
         Connection connection = generateConnection();
 
@@ -375,5 +375,36 @@ public class SourceDAOTest {
             assertFalse(result.isError());
             assertEquals(result.getNewResult(), sources[i]);
         }
+    }
+
+    @Test
+    void savingWithoutSelectStatementAndPartitionShouldWork() {
+        // first a connection
+        Connection connection = generateConnection();
+
+        ConnectionDAO connectionDAO = new ConnectionDAO(db);
+        connectionDAO.save(connection, true);
+
+        // second a table
+        Table table = generateTable();
+
+        TableDAO tableDAO = new TableDAO(db);
+        tableDAO.save(table, true);
+
+        Source source = generateSource();
+
+        source.setPartitioned(false);
+        source.setPartitionSize(0);
+        source.setPartitionUnit(null);
+        source.setSelectColumn(null);
+        source.setSelectQuery(null);
+
+        SourceResult result = service.save(source, table, true);
+
+        assertTrue(result.isSuccess());
+        assertFalse(result.isError());
+        assertNotNull(result.getNewResult());
+        assertNotNull(result.getNewResult().getId());
+        assertEquals(source, result.getNewResult());
     }
 }

@@ -53,43 +53,43 @@ class EnvironmentTableTest extends AnyFlatSpec with BeforeAndAfterEach {
 
   "An environment without connections" should "refuse to load any tables" in {
     val env     = new Environment(metaStore, null)
-    val wrapper = env.addTable("EnvTableTest1.yml", identityUserFunc)
+    val wrapper = env.addTableFile("EnvTableTest1.yml", identityUserFunc)
     assert(wrapper.isEmpty)
   }
 
   it should "load when connection are provided" in {
     val env = new Environment(metaStore, null)
-    env.addConnections("EnvTableConn1.yml")
-    val wrapper = env.addTable("EnvTableTest1.yml", identityUserFunc)
+    env.addConnectionFile("EnvTableConn1.yml")
+    val wrapper = env.addTableFile("EnvTableTest1.yml", identityUserFunc)
     assert(wrapper.isDefined)
   }
 
   "A table without all its dependencies loaded" should "be rejected by the environment" in {
     val env = new Environment(metaStore, null)
-    env.addConnections("EnvTableConn1.yml")
-    val wrapper1 = env.addTable("EnvTableTest3.yml", identityUserFunc)
+    env.addConnectionFile("EnvTableConn1.yml")
+    val wrapper1 = env.addTableFile("EnvTableTest3.yml", identityUserFunc)
     assert(wrapper1.isEmpty)
-    val wrapper2A = env.addTable("EnvTableTest1.yml", identityUserFunc)
-    val wrapper2B = env.addTable("EnvTableTest3.yml", identityUserFunc, true)
+    val wrapper2A = env.addTableFile("EnvTableTest1.yml", identityUserFunc)
+    val wrapper2B = env.addTableFile("EnvTableTest3.yml", identityUserFunc, true)
     assert(wrapper2A.isDefined)
     assert(wrapper2B.isEmpty)
   }
 
   it should "be accepted when all dependencies are there" in {
     val env = new Environment(metaStore, null)
-    env.addConnections("EnvTableConn1.yml")
+    env.addConnectionFile("EnvTableConn1.yml")
     val wrappers =
-      List("EnvTableTest1.yml", "EnvTableTest2.yml", "EnvTableTest3.yml").map(env.addTable(_, identityUserFunc))
+      List("EnvTableTest1.yml", "EnvTableTest2.yml", "EnvTableTest3.yml").map(env.addTableFile(_, identityUserFunc))
     assert(wrappers.forall(_.isDefined))
   }
 
   // A malformed-unit config
   ignore should "be rejected" in {
     val env = new Environment(metaStore, null)
-    env.addConnections("EnvTableConn1.yml")
+    env.addConnectionFile("EnvTableConn1.yml")
     // FIXME: Needs validate this before loading into model pojo's
     // in model pojo's a unit of null means it is an unpartitioned table
-    val wrapper = env.addTable("EnvTableTest1Bad1.yml", identityUserFunc)
+    val wrapper = env.addTableFile("EnvTableTest1Bad1.yml", identityUserFunc)
     assert(wrapper.isEmpty)
   }
 
@@ -97,22 +97,22 @@ class EnvironmentTableTest extends AnyFlatSpec with BeforeAndAfterEach {
   ignore should "not be allowed to load" in {
     // FIXME: This should result in a false config (fix is in config-branch)
     val env = new Environment(metaStore, null)
-    env.addConnections("EnvTableConn1.yml")
-    val wrapper = env.addTable("EnvTableTest1Bad2.yml", identityUserFunc)
+    env.addConnectionFile("EnvTableConn1.yml")
+    val wrapper = env.addTableFile("EnvTableTest1Bad2.yml", identityUserFunc)
     assert(wrapper.isEmpty)
   }
 
   "A wrong dependency size" should "be rejected when storing" in {
     val env = new Environment(metaStore, null)
-    env.addConnections("EnvTableConn1.yml")
-    val wrapperA = env.addTable("EnvTableTest1.yml", identityUserFunc)
-    val wrapperB = env.addTable("EnvTableTest2.yml", identityUserFunc)
+    env.addConnectionFile("EnvTableConn1.yml")
+    val wrapperA = env.addTableFile("EnvTableTest1.yml", identityUserFunc)
+    val wrapperB = env.addTableFile("EnvTableTest2.yml", identityUserFunc)
     assert(wrapperA.isDefined)
     assert(wrapperB.isDefined)
-    val wrapperC = env.addTable("EnvTableTest3Bad.yml", identityUserFunc)
+    val wrapperC = env.addTableFile("EnvTableTest3Bad.yml", identityUserFunc)
     assert(wrapperC.isEmpty)
 
-    val wrapperD = env.addTable("EnvTableTest4Bad.yml", identityUserFunc)
+    val wrapperD = env.addTableFile("EnvTableTest4Bad.yml", identityUserFunc)
     assert(wrapperD.isEmpty)
   }
 
