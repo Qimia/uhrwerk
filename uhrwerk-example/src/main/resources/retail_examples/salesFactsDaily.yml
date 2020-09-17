@@ -1,6 +1,6 @@
 area: "dwh"
 vertical: "retail"
-table: "salesFactsWeekly"
+table: "salesFactsDaily"
 version: "1.0"
 partition:
   unit: "days"
