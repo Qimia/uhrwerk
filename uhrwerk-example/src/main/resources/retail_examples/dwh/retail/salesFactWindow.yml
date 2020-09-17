@@ -1,0 +1,22 @@
+area: "dwh"
+vertical: "retail"
+table: "salesFactWindow"
+version: "1.0"
+partition:
+  unit: "days"
+  size: 3
+
+dependencies:
+  - area: "dwh"
+    vertical: "retail"
+    table: "salesFact"
+    version: "1.0"
+    format: "jdbc"
+    transform:
+      type: "window"
+      partition:
+        size: 3
+
+targets:
+  - connection_name: "retail_mysql"
+    format: "jdbc"
