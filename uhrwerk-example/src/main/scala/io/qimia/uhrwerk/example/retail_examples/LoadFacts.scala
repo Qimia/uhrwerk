@@ -80,10 +80,10 @@ object LoadFacts extends App {
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
   uhrwerkEnvironment.addConnections("testing-connection-config.yml")
 
-  val salesWrapper = uhrwerkEnvironment.addTable("retail_examples/salesFact.yml",
+  val salesWrapper = uhrwerkEnvironment.addTable("retail_examples/staging/retail/salesFact_1.0.yml",
     simpleLoad(SourceIdent("retail_mysql", "qimia_oltp.sales_items", "jdbc")))
-  val salesFactWrapper = uhrwerkEnvironment.addTable("retail_examples/salesFact_dwh.yml", computeFactTable)
-  val salesFactDailyWrapper = uhrwerkEnvironment.addTable("retail_examples/salesFactsDaily.yml", computeWeeklyFacts)
+  val salesFactWrapper = uhrwerkEnvironment.addTable("retail_examples/dwh/retail/salesFact_1.0.yml", computeFactTable)
+  val salesFactDailyWrapper = uhrwerkEnvironment.addTable("retail_examples/dwh/retail/salesFactsDaily_1.0.yml", computeWeeklyFacts)
 
   val runTimes = Array(
     LocalDateTime.of(2020, 6, 1, 0, 0),
