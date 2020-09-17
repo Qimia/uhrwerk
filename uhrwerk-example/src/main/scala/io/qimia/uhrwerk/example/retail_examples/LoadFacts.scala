@@ -10,9 +10,10 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, count, sum}
 
 object LoadFacts extends App {
+  val numberOfCores = Runtime.getRuntime.availableProcessors
   val sparkSess = SparkSession.builder()
     .appName("loadDims")
-    .master("local[*]")
+    .master(s"local[${numberOfCores - 1}]")
     .config("driver-memory", "4g")
     .getOrCreate()
 

@@ -146,27 +146,46 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       dfReader
     }
 
-    val df =
-      if (isJDBC) {
-        dfReaderWithUserOptions
-          .option("url", dependencyResult.connection.getJdbcUrl)
-          .option("driver", dependencyResult.connection.getJdbcDriver)
-          .option("user", dependencyResult.connection.getJdbcUser)
-          .option("password", dependencyResult.connection.getJdbcPass)
-          .option(
-            "dbtable",
-            getDependencyPath(dependencyResult.dependency, fileSystem = false)
-          )
-          .load()
-      } else {
-        dfReaderWithUserOptions
-          .load(
-            getFullLocation(
-              dependencyResult.connection.getPath,
-              getDependencyPath(dependencyResult.dependency, fileSystem = true)
+    val dependencyPath = getDependencyPath(dependencyResult.dependency, fileSystem = !isJDBC)
+
+    val df = {
+      try {
+        if (isJDBC) {
+          dfReaderWithUserOptions
+            .option("url", dependencyResult.connection.getJdbcUrl)
+            .option("driver", dependencyResult.connection.getJdbcDriver)
+            .option("user", dependencyResult.connection.getJdbcUser)
+            .option("password", dependencyResult.connection.getJdbcPass)
+            .option(
+              "dbtable",
+              dependencyPath
             )
+            .load()
+        } else {
+          dfReaderWithUserOptions
+            .load(
+              getFullLocation(
+                dependencyResult.connection.getPath,
+                dependencyPath
+              )
+            )
+        }
+      } catch {
+        case exception: Exception => {
+          throw new Exception(
+            s"Something went wrong with reading of the DataFrame for dependency: $dependencyPath" +
+              "\nThe DataFrame was probably saved in previous steps with empty partitions only." +
+              "\nAs the Metastore has some partition information for this dependency (otherwise this job wouldn't have run), " +
+              "that table was saved with empty partitions." +
+              "\nThis is made by design, when e.g. 1 of out 100 partitions is empty, all 100 are " +
+              "marked as successfully processed. " +
+              "\nIn a job with a dependency on that empty partition an empty DataFrame with a proper schema is returned." +
+              "\nExcept when all saved partitions were empty, then the table doesn't yet exist on the datalake (database).",
+            exception
           )
+        }
       }
+    }
 
     val filtered = df.filter(filter)
 
