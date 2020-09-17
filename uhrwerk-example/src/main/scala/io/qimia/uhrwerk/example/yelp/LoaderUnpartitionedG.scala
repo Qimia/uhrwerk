@@ -22,8 +22,8 @@ object LoaderUnpartitionedG extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnections("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTable("loader-unpartitioned-G.yml", loaderUnpartitionedGFunc)
+  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("loader-unpartitioned-G.yml", loaderUnpartitionedGFunc)
 
   val results = wrapper.get.runTasksAndWait()
   println(results)

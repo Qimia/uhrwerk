@@ -30,8 +30,8 @@ object WindowF extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnections("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTable("window-F.yml", loaderAFunc, true)
+  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("window-F.yml", loaderAFunc, true)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 3, 0, 0),
