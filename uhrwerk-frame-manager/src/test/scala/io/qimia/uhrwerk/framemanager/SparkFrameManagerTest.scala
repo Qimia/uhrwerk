@@ -23,9 +23,9 @@ import scala.collection.mutable.ListBuffer
 trait BuildTeardown extends BeforeAndAfterAll {
   this: Suite =>
 
-  val DATABASE_NAME: String = "staging-dbname"
-  val DATABASE_NAME2: String = "source-testdb"
-  val DATABASE_NAME3: String = "staging-testdb"
+  val DATABASE_NAME: String = "staging_dbname"
+  val DATABASE_NAME2: String = "source_testdb"
+  val DATABASE_NAME3: String = "staging_testdb"
 
   override def afterAll() {
     val foldersToClean: ListBuffer[Path] = new ListBuffer[Path]
@@ -318,7 +318,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     sourceJDBC.setSelectQuery(
       "select * from <path> where created_at >= '<lower_bound>' and created_at < '<upper_bound>'"
     )
-    sourceJDBC.setPath("`source-testdb`.`sourcenumberone-1`")
+    sourceJDBC.setPath("`source_testdb`.`sourcenumberone_1`")
 
     val loadedDFSourceWithTSJDBC = manager
       .loadSourceDataFrame(

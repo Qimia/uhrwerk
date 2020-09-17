@@ -15,7 +15,7 @@ object SparkFrameManagerUtils {
     List("year", "month", "day", "hour", "minute")
   private[framemanager] val timeColumnsFormats: List[String] =
     List("yyyy", "yyyy-MM", "yyyy-MM-dd", "yyyy-MM-dd-HH", "yyyy-MM-dd-HH-mm")
-  private[framemanager] val timeColumnJDBC: String = "uhrwerk-timestamp"
+  private[framemanager] val timeColumnJDBC: String = "uhrwerk_timestamp"
 
   /**
    * Concatenates paths into a single string. Handles properly all trailing slashes
@@ -116,7 +116,7 @@ object SparkFrameManagerUtils {
         )
         .toString
     } else { // jdbc
-      "`" + table.getArea + "-" + table.getVertical + "`.`" + table.getName + "-" + table.getVersion
+      "`" + table.getArea + "_" + table.getVertical + "`.`" + table.getName + "_" + table.getVersion
         .replace(".", "_") + "`"
     }
   }
@@ -144,7 +144,7 @@ object SparkFrameManagerUtils {
         )
         .toString
     } else { // jdbc
-      "`" + dependency.getArea + "-" + dependency.getVertical + "`.`" + dependency.getTableName + "-" + dependency.getVersion
+      "`" + dependency.getArea + "_" + dependency.getVertical + "`.`" + dependency.getTableName + "_" + dependency.getVersion
         .replace(".", "_") + "`"
     }
   }

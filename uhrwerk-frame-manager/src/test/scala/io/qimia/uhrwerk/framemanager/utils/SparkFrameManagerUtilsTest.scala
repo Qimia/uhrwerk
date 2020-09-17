@@ -102,7 +102,7 @@ class SparkFrameManagerUtilsTest extends AnyFlatSpec {
     )
 
     val tablePathJDBC = SparkFrameManagerUtils.getTablePath(table, false, "jdbc")
-    assert(tablePathJDBC === "`staging-testdb`.`testsparkframemanager-1`")
+    assert(tablePathJDBC === "`staging_testdb`.`testsparkframemanager_1`")
   }
 
   "getDependencyPath" should "create a dependency path" in {
@@ -119,7 +119,7 @@ class SparkFrameManagerUtilsTest extends AnyFlatSpec {
     )
 
     val tablePathJDBC = SparkFrameManagerUtils.getDependencyPath(dependency, false)
-    assert(tablePathJDBC === "`staging-testdb`.`testsparkframemanager-1`")
+    assert(tablePathJDBC === "`staging_testdb`.`testsparkframemanager_1`")
   }
 
   "containsTimeColumns" should "return true if all time columns are present" in {

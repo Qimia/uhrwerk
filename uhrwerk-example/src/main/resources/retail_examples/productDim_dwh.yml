@@ -1,5 +1,5 @@
 area: "dwh"
-vertical: "sales"
+vertical: "retail"
 table: "productDim"
 version: "1.0"
 
@@ -11,5 +11,5 @@ dependencies:
     version: "1.0"
 
 targets:
-  - connection_name: "retail_examples"
+  - connection_name: "retail_mysql"
     format: "jdbc"
