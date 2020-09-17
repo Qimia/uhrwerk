@@ -3,7 +3,6 @@ package io.qimia.uhrwerk.engine
 import java.sql.DriverManager
 
 import io.qimia.uhrwerk.common.model.{Metastore => MetastoreConnInfo}
-import org.apache.spark.sql.DataFrame
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -22,8 +21,8 @@ class EnvironmentTableTest extends AnyFlatSpec with BeforeAndAfterEach {
   testConnInfo.setPass("Xq92vFqEKF7TB8H9")
   val metaStore = MetaStore.build(testConnInfo)
 
-  def identityUserFunc(in: TaskInput): DataFrame = {
-    in.inputFrames.values.head
+  def identityUserFunc(in: TaskInput): TaskOutput = {
+    TaskOutput(in.loadedInputFrames.values.head)
   }
 
   override protected def afterEach(): Unit = {

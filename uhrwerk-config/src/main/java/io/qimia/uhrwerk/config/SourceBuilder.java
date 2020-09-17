@@ -18,6 +18,7 @@ public class SourceBuilder {
   private Partition partition;
   private ParallelLoad parallelLoad;
   private Select select;
+  private Boolean autoloading = true;
 
   public SourceBuilder() {}
 
@@ -90,6 +91,11 @@ public class SourceBuilder {
     return this;
   }
 
+  public SourceBuilder autoloading(Boolean autoloading){
+    this.autoloading = autoloading;
+    return this;
+  }
+
   public TableBuilder done() {
     this.parent.source(this.build());
     return this.parent;
@@ -104,6 +110,7 @@ public class SourceBuilder {
     source.setPartition(this.partition);
     source.setParallel_load(this.parallelLoad);
     source.setSelect(this.select);
+    source.setAutoloading(this.autoloading);
     source.validate("");
     return source;
   }

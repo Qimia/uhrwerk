@@ -26,17 +26,17 @@ public class DependencyDAO implements DependencyStoreService {
   private static final String DELETE_DEPENDENCIES = "DELETE FROM DEPENDENCY WHERE table_id = ?";
 
   private static final String INSERT_DEPENDENCY =
-      "INSERT INTO DEPENDENCY "
-          + "(id, table_id, dependency_target_id, dependency_table_id, transform_type, transform_partition_unit, "
-          + "transform_partition_size) VALUES (?, ?, ?, ?, ?, ?, ?)";
+          "INSERT INTO DEPENDENCY "
+                  + "(id, table_id, dependency_target_id, dependency_table_id, transform_type, transform_partition_unit, "
+                  + "transform_partition_size) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
   private static final String GET_DEPENDENCY_BY_TABLE =
-      "SELECT dep.id, dep.table_id, dep.dependency_target_id, "
-          + "dep.dependency_table_id, tab.area, tab.vertical, tab.name, tar.format, tab.version, dep.transform_type, "
-          + "dep.transform_partition_unit, dep.transform_partition_size FROM DEPENDENCY dep "
-          + "JOIN TABLE_ tab ON dep.dependency_table_id = tab.id "
-          + "JOIN TARGET tar ON dep.dependency_target_id = tar.id "
-          + "WHERE dep.table_id = ?";
+          "SELECT dep.id, dep.table_id, dep.dependency_target_id, "
+                  + "dep.dependency_table_id, tab.area, tab.vertical, tab.name, tar.format, tab.version, dep.transform_type, "
+                  + "dep.transform_partition_unit, dep.transform_partition_size FROM DEPENDENCY dep "
+                  + "JOIN TABLE_ tab ON dep.dependency_table_id = tab.id "
+                  + "JOIN TARGET tar ON dep.dependency_target_id = tar.id "
+                  + "WHERE dep.table_id = ?";
 
   static class DepCompareRes {
     boolean success;

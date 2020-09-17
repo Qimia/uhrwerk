@@ -1,9 +1,9 @@
 package io.qimia.uhrwerk.example.yelp
 
-import io.qimia.uhrwerk.engine.{Environment, TaskInput}
+import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 object LoaderUnpartitionedG extends App {
   val sparkSess = SparkSession.builder()
@@ -13,10 +13,10 @@ object LoaderUnpartitionedG extends App {
 
   Logger.getLogger("org").setLevel(Level.WARN)
 
-  def loaderUnpartitionedGFunc(in: TaskInput): DataFrame = {
+  def loaderUnpartitionedGFunc(in: TaskInput): TaskOutput = {
     // The most basic userFunction simply returns the input dataframe
-    in.inputFrames.values.head.show()
-    in.inputFrames.values.head
+    in.loadedInputFrames.values.head.show()
+    TaskOutput(in.loadedInputFrames.values.head)
   }
 
   val frameManager = new SparkFrameManager(sparkSess)

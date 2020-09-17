@@ -5,12 +5,13 @@ import io.qimia.uhrwerk.common.model.PartitionTransformType;
 import io.qimia.uhrwerk.common.model.PartitionUnit;
 import io.qimia.uhrwerk.config.representation.*;
 import org.yaml.snakeyaml.Yaml;
-import java.nio.file.Files;
+import org.yaml.snakeyaml.error.YAMLException;
+
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
-
-import java.io.InputStream;
 
 public class YamlConfigReader {
 
@@ -41,7 +42,6 @@ public class YamlConfigReader {
     }
     else {return queryOrFile;}
   }
-
 
   public io.qimia.uhrwerk.common.model.Table getModelTable(Table table){
     if (table != null) {
@@ -83,14 +83,22 @@ public class YamlConfigReader {
             source.setPartitionUnit(getModelPartitionUnit(sources[j].getPartition().getUnit()));
             source.setPartitionSize(sources[j].getPartition().getSize());
             source.setPartitioned(true);
+            source.setSelectQuery(readQueryOrFileLines(sources[j].getSelect().getQuery()));
+            source.setSelectColumn(sources[j].getSelect().getColumn());
+          } else {
+            if (sources[j].getSelect() != null) {
+              source.setSelectQuery(readQueryOrFileLines(sources[j].getSelect().getQuery()));
+              if (!sources[j].getSelect().getColumn().equals("")) {
+                source.setSelectColumn(sources[j].getSelect().getColumn());
+              }
+            }
           }
-          if (sources[j].getParallel_load() != null){
+          if (sources[j].getParallel_load() != null) {
             source.setParallelLoadQuery(readQueryOrFileLines(sources[j].getParallel_load().getQuery()));
             source.setParallelLoadColumn(sources[j].getParallel_load().getColumn());
             source.setParallelLoadNum(sources[j].getParallel_load().getNum());
           }
-          source.setSelectQuery(readQueryOrFileLines(sources[j].getSelect().getQuery()));
-          source.setSelectColumn(sources[j].getSelect().getColumn());
+          source.setAutoloading(sources[j].getAutoloading());
           source.setKey();
         }
         tab.setSources(resultSource);
@@ -292,10 +300,13 @@ public class YamlConfigReader {
   public io.qimia.uhrwerk.common.model.Table readTable(String file) {
     Yaml yaml = new Yaml();
     InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
-    Table table = yaml.loadAs(stream, Table.class);
-    return getModelTable(table);
+    try {
+      Table table = yaml.loadAs(stream, Table.class);
+      return getModelTable(table);
+    } catch (YAMLException e) {
+      throw new IllegalArgumentException("Something went wrong with reading the config file. " +
+              "Either it doesn't exist or the structure is wrong?", e);
+    }
   }
-
-
 }
 

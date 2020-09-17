@@ -51,6 +51,7 @@ public class SourceDAOTest {
         source.setPartitionSize(1);
         source.setParallelLoadNum(40);
         source.setPartitioned(true);
+        source.setAutoloading(false);
         source.setKey();
         return source;
     }
@@ -95,6 +96,16 @@ public class SourceDAOTest {
         assertNotNull(result.getNewResult());
         assertNotNull(result.getNewResult().getId());
         assertEquals(source, result.getNewResult());
+
+        assertEquals(generateTable().getId(), result.getNewResult().getTableId());
+        assertEquals(generateConnection(), result.getNewResult().getConnection());
+        assertEquals("source-test-path", result.getNewResult().getPath());
+        assertEquals("jdbc", result.getNewResult().getFormat());
+        assertEquals(PartitionUnit.DAYS, result.getNewResult().getPartitionUnit());
+        assertEquals(1, result.getNewResult().getPartitionSize());
+        assertEquals(40, result.getNewResult().getParallelLoadNum());
+        assertEquals(true, result.getNewResult().isPartitioned());
+        assertEquals(false, result.getNewResult().isAutoloading());
     }
 
     @Test
@@ -133,7 +144,7 @@ public class SourceDAOTest {
     }
 
     @Test
-    void overwriteOfNonEssentialFieldsShouldBePossible() throws SQLException {
+    void overwriteOfFieldsShouldBePossible() throws SQLException {
         // first a connection
         Connection connection = generateConnection();
 
@@ -159,6 +170,11 @@ public class SourceDAOTest {
         source.setPartitionSize(5);
         source.setPath("new-path");
         source.setSelectColumn("column");
+        source.setFormat("parquet");
+        source.setPartitionUnit(PartitionUnit.HOURS);
+        source.setParallelLoadNum(20);
+        source.setPartitioned(false);
+        source.setAutoloading(true);
 
         SourceResult resultChanged = service.save(source, table, true);
 

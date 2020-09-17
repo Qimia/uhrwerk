@@ -6,7 +6,10 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -333,6 +336,15 @@ public class DependencyDAOTest {
 
     var foundDependencies = dao.get(newTable.getId());
     assertEquals(3, foundDependencies.length);
+
+    assertEquals("area1", foundDependencies[2].getArea());
+    assertEquals("vertical1", foundDependencies[2].getVertical());
+    assertEquals("name1", foundDependencies[2].getTableName());
+    assertEquals("1.0", foundDependencies[2].getVersion());
+    assertEquals("parquet", foundDependencies[2].getFormat());
+    assertEquals(PartitionTransformType.IDENTITY, foundDependencies[2].getTransformType());
+    assertEquals(1, foundDependencies[2].getTransformPartitionSize());
+    assertEquals(newTable.getId(), foundDependencies[2].getTableId());
   }
 
   @Test

@@ -18,6 +18,15 @@ public class Source implements Comparable<Source> {
   String selectQuery;
   String selectColumn;
   boolean partitioned = false;
+  boolean autoloading = true;
+
+  public boolean isAutoloading() {
+    return autoloading;
+  }
+
+  public void setAutoloading(boolean autoloading) {
+    this.autoloading = autoloading;
+  }
 
   public void setKey() {
     StringBuilder res =
@@ -168,45 +177,28 @@ public class Source implements Comparable<Source> {
             parallelLoadNum,
             selectQuery,
             selectColumn,
-            partitioned);
+            partitioned,
+            autoloading);
   }
 
   @Override
   public String toString() {
-    return "Source{"
-            + "id="
-            + id
-            + ", tableId="
-            + tableId
-            + ", connection="
-            + connection
-            + ", path='"
-            + path
-            + '\''
-            + ", format='"
-            + format
-            + '\''
-            + ", partitionUnit="
-            + partitionUnit
-            + ", partitionSize="
-            + partitionSize
-            + ", partitioned="
-            + partitioned
-            + ", parallelLoadQuery='"
-            + parallelLoadQuery
-            + '\''
-            + ", parallelLoadColumn='"
-            + parallelLoadColumn
-            + '\''
-            + ", parallelLoadNum="
-            + parallelLoadNum
-            + ", selectQuery='"
-            + selectQuery
-            + '\''
-            + ", selectColumn='"
-            + selectColumn
-            + '\''
-            + '}';
+    return "Source{" +
+            "id=" + id +
+            ", tableId=" + tableId +
+            ", connection=" + connection +
+            ", path='" + path + '\'' +
+            ", format='" + format + '\'' +
+            ", partitionUnit=" + partitionUnit +
+            ", partitionSize=" + partitionSize +
+            ", parallelLoadQuery='" + parallelLoadQuery + '\'' +
+            ", parallelLoadColumn='" + parallelLoadColumn + '\'' +
+            ", parallelLoadNum=" + parallelLoadNum +
+            ", selectQuery='" + selectQuery + '\'' +
+            ", selectColumn='" + selectColumn + '\'' +
+            ", partitioned=" + partitioned +
+            ", autoloading=" + autoloading +
+            '}';
   }
 
   @Override

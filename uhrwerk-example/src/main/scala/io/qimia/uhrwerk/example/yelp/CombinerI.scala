@@ -1,9 +1,9 @@
 package io.qimia.uhrwerk.example.yelp
 
-import io.qimia.uhrwerk.engine.{Environment, TaskInput}
+import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 object CombinerI extends App {
   val sparkSess = SparkSession
@@ -14,8 +14,8 @@ object CombinerI extends App {
 
   Logger.getLogger("org").setLevel(Level.WARN)
 
-  def transformationFunction(in: TaskInput): DataFrame = {
-    in.inputFrames.head._2
+  def transformationFunction(in: TaskInput): TaskOutput = {
+    TaskOutput(in.loadedInputFrames.head._2)
   }
 
   val frameManager = new SparkFrameManager(sparkSess)

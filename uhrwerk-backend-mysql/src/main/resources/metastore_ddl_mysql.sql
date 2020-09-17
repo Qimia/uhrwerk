@@ -12,11 +12,11 @@ CREATE TABLE IF NOT EXISTS CONNECTION
     aws_access_key_id     VARCHAR(512),
     aws_secret_access_key VARCHAR(512),
     created_ts            TIMESTAMP DEFAULT CURRENT_TIMESTAMP    NULL,
-    updated_ts            TIMESTAMP DEFAULT CURRENT_TIMESTAMP    NULL ON UPDATE CURRENT_TIMESTAMP,
+    updated_ts            TIMESTAMP DEFAULT CURRENT_TIMESTAMP    NULL ON update CURRENT_TIMESTAMP,
     description           VARCHAR(512)                           NULL
 );
 
-create table if not exists TABLE_
+CREATE TABLE IF NOT EXISTS TABLE_
 (
     id             BIGINT PRIMARY KEY,
     area           VARCHAR(128)                               NOT NULL,
@@ -29,25 +29,25 @@ create table if not exists TABLE_
     version        VARCHAR(128)                               NOT NULL,
     partitioned    BOOLEAN                                    NOT NULL DEFAULT TRUE,
     created_ts     TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL,
-    updated_ts     TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL ON UPDATE CURRENT_TIMESTAMP,
+    updated_ts     TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL ON update CURRENT_TIMESTAMP,
     description    VARCHAR(512)                               NULL,
     UNIQUE (area, vertical, name, version)
 );
 
-create table if not exists TARGET
+CREATE TABLE IF NOT EXISTS TARGET
 (
     id            BIGINT PRIMARY KEY,
     table_id      BIGINT                              NOT NULL,
     connection_id BIGINT                              NULL,
     format        VARCHAR(64)                         NOT NULL,
     created_ts    TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
-    updated_ts    TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
+    updated_ts    TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
     index (table_id),
     index (connection_id),
     UNIQUE (table_id, connection_id, format)
 );
 
-create table if not exists DEPENDENCY
+CREATE TABLE IF NOT EXISTS DEPENDENCY
 (
     id                       BIGINT PRIMARY KEY,
     table_id                 BIGINT                                     NOT NULL,
@@ -57,31 +57,31 @@ create table if not exists DEPENDENCY
     transform_partition_unit enum ('WEEKS', 'DAYS', 'HOURS', 'MINUTES') NULL,
     transform_partition_size int       DEFAULT 1,
     created_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL,
-    updated_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL ON UPDATE CURRENT_TIMESTAMP,
+    updated_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL ON update CURRENT_TIMESTAMP,
     description              VARCHAR(512)                               NULL,
     index (table_id),
     index (dependency_target_id)
 );
 
-create table if not exists PARTITION_
+CREATE TABLE IF NOT EXISTS PARTITION_
 (
     id           BIGINT PRIMARY KEY,
     target_id    BIGINT                              NOT NULL,
     partition_ts TIMESTAMP                           NOT NULL,
     partitioned  BOOLEAN                             NOT NULL DEFAULT TRUE,
     created_ts   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
-    updated_ts   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
+    updated_ts   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
     index (target_id),
     index (partition_ts)
 );
 
-create table if not exists PARTITION_DEPENDENCY
+CREATE TABLE IF NOT EXISTS PARTITION_DEPENDENCY
 (
     id                      BIGINT PRIMARY KEY,
     partition_id            BIGINT                              NOT NULL,
     dependency_partition_id BIGINT                              NOT NULL,
     created_ts              TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
-    updated_ts              TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
+    updated_ts              TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
     index (partition_id),
     index (dependency_partition_id)
 );
@@ -102,8 +102,9 @@ CREATE TABLE IF NOT EXISTS SOURCE
     query_column        VARCHAR(256)  DEFAULT NULL,
     partitioned         BOOLEAN       NOT NULL DEFAULT TRUE,
     created_ts          TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
-    updated_ts          TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_ts          TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
     description         VARCHAR(512),
+    autoloading         BOOLEAN                                    NOT NULL,
     index (table_id),
     index (connection_id)
 );

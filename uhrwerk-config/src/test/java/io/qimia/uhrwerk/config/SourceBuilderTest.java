@@ -12,6 +12,7 @@ class SourceBuilderTest {
             .path("table")
             .format("jdbc")
             .version("1.0")
+            .autoloading(false)
             .partition()
             .unit("hours")
             .size(1)

@@ -6,7 +6,7 @@ import java.util.concurrent.Executors
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
 import io.qimia.uhrwerk.common.metastore.dependency.{TablePartitionResult, TablePartitionResultSet}
 import io.qimia.uhrwerk.common.model.{Partition, PartitionUnit, Table, Target}
-import io.qimia.uhrwerk.engine.Environment.Ident
+import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent}
 import io.qimia.uhrwerk.engine.tools.{DependencyHelper, SourceHelper, TimeHelper}
 import org.apache.spark.sql.DataFrame
 
@@ -31,7 +31,7 @@ object TableWrapper {
   }
 }
 
-class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => DataFrame, frameManager: FrameManager) {
+class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => TaskOutput, frameManager: FrameManager) {
 
   val tableDuration: Duration = if (table.isPartitioned) {
     TimeHelper.convertToDuration(table.getPartitionUnit, table.getPartitionSize)
@@ -57,21 +57,25 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Da
     println("Start of Single Run")
     println(s"TS: ${startTs} Optional end-TS: ${endTs}")
 
-    val inputDepDFs: List[(Ident, DataFrame)] =
+    val loadedInputDepDFs: List[(Ident, DataFrame)] =
       if (dependencyResults.nonEmpty) {
-        dependencyResults.map(bd => {
-          val df = frameManager.loadDependencyDataFrame(bd)
-          val id = DependencyHelper.extractTableIdentity(bd)
-          id -> df
-        })
+        dependencyResults
+          .map(bd => {
+            val id = DependencyHelper.extractTableIdentity(bd)
+            val df = frameManager.loadDependencyDataFrame(bd)
+
+            id -> df
+          })
         //val df: DataFrame = null
       } else {
         Nil
       }
+
     val sources = table.getSources
-    val inputSourceDFs: List[(Ident, DataFrame)] =
+    val loadedInputSourceDFs: List[(Ident, DataFrame)] =
       if ((sources != null) && sources.nonEmpty) {
         sources
+          .filter(s => s.isAutoloading)
           .map(s => {
             val df = if (table.isPartitioned) {
               frameManager.loadSourceDataFrame(s, Option(startTs), endTs)
@@ -85,16 +89,36 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Da
       } else {
         Nil
       }
-    val inputMap = (inputDepDFs ::: inputSourceDFs).toMap
-    val taskInput = TaskInput(inputMap)
+
+    val notLoadedInputSources: List[(SourceIdent, DependentLoaderSource)] =
+      if ((sources != null) && sources.nonEmpty) {
+        sources
+          .filter(s => !s.isAutoloading)
+          .map(s => {
+            val dL = if (table.isPartitioned) {
+              DependentLoaderSource(s, frameManager, Option(startTs), endTs)
+            } else {
+              DependentLoaderSource(s, frameManager)
+            }
+            val id = SourceHelper.extractSourceIdent(s)
+            id -> dL
+          })
+          .toList
+      } else {
+        Nil
+      }
+
+    val inputMapLoaded = (loadedInputDepDFs ::: loadedInputSourceDFs).toMap
+    val taskInput = TaskInput(inputMapLoaded, notLoadedInputSources.toMap)
 
     val success =
       try {
-        val frame = userFunc(taskInput)
+        val taskOutput = userFunc(taskInput)
+        val frame = taskOutput.frame
         // TODO error checking: if target should be on datalake but no frame is given
         // Note: We are responsible for all standard writing of DataFrames
         if (!frame.isEmpty) {
-          frameManager.writeDataFrame(frame, table, partitionTS)
+          frameManager.writeDataFrame(frame, table, partitionTS, taskOutput.dataFrameWriterOptions)
         }
         true
       } catch {

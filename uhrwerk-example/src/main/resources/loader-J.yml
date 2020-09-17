@@ -1,0 +1,40 @@
+area: "staging"
+vertical: "yelp_db"
+table: "table_j"
+version: "1.0"
+parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+max_bulk_size: 1
+partition:
+  unit: "days"
+  size: 1
+
+sources:
+  - connection_name: "yelp_mysql"
+    path: "review"  # On DB
+    format: "jdbc"
+    version: "1.0"
+    partition:
+      unit: "days"
+      size: 1
+    select:
+      query: "SELECT * FROM <path> WHERE date >= '<lower_bound>' and date < '<upper_bound>' and user_id IN (<user_ids>) and business_id IN (<business_ids>)"
+      column: "date"
+    autoloading: false
+
+dependencies:
+  - area: "staging"
+    vertical: "yelp_db"
+    table: "table_g"
+    format: "parquet"
+    version: "1.0"
+  - area: "staging"
+    vertical: "yelp_db"
+    table: "table_d"
+    format: "parquet"
+    version: "1.0"
+    transform:
+      type: "identity"
+
+targets:
+  - connection_name: "local_fs_lake"
+    format: "parquet"

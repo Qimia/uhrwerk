@@ -30,7 +30,7 @@ class TransformBuilderTest {
             .type("temporal_aggregate")
             .partition()
             .size(4)
-            .unit("hour")
+            .unit("hours")
             .done()
             .build();
 
@@ -43,8 +43,8 @@ class TransformBuilderTest {
   @Test
   void nestedBuilderTest() {
     var builder = new TransformBuilder();
-    var partitionBuilder = new PartitionBuilder<>().unit("hour").size(10);
-    var partition = new PartitionBuilder<>().unit("day").size(5).build();
+    var partitionBuilder = new PartitionBuilder<>().unit("hours").size(10);
+    var partition = new PartitionBuilder<>().unit("days").size(5).build();
 
     var transform1 = builder
             .type("temporal_aggregate")
