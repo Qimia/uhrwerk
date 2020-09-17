@@ -90,24 +90,14 @@ public class Dependency {
 
   @Override
   public String toString() {
-    return "Dependency{"
-        + "area='"
-        + area
-        + '\''
-        + ", vertical='"
-        + vertical
-        + '\''
-        + ", table='"
-        + table
-        + '\''
-        + ", format='"
-        + format
-        + '\''
-        + ", version='"
-        + version
-        + '\''
-        + ", transform="
-        + transform
-        + '}';
+    return "Dependency{" +
+            "area='" + area + '\'' +
+            ", vertical='" + vertical + '\'' +
+            ", table='" + table + '\'' +
+            ", format='" + format + '\'' +
+            ", version='" + version + '\'' +
+            ", transform=" + transform +
+            '}';
   }
+
 }

@@ -14,8 +14,17 @@ public class Source{
     private Partition partition;
     private ParallelLoad parallel_load;
     private Select select;
+    private Boolean autoloading = true;
 
     public Source() {}
+
+    public Boolean getAutoloading() {
+        return autoloading;
+    }
+
+    public void setAutoloading(Boolean autoloading) {
+        this.autoloading = autoloading;
+    }
 
     public String getConnection_name() {
         return connection_name;
@@ -119,6 +128,7 @@ public class Source{
                 ", partition=" + partition +
                 ", parallel_load=" + parallel_load +
                 ", select=" + select +
+                ", autoloading=" + autoloading +
                 '}';
     }
 }

@@ -2,12 +2,12 @@ package io.qimia.uhrwerk.example.yelp
 
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.engine.{Environment, TaskInput}
+import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils
 import org.apache.log4j.{Level, Logger}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{max, min}
-import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object WindowF extends App {
   val sparkSess = SparkSession.builder()
@@ -19,12 +19,12 @@ object WindowF extends App {
     Logger.getLogger("akka").setLevel(Level.ERROR)
 
 
-  def loaderAFunc(in: TaskInput): DataFrame = {
-    val aDF = in.inputFrames.values.head
+  def loaderAFunc(in: TaskInput): TaskOutput = {
+    val aDF = in.loadedInputFrames.values.head
     aDF.select("date").agg(min("date"), max("date")).show()
     aDF.printSchema()
     aDF.show(10)
-    aDF.drop(SparkFrameManagerUtils.timeColumns: _*)
+    TaskOutput(aDF.drop(SparkFrameManagerUtils.timeColumns: _*))
   }
 
   val frameManager = new SparkFrameManager(sparkSess)
