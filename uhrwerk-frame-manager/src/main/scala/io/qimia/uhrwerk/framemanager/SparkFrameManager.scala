@@ -159,7 +159,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           .option("password", dependencyResult.connection.getJdbcPass)
           .option(
             "dbtable",
-            getDependencyPath(dependencyResult.dependency, false)
+            getDependencyPath(dependencyResult.dependency, fileSystem = false)
           )
           .load()
       } else {
@@ -167,7 +167,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           .load(
             getFullLocation(
               dependencyResult.connection.getPath,
-              getDependencyPath(dependencyResult.dependency, true)
+              getDependencyPath(dependencyResult.dependency, fileSystem = true)
             )
           )
       }
@@ -182,8 +182,11 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     } else {
       // partitioned data
       if (isJDBC) {
-        addTimeColumnsToDFFromTimestampColumn(filtered, timeColumnJDBC, dependencyResult.succeeded.head.getPartitionUnit)
-          .drop(timeColumnJDBC)
+        addTimeColumnsToDFFromTimestampColumn(
+          filtered,
+          timeColumnJDBC,
+          dependencyResult.succeeded.head.getPartitionUnit
+        ).drop(timeColumnJDBC)
       } else {
         filtered
       }
@@ -266,6 +269,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           .option("dbtable", source.getPath) // area-vertical.tableName-version
       }
 
+    println("Loading source")
+
     val df: DataFrame = dfReaderWithQuery
       .load()
 
@@ -297,6 +302,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
    *                               If the array has only one item (one map), this one is used for all targets.
    *                               If the array has as many items as there are targets,
    *                               each target is saved with different options.
+   *                               The options need to be valid Spark options with one exception: partitionBy.
+   *                               This is a comma-separated list of columns that should be used for partitioning
+   *                               (extra from the uhrwerk timestamp columns).
    */
   override def writeDataFrame(
                                frame: DataFrame,
@@ -390,23 +398,34 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       }
 
       val writer = df.write.mode(SaveMode.Append).format(target.getFormat)
-      val writerWithOptions = if (dataFrameWriterOptions.isDefined) {
-        val options =
+      val (writerWithOptions: DataFrameWriter[Row], partitionBy: List[String]) = if (dataFrameWriterOptions.isDefined) {
+        val optionsTmp =
           if (dataFrameWriterOptions.get.length == locationTableInfo.getTargets.length) {
             dataFrameWriterOptions.get(index)
           } else {
             dataFrameWriterOptions.get.head
           }
-        writer
-          .options(options)
+        val (options, partitionBy: List[String]) = if (optionsTmp.contains("partitionBy")) {
+          (
+            optionsTmp.filterNot(p => p._1 == "partitionBy"),
+            optionsTmp.find(p => p._1 == "partitionBy").get._2.split(",").map(_.trim).toList
+          )
+        } else {
+          (optionsTmp, List[String]())
+        }
+        (
+          writer
+            .options(options),
+          partitionBy
+        )
       } else {
-        writer
+        (writer, List[String]())
       }
 
       val writerWithPartitioning =
         if (!isJDBC && dfContainsTimeColumns) {
           writerWithOptions
-            .partitionBy(selectedTimeColumns: _*)
+            .partitionBy(selectedTimeColumns ++ partitionBy: _*)
         } else {
           writerWithOptions
         }

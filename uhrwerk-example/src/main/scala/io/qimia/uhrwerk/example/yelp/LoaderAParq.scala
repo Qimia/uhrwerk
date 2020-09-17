@@ -2,10 +2,10 @@ package io.qimia.uhrwerk.example.yelp
 
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.engine.{Environment, TaskInput}
+import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
 
 
@@ -18,13 +18,13 @@ object LoaderAParq extends App {
     .master("local[3]")
     .getOrCreate()
 
-  def loaderAFunc(in: TaskInput): DataFrame = {
+  def loaderAFunc(in: TaskInput): TaskOutput = {
     // The most basic userFunction simply returns the input dataframe
-    val aDF = in.inputFrames.values.head
+    val aDF = in.loadedInputFrames.values.head
     aDF.select("day").agg(min("day"), max("day")).show()
     aDF.printSchema()
     aDF.show(10)
-    aDF
+    TaskOutput(aDF)
   }
 
   val frameManager = new SparkFrameManager(sparkSess)

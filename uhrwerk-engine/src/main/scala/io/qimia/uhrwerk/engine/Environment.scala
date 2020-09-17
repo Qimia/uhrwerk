@@ -2,10 +2,9 @@ package io.qimia.uhrwerk.engine
 
 import io.qimia.uhrwerk.common.framemanager.FrameManager
 import io.qimia.uhrwerk.common.metastore.config.TableResult
+import io.qimia.uhrwerk.common.model.{Dependency, Source, Table}
 import io.qimia.uhrwerk.config.YamlConfigReader
 import io.qimia.uhrwerk.engine.Environment.{Ident, TableIdent, reportProblems}
-import io.qimia.uhrwerk.common.model.{Dependency, Source, Table}
-import org.apache.spark.sql.DataFrame
 
 import scala.collection.mutable
 
@@ -113,7 +112,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     * @return If storing the config was a success a TableWrapper object
     */
   def addTable(tableConfigLoc: String,
-               userFunc: TaskInput => DataFrame,
+               userFunc: TaskInput => TaskOutput,
                overwrite: Boolean = false): Option[TableWrapper] = {
     val tableYaml = Environment.tableCleaner(configReader.readTable(tableConfigLoc))
     val storeRes = store.tableService.save(tableYaml, overwrite)
@@ -140,12 +139,13 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
   def getTable(id: Ident): Option[TableWrapper] = tables.get(id)
 
   /**
-    * Setup a full dag based on a configuration
-    * @param dagConfigLoc location of the full dag configuration file
-    * @param userFuncs a map with the table identity objects mapped to the userfunctions for transformation
-    */
+   * Setup a full dag based on a configuration
+   *
+   * @param dagConfigLoc location of the full dag configuration file
+   * @param userFuncs    a map with the table identity objects mapped to the userfunctions for transformation
+   */
   def setupDag(dagConfigLoc: String,
-               userFuncs: Map[Ident, TaskInput => DataFrame]): Unit = {
+               userFuncs: Map[Ident, TaskInput => TaskOutput]): Unit = {
     // TODO: First fix addConnections + addTable then work those changes back into this function
     val dagYaml = configReader.readDag(dagConfigLoc)
     dagYaml.getConnections.foreach(conn =>

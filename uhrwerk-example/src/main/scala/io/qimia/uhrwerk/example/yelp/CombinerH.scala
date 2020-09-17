@@ -3,10 +3,10 @@ package io.qimia.uhrwerk.example.yelp
 import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.engine.Environment.TableIdent
-import io.qimia.uhrwerk.engine.{Environment, TaskInput}
+import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 object CombinerH extends App {
   val sparkSess = SparkSession
@@ -17,9 +17,9 @@ object CombinerH extends App {
 
   Logger.getLogger("org").setLevel(Level.WARN)
 
-  def transformationFunction(in: TaskInput): DataFrame = {
-    val review = in.inputFrames.find(t => t._1.asInstanceOf[TableIdent].name.equals("table_a_parq")).get._2.as("review")
-    val user = in.inputFrames
+  def transformationFunction(in: TaskInput): TaskOutput = {
+    val review = in.loadedInputFrames.find(t => t._1.asInstanceOf[TableIdent].name.equals("table_a_parq")).get._2.as("review")
+    val user = in.loadedInputFrames
       .find(t => t._1.asInstanceOf[TableIdent].name.equals("table_g"))
       .get
       ._2
@@ -27,7 +27,7 @@ object CombinerH extends App {
       .drop("funny", "cool", "useful")
       .withColumnRenamed("id", "user_id")
 
-    review.join(user, "user_id")
+    TaskOutput(review.join(user, "user_id"))
   }
 
   val frameManager = new SparkFrameManager(sparkSess)

@@ -21,18 +21,18 @@ public class SourceDAO implements SourceService {
 
   private static final String INSERT_SOURCE =
           "INSERT INTO SOURCE(id, table_id, connection_id, path, format, partition_unit, partition_size, sql_select_query, "
-                  + "sql_partition_query, partition_column, partition_num, query_column, partitioned)\n"
-                  + "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                  + "sql_partition_query, partition_column, partition_num, query_column, partitioned, autoloading)\n"
+                  + "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
   private static final String SELECT_BY_ID =
           "SELECT id, table_id, connection_id, path, format, partition_unit, partition_size, sql_select_query, "
-                  + "sql_partition_query, partition_column, partition_num, query_column, partitioned\n"
+                  + "sql_partition_query, partition_column, partition_num, query_column, partitioned, autoloading\n"
                   + "FROM SOURCE\n"
                   + "WHERE id = ?";
 
   private static final String SELECT_BY_TABLE_ID =
           "SELECT id, table_id, connection_id, path, format, partition_unit, partition_size, sql_select_query, "
-                  + "sql_partition_query, partition_column, partition_num, query_column, partitioned\n"
+                  + "sql_partition_query, partition_column, partition_num, query_column, partitioned, autoloading\n"
                   + "FROM SOURCE\n"
                   + "WHERE table_id = ?";
 
@@ -73,6 +73,7 @@ public class SourceDAO implements SourceService {
     insert.setInt(11, source.getParallelLoadNum());
     insert.setString(12, source.getSelectColumn());
     insert.setBoolean(13, source.isPartitioned());
+    insert.setBoolean(14, source.isAutoloading());
 
     JdbcBackendUtils.singleRowUpdate(insert);
   }
@@ -115,6 +116,7 @@ public class SourceDAO implements SourceService {
       res.setParallelLoadNum(record.getInt(11));
       res.setSelectColumn(record.getString(12));
       res.setPartitioned(record.getBoolean(13));
+      res.setAutoloading(record.getBoolean(14));
 
       return res;
     }
