@@ -31,17 +31,17 @@ object LoadDims extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnections("testing-connection-config.yml")
+  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
 
-  val prodWrapper = uhrwerkEnvironment.addTable(
+  val prodWrapper = uhrwerkEnvironment.addTableFile(
     "retail_examples/staging/retail/productDim_1.0.yml",
     simpleHashLoad(SourceIdent("retail_mysql", "qimia_oltp.products", "jdbc"), "productKey")
   )
-  val employeeWrapper = uhrwerkEnvironment.addTable(
+  val employeeWrapper = uhrwerkEnvironment.addTableFile(
     "retail_examples/staging/retail/employeeDim_1.0.yml",
     simpleHashLoad(SourceIdent("retail_mysql", "qimia_oltp.employees", "jdbc"), "employeeKey")
   )
-  val storeWrapper = uhrwerkEnvironment.addTable(
+  val storeWrapper = uhrwerkEnvironment.addTableFile(
     "retail_examples/staging/retail/storeDim_1.0.yml",
     simpleHashLoad(SourceIdent("retail_mysql", "qimia_oltp.stores", "jdbc"), "storeKey")
   )

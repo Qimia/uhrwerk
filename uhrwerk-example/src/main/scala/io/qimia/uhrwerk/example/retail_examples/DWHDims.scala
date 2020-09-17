@@ -22,17 +22,17 @@ object DWHDims extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnections("testing-connection-config.yml")
+  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
 
-  val prodWrapper = uhrwerkEnvironment.addTable(
+  val prodWrapper = uhrwerkEnvironment.addTableFile(
     "retail_examples/dwh/retail/productDim_1.0.yml",
     dwh
   )
-  val employeeWrapper = uhrwerkEnvironment.addTable(
+  val employeeWrapper = uhrwerkEnvironment.addTableFile(
     "retail_examples/dwh/retail/employeeDim_1.0.yml",
     dwh
   )
-  val storeWrapper = uhrwerkEnvironment.addTable(
+  val storeWrapper = uhrwerkEnvironment.addTableFile(
     "retail_examples/dwh/retail/storeDim_1.0.yml",
     dwh
   )

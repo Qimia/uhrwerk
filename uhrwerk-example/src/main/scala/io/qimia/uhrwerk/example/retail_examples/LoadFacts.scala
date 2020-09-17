@@ -81,12 +81,12 @@ object LoadFacts extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnections("testing-connection-config.yml")
+  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
 
-  val salesWrapper = uhrwerkEnvironment.addTable("retail_examples/staging/retail/salesFact_1.0.yml",
+  val salesWrapper = uhrwerkEnvironment.addTableFile("retail_examples/staging/retail/salesFact_1.0.yml",
     simpleLoad(SourceIdent("retail_mysql", "qimia_oltp.sales_items", "jdbc")))
-  val salesFactWrapper = uhrwerkEnvironment.addTable("retail_examples/dwh/retail/salesFact_1.0.yml", computeFactTable)
-  val salesFactDailyWrapper = uhrwerkEnvironment.addTable("retail_examples/dwh/retail/salesFactsDaily_1.0.yml", computeWeeklyFacts)
+  val salesFactWrapper = uhrwerkEnvironment.addTableFile("retail_examples/dwh/retail/salesFact_1.0.yml", computeFactTable)
+  val salesFactDailyWrapper = uhrwerkEnvironment.addTableFile("retail_examples/dwh/retail/salesFactsDaily_1.0.yml", computeWeeklyFacts)
 
   val runTimes = Array(
     LocalDateTime.of(2020, 6, 1, 0, 0),
