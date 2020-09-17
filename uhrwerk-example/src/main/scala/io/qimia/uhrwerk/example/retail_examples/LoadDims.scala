@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.example.retail_examples
 
 import io.qimia.uhrwerk.engine.Environment.SourceIdent
-import io.qimia.uhrwerk.engine.{Environment, TaskInput}
+import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.functions.{col, hash}
@@ -17,13 +17,14 @@ object LoadDims extends App {
 
   Logger.getLogger("org").setLevel(Level.WARN)
 
-  def simpleHashLoad(ident: SourceIdent, colName: String): (TaskInput => DataFrame) = {
-    def udf(in: TaskInput): DataFrame = {
-      in.inputFrames.get(ident) match {
-        case Some(df) => df.withColumn(colName, hash(df.columns.map(col): _*))
+  def simpleHashLoad(ident: SourceIdent, colName: String): (TaskInput => TaskOutput) = {
+    def udf(in: TaskInput): TaskOutput = {
+      in.loadedInputFrames.get(ident) match {
+        case Some(df) => TaskOutput(df.withColumn(colName, hash(df.columns.map(col): _*)))
         case None => throw new Exception(s"Table ${ident.toString} not found!")
       }
     }
+
     udf
   }
 

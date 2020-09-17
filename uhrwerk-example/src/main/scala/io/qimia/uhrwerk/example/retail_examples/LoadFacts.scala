@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.example.retail_examples
 import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.engine.Environment.{SourceIdent, TableIdent}
-import io.qimia.uhrwerk.engine.{Environment, TaskInput}
+import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.spark.sql.functions.{col, count, sum}
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -15,10 +15,10 @@ object LoadFacts extends App {
     .config("driver-memory", "6g")
     .getOrCreate()
 
-  def simpleLoad(ident: SourceIdent): (TaskInput => DataFrame) = {
-    def udf(in: TaskInput): DataFrame = {
-      in.inputFrames.get(ident) match {
-        case Some(x) => x
+  def simpleLoad(ident: SourceIdent): (TaskInput => TaskOutput) = {
+    def udf(in: TaskInput): TaskOutput = {
+      in.loadedInputFrames.get(ident) match {
+        case Some(x) => TaskOutput(x)
         case None => throw new Exception(s"Table ${ident.toString} not found!")
       }
     }
@@ -26,24 +26,24 @@ object LoadFacts extends App {
     udf
   }
 
-  def computeFactTable(in: TaskInput): DataFrame = {
-    val facts = in.inputFrames.get(TableIdent("staging", "retail", "salesFacts", "1.0")) match {
+  def computeFactTable(in: TaskInput): TaskOutput = {
+    val facts = in.loadedInputFrames.get(TableIdent("staging", "retail", "salesFacts", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception(s"Table salesFact not found!")
     }
-    val employeeDim = in.inputFrames.get(TableIdent("staging", "retail", "employeeDim", "1.0")) match {
+    val employeeDim = in.loadedInputFrames.get(TableIdent("staging", "retail", "employeeDim", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception(s"Table employeeDim not found!")
     }
-    val storeDim = in.inputFrames.get(TableIdent("staging", "retail", "storeDim", "1.0")) match {
+    val storeDim = in.loadedInputFrames.get(TableIdent("staging", "retail", "storeDim", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception(s"Table storeDim not found!")
     }
-    val storeEmployees = in.inputFrames.get(SourceIdent("retail_mysql", "qimia_oltp.stores_eymploees", "jdbc")) match {
+    val storeEmployees = in.loadedInputFrames.get(SourceIdent("retail_mysql", "qimia_oltp.stores_eymploees", "jdbc")) match {
       case Some(x) => x
       case None => throw new Exception(s"Table storeEmployees not found")
     }
-    val productDim = in.inputFrames.get(TableIdent("staging", "retail", "productDim", "1.0")) match {
+    val productDim = in.loadedInputFrames.get(TableIdent("staging", "retail", "productDim", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception(s"Table productDim not found!")
     }
@@ -61,18 +61,18 @@ object LoadFacts extends App {
       .select("s.product_id", "s.quantity", "s.sales_id", "s.cashier", "s.store", "s.selling_date", "s.year",
         "s.month", "s.days", "s.produtKey", "s.storeKey", "e.employeeKey")
 
-    eFacts
+    TaskOutput(eFacts)
   }
 
-  def computeWeeklyFacts(in: TaskInput): DataFrame = {
-    val salesFacts = in.inputFrames.get(TableIdent("dwh", "retail", "salesFact", "1.0")) match {
+  def computeWeeklyFacts(in: TaskInput): TaskOutput = {
+    val salesFacts = in.loadedInputFrames.get(TableIdent("dwh", "retail", "salesFact", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception("Table salesFact not found!")
     }
 
-    salesFacts.drop("employeeKey", "cashier", "store", "year", "month", "day")
+    TaskOutput(salesFacts.drop("employeeKey", "cashier", "store", "year", "month", "day")
       .groupBy("selling_date", "storeKey", "productKey")
-      .agg(count("sales_id"), sum("quantity"))
+      .agg(count("sales_id"), sum("quantity")))
   }
 
   val frameManager = new SparkFrameManager(sparkSess)
