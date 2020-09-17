@@ -25,15 +25,15 @@ object DWHDims extends App {
   uhrwerkEnvironment.addConnections("testing-connection-config.yml")
 
   val prodWrapper = uhrwerkEnvironment.addTable(
-    "retail_examples/productDim_dwh.yml",
+    "retail_examples/dwh/retail/productDim_1.0.yml",
     dwh
   )
   val employeeWrapper = uhrwerkEnvironment.addTable(
-    "retail_examples/employeeDim_dwh.yml",
+    "retail_examples/dwh/retail/employeeDim_1.0.yml",
     dwh
   )
   val storeWrapper = uhrwerkEnvironment.addTable(
-    "retail_examples/storeDim_dwh.yml",
+    "retail_examples/dwh/retail/storeDim_1.0.yml",
     dwh
   )
 
