@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 import io.qimia.uhrwerk.engine.Environment.{SourceIdent, TableIdent}
 import io.qimia.uhrwerk.engine.{Environment, TaskInput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.{col, count, sum}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object LoadFacts extends App {
@@ -64,6 +64,17 @@ object LoadFacts extends App {
     eFacts
   }
 
+  def computeWeeklyFacts(in: TaskInput): DataFrame = {
+    val salesFacts = in.inputFrames.get(TableIdent("dwh", "retail", "salesFact", "1.0")) match {
+      case Some(x) => x
+      case None => throw new Exception("Table salesFact not found!")
+    }
+
+    salesFacts.drop("employeeKey", "cashier", "store", "year", "month", "day")
+      .groupBy("selling_date", "storeKey", "productKey")
+      .agg(count("sales_id"), sum("quantity"))
+  }
+
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
@@ -72,14 +83,19 @@ object LoadFacts extends App {
   val salesWrapper = uhrwerkEnvironment.addTable("retail_examples/salesFact.yml",
     simpleLoad(SourceIdent("retail_mysql", "qimia_oltp.sales_items", "jdbc")))
   val salesFactWrapper = uhrwerkEnvironment.addTable("retail_examples/salesFact_dwh.yml", computeFactTable)
+  val salesFactDailyWrapper = uhrwerkEnvironment.addTable("retail_examples/salesFactsDaily.yml", computeWeeklyFacts)
 
   val runTimes = Array(
     LocalDateTime.of(2020, 6, 1, 0, 0),
+    LocalDateTime.of(2020, 6, 2, 0, 0),
+    LocalDateTime.of(2020, 6, 3, 0, 0),
   )
 
   val salesResult = salesWrapper.get.runTasksAndWait(runTimes)
   val salesFactResult = salesFactWrapper.get.runTasksAndWait(runTimes)
+  val salesFactDailyResult = salesFactDailyWrapper.get.runTasksAndWait(runTimes)
 
   println(s"Sales Fact processed: ${salesResult}")
   println(s"Sales Fact processed to dwh: ${salesFactResult}")
+  println(s"Sales Fact Daily processed to dwh: ${salesFactDailyResult}")
 }

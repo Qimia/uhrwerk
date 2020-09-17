@@ -1,0 +1,21 @@
+area: "dwh"
+vertical: "retail"
+table: "salesFactsWeekly"
+version: "1.0"
+partition:
+  unit: "days"
+  size: 3
+
+dependencies:
+  area: "dwh"
+  vertical: "retail"
+  table: "salesFact"
+  version: "1.0"
+  transform:
+    type: "aggregate"
+    unit: "days"
+    size: 1
+
+target:
+  - connection_name: "retail-mysql"
+    format: "jdbc"
