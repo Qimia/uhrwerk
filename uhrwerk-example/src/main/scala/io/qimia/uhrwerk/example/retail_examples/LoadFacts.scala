@@ -59,9 +59,8 @@ object LoadFacts extends App {
       .select("p.product_id", "p.quantity", "p.sales_id", "p.cashier", "p.store", "p.selling_date", "p.year",
         "p.month", "p.day", "p.productKey", "s.storeKey")
 
-    val eFacts = sFacts.as("s").join(storeEmployees.as("se"), col("s.store") === col("se.store_id"))
-      .join(employeeDim.as("e"), col("se.employee_id") === col("e.employee_id"))
-      .select("s.product_id", "s.quantity", "s.sales_id", "s.cashier", "s.store", "s.selling_date", "s.year",
+    val eFacts = sFacts.as("s").join(employeeDim.as("e"), col("s.cashier") === ("e.employee_id"))
+      .select("s.product_id", "s.quantity", "s.sales_id", "s.store", "s.store", "s.selling_date", "s.year",
         "s.month", "s.day", "s.productKey", "s.storeKey", "e.employeeKey")
 
     TaskOutput(eFacts)
@@ -73,7 +72,7 @@ object LoadFacts extends App {
       case None => throw new Exception("Table salesFact not found!")
     }
 
-    TaskOutput(salesFacts.drop("employeeKey", "cashier", "store", "year", "month", "day")
+    TaskOutput(salesFacts.drop("employeeKey", "store", "year", "month", "day")
       .groupBy("selling_date", "storeKey", "productKey")
       .agg(count("sales_id"), sum("quantity")))
   }
