@@ -88,9 +88,6 @@ public class YamlConfigReader {
           } else {
             if (sources[j].getSelect() != null) {
               source.setSelectQuery(readQueryOrFileLines(sources[j].getSelect().getQuery()));
-              if (!sources[j].getSelect().getColumn().equals("")) {
-                source.setSelectColumn(sources[j].getSelect().getColumn());
-              }
             }
           }
           if (sources[j].getParallel_load() != null) {
