@@ -34,15 +34,15 @@ object LoadDims extends App {
   uhrwerkEnvironment.addConnections("testing-connection-config.yml")
 
   val prodWrapper = uhrwerkEnvironment.addTable(
-    "retail_examples/productDim.yml",
+    "retail_examples/staging/retail/productDim_1.0.yml",
     simpleHashLoad(SourceIdent("retail_mysql", "qimia_oltp.products", "jdbc"), "productKey")
   )
   val employeeWrapper = uhrwerkEnvironment.addTable(
-    "retail_examples/employeeDim.yml",
+    "retail_examples/staging/retail/employeeDim_1.0.yml",
     simpleHashLoad(SourceIdent("retail_mysql", "qimia_oltp.employees", "jdbc"), "employeeKey")
   )
   val storeWrapper = uhrwerkEnvironment.addTable(
-    "retail_examples/storeDim.yml",
+    "retail_examples/staging/retail/storeDim_1.0.yml",
     simpleHashLoad(SourceIdent("retail_mysql", "qimia_oltp.stores", "jdbc"), "storeKey")
   )
 
