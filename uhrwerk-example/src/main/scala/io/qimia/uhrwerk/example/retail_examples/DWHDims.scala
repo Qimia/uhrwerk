@@ -40,7 +40,6 @@ object DWHDims extends App {
   val prodResult = prodWrapper.get.runTasksAndWait()
   val employeeResult = employeeWrapper.get.runTasksAndWait()
   val storeResult = storeWrapper.get.runTasksAndWait()
-
   println(s"Product Dimension processed: ${prodResult}")
   println(s"Employee Dimension processed: ${employeeResult}")
   println(s"Store Dimension processed: ${storeResult}")

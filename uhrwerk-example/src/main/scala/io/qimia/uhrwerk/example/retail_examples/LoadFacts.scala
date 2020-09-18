@@ -63,22 +63,12 @@ object LoadFacts extends App {
     TaskOutput(eFacts)
   }
 
-  def computeThreeDays(in: TaskInput): TaskOutput = {
+  def computeAggregation(in: TaskInput): TaskOutput = {
     val salesFacts = in.loadedInputFrames.get(TableIdent("dwh", "retail", "salesFact", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception("Table salesFact not found!")
     }
 
-    TaskOutput(salesFacts.drop("employeeKey", "store", "year", "month", "day")
-      .groupBy("selling_date", "storeKey", "productKey")
-      .agg(count("sales_id"), sum("quantity")))
-  }
-
-  def computeFactWindow(in: TaskInput): TaskOutput = {
-    val salesFacts = in.loadedInputFrames.get(TableIdent("dwh", "retail", "salesFact", "1.0")) match {
-      case Some(x) => x
-      case None => throw new Exception("Table salesFact not found!")
-    }
     TaskOutput(salesFacts.drop("employeeKey", "store", "year", "month", "day")
       .groupBy("selling_date", "storeKey", "productKey")
       .agg(count("sales_id"), sum("quantity")))
@@ -92,7 +82,7 @@ object LoadFacts extends App {
   val salesWrapper = uhrwerkEnvironment.addTableFile("retail_examples/staging/retail/salesFact_1.0.yml",
     simpleLoad(SourceIdent("retail_mysql", "qimia_oltp.sales_items", "jdbc")))
   val salesFactWrapper = uhrwerkEnvironment.addTableFile("retail_examples/dwh/retail/salesFact_1.0.yml", computeFactTable)
-  val salesFactDailyWrapper = uhrwerkEnvironment.addTableFile("retail_examples/dwh/retail/salesFactsDaily_1.0.yml", computeThreeDays)
+  val salesFactDailyWrapper = uhrwerkEnvironment.addTableFile("retail_examples/dwh/retail/salesFactsDaily_1.0.yml", computeAggregation)
 
   val runTimes = Array(
     LocalDateTime.of(2020, 6, 1, 0, 0),
