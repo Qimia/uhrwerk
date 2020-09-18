@@ -18,6 +18,18 @@ object SparkFrameManagerUtils {
   private[framemanager] val timeColumnJDBC: String = "uhrwerk-timestamp"
 
   /**
+   * Converts all time columns (based on the partition unit) into strings.
+   *
+   * @param df DataFrame.
+   * @return Converted DataFrame.
+   */
+  private[framemanager] def convertTimeColumnsToStrings(df: DataFrame, partitionUnit: PartitionUnit): DataFrame = {
+    timeColumns
+      .slice(0, calculateCutBasedOnPartitionUnit(partitionUnit))
+      .foldLeft(df)((tmp, timeColumn) => tmp.withColumn(timeColumn, col(timeColumn).cast(StringType)))
+  }
+
+  /**
    * Concatenates paths into a single string. Handles properly all trailing slashes
    *
    * @param first First path
@@ -159,13 +171,25 @@ object SparkFrameManagerUtils {
     s == null || s.isEmpty
   }
 
+  /**
+   * Calculates where to cut an array of time columns (year, month, day, hour, minute) based on the partition unit.
+   * E.g. for partition unit minutes returns 5 (all five columns should be considered), for unit days returns 3,
+   * only (year, month, day) are important.
+   *
+   * @param partitionUnit Partition Unit.
+   * @return The cut.
+   */
   private[framemanager] def calculateCutBasedOnPartitionUnit(partitionUnit: PartitionUnit): Int = {
-    partitionUnit match {
-      case PartitionUnit.MINUTES => 5
-      case PartitionUnit.HOURS => 4
-      case PartitionUnit.DAYS => 3
-      case _ => 5
-    }
+    //    partitionUnit match {
+    //      case PartitionUnit.MINUTES => 5
+    //      case PartitionUnit.HOURS   => 4
+    //      case PartitionUnit.DAYS    => 3
+    //      case PartitionUnit.WEEKS   => 3
+    //      case _                     => 5
+    //    }
+
+    // currently we use always all five columns
+    5
   }
 
   /**
@@ -286,26 +310,33 @@ object SparkFrameManagerUtils {
                                                                    selectColumn: String,
                                                                    partitionUnit: PartitionUnit
                                                                  ): DataFrame = {
-    val withDay = df
-      .withColumn("year", year(col(selectColumn)))
+    //    val withDay = df
+    //      .withColumn("year", year(col(selectColumn)))
+    //      .withColumn("month", concat(col("year"), lit("-"), leftPad(month(col(selectColumn)))))
+    //      .withColumn("day", concat(col("month"), lit("-"), leftPad(dayofmonth(col(selectColumn)))))
+    //
+    //    val withHour = if (partitionUnit.equals(PartitionUnit.HOURS) || partitionUnit.equals(PartitionUnit.MINUTES)) {
+    //      withDay
+    //        .withColumn("hour", concat(col("day"), lit("-"), leftPad(hour(col(selectColumn)))))
+    //    } else {
+    //      withDay
+    //    }
+    //
+    //    val withMinute = if (partitionUnit.equals(PartitionUnit.MINUTES)) {
+    //      withHour
+    //        .withColumn("minute", concat(col("hour"), lit("-"), leftPad(minute(col(selectColumn)))))
+    //    } else {
+    //      withHour
+    //    }
+    //
+    //    withMinute
+
+    // now we always want all time columns
+    df.withColumn("year", year(col(selectColumn)))
       .withColumn("month", concat(col("year"), lit("-"), leftPad(month(col(selectColumn)))))
       .withColumn("day", concat(col("month"), lit("-"), leftPad(dayofmonth(col(selectColumn)))))
-
-    val withHour = if (partitionUnit.equals(PartitionUnit.HOURS) || partitionUnit.equals(PartitionUnit.MINUTES)) {
-      withDay
-        .withColumn("hour", concat(col("day"), lit("-"), leftPad(hour(col(selectColumn)))))
-    } else {
-      withDay
-    }
-
-    val withMinute = if (partitionUnit.equals(PartitionUnit.MINUTES)) {
-      withHour
-        .withColumn("minute", concat(col("hour"), lit("-"), leftPad(minute(col(selectColumn)))))
-    } else {
-      withHour
-    }
-
-    withMinute
+      .withColumn("hour", concat(col("day"), lit("-"), leftPad(hour(col(selectColumn)))))
+      .withColumn("minute", concat(col("hour"), lit("-"), leftPad(minute(col(selectColumn)))))
   }
 
   private[framemanager] def leftPad(c: Column): Column = {

@@ -127,12 +127,22 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         if (isJDBC) {
           col(timeColumnJDBC) === TimeTools.convertTSToUTCString(p.getPartitionTs)
         } else {
-          val (year, month, day, hour, minute) = getTimeValues(p.getPartitionTs)
+          val (yearLowerBound, monthLowerBound, dayLowerBound, hourLowerBound, minuteLowerBound) =
+            getTimeValues(p.getPartitionTs)
+          val (yearUpperBound, monthUpperBound, dayUpperBound, hourUpperBound, minuteUpperBound) =
+            if (p.getPartitionUnit != null) {
+              getTimeValues(
+                TimeTools.addPartitionSizeToTimestamp(p.getPartitionTs, p.getPartitionSize, p.getPartitionUnit)
+              )
+            } else {
+              ("", "", "", "", "")
+            }
           p.getPartitionUnit match {
-            case PartitionUnit.MINUTES => col("minute") === minute
-            case PartitionUnit.HOURS => col("hour") === hour
-            case PartitionUnit.DAYS => col("day") === day
-            case _ => col("minute") === minute // unpartitioned
+            case null => col("minute") === minuteLowerBound // unpartitioned
+            //            case PartitionUnit.HOURS => col("hour") >= hourLowerBound && col("hour") < hourUpperBound
+            //            case PartitionUnit.DAYS => col("day") >= dayLowerBound && col("day") < dayUpperBound
+            //            case PartitionUnit.WEEKS => col("day") >= dayLowerBound && col("day") < dayUpperBound
+            case _ => col("minute") >= minuteLowerBound && col("minute") < minuteUpperBound
           }
         }
       )
@@ -172,7 +182,12 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           )
       }
 
-    val filtered = df.filter(filter)
+    val convertedColumns = if (isJDBC) {
+      df
+    } else {
+      convertTimeColumnsToStrings(df, dependencyResult.succeeded.head.getPartitionUnit)
+    }
+    val filtered = convertedColumns.filter(filter)
 
     if (dependencyResult.dependency.getTransformType.equals(PartitionTransformType.NONE)) {
       // unpartitioned data, remove all time columns
