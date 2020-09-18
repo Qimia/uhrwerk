@@ -43,10 +43,6 @@ object LoadFacts extends App {
       case Some(x) => x
       case None => throw new Exception(s"Table storeDim not found!")
     }
-    val storeEmployees = in.loadedInputFrames.get(SourceIdent("retail_mysql", "qimia_oltp.stores_employees", "jdbc")) match {
-      case Some(x) => x
-      case None => throw new Exception(s"Table storeEmployees not found")
-    }
     val productDim = in.loadedInputFrames.get(TableIdent("staging", "retail", "productDim", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception(s"Table productDim not found!")
@@ -67,7 +63,7 @@ object LoadFacts extends App {
     TaskOutput(eFacts)
   }
 
-  def computeWeeklyFacts(in: TaskInput): TaskOutput = {
+  def computeThreeDays(in: TaskInput): TaskOutput = {
     val salesFacts = in.loadedInputFrames.get(TableIdent("dwh", "retail", "salesFact", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception("Table salesFact not found!")
@@ -96,7 +92,7 @@ object LoadFacts extends App {
   val salesWrapper = uhrwerkEnvironment.addTableFile("retail_examples/staging/retail/salesFact_1.0.yml",
     simpleLoad(SourceIdent("retail_mysql", "qimia_oltp.sales_items", "jdbc")))
   val salesFactWrapper = uhrwerkEnvironment.addTableFile("retail_examples/dwh/retail/salesFact_1.0.yml", computeFactTable)
-  val salesFactDailyWrapper = uhrwerkEnvironment.addTableFile("retail_examples/dwh/retail/salesFactsDaily_1.0.yml", computeWeeklyFacts)
+  val salesFactDailyWrapper = uhrwerkEnvironment.addTableFile("retail_examples/dwh/retail/salesFactsDaily_1.0.yml", computeThreeDays)
 
   val runTimes = Array(
     LocalDateTime.of(2020, 6, 1, 0, 0),

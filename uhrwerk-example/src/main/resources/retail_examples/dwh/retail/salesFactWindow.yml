@@ -4,7 +4,7 @@ table: "salesFactWindow"
 version: "1.0"
 partition:
   unit: "days"
-  size: 3
+  size: 1
 
 dependencies:
   - area: "dwh"
