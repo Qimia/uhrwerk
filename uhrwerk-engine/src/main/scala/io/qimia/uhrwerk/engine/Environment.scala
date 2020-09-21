@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.engine
 import io.qimia.uhrwerk.common.framemanager.FrameManager
 import io.qimia.uhrwerk.common.metastore.config.TableResult
 import io.qimia.uhrwerk.config.YamlConfigReader
-import io.qimia.uhrwerk.engine.Environment.{Ident, TableIdent, reportProblems, tableCleaner}
+import io.qimia.uhrwerk.engine.Environment.{Ident, TableIdent, getTableFunctionDynamic, reportProblems, tableCleaner}
 import io.qimia.uhrwerk.common.model.{Connection, Dag, Dependency, PartitionTransformType, Source, Table}
 
 import scala.collection.mutable
@@ -12,6 +12,23 @@ object Environment {
   sealed abstract class Ident
   case class TableIdent(area: String, vertical: String, name: String, version: String) extends Ident
   case class SourceIdent(connection: String, path: String, format: String)             extends Ident
+
+  /**
+    * Dynamically retrieve the Table Transformation function based on config parameters (or convention)
+    * @param table table which still needs the user-function (and has not been loaded yet)
+    * @return user's code with the table's transformation function
+    */
+  def getTableFunctionDynamic(table: Table): TaskInput => TaskOutput = {
+    // Dynamically load the right class and return the function described in it
+    // either it is defined in the table object or through the convention of classnaming
+    // `area.vertical.name.version`
+    val tableTransform = Class
+      .forName(table.getClassName)
+      .getConstructor()
+      .newInstance()
+      .asInstanceOf[TableTransformation]
+    tableTransform.process
+  }
 
   /**
     * Setup the uhrwerk environment based on an environment configuration file
@@ -92,6 +109,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
   /**
     * Add and load connections to uhrwerk
     * @param connConfigLoc location of connection configuration file
+    * @param overwrite remove old definitions of table or keep them and stop if changes have been made
     */
   def addConnectionFile(connConfigLoc: String, overwrite: Boolean = false): Unit = {
     val connections = configReader.readConnections(connConfigLoc)
@@ -101,6 +119,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
   /**
     * Add and load connections to uhrwerk
     * @param connConfigs connection configuration objects
+    * @param overwrite remove old definitions of table or keep them and stop if changes have been made
     */
   def addConnections(connConfigs: Seq[Connection], overwrite: Boolean = false): Unit =
     connConfigs.foreach(conn => store.connectionService.save(conn, overwrite))
@@ -109,6 +128,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     * Add a new table to the uhrwerk dag
     * @param tableConfigLoc location of the table configuration file
     * @param userFunc user function for transforming & joining the sources and dependencies
+    * @param overwrite remove old definitions of table or keep them and stop if changes have been made
     * @return If storing the config was a success a TableWrapper object
     */
   def addTableFile(tableConfigLoc: String,
@@ -119,9 +139,29 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
   }
 
   /**
+    * Add a new table to the uhrwerk dag environment by loading the usercode dynamically
+    * @param tableConfigLoc location of table configuration file
+    * @param overwrite remove old definitions of table or keep them and stop if changes have been made
+    * @return
+    */
+  def addTableFileConvention(tableConfigLoc: String, overwrite: Boolean): Option[TableWrapper] = {
+    val tableYaml = configReader.readTable(tableConfigLoc)
+    addTable(tableYaml, getTableFunctionDynamic(tableYaml), overwrite)
+  }
+
+  /**
+    * Add a new table to the uhrwerk dag environment by loading the usercode dynamically
+    * @param tableConfig table configuration
+    * @param overwrite remove old definitions of table or keep them and stop if changes have been made
+    */
+  def addTableConvention(tableConfig: Table, overwrite: Boolean): Unit =
+    addTable(tableConfig, getTableFunctionDynamic(tableConfig), overwrite)
+
+  /**
     * Add a new table to the uhrwerk dag
     * @param tableConfig table configuration object
     * @param userFunc user function for transforming & joining the sources and dependencies
+    * @param overwrite remove old definitions of table or keep them and stop if changes have been made
     * @return If storing the config was a success a TableWrapper object
     */
   def addTable(tableConfig: Table,
