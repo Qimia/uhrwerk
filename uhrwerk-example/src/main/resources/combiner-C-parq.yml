@@ -11,14 +11,14 @@ partition:
 dependencies:
   - area: "staging"
     vertical: "yelp_db"
-    table: "table_a_parq"
+    table: "table_a"
     format: "parquet"
     version: "1.0"
     transform:
       type: "identity"
   - area: "staging"
     vertical: "yelp_db"
-    table: "table_b_parq"
+    table: "table_b"
     format: "parquet"
     version: "1.0"
     transform:
