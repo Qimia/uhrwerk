@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS TABLE_
     parallelism    int                                        NOT NULL,
     max_bulk_size  int                                        NOT NULL,
     version        VARCHAR(128)                               NOT NULL,
+    class_name     VARCHAR(128)                               NOT NULL,
     partitioned    BOOLEAN                                    NOT NULL DEFAULT TRUE,
     created_ts     TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL,
     updated_ts     TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL ON update CURRENT_TIMESTAMP,
