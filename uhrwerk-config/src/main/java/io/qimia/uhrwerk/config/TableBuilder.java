@@ -19,6 +19,7 @@ public class TableBuilder {
     private String vertical;
     private String table;
     private String version;
+    private String className;
     private int parallelism;
     private int maxBulkSize;
     private Partition partition;
@@ -51,6 +52,11 @@ public class TableBuilder {
 
     public TableBuilder version(String version){
         this.version = version;
+        return this;
+    }
+
+    public TableBuilder className(String className){
+        this.className = className;
         return this;
     }
 
@@ -203,6 +209,7 @@ public class TableBuilder {
         table.setVertical(this.vertical);
         table.setTable(this.table);
         table.setVersion(this.version);
+        table.setClassName(this.className);
         table.setParallelism(this.parallelism);
         table.setMax_bulk_size(this.maxBulkSize);
         table.setPartition(this.partition);

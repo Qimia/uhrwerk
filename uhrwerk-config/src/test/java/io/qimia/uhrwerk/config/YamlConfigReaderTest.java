@@ -51,10 +51,11 @@ class YamlConfigReaderTest {
       assertEquals(false, dag.getTables()[1].isPartitioned());
       assertEquals(true, dag.getTables()[0].getSources()[0].isPartitioned());
       assertEquals(false, dag.getTables()[0].getSources()[1].isPartitioned());
+      assertEquals("load.class.name", dag.getTables()[0].getClassName());
+      assertEquals("processing.sourcedb_1.load_a_table.1.0", dag.getTables()[1].getClassName());
       assertEquals(PartitionTransformType.NONE, dag.getTables()[1].getDependencies()[0].getTransformType());
       assertEquals(PartitionTransformType.IDENTITY, dag.getTables()[1].getDependencies()[1].getTransformType());
   }
-
 
   @Test
   public void readEnvTest() {

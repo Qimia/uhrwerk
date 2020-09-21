@@ -9,6 +9,7 @@ public class Table{
     private String vertical;
     private String table;
     private String version;
+    private String className;
     private Integer parallelism=1;
     private Integer max_bulk_size=1;
     private Partition partition;
@@ -50,6 +51,14 @@ public class Table{
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
     }
 
     public Integer getParallelism() {

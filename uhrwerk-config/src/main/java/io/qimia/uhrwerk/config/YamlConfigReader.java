@@ -55,6 +55,17 @@ public class YamlConfigReader {
       tab.setVertical(table.getVertical());
       tab.setName(table.getTable());
       tab.setVersion(table.getVersion());
+      if (table.getClassName() != null){
+        tab.setClassName(table.getClassName());
+      }
+      else {
+        tab.setClassName(
+                table.getArea()
+                + "." + table.getVertical()
+                + "." + table.getTable()
+                + "." + table.getVersion()
+        );
+      }
       tab.setParallelism(table.getParallelism());
       tab.setMaxBulkSize(table.getMax_bulk_size());
       if (table.getPartition() != null) {
