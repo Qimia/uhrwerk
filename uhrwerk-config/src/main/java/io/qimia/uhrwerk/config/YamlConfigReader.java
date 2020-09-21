@@ -55,8 +55,8 @@ public class YamlConfigReader {
       tab.setVertical(table.getVertical());
       tab.setName(table.getTable());
       tab.setVersion(table.getVersion());
-      if (table.getClassName() != null){
-        tab.setClassName(table.getClassName());
+      if (table.getClass_name() != null){
+        tab.setClassName(table.getClass_name());
       }
       else {
         tab.setClassName(

@@ -209,7 +209,7 @@ public class TableBuilder {
         table.setVertical(this.vertical);
         table.setTable(this.table);
         table.setVersion(this.version);
-        table.setClassName(this.className);
+        table.setClass_name(this.className);
         table.setParallelism(this.parallelism);
         table.setMax_bulk_size(this.maxBulkSize);
         table.setPartition(this.partition);

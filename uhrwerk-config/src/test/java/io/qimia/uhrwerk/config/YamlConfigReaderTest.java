@@ -44,6 +44,7 @@ class YamlConfigReaderTest {
 
   @Test
   public void readDagTest() {
+
     Dag dag =
             (new YamlConfigReader()).readDag("config/dag-config.yml");
       System.out.println(dag);
