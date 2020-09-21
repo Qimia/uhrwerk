@@ -128,6 +128,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val partition = new Partition
     partition.setPartitionTs(dateTime)
     partition.setPartitionUnit(PartitionUnit.MINUTES)
+    partition.setPartitionSize(1)
     val dependencyResult = BulkDependencyResult(
       Array(dateTime),
       dependency,
@@ -427,7 +428,16 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       LocalDateTime.of(2015, 10, 12, 20, 0),
       LocalDateTime.of(2015, 10, 15, 13, 45)
     )
-    batchDates.foreach(bd => {
+
+    val extraTs = Array(
+      LocalDateTime.of(2015, 10, 20, 20, 0),
+      LocalDateTime.of(2015, 10, 12, 23, 0),
+      LocalDateTime.of(2015, 10, 12, 2, 0),
+      LocalDateTime.of(2015, 10, 14, 19, 0),
+      LocalDateTime.of(2015, 10, 14, 20, 0)
+    )
+
+    (batchDates ++ extraTs).foreach(bd => {
       println(bd)
       val df = createMockDataFrame(spark, Option(bd))
       manager.writeDataFrame(df, table, Array(bd))
@@ -438,6 +448,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       val partition = new Partition
       partition.setPartitionTs(bd)
       partition.setPartitionUnit(PartitionUnit.MINUTES)
+      partition.setPartitionSize(1)
 
       partition
     })
@@ -468,6 +479,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     assert(results2.getAs[String](0) === "2015-10-12-20-00")
     assert(results2.getAs[String](1) === "2015-10-15-13-45")
 
+    // DAYS
     val partitions3 = partitions.map(p => {
       p.setPartitionUnit(PartitionUnit.DAYS)
 
@@ -483,36 +495,39 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     assert(results3.getAs[String](0) === "2015-10-12-20-00")
     assert(results3.getAs[String](1) === "2015-10-15-13-45")
 
-    //    val partitions4 = batchDates.slice(0, 1).map(bd => {
-    //      val partition = new Partition
-    //      partition.setYear(bd.getYear.toString)
-    //      partition.setMonth(bd.getMonthValue.toString)
-    //
-    //      partition
-    //    })
-    //
-    //    val dependencyResult4 = BulkDependencyResult(batchDates, dependency, connection, partitions4)
-    //
-    //    val bigDF4: DataFrame = manager.loadDependencyDataFrame(dependencyResult4)
-    //
-    //    val results4 = bigDF4.agg(min($"minute"), max($"minute")).collect().head
-    //    assert(results4.getAs[String](0) === "2015-10-12-20-00")
-    //    assert(results4.getAs[String](1) === "2015-10-15-13-45")
-    //
-    //    val partitions5 = batchDates.slice(0, 1).map(bd => {
-    //      val partition = new Partition
-    //      partition.setYear(bd.getYear.toString)
-    //
-    //      partition
-    //    })
-    //
-    //    val dependencyResult5 = BulkDependencyResult(batchDates, dependency, connection, partitions5)
-    //
-    //    val bigDF5: DataFrame = manager.loadDependencyDataFrame(dependencyResult5)
-    //
-    //    val results5 = bigDF5.agg(min($"minute"), max($"minute")).collect().head
-    //    assert(results5.getAs[String](0) === "2015-10-12-20-00")
-    //    assert(results5.getAs[String](1) === "2015-10-15-13-45")
+    // DAYS with partitionSize 2
+    val partitions5 = partitions.slice(0, 1).map(p => {
+      p.setPartitionUnit(PartitionUnit.DAYS)
+      p.setPartitionSize(2)
+      p
+    })
+
+    val dependencyResult5 =
+      BulkDependencyResult(batchDates, dependency, connection, partitions5)
+
+    val bigDF5: DataFrame = manager.loadDependencyDataFrame(dependencyResult5)
+
+    val results5 = bigDF5.agg(min($"minute"), max($"minute")).collect().head
+    assert(results5.getAs[String](0) === "2015-10-12-20-00")
+    assert(results5.getAs[String](1) === "2015-10-14-19-00")
+
+    // WEEKS
+    val partitions4 = partitions
+      .slice(0, 1)
+      .map(p => {
+        p.setPartitionUnit(PartitionUnit.WEEKS)
+        p.setPartitionSize(1)
+
+        p
+      })
+
+    val dependencyResult4 = BulkDependencyResult(batchDates, dependency, connection, partitions4)
+
+    val bigDF4: DataFrame = manager.loadDependencyDataFrame(dependencyResult4)
+
+    val results4 = bigDF4.agg(min($"day"), max($"day")).collect().head
+    assert(results4.getAs[String](0).equals("2015-10-12"))
+    assert(results4.getAs[String](1) === "2015-10-15")
   }
 
   "loading dependencies with empty partitions" should "fail" in {
@@ -617,7 +632,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val spark = getSparkSession
 
     val dateTime = LocalDateTime.of(2020, 2, 4, 10, 30)
-    val df = createMockDataFrame(spark, Option(dateTime)).drop("hour", "minute")
+    val df = createMockDataFrame(spark, Option(dateTime)) //.drop("hour", "minute")
 
     val manager = new SparkFrameManager(spark)
 
@@ -650,6 +665,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val partition = new Partition
     partition.setPartitionTs(LocalDateTime.of(2020, 2, 4, 10, 30))
     partition.setPartitionUnit(PartitionUnit.DAYS)
+    partition.setPartitionSize(1)
 
     val dependencyResult = BulkDependencyResult(
       Array(dateTime),
@@ -679,7 +695,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     )
 
     assert(
-      !new File(
+      new File(
         "src/test/resources/testlake/area=staging/vertical=testdb/table=testoptionsonlyday/version=1/format=csv/" +
           "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10"
       ).isDirectory

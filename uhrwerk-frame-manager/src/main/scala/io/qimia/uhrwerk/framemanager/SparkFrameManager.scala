@@ -102,7 +102,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     }
 
     if (!isStringEmpty(source.getSelectColumn) && !containsTimeColumns(filteredDf, source.getPartitionUnit)) {
-      addTimeColumnsToDFFromTimestampColumn(filteredDf, source.getSelectColumn, source.getPartitionUnit)
+      addTimeColumnsToDFFromTimestampColumn(filteredDf, source.getSelectColumn)
     } else {
       filteredDf
     }
@@ -127,12 +127,22 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         if (isJDBC) {
           col(timeColumnJDBC) === TimeTools.convertTSToUTCString(p.getPartitionTs)
         } else {
-          val (year, month, day, hour, minute) = getTimeValues(p.getPartitionTs)
+          val (yearLowerBound, monthLowerBound, dayLowerBound, hourLowerBound, minuteLowerBound) =
+            getTimeValues(p.getPartitionTs)
+          val (yearUpperBound, monthUpperBound, dayUpperBound, hourUpperBound, minuteUpperBound) =
+            if (p.getPartitionUnit != null) {
+              getTimeValues(
+                TimeTools.addPartitionSizeToTimestamp(p.getPartitionTs, p.getPartitionSize, p.getPartitionUnit)
+              )
+            } else {
+              ("", "", "", "", "")
+            }
           p.getPartitionUnit match {
-            case PartitionUnit.MINUTES => col("minute") === minute
-            case PartitionUnit.HOURS => col("hour") === hour
-            case PartitionUnit.DAYS => col("day") === day
-            case _ => col("minute") === minute // unpartitioned
+            case null => col("minute") === minuteLowerBound // unpartitioned
+            //            case PartitionUnit.HOURS => col("hour") >= hourLowerBound && col("hour") < hourUpperBound
+            //            case PartitionUnit.DAYS => col("day") >= dayLowerBound && col("day") < dayUpperBound
+            //            case PartitionUnit.WEEKS => col("day") >= dayLowerBound && col("day") < dayUpperBound
+            case _ => col("minute") >= minuteLowerBound && col("minute") < minuteUpperBound
           }
         }
       )
@@ -172,7 +182,12 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           )
       }
 
-    val filtered = df.filter(filter)
+    val convertedColumns = if (isJDBC) {
+      df
+    } else {
+      convertTimeColumnsToStrings(df, dependencyResult.succeeded.head.getPartitionUnit)
+    }
+    val filtered = convertedColumns.filter(filter)
 
     if (dependencyResult.dependency.getTransformType.equals(PartitionTransformType.NONE)) {
       // unpartitioned data, remove all time columns
@@ -184,8 +199,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       if (isJDBC) {
         addTimeColumnsToDFFromTimestampColumn(
           filtered,
-          timeColumnJDBC,
-          dependencyResult.succeeded.head.getPartitionUnit
+          timeColumnJDBC
         ).drop(timeColumnJDBC)
       } else {
         filtered
@@ -275,7 +289,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       .load()
 
     if (!isStringEmpty(source.getSelectColumn) && !containsTimeColumns(df, source.getPartitionUnit)) {
-      addTimeColumnsToDFFromTimestampColumn(df, source.getSelectColumn, source.getPartitionUnit)
+      addTimeColumnsToDFFromTimestampColumn(df, source.getSelectColumn)
     } else {
       df
     }
@@ -284,7 +298,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   /**
    * Saves a table to all its targets.
    * Four possible scenarios regarding the timestamp:
-   * 1. Time columns (up to these five: year, month, day, hour, minute) are in the DF
+   * 1. Time columns (these five: year, month, day, hour, minute) are in the DF
    * 1.1 Identity transformation (partitionSize = 1)
    * 1.1.1 File system => columns are normally used for partitioning
    * 1.1.2 JDBC => one time stamp column is created from the time columns and that is then used for saving
@@ -323,10 +337,6 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       }
       val isJDBC = target.getConnection.getType.equals(ConnectionType.JDBC)
 
-      val timeColumnsCut = calculateCutBasedOnPartitionUnit(locationTableInfo.getPartitionUnit)
-      val selectedTimeColumns =
-        timeColumns.slice(0, timeColumnsCut)
-
       val tablePath = getTablePath(locationTableInfo, !isJDBC, target.getFormat)
       val path = if (isJDBC) {
         tablePath
@@ -341,22 +351,22 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
         // for jdbc add a timestamp column and remove all other time columns (year/month/day/hour/minute)
         if (isJDBC) {
-          val jdbcDF = addJDBCTimeColumn(frame, partitionTS.head).drop(selectedTimeColumns: _*)
+          val jdbcDF = addJDBCTimeColumn(frame, partitionTS.head).drop(timeColumns: _*)
 
           (path, jdbcDF)
           // for fs remove all time columns (year/month/day/hour/minute)
         } else {
           val datePath = createDatePath(partitionTS.head, locationTableInfo.getPartitionUnit)
 
-          (concatenatePaths(path, datePath), frame.drop(selectedTimeColumns: _*))
+          (concatenatePaths(path, datePath), frame.drop(timeColumns: _*))
         }
       } else if (dfContainsTimeColumns) {
         // if it is not identity, need to rewrite the values in the time columns
         if (locationTableInfo.getPartitionSize > 1) {
           val partitionUnit = locationTableInfo.getPartitionUnit.toString
           val partitionSize = locationTableInfo.getPartitionSize
-          val dfWithNewTimeColumnsTmp = addJDBCTimeColumnFromTimeColumns(frame, timeColumnsCut)
-            .drop(selectedTimeColumns: _*)
+          val dfWithNewTimeColumnsTmp = addJDBCTimeColumnFromTimeColumns(frame)
+            .drop(timeColumns: _*)
             .withColumn(
               timeColumnJDBC,
               udf { x: Timestamp =>
@@ -378,8 +388,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
               path,
               addTimeColumnsToDFFromTimestampColumn(
                 dfWithNewTimeColumnsTmp,
-                timeColumnJDBC,
-                locationTableInfo.getPartitionUnit
+                timeColumnJDBC
               ).drop(timeColumnJDBC)
             )
           }
@@ -387,7 +396,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           // if jdbc and saving several partitions (the df contains the time columns) - add the timestamp column
           // and remove the time columns
           if (isJDBC) {
-            (path, addJDBCTimeColumnFromTimeColumns(frame, timeColumnsCut).drop(selectedTimeColumns: _*))
+            (path, addJDBCTimeColumnFromTimeColumns(frame).drop(timeColumns: _*))
           } else {
             (path, frame)
           }
@@ -425,7 +434,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       val writerWithPartitioning =
         if (!isJDBC && dfContainsTimeColumns) {
           writerWithOptions
-            .partitionBy(selectedTimeColumns ++ partitionBy: _*)
+            .partitionBy(timeColumns ++ partitionBy: _*)
         } else {
           writerWithOptions
         }
