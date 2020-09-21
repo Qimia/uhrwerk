@@ -25,7 +25,6 @@ object SparkFrameManagerUtils {
    */
   private[framemanager] def convertTimeColumnsToStrings(df: DataFrame, partitionUnit: PartitionUnit): DataFrame = {
     timeColumns
-      .slice(0, calculateCutBasedOnPartitionUnit(partitionUnit))
       .foldLeft(df)((tmp, timeColumn) => tmp.withColumn(timeColumn, col(timeColumn).cast(StringType)))
   }
 
@@ -98,7 +97,6 @@ object SparkFrameManagerUtils {
   private[framemanager] def createDatePath(startTS: LocalDateTime, partitionUnit: PartitionUnit): String = {
     val (year, month, day, hour, minute) = getTimeValues(startTS)
     val listOfTimeColumns = List(s"year=$year", s"month=$month", s"day=$day", s"hour=$hour", s"minute=$minute")
-      .slice(0, calculateCutBasedOnPartitionUnit(partitionUnit))
 
     concatenatePaths(listOfTimeColumns.head, listOfTimeColumns.slice(1, listOfTimeColumns.length): _*)
   }
@@ -172,27 +170,6 @@ object SparkFrameManagerUtils {
   }
 
   /**
-   * Calculates where to cut an array of time columns (year, month, day, hour, minute) based on the partition unit.
-   * E.g. for partition unit minutes returns 5 (all five columns should be considered), for unit days returns 3,
-   * only (year, month, day) are important.
-   *
-   * @param partitionUnit Partition Unit.
-   * @return The cut.
-   */
-  private[framemanager] def calculateCutBasedOnPartitionUnit(partitionUnit: PartitionUnit): Int = {
-    //    partitionUnit match {
-    //      case PartitionUnit.MINUTES => 5
-    //      case PartitionUnit.HOURS   => 4
-    //      case PartitionUnit.DAYS    => 3
-    //      case PartitionUnit.WEEKS   => 3
-    //      case _                     => 5
-    //    }
-
-    // currently we use always all five columns
-    5
-  }
-
-  /**
    * Checks whether a DataFrame contains all time columns.
    *
    * @param df            DataFrame.
@@ -203,9 +180,7 @@ object SparkFrameManagerUtils {
                                                  df: DataFrame,
                                                  partitionUnit: PartitionUnit
                                                ): Boolean = {
-    val cut = calculateCutBasedOnPartitionUnit(partitionUnit)
-
-    if (!timeColumns.slice(0, cut).forall(df.columns.contains(_))) {
+    if (!timeColumns.forall(df.columns.contains(_))) {
       return false
     }
     df.cache()
@@ -213,8 +188,7 @@ object SparkFrameManagerUtils {
     try {
       if (
         timeColumns
-          .slice(0, cut)
-          .zip(timeColumnsFormats.slice(0, cut))
+          .zip(timeColumnsFormats)
           .forall(p => {
             df.withColumn(p._1 + "_transformed", to_date(col(p._1).cast(StringType), p._2))
               .filter(col(p._1 + "_transformed").isNull)
@@ -224,46 +198,9 @@ object SparkFrameManagerUtils {
         return true
       }
     } catch {
-      case exception: Exception => println("The df doesn't contain time columns")
+      case _: Exception => println("The df doesn't contain time columns")
     }
     false
-  }
-
-  /**
-   * Adds time columns to a DataFrame from a specified timestamp.
-   *
-   * @param frame         DataFrame to add columns to.
-   * @param ts            TimeStamp.
-   * @param partitionUnit Partition Unit.
-   * @return DataFrame with the time columns.
-   */
-  private[framemanager] def addTimeColumns(
-                                            frame: DataFrame,
-                                            ts: LocalDateTime,
-                                            partitionUnit: PartitionUnit
-                                          ): DataFrame = {
-    val (year, month, day, hour, minute) = getTimeValues(ts)
-
-    val withDay = frame
-      .withColumn("year", lit(year))
-      .withColumn("month", lit(month))
-      .withColumn("day", lit(day))
-
-    val withHour = if (partitionUnit.equals(PartitionUnit.HOURS) || partitionUnit.equals(PartitionUnit.MINUTES)) {
-      withDay
-        .withColumn("hour", lit(hour))
-    } else {
-      withDay
-    }
-
-    val withMinute = if (partitionUnit.equals(PartitionUnit.MINUTES)) {
-      withHour
-        .withColumn("minute", lit(minute))
-    } else {
-      withHour
-    }
-
-    withMinute
   }
 
   /**
@@ -284,54 +221,28 @@ object SparkFrameManagerUtils {
    * Adds a jdbc time column (timestamp) to a DataFrame from its time columns.
    *
    * @param frame          DataFrame to add columns to.
-   * @param timeColumnsCut Cut in the time columns array based on the PartitionUnit.
    * @return DataFrame with the time columns.
    */
   private[framemanager] def addJDBCTimeColumnFromTimeColumns(
-                                                              frame: DataFrame,
-                                                              timeColumnsCut: Int
+                                                              frame: DataFrame
                                                             ): DataFrame = {
     frame.withColumn(
       timeColumnJDBC,
-      to_timestamp(col(timeColumns(timeColumnsCut - 1)), timeColumnsFormats(timeColumnsCut - 1))
+      to_timestamp(col(timeColumns.last), timeColumnsFormats.last)
     )
   }
 
   /**
-   * Expands a source's selectColumn (timestamp) into our time columns based on the partition unit.
+   * Expands a source's selectColumn (timestamp) into our time columns.
    *
-   * @param df            Source DataFrame.
-   * @param selectColumn  Timestamp column.
-   * @param partitionUnit Partition Unit.
+   * @param df           Source DataFrame.
+   * @param selectColumn Timestamp column.
    * @return Enriched DataFrame.
    */
   private[framemanager] def addTimeColumnsToDFFromTimestampColumn(
                                                                    df: DataFrame,
-                                                                   selectColumn: String,
-                                                                   partitionUnit: PartitionUnit
+                                                                   selectColumn: String
                                                                  ): DataFrame = {
-    //    val withDay = df
-    //      .withColumn("year", year(col(selectColumn)))
-    //      .withColumn("month", concat(col("year"), lit("-"), leftPad(month(col(selectColumn)))))
-    //      .withColumn("day", concat(col("month"), lit("-"), leftPad(dayofmonth(col(selectColumn)))))
-    //
-    //    val withHour = if (partitionUnit.equals(PartitionUnit.HOURS) || partitionUnit.equals(PartitionUnit.MINUTES)) {
-    //      withDay
-    //        .withColumn("hour", concat(col("day"), lit("-"), leftPad(hour(col(selectColumn)))))
-    //    } else {
-    //      withDay
-    //    }
-    //
-    //    val withMinute = if (partitionUnit.equals(PartitionUnit.MINUTES)) {
-    //      withHour
-    //        .withColumn("minute", concat(col("hour"), lit("-"), leftPad(minute(col(selectColumn)))))
-    //    } else {
-    //      withHour
-    //    }
-    //
-    //    withMinute
-
-    // now we always want all time columns
     df.withColumn("year", year(col(selectColumn)))
       .withColumn("month", concat(col("year"), lit("-"), leftPad(month(col(selectColumn)))))
       .withColumn("day", concat(col("month"), lit("-"), leftPad(dayofmonth(col(selectColumn)))))
