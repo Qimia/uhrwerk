@@ -6,7 +6,7 @@ import io.qimia.uhrwerk.engine.Environment
 import io.qimia.uhrwerk.engine.Environment.SourceIdent
 import io.qimia.uhrwerk.engine.dag.{DagTask, DagTaskBuilder, DagTaskDispatcher}
 import io.qimia.uhrwerk.example.retail_examples.LoadDims.simpleHashLoad
-import io.qimia.uhrwerk.example.retail_examples.LoadFacts.{computeFactTable, computeWeeklyFacts, simpleLoad}
+import io.qimia.uhrwerk.example.retail_examples.LoadFacts.{computeFactTable, computeAggregation, simpleLoad}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
@@ -41,7 +41,6 @@ object RetailDAG extends App {
     "retail_examples/staging/retail/storeDim_1.0.yml",
     simpleHashLoad(SourceIdent("retail_mysql", "qimia_oltp.stores", "jdbc"), "storeKey")
   )
-
   val salesWrapper = uhrwerkEnvironment.addTableFile(
     "retail_examples/staging/retail/salesFact_1.0.yml",
     simpleLoad(SourceIdent("retail_mysql", "qimia_oltp.sales_items", "jdbc"))
@@ -49,7 +48,7 @@ object RetailDAG extends App {
   val salesFactWrapper =
     uhrwerkEnvironment.addTableFile("retail_examples/dwh/retail/salesFact_1.0.yml", computeFactTable)
   val salesFactDailyWrapper =
-    uhrwerkEnvironment.addTableFile("retail_examples/dwh/retail/salesFactsDaily_1.0.yml", computeWeeklyFacts)
+    uhrwerkEnvironment.addTableFile("retail_examples/dwh/retail/salesFactsDaily_1.0.yml", computeAggregation)
 
   val dagTaskBuilder = new DagTaskBuilder(uhrwerkEnvironment)
   val taskList: List[DagTask] = dagTaskBuilder.buildTaskListFromTable(
