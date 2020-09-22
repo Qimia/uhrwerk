@@ -189,10 +189,39 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
   def getTable(id: Ident): Option[TableWrapper] = tables.get(id)
 
   /**
-    * Setup a full dag based on a configuration
-    * @param dagConfigLoc location of the full dag configuration file
-    * @param userFuncs a map with the table identity objects mapped to the userfunctions for transformation
-    */
+   * Setup a full dag based on a configuration file and userCode class config or convention
+   * @param dagConfigLoc location of the full dag configuration file
+   */
+  def setupDagFileConvention(dagConfigLoc: String, overwrite: Boolean = false): Unit = {
+    val dagYaml = configReader.readDag(dagConfigLoc)
+    setupDagConvention(dagYaml, overwrite)
+  }
+
+  /**
+   * Setup a full dag based on a configuration
+   * @param dagConfig full dag configuration object
+   */
+  def setupDagConvention(dagConfig: Dag, overwrite: Boolean = false){
+    dagConfig.getConnections.foreach(conn => store.connectionService.save(conn, true))
+    dagConfig.getTables.foreach(t => {
+      val ident = TableIdent(t.getArea, t.getVertical, t.getName, t.getVersion)
+      val storeRes = store.tableService.save(t, true)
+      if (!storeRes.isSuccess) {
+        System.err.println(storeRes.getMessage)
+      } else {
+        val storedT  = storeRes.getNewResult
+        val userFunc = getTableFunctionDynamic(t)
+        val wrapper  = new TableWrapper(store, storedT, userFunc, frameManager)
+        tables(ident) = wrapper
+      }
+    })
+  }
+
+  /**
+   * Setup a full dag based on a configuration file
+   * @param dagConfigLoc location of the full dag configuration file
+   * @param userFuncs a map with the table identity objects mapped to the userfunctions for transformation
+   */
   def setupDagFile(dagConfigLoc: String, userFuncs: Map[Ident, TaskInput => TaskOutput]): Unit = {
     // TODO: First fix addConnections + addTable then work those changes back into this function
     val dagYaml = configReader.readDag(dagConfigLoc)
@@ -204,12 +233,12 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     * @param dagConfig full dag configuration object
     * @param userFuncs a map with the table identity objects mapped to the userfunctions for transformation
     */
-  def setupDag(dagConfig: Dag, userFuncs: Map[Ident, TaskInput => TaskOutput]): Unit = {
-    dagConfig.getConnections.foreach(conn => store.connectionService.save(conn, true))
+  def setupDag(dagConfig: Dag, userFuncs: Map[Ident, TaskInput => TaskOutput], overwrite: Boolean = false): Unit = {
+    dagConfig.getConnections.foreach(conn => store.connectionService.save(conn, overwrite))
     dagConfig.getTables.foreach(t => {
       val ident = TableIdent(t.getArea, t.getVertical, t.getName, t.getVersion)
       if (userFuncs.contains(ident)) {
-        val storeRes = store.tableService.save(t, true)
+        val storeRes = store.tableService.save(t, overwrite)
         if (!storeRes.isSuccess) {
           System.err.println(storeRes.getMessage)
         } else {
