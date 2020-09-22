@@ -43,3 +43,5 @@ Uhrwerk needs two things to run:
        .getOrCreate()
     ```
     * With prepared spark-submit scripts on the docker Spark cluster (`./submit-loader-A-parq.sh`). Use `testing-connection-config-docker.yml`, and `testing-env-config-docker.yml`.
+    
+4. When using the Spark docker containers, see the Spark history server at http://0.0.0.0:18080/    
