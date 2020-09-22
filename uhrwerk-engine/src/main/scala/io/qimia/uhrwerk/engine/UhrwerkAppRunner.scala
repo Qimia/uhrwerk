@@ -71,14 +71,42 @@ object UhrwerkAppRunner {
   }
 
   /**
-    * Run Uhrwerk framework as application
-    * @param sparkSession spark session required by framemanagers
-    * @param environmentConfig the environment configuration
-    * @param connectionConfigs all connection configurations
-    * @param tableConfigs all table configurations
-    * @param runTable identity of exact table that needs to be processed
-    * @param startTime starting time partitions inclusive
-    * @param endTime end time partitions exclusive
+   * Run Uhrwerk with a dag config file
+   *
+   * @param sparkSession      spark session required by framemanagers
+   * @param environmentConfig the environment configuration
+   * @param dagConfig         the dag configuration
+   * @param runTable          identity of exact table that needs to be processed
+   * @param startTime         starting time partitions inclusive
+   * @param endTime           end time partitions exclusive
+   * @param dagMode           run all the dependencies as well (true) or only particular table (false)
+   * @param parallelRun       parallelRun run tables in parallel or each
+   * @param overwrite
+   */
+  def runDagFile(
+                  sparkSession: SparkSession,
+                  environmentConfig: String,
+                  dagConfig: String,
+                  runTable: TableIdent,
+                  startTime: LocalDateTime,
+                  endTime: LocalDateTime,
+                  dagMode: Boolean,
+                  parallelRun: Int,
+                  overwrite: Boolean
+                ): Unit = {
+    ???
+  }
+
+  /**
+   * Run Uhrwerk framework as application
+   *
+   * @param sparkSession      spark session required by framemanagers
+   * @param environmentConfig the environment configuration
+   * @param connectionConfigs all connection configurations
+   * @param tableConfigs      all table configurations
+   * @param runTable          identity of exact table that needs to be processed
+   * @param startTime         starting time partitions inclusive
+   * @param endTime           end time partitions exclusive
     * @param dagMode run all the dependencies as well (true) or only particular table (false)
     * @param parallelRun run tables in parallel or each
     * @param overwrite

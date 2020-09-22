@@ -28,20 +28,24 @@ class CommandLineInterface extends Callable[Int] {
     description = Array("Paths to the Table Configuration(s)"), required = false)
   private val tableConfAL = new util.ArrayList[String]
 
+  @Option(names = Array("-d", "--dag"), paramLabel = "DAG_CONF",
+    description = Array("Path to the Dag Configuration"), required = false)
+  private val dagConfig = ""
+
   @Option(names = Array("-r", "--run"), paramLabel = "RUN_TAB",
-    description = Array("Table to run as 'area.vertical.table.version'"), required = true)
+    description = Array("Table to run as area.vertical.table.version"), required = true)
   private val runTable = ""
 
   @Option(names = Array("-st", "--start"), paramLabel = "STARTTS",
-    description = Array("Start point for the execution"), required = true)
+    description = Array("Start point for the execution"), required = false)
   private val startTime = ""
 
   @Option(names = Array("-et", "--end"), paramLabel = "ENDTS",
     description = Array("End point for the execution"), required = true)
   private val endTime = ""
 
-  @Option(names = Array("-d", "--dag"), paramLabel = "DAGMD",
-    description = Array(""), required = true)
+  @Option(names = Array("-dm", "--dagmode"), paramLabel = "DAGMD",
+    description = Array(""))
   private val dagM = "n"
 
   @Option(names = Array("-p", "--parallel"), paramLabel = "PARALLEL",
@@ -52,6 +56,10 @@ class CommandLineInterface extends Callable[Int] {
     description = Array("If entries should be updated if they already exist"), required = false)
   private val overw = "n"
 
+  @Option(names = Array("--cont"), paramLabel = "CONMODE",
+    description = Array("Run pipeline in continuous mode instead of batch"), required = false)
+  private val conM = "n"
+
   override def call(): Int = {
     val dagMode = dagM match {
       case "y" => true
@@ -61,21 +69,37 @@ class CommandLineInterface extends Callable[Int] {
       case "y" => true
       case _ => false
     }
+    val conMode = conM match {
+      case "y" => true
+      case _ => false
+    }
     val sparkSess = SparkSession.builder().appName(runTable).master("local").getOrCreate()
-
-    val connectionConf = connectionConfAL.asScala.toArray
-    val tableConf = tableConfAL.asScala.toArray
 
     val components = runTable.split(".")
     val target = TableIdent(components(0), components(1), components(2), components(3))
 
-    try {
-      UhrwerkAppRunner.runFiles(sparkSess, environmentConfig, connectionConf,
-        tableConf, target, startTime.asInstanceOf[LocalDateTime], endTime.asInstanceOf[LocalDateTime], dagMode, parallelRun, overwrite)
-      0
+    if (dagConfig == "") {
+      val connectionConf = connectionConfAL.asScala.toArray
+      val tableConf = tableConfAL.asScala.toArray
+
+      try {
+        UhrwerkAppRunner.runFiles(sparkSess, environmentConfig, connectionConf,
+          tableConf, target, startTime.asInstanceOf[LocalDateTime], endTime.asInstanceOf[LocalDateTime], dagMode, parallelRun, overwrite)
+        0
+      }
+      catch {
+        case e: Exception => 1
+      }
     }
-    catch {
-      case e: Exception => 1
+    else {
+      try {
+        UhrwerkAppRunner.runDagFile(sparkSess, environmentConfig, dagConfig, target,
+          startTime.asInstanceOf[LocalDateTime], endTime.asInstanceOf[LocalDateTime], dagMode, parallelRun, overwrite)
+        0
+      }
+      catch {
+        case e: Exception => 1
+      }
     }
   }
 }
