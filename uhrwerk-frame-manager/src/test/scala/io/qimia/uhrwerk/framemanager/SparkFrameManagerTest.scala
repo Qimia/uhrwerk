@@ -53,7 +53,7 @@ trait BuildTeardown extends BeforeAndAfterAll {
     conn.setJdbcDriver("com.mysql.cj.jdbc.Driver")
     conn.setJdbcUrl("jdbc:mysql://localhost:53306")
     conn.setJdbcUser("root")
-    conn.setJdbcPass("mysql")
+    conn.setJdbcPass("61ePGqq20u9TZjbNhf0")
     conn
   }
 
