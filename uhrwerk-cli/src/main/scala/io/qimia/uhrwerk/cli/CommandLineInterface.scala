@@ -47,7 +47,7 @@ class CommandLineInterface extends Callable[Int] {
 
   @Option(names = Array("-dm", "--dagmode"), paramLabel = "DAGMD",
     description = Array(""))
-  private val dagM = "n"
+  private val dagM = "y"
 
   @Option(names = Array("-p", "--parallel"), paramLabel = "PARALLEL",
     description = Array("Size of the threadpool for running the tasks"), required = false)
