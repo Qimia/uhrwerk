@@ -23,9 +23,9 @@ import scala.collection.mutable.ListBuffer
 trait BuildTeardown extends BeforeAndAfterAll {
   this: Suite =>
 
-  val DATABASE_NAME: String = "staging-dbname"
-  val DATABASE_NAME2: String = "source-testdb"
-  val DATABASE_NAME3: String = "staging-testdb"
+  val DATABASE_NAME: String = "staging_dbname"
+  val DATABASE_NAME2: String = "source_testdb"
+  val DATABASE_NAME3: String = "staging_testdb"
 
   override def afterAll() {
     val foldersToClean: ListBuffer[Path] = new ListBuffer[Path]
@@ -319,7 +319,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     sourceJDBC.setSelectQuery(
       "select * from <path> where created_at >= '<lower_bound>' and created_at < '<upper_bound>'"
     )
-    sourceJDBC.setPath("`source-testdb`.`sourcenumberone-1`")
+    sourceJDBC.setPath("`source_testdb`.`sourcenumberone_1`")
 
     val loadedDFSourceWithTSJDBC = manager
       .loadSourceDataFrame(
@@ -395,13 +395,16 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     assert(bWholeDFQuery === dfWithTSCollected)
   }
 
-  "specifying timestamps but not the source select column" should "throw an exception" in {
+  "specifying timestamps but not the source select column for partitioned sources" should "throw an exception" in {
     val spark = getSparkSession
     val manager = new SparkFrameManager(spark)
 
+    val source = new Source
+    source.setPartitioned(true)
+
     assertThrows[IllegalArgumentException](
       manager
-        .loadSourceDataFrame(new Source, startTS = Option(LocalDateTime.now()))
+        .loadSourceDataFrame(source, startTS = Option(LocalDateTime.now()))
     )
   }
 

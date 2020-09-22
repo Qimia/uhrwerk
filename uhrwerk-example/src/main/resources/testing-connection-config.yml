@@ -22,6 +22,13 @@
     user: root
     pass: mysql
 
+- name: "retail_mysql"
+  jdbc:
+    jdbc_url: 'jdbc:mysql://localhost:43306/'
+    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    user: root
+    pass: mysql
+
 - name: "qimia_oltp"
   jdbc:
     jdbc_url: 'jdbc:mysql://localhost:53306/qimia_oltp'
