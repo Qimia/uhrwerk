@@ -11,8 +11,11 @@ import org.apache.spark.sql.SparkSession
 object LoaderA extends App {
 
   val sparkSess = SparkSession.builder()
-    .appName("loaderA")
-    .master("local")
+    .appName("LoaderA")
+    .master("local[*]")
+    .config("driver-memory", "2g")
+    .config("spark.eventLog.enabled", "true")
+    .config("spark.eventLog.dir", "./docker/spark_logs")
     .getOrCreate()
 
   def loaderAFunc(in: TaskInput): TaskOutput = {
