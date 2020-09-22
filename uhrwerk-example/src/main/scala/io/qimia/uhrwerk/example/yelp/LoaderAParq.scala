@@ -14,8 +14,7 @@ object LoaderAParq extends App {
   Logger.getLogger("akka").setLevel(Level.ERROR)
 
   val sparkSess = SparkSession.builder()
-    .appName("loaderA")
-    .master("local[3]")
+    .appName("LoaderAParq")
     .getOrCreate()
 
   def loaderAFunc(in: TaskInput): TaskOutput = {
@@ -29,8 +28,8 @@ object LoaderAParq extends App {
 
   val frameManager = new SparkFrameManager(sparkSess)
 
-  val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+  val uhrwerkEnvironment = Environment.build("testing-env-config-docker.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("testing-connection-config-docker.yml")
   val wrapper = uhrwerkEnvironment.addTableFile("loader-A-parq.yml", loaderAFunc, true)
 
   val runTimes = Array(

@@ -10,8 +10,11 @@ import org.apache.spark.sql.functions.{max, min}
 
 object LoaderD extends App {
   val sparkSess = SparkSession.builder()
-    .appName("loaderD")
-    .master("local")
+    .appName("LoaderD")
+    .master("local[*]")
+    .config("driver-memory", "2g")
+    .config("spark.eventLog.enabled", "true")
+    .config("spark.eventLog.dir", "./docker/spark_logs")
     .getOrCreate()
 
   Logger.getLogger("org").setLevel(Level.WARN)
