@@ -21,11 +21,12 @@ object LoaderB extends App {
 
   val frameManager = new SparkFrameManager(sparkSess)
 
-  val uhrwerkEnvironment = Environment.build("testing-env-config.yml" ,frameManager)
+  val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
   uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
   val wrapper = uhrwerkEnvironment.addTableFile("loader-B.yml", loaderBFunc)
 
-  val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0))
+  val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0),
+    LocalDateTime.of(2012, 5, 2, 3, 4))
   val results = wrapper.get.runTasksAndWait(runTimes)
   println(results)
 

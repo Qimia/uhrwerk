@@ -79,13 +79,13 @@ class SparkFrameManagerUtilsTest extends AnyFlatSpec {
     val datePathHour = SparkFrameManagerUtils.createDatePath(ts, PartitionUnit.HOURS)
 
     assert(
-      datePathHour === "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10"
+      datePathHour === "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10/minute=2020-02-04-10-30"
     )
 
     val datePathDay = SparkFrameManagerUtils.createDatePath(ts, PartitionUnit.DAYS)
 
     assert(
-      datePathDay === "year=2020/month=2020-02/day=2020-02-04"
+      datePathDay === "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10/minute=2020-02-04-10-30"
     )
   }
 

@@ -91,7 +91,7 @@
                     <forkMode>once</forkMode>
                     <junitxml>.</junitxml>
                     <filereports>TestSuiteReport.txt</filereports>
-                    <parallel>true</parallel>
+                    <parallel>false</parallel>
                 </configuration>
                 <executions>
                     <execution>
