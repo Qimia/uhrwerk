@@ -222,10 +222,10 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
    * @param dagConfigLoc location of the full dag configuration file
    * @param userFuncs a map with the table identity objects mapped to the userfunctions for transformation
    */
-  def setupDagFile(dagConfigLoc: String, userFuncs: Map[Ident, TaskInput => TaskOutput]): Unit = {
+  def setupDagFile(dagConfigLoc: String, userFuncs: Map[Ident, TaskInput => TaskOutput], overwrite: Boolean = false): Unit = {
     // TODO: First fix addConnections + addTable then work those changes back into this function
     val dagYaml = configReader.readDag(dagConfigLoc)
-    setupDag(dagYaml, userFuncs)
+    setupDag(dagYaml, userFuncs, overwrite)
   }
 
   /**
@@ -240,7 +240,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
       if (userFuncs.contains(ident)) {
         val storeRes = store.tableService.save(t, overwrite)
         if (!storeRes.isSuccess) {
-          System.err.println(storeRes.getMessage)
+          System.err.println("TableStore failed: " + storeRes.getMessage)
         } else {
           val storedT  = storeRes.getNewResult
           val userFunc = userFuncs(ident)
