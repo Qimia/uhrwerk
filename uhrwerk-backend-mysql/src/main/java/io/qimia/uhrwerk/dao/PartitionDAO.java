@@ -207,7 +207,7 @@ public class PartitionDAO implements PartitionService {
   }
 
   @Override
-  public Partition getLatestUnpartitioned(Long targetId) {
+  public Partition getLatestPartition(Long targetId) {
     try {
       PreparedStatement select = db.prepareStatement(SELECT_LATEST_BY_TARGET_ID);
       select.setLong(1, targetId);
