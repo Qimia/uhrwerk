@@ -19,6 +19,9 @@ public class SourceDAOTest {
         table.setArea("test-area-source");
         table.setVertical("test-vertical");
         table.setName("test-table-sourcedao");
+        table.setClassName(
+            String.join(
+                ".", table.getArea(), table.getVertical(), table.getName(), table.getVersion()));
         table.setPartitionUnit(PartitionUnit.MINUTES);
         table.setPartitionSize(15);
         table.setParallelism(8);

@@ -29,6 +29,7 @@
         <module>uhrwerk-frame-manager</module>
         <module>uhrwerk-engine</module>
         <module>uhrwerk-example</module>
+        <module>uhrwerk-cli</module>
     </modules>
 
     <dependencies>

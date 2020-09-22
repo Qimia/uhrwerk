@@ -178,6 +178,7 @@ class TableBuilderTest {
                 .vertical("TableVertical")
                 .table("TableTable")
                 .version("TableVersion")
+                .className("my.class.name")
                 .parallelism(2)
                 .maxBulkSize(2)
                 .partition(partition)

@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.example.yelp
 
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
+import io.qimia.uhrwerk.engine.{Environment, TableTransformation, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession

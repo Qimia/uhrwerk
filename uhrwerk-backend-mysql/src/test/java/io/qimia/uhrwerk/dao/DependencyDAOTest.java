@@ -38,16 +38,23 @@ public class DependencyDAOTest {
     tableDepA.setVertical("vertical1");
     tableDepA.setName("name1");
     tableDepA.setVersion("1.0");
+    tableDepA.setClassName(
+        String.join(
+            ".",
+            tableDepA.getArea(),
+            tableDepA.getVertical(),
+            tableDepA.getName(),
+            tableDepA.getVersion()));
     tableDepA.setPartitioned(true);
     tableDepA.setPartitionSize(1);
     tableDepA.setPartitionUnit(PartitionUnit.HOURS);
     tableDepA.setKey();
     Statement b = db.createStatement();
     b.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, partition_unit, partition_size, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableDepA.getId()
-            + ", 'area1', 'vertical1', 'name1', '1.0', TRUE, 'HOURS', 1, 1, 1)");
+            + ", 'area1', 'vertical1', 'name1', '1.0', TRUE, 'HOURS', 1, 1, 1, 'area1.vertical1.name1.1.0')");
     b.close();
 
     var depATarget = new Target();
@@ -71,16 +78,23 @@ public class DependencyDAOTest {
     tableDepB.setVertical("vertical1");
     tableDepB.setName("name2");
     tableDepB.setVersion("1.0");
+    tableDepB.setClassName(
+        String.join(
+            ".",
+            tableDepB.getArea(),
+            tableDepB.getVertical(),
+            tableDepB.getName(),
+            tableDepB.getVersion()));
     tableDepB.setPartitioned(true);
     tableDepB.setPartitionSize(1);
     tableDepB.setPartitionUnit(PartitionUnit.HOURS);
     tableDepB.setKey();
     Statement d = db.createStatement();
     d.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, partition_unit, partition_size, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableDepB.getId()
-            + ", 'area1', 'vertical1', 'name2', '1.0', TRUE, 'HOURS', 1, 1, 1)");
+            + ", 'area1', 'vertical1', 'name2', '1.0', TRUE, 'HOURS', 1, 1, 1, 'area1.vertical1.name2.1.0')");
     d.close();
 
     var depBTarget = new Target();
@@ -108,10 +122,10 @@ public class DependencyDAOTest {
     tableDepC.setKey();
     Statement f = db.createStatement();
     f.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableDepC.getId()
-            + ", 'area1', 'vertical1', 'name3', '1.0', FALSE, 1, 1)");
+            + ", 'area1', 'vertical1', 'name3', '1.0', FALSE, 1, 1, 'area1.vertical1.name3.1.0')");
     f.close();
 
     var depCTarget = new Target();
@@ -165,16 +179,23 @@ public class DependencyDAOTest {
     newTable.setVertical("vertical1");
     newTable.setName("name4");
     newTable.setVersion("1.0");
+    newTable.setClassName(
+        String.join(
+            ".",
+            newTable.getArea(),
+            newTable.getVertical(),
+            newTable.getName(),
+            newTable.getVersion()));
     newTable.setPartitioned(true);
     newTable.setPartitionUnit(PartitionUnit.HOURS);
     newTable.setPartitionSize(1);
     newTable.setKey();
     Statement setupTableStm = db.createStatement();
     setupTableStm.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, partition_unit, partition_size, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + newTable.getId()
-            + ", 'area1', 'vertical1', 'name4', '1.0', TRUE, 'HOURS', 1, 1, 1)");
+            + ", 'area1', 'vertical1', 'name4', '1.0', TRUE, 'HOURS', 1, 1, 1, 'area1.vertical1.name4.1.0')");
     setupTableStm.close();
     return newTable;
   }
@@ -374,14 +395,21 @@ public class DependencyDAOTest {
     unpartitionedTable.setVertical("vertical1");
     unpartitionedTable.setName("name5");
     unpartitionedTable.setVersion("1.0");
+    unpartitionedTable.setClassName(
+        String.join(
+            ".",
+            unpartitionedTable.getArea(),
+            unpartitionedTable.getVertical(),
+            unpartitionedTable.getName(),
+            unpartitionedTable.getVersion()));
     unpartitionedTable.setPartitioned(false);
     unpartitionedTable.setKey();
     Statement setupTableStm = db.createStatement();
     setupTableStm.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partitioned, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + unpartitionedTable.getId()
-            + ", 'area1', 'vertical1', 'name5', '1.0', FALSE, 1, 1)");
+            + ", 'area1', 'vertical1', 'name5', '1.0', FALSE, 1, 1, 'area1.vertical1.name5.1.0')");
     setupTableStm.close();
 
     var depA = new Dependency();

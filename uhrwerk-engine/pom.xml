@@ -22,9 +22,16 @@
             <artifactId>uhrwerk-common</artifactId>
             <version>${version}</version>
         </dependency>
+
+        <!-- TODO: Should only use these using interfaces defined in uhrwerk-common -->
         <dependency>
             <groupId>io.qimia</groupId>
             <artifactId>uhrwerk-backend-mysql</artifactId>
+            <version>${version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.qimia</groupId>
+            <artifactId>uhrwerk-frame-manager</artifactId>
             <version>${version}</version>
         </dependency>
 

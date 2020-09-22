@@ -31,6 +31,9 @@ public class PartitionDAOTest {
         table.setParallelism(8);
         table.setMaxBulkSize(96);
         table.setVersion("1.0");
+        table.setClassName(
+                String.join(
+                        ".", table.getArea(), table.getVertical(), table.getName(), table.getVersion()));
         table.setKey();
         table.setTargets(new Target[]{generateTarget(testName, table.getId())});
 

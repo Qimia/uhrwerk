@@ -75,13 +75,16 @@ public class TargetDAOTest {
         newTable.setArea("area1");
         newTable.setVertical("vertical1");
         newTable.setName("tablename");
+        newTable.setClassName(
+                String.join(
+                        ".", newTable.getArea(), newTable.getVertical(), newTable.getName(), newTable.getVersion()));
         newTable.setVersion("1.0");
         newTable.setPartitionUnit(PartitionUnit.HOURS);
         newTable.setPartitionSize(1);
         newTable.setKey();
         Statement setupTableStm = db.createStatement();
-        setupTableStm.executeUpdate("INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)" +
-                "VALUES (" + newTable.getId() + ", 'area1', 'vertical1', 'tablename', '1.0', 'HOURS', 1, 1, 1)");
+        setupTableStm.executeUpdate("INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, class_name)" +
+                "VALUES (" + newTable.getId() + ", 'area1', 'vertical1', 'tablename', '1.0', 'HOURS', 1, 1, 1, 'area1.vertical1.tablename.1.0')");
         setupTableStm.close();
         return newTable;
     }

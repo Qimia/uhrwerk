@@ -85,10 +85,10 @@ public class ProcessPartitionTest {
     tableDepA.setKey();
     Statement b = db.createStatement();
     b.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableDepA.getId()
-            + ", 'area1', 'vertical1', 'name1', '1.0', 'HOURS', 1, 1, 1)");
+            + ", 'area1', 'vertical1', 'name1', '1.0', 'HOURS', 1, 1, 1, 'area1.vertical1.name1.1.0')");
     b.close();
 
     depATarget = new Target();
@@ -170,10 +170,10 @@ public class ProcessPartitionTest {
 
     Statement tableStm = db.createStatement();
     tableStm.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableOut.getId()
-            + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 1, 1, 1)");
+            + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 1, 1, 1, 'area1.vertical1.tableout.1.0')");
     tableStm.close();
 
     PreparedStatement depStm =
@@ -276,10 +276,10 @@ public class ProcessPartitionTest {
 
     Statement tableStm = db.createStatement();
     tableStm.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableOut.getId()
-            + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 1, 1, 1)");
+            + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 1, 1, 1, 'area1.vertical1.tableout.1.0')");
     tableStm.close();
 
     PreparedStatement depStm =
@@ -388,10 +388,10 @@ public class ProcessPartitionTest {
 
     Statement tableStm = db.createStatement();
     tableStm.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableOut.getId()
-            + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 2, 1, 1)");
+            + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 2, 1, 1, 'area1.vertical1.tableout.1.0')");
     tableStm.close();
 
     PreparedStatement depStm =
@@ -490,10 +490,10 @@ public class ProcessPartitionTest {
     tableDepB.setKey();
     Statement b = db.createStatement();
     b.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableDepB.getId()
-            + ", 'area1', 'vertical1', 'name1', '1.0', 1, 1)");
+            + ", 'area1', 'vertical1', 'name1', '1.0', 1, 1, 'area1.vertical1.name1.1.0')");
     b.close();
 
     depBTarget = new Target();
@@ -537,10 +537,10 @@ public class ProcessPartitionTest {
 
     Statement tableStm = db.createStatement();
     tableStm.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableOut.getId()
-            + ", 'area1', 'vertical1', 'tableout', '1.0', 1, 1)");
+            + ", 'area1', 'vertical1', 'tableout', '1.0', 1, 1, 'area1.vertical1.tableout.1.0')");
     tableStm.close();
 
     Statement tarStm = db.createStatement();

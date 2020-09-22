@@ -47,6 +47,9 @@ class TableDAOTest {
     table.setArea("dwh");
     table.setVertical("vertical1");
     table.setName("tableA");
+    table.setClassName(
+        String.join(
+            ".", table.getArea(), table.getVertical(), table.getName(), table.getVersion()));
     table.setPartitionUnit(PartitionUnit.MINUTES);
     table.setPartitionSize(15);
     table.setParallelism(8);
@@ -75,6 +78,9 @@ class TableDAOTest {
       table.setParallelism(8);
       table.setMaxBulkSize(96);
       table.setVersion("1.0");
+      table.setClassName(
+              String.join(
+                      ".", table.getArea(), table.getVertical(), table.getName(), table.getVersion()));
       table.setKey();
       tableDAO.save(table, false);
       var target = generateTarget(table.getId(), i);
@@ -122,8 +128,7 @@ class TableDAOTest {
 
   @org.junit.jupiter.api.BeforeEach
   void setUp() throws SQLException {
-    this.db =
-            ConnectionHelper.getConnection();
+    this.db = ConnectionHelper.getConnection();
     this.tableDAO = new TableDAO(db);
     this.connectionDAO = new ConnectionDAO(db);
     this.partitionDAO = new PartitionDAO(db);
@@ -282,9 +287,9 @@ class TableDAOTest {
 
     var source1 =
         (new SourceBuilder())
-                .connectionName("Test-JDBC-Source1")
-                .path("SOURCE_DB.EXT_TABLE1")
-                .format("jdbc")
+            .connectionName("Test-JDBC-Source1")
+            .path("SOURCE_DB.EXT_TABLE1")
+            .format("jdbc")
             .version("1.0")
             .partition()
             .unit("minutes")

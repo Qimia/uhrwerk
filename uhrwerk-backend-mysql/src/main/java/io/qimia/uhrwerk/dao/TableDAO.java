@@ -26,8 +26,8 @@ public class TableDAO implements TableDependencyService, TableService {
   private final SourceDAO sourceDAO;
 
   private static final String SELECT_BY_ID =
-          "SELECT id, area, vertical, name, partition_unit, partition_size, parallelism, max_bulk_size, version, partitioned\n"
-          + "FROM TABLE_\n"
+          "SELECT id, area, vertical, name, partition_unit, partition_size, parallelism, max_bulk_size, version, partitioned,\n"
+          + "class_name FROM TABLE_\n"
           + "WHERE id = ?";
 
   public TableDAO(java.sql.Connection db) {
@@ -40,8 +40,8 @@ public class TableDAO implements TableDependencyService, TableService {
   }
 
   private static final String INSERT =
-          "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, partitioned) "
-                  + "VALUES(?,?,?,?,?,?,?,?,?,?)";
+          "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, partitioned, "
+                  + "class_name) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
 
   private static final String DELETE_BY_ID = "DELETE FROM TABLE_ WHERE id = ?";
 
@@ -153,6 +153,7 @@ public class TableDAO implements TableDependencyService, TableService {
     insert.setInt(8, table.getParallelism());
     insert.setInt(9, table.getMaxBulkSize());
     insert.setBoolean(10, table.isPartitioned());
+    insert.setString(11, table.getClassName());
     insert.executeUpdate();
   }
 
@@ -187,6 +188,7 @@ public class TableDAO implements TableDependencyService, TableService {
       res.setMaxBulkSize(record.getInt("max_bulk_size"));
       res.setVersion(record.getString("version"));
       res.setPartitioned(record.getBoolean("partitioned"));
+      res.setClassName(record.getString("class_name"));
 
       return res;
     }
