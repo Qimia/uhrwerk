@@ -84,7 +84,7 @@ class DagTaskBuilderTest extends AnyFlatSpec with BeforeAndAfterEach {
     mappedIdentityUserFunc += (TableIdent("processing","sourcedb_1","process_a_table2","1.0") -> identityUserFunc )
     mappedIdentityUserFunc += (TableIdent("processing","sourcedb_1","process_a_table3","1.0") -> identityUserFunc )
     mappedIdentityUserFunc += (TableIdent("final","sourcedb_1","finalize_a_table1","1.0") -> identityUserFunc )
-    env.setupDagFile("EnvDagTest1.yml", mappedIdentityUserFunc.toMap)
+    env.setupDagFile("EnvDagTest1.yml", mappedIdentityUserFunc.toMap, true)
     val wrap1 = env.getTable(TableIdent("processing", "sourcedb_1", "process_a_table1", "1.0")).get
     val startTs = LocalDateTime.of(2018, 6, 20, 10, 0)
     val endTs = LocalDateTime.of(2018, 6, 20, 16, 0)
