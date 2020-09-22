@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 import io.qimia.uhrwerk.common.model.PartitionTransformType
 import io.qimia.uhrwerk.common.tools.TimeTools
 import io.qimia.uhrwerk.engine.Environment.{TableIdent, tableCleaner}
+import io.qimia.uhrwerk.engine.tools.TimeHelper
 import io.qimia.uhrwerk.engine.{Environment, TableWrapper}
 
 import scala.collection.mutable
@@ -13,17 +14,17 @@ import scala.collection.mutable.ListBuffer
 object DagTaskBuilder {
 
   /**
-   * Filter distinct Dag tasks only by table and partitions requested
-   * This is required because DagTask contains dept info which trips up SeqOps.distinct
-   * @param tasks a sequence of DagTasks (meaning a tablewrapper with some partitions needed for that table)
-   * @return a sequence of DagTasks with all duplicate table-partition pairs filtered out (removing later one)
-   */
+    * Filter distinct Dag tasks only by table and partitions requested
+    * This is required because DagTask contains dept info which trips up SeqOps.distinct
+    * @param tasks a sequence of DagTasks (meaning a tablewrapper with some partitions needed for that table)
+    * @return a sequence of DagTasks with all duplicate table-partition pairs filtered out (removing later one)
+    */
   def distinctDagTasks(tasks: Seq[DagTask]): Seq[DagTask] = {
     val builder: ListBuffer[DagTask] = ListBuffer()
-    val seen = mutable.HashSet.empty[(TableWrapper, Seq[LocalDateTime])]
-    val it = tasks.iterator
-    var different = false
-    while(it.hasNext) {
+    val seen                         = mutable.HashSet.empty[(TableWrapper, Seq[LocalDateTime])]
+    val it                           = tasks.iterator
+    var different                    = false
+    while (it.hasNext) {
       val next = it.next()
       if (seen.add(next.table, next.partitions)) {
         builder += next
@@ -39,25 +40,21 @@ object DagTaskBuilder {
   }
 }
 
-
 class DagTaskBuilder(environment: Environment) {
 
   /**
-   * Create a queue of table + partition-list which need to be present for filling a given output table for a
-   * particular time-range.
-   * The queue is filling an bulk partition section of the outTable at a time.
-   * @param outTable table which needs to be generated
-   * @param startTs inclusive start timestamp of first partition
-   * @param endTs exclusive end timestamp of last partition
-   * @return List of TableWrappers and when they need to run.
-   */
-  def buildTaskListFromTable(outTable: TableWrapper,
-                             startTs: LocalDateTime,
-                             endTs: LocalDateTime): List[DagTask] = {
+    * Create a queue of table + partition-list which need to be present for filling a given output table for a
+    * particular time-range.
+    * The queue is filling an bulk partition section of the outTable at a time.
+    * @param outTable table which needs to be generated
+    * @param startTs inclusive start timestamp of first partition
+    * @param endTs exclusive end timestamp of last partition
+    * @return List of TableWrappers and when they need to run.
+    */
+  def buildTaskListFromTable(outTable: TableWrapper, startTs: LocalDateTime, endTs: LocalDateTime): List[DagTask] = {
     val callTime = LocalDateTime.now()
 
-    def recursiveBuild(aTable: TableWrapper,
-                       partitionTimes: List[LocalDateTime], dept: Int = 0): List[DagTask] = {
+    def recursiveBuild(aTable: TableWrapper, partitionTimes: List[LocalDateTime], dept: Int = 0): List[DagTask] = {
       val dependencyTables = tableCleaner(aTable.wrappedTable).getDependencies
         .map(d => {
           val ident    = TableIdent(d.getArea, d.getVertical, d.getTableName, d.getVersion)
@@ -82,13 +79,25 @@ class DagTaskBuilder(environment: Environment) {
       return recursiveBuild(outTable, List(callTime)).reverse
     }
 
-    val partitionBulkTs = TimeTools
+    val partitionTs = TimeTools
       .convertRangeToBatch(startTs, endTs, outTable.tableDuration)
-      .grouped(outTable.wrappedTable.getMaxBulkSize)
-    partitionBulkTs.flatMap((bulkTs: List[LocalDateTime]) => {
-      // Reverse to do dependencies before target-tables
-      recursiveBuild(outTable, bulkTs).reverse
-    }).toList
+
+    val processedPartitions = environment.metaStore.tableDependencyService
+      .processingPartitions(outTable.wrappedTable, partitionTs.toArray)
+      .getProcessedTs
+      .toSet
+
+    val partitionBulkTs = TimeHelper.createPartitionBulkGroups(
+      partitionTs
+        .filter(p => !processedPartitions.contains(p)),
+      outTable.tableDuration,
+      outTable.wrappedTable.getMaxBulkSize
+    )
+    partitionBulkTs
+      .flatMap((bulkTs: List[LocalDateTime]) => {
+        // Reverse to do dependencies before target-tables
+        recursiveBuild(outTable, bulkTs).reverse
+      })
   }
 
 }
