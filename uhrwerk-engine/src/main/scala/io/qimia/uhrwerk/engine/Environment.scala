@@ -182,17 +182,34 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
   }
 
   /**
-    * Retrieve previously loaded TableWrapper object
-    * @param id a unique table identifier case class
-    * @return option with tablewrapper if found
-    */
+   * Retrieve previously loaded TableWrapper object
+   *
+   * @param id a unique table identifier case class
+   * @return option with tablewrapper if found
+   */
   def getTable(id: Ident): Option[TableWrapper] = tables.get(id)
 
   /**
-    * Setup a full dag based on a configuration
-    * @param dagConfigLoc location of the full dag configuration file
-    * @param userFuncs a map with the table identity objects mapped to the userfunctions for transformation
-    */
+   * Add a new dag to the uhrwerk environment by loading the user code dynamically
+   *
+   * @param dagConf   location of the dag configuration file
+   * @param overwrite overwrite remove old definitions of table or keep them and stop if changes have been made
+   */
+  def addDagFileConvention(dagConf: String, overwrite: Boolean): Unit = {
+    val configReader = new YamlConfigReader()
+    val dag = configReader.readDag(dagConf)
+    val connections = dag.getConnections
+    val tables = dag.getTables
+    connections.foreach(con => addConnections(connections, overwrite))
+    tables.foreach(tab => addTable(tab, getTableFunctionDynamic(tab), overwrite))
+  }
+
+  /**
+   * Setup a full dag based on a configuration
+   *
+   * @param dagConfigLoc location of the full dag configuration file
+   * @param userFuncs    a map with the table identity objects mapped to the userfunctions for transformation
+   */
   def setupDagFile(dagConfigLoc: String, userFuncs: Map[Ident, TaskInput => TaskOutput]): Unit = {
     // TODO: First fix addConnections + addTable then work those changes back into this function
     val dagYaml = configReader.readDag(dagConfigLoc)

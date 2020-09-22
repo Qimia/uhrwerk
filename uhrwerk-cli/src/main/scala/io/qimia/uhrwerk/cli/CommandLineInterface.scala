@@ -8,6 +8,7 @@ import io.qimia.uhrwerk.engine.Environment.TableIdent
 import picocli.CommandLine
 import picocli.CommandLine.{Command, Option}
 import io.qimia.uhrwerk.engine.UhrwerkAppRunner
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
 
 import scala.collection.JavaConverters._
@@ -73,17 +74,26 @@ class CommandLineInterface extends Callable[Int] {
       case "y" => true
       case _ => false
     }
-    val sparkSess = SparkSession.builder().appName(runTable).master("local").getOrCreate()
+
+    val config = new SparkConf()
+    config.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+
+    val spark = SparkSession.builder().config(config).getOrCreate()
 
     val components = runTable.split(".")
-    val target = TableIdent(components(0), components(1), components(2), components(3))
+    val target = try {
+      TableIdent(components(0), components(1), components(2), components(3))
+    }
+    catch {
+      case e: Exception => throw new Exception("Parsing target failed. Please check the specified runTable.")
+    }
 
     if (dagConfig == "") {
       val connectionConf = connectionConfAL.asScala.toArray
       val tableConf = tableConfAL.asScala.toArray
 
       try {
-        UhrwerkAppRunner.runFiles(sparkSess, environmentConfig, connectionConf,
+        UhrwerkAppRunner.runFiles(spark, environmentConfig, connectionConf,
           tableConf, target, startTime.asInstanceOf[LocalDateTime], endTime.asInstanceOf[LocalDateTime], dagMode, parallelRun, overwrite)
         0
       }
@@ -93,7 +103,7 @@ class CommandLineInterface extends Callable[Int] {
     }
     else {
       try {
-        UhrwerkAppRunner.runDagFile(sparkSess, environmentConfig, dagConfig, target,
+        UhrwerkAppRunner.runDagFile(spark, environmentConfig, dagConfig, target,
           startTime.asInstanceOf[LocalDateTime], endTime.asInstanceOf[LocalDateTime], dagMode, parallelRun, overwrite)
         0
       }
