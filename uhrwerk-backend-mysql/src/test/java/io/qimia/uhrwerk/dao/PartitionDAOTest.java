@@ -244,7 +244,7 @@ public class PartitionDAOTest {
         assertTrue(Arrays.equals(foundPartitionsSubset, partitionsSubset));
 
         // getting the latest partition
-        Partition latestPartition = partitionDAO.getLatestUnpartitioned(target.getId());
+        Partition latestPartition = partitionDAO.getLatestPartition(target.getId());
         assertNotNull(latestPartition);
         assertEquals(expectedLatestPartition, latestPartition);
 

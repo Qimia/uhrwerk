@@ -182,38 +182,50 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
   }
 
   /**
-   * Retrieve previously loaded TableWrapper object
-   *
-   * @param id a unique table identifier case class
-   * @return option with tablewrapper if found
-   */
+    * Retrieve previously loaded TableWrapper object
+    * @param id a unique table identifier case class
+    * @return option with tablewrapper if found
+    */
   def getTable(id: Ident): Option[TableWrapper] = tables.get(id)
 
   /**
-   * Add a new dag to the uhrwerk environment by loading the user code dynamically
-   *
-   * @param dagConf   location of the dag configuration file
-   * @param overwrite overwrite remove old definitions of table or keep them and stop if changes have been made
+   * Setup a full dag based on a configuration file and userCode class config or convention
+   * @param dagConfigLoc location of the full dag configuration file
    */
-  def addDagFileConvention(dagConf: String, overwrite: Boolean): Unit = {
-    val configReader = new YamlConfigReader()
-    val dag = configReader.readDag(dagConf)
-    val connections = dag.getConnections
-    val tables = dag.getTables
-    connections.foreach(con => addConnections(connections, overwrite))
-    tables.foreach(tab => addTable(tab, getTableFunctionDynamic(tab), overwrite))
+  def setupDagFileConvention(dagConfigLoc: String, overwrite: Boolean = false): Unit = {
+    val dagYaml = configReader.readDag(dagConfigLoc)
+    setupDagConvention(dagYaml, overwrite)
   }
 
   /**
    * Setup a full dag based on a configuration
-   *
-   * @param dagConfigLoc location of the full dag configuration file
-   * @param userFuncs    a map with the table identity objects mapped to the userfunctions for transformation
+   * @param dagConfig full dag configuration object
    */
-  def setupDagFile(dagConfigLoc: String, userFuncs: Map[Ident, TaskInput => TaskOutput]): Unit = {
+  def setupDagConvention(dagConfig: Dag, overwrite: Boolean = false){
+    dagConfig.getConnections.foreach(conn => store.connectionService.save(conn, true))
+    dagConfig.getTables.foreach(t => {
+      val ident = TableIdent(t.getArea, t.getVertical, t.getName, t.getVersion)
+      val storeRes = store.tableService.save(t, true)
+      if (!storeRes.isSuccess) {
+        System.err.println(storeRes.getMessage)
+      } else {
+        val storedT  = storeRes.getNewResult
+        val userFunc = getTableFunctionDynamic(t)
+        val wrapper  = new TableWrapper(store, storedT, userFunc, frameManager)
+        tables(ident) = wrapper
+      }
+    })
+  }
+
+  /**
+   * Setup a full dag based on a configuration file
+   * @param dagConfigLoc location of the full dag configuration file
+   * @param userFuncs a map with the table identity objects mapped to the userfunctions for transformation
+   */
+  def setupDagFile(dagConfigLoc: String, userFuncs: Map[Ident, TaskInput => TaskOutput], overwrite: Boolean = false): Unit = {
     // TODO: First fix addConnections + addTable then work those changes back into this function
     val dagYaml = configReader.readDag(dagConfigLoc)
-    setupDag(dagYaml, userFuncs)
+    setupDag(dagYaml, userFuncs, overwrite)
   }
 
   /**
@@ -221,14 +233,14 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     * @param dagConfig full dag configuration object
     * @param userFuncs a map with the table identity objects mapped to the userfunctions for transformation
     */
-  def setupDag(dagConfig: Dag, userFuncs: Map[Ident, TaskInput => TaskOutput]): Unit = {
-    dagConfig.getConnections.foreach(conn => store.connectionService.save(conn, true))
+  def setupDag(dagConfig: Dag, userFuncs: Map[Ident, TaskInput => TaskOutput], overwrite: Boolean = false): Unit = {
+    dagConfig.getConnections.foreach(conn => store.connectionService.save(conn, overwrite))
     dagConfig.getTables.foreach(t => {
       val ident = TableIdent(t.getArea, t.getVertical, t.getName, t.getVersion)
       if (userFuncs.contains(ident)) {
-        val storeRes = store.tableService.save(t, true)
+        val storeRes = store.tableService.save(t, overwrite)
         if (!storeRes.isSuccess) {
-          System.err.println(storeRes.getMessage)
+          System.err.println("TableStore failed: " + storeRes.getMessage)
         } else {
           val storedT  = storeRes.getNewResult
           val userFunc = userFuncs(ident)

@@ -209,7 +209,7 @@ public class TableDAO implements TableDependencyService, TableService {
     var resultSet = new TablePartitionResultSet();
     // FIXME checks only the first target of the table (see FIXME normal processingPartitions)
     Partition processedPartition =
-        partitionDAO.getLatestUnpartitioned(table.getTargets()[0].getId());
+            partitionDAO.getLatestPartition(table.getTargets()[0].getId());
     if (processedPartition != null) {
       // If partition found -> check if it has been processed in the last 1 minute
 
@@ -257,7 +257,7 @@ public class TableDAO implements TableDependencyService, TableService {
       dependencyResult.setConnection(connectionsMap.get(spec.connectionId));
       dependencyResult.setDependency(dependenciesMap.get(spec.dependencyId));
 
-      Partition depPartition = partitionDAO.getLatestUnpartitioned(spec.targetId);
+      Partition depPartition = partitionDAO.getLatestPartition(spec.targetId);
       if (depPartition == null) {
         dependencyResult.setSuccess(false);
         dependencyResult.setFailed(new LocalDateTime[] {requestTime});
@@ -396,7 +396,7 @@ public class TableDAO implements TableDependencyService, TableService {
       if (spec.transformType.equals(PartitionTransformType.NONE)) {
         // If not partitioned then check single
 
-        Partition depPartition = partitionDAO.getLatestUnpartitioned(spec.getTargetId());
+        Partition depPartition = partitionDAO.getLatestPartition(spec.getTargetId());
         if (depPartition == null) {
           // If there is nothing, set all to unsuccessful
           DependencyResult dependencyResult = new DependencyResult();

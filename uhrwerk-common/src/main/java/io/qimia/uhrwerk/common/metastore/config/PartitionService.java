@@ -42,8 +42,8 @@ public interface PartitionService {
    * Gets the latest partition for a specified target id.
    *
    * @param targetId Target ID.
-   * @return The latest partitioned for this unpartitioned target. Can be null in case something
+   * @return The latest partition for this target. Can be null in case something
    * went wrong or there are no partitions.
    */
-  Partition getLatestUnpartitioned(Long targetId);
+  Partition getLatestPartition(Long targetId);
 }
