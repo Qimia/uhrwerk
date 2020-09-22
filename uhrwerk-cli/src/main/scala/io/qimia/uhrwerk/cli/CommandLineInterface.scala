@@ -80,7 +80,7 @@ class CommandLineInterface extends Callable[Int] {
 
     val spark = SparkSession.builder().config(config).getOrCreate()
 
-    val components = runTable.split(".")
+    val components = runTable.split("_")
     val target = try {
       TableIdent(components(0), components(1), components(2), components(3))
     }
