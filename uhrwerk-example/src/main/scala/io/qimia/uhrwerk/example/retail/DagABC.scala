@@ -8,13 +8,9 @@ import io.qimia.uhrwerk.example.yelp.CombinerC.CombinerCFunc
 import io.qimia.uhrwerk.example.yelp.LoaderAParq.loaderAFunc
 import io.qimia.uhrwerk.example.yelp.LoaderBParq.loaderBFunc
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 
 object DagABC extends App {
-  Logger.getLogger("org").setLevel(Level.WARN)
-  Logger.getLogger("akka").setLevel(Level.ERROR)
-
   val sparkSess = SparkSession.builder()
     .appName(this.getClass.toString)
     .master("local[3]")
