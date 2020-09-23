@@ -1,0 +1,16 @@
+area: "staging"
+vertical: "retail"
+table: "productDim"
+version: "1.0"
+parallelism: 1
+max_bulk_size: 1
+
+sources:
+  - connection_name: "retail_mysql"
+    path: "qimia_oltp.products"
+    format: "jdbc"
+    version: "1.0"
+
+targets:
+  - connection_name: "retail_mysql"
+    format: "jdbc"

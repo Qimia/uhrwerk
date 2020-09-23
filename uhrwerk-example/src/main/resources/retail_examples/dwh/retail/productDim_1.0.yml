@@ -1,0 +1,15 @@
+area: "dwh"
+vertical: "retail"
+table: "productDim"
+version: "1.0"
+
+dependencies:
+  - area: "staging"
+    vertical: "retail"
+    table: "productDim"
+    format: "jdbc"
+    version: "1.0"
+
+targets:
+  - connection_name: "retail_mysql"
+    format: "jdbc"

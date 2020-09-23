@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.common.tools
 
-import java.sql.DriverManager
+import java.sql.{DriverManager, ResultSet}
 import java.time.LocalDateTime
 import java.{lang, sql}
 
@@ -10,6 +10,34 @@ import org.apache.spark.sql.{DataFrameReader, SparkSession}
 import scala.io.Source
 
 object JDBCTools {
+  def addIndexToTable(connection: Connection, tableSchema: String, tableName: String, timeColumnJDBC: String): Unit = {
+    try {
+      val jdbcConnection = getJDBCConnection(connection)
+      val statement = jdbcConnection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+      val indexName = s"index_${tableSchema}_${tableName}_${timeColumnJDBC}"
+
+      // todo add support for dbs other than mysql
+      val isResult = statement.execute(
+        s"SELECT * FROM " +
+          s"(SELECT COUNT(1) IndexIsThere FROM INFORMATION_SCHEMA.STATISTICS " +
+          s"WHERE table_schema='$tableSchema' AND table_name='$tableName' " +
+          s"AND index_name='$indexName') t " +
+          s"WHERE IndexIsThere > 0"
+      )
+      val isIndexThere = if (isResult) {
+        statement.getResultSet.first()
+      } else {
+        false
+      }
+      if (!isIndexThere) {
+        statement.execute(s"CREATE INDEX $indexName ON `$tableSchema`.`$tableName`($timeColumnJDBC)")
+      }
+      jdbcConnection.close()
+    } catch {
+      case e: Exception => println(e.getLocalizedMessage)
+    }
+  }
+
   def executeSqlFile(connection: Connection, fileName: String): Unit = {
     val jdbcConnection = getJDBCConnection(connection)
 
@@ -52,7 +80,6 @@ object JDBCTools {
    */
   def getJDBCConnection(connection: Connection): sql.Connection = {
     val url = connection.getJdbcUrl
-    val driver = connection.getJdbcDriver
     val username = connection.getJdbcUser
     val password = connection.getJdbcPass
     DriverManager.getConnection(url, username, password)
