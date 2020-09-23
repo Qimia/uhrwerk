@@ -1,8 +1,10 @@
 package io.qimia.uhrwerk.config;
 
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 class ConnectionBuilderTest {
+  private final Logger logger = Logger.getLogger(this.getClass());
 
   @Test
   void builderTest() {
@@ -38,9 +40,9 @@ class ConnectionBuilderTest {
             .done()
             .build();
 
-    System.out.println(connection1);
-    System.out.println(connection2);
-    System.out.println(connection3);
+    logger.info(connection1);
+    logger.info(connection2);
+    logger.info(connection3);
 
   }
 
@@ -65,8 +67,8 @@ class ConnectionBuilderTest {
             .s3(s3)
             .build();
 
-    System.out.println(con1);
-    System.out.println(con2);
+    logger.info(con1);
+    logger.info(con2);
   }
 
 

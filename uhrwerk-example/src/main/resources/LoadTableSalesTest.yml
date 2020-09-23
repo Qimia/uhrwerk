@@ -2,6 +2,7 @@ area: "staging"
 vertical: "qimia_oltp"
 table: "sales"
 version: "1.0"
+class_name: "io.qimia.uhrwerk.example.retail.ClassLoaderSales"
 parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
 max_bulk_size: 1
 partition:

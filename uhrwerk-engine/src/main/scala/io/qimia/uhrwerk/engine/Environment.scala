@@ -2,20 +2,27 @@ package io.qimia.uhrwerk.engine
 
 import io.qimia.uhrwerk.common.framemanager.FrameManager
 import io.qimia.uhrwerk.common.metastore.config.TableResult
+import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.config.YamlConfigReader
-import io.qimia.uhrwerk.engine.Environment.{Ident, TableIdent, getTableFunctionDynamic, reportProblems, tableCleaner}
-import io.qimia.uhrwerk.common.model.{Connection, Dag, Dependency, PartitionTransformType, Source, Table}
+import io.qimia.uhrwerk.engine.Environment._
+import org.apache.log4j.Logger
 
 import scala.collection.mutable
 
 object Environment {
+
   sealed abstract class Ident
+
   case class TableIdent(area: String, vertical: String, name: String, version: String) extends Ident
-  case class SourceIdent(connection: String, path: String, format: String)             extends Ident
+
+  case class SourceIdent(connection: String, path: String, format: String) extends Ident
+
+  private val logger: Logger = Logger.getLogger(this.getClass)
 
   /**
-    * Dynamically retrieve the Table Transformation function based on config parameters (or convention)
-    * @param table table which still needs the user-function (and has not been loaded yet)
+   * Dynamically retrieve the Table Transformation function based on config parameters (or convention)
+   *
+   * @param table table which still needs the user-function (and has not been loaded yet)
     * @return user's code with the table's transformation function
     */
   def getTableFunctionDynamic(table: Table): TaskInput => TaskOutput = {
@@ -62,10 +69,10 @@ object Environment {
     * @param badTableResult Unsuccessful table store result
     */
   def reportProblems(badTableResult: TableResult): Unit = {
-    System.err.println("Storing table failed:")
+    logger.error("Storing table failed:")
     val tableStoreMsg = badTableResult.getMessage
     if ((tableStoreMsg != null) && (tableStoreMsg.length > 0)) {
-      System.err.println(tableStoreMsg)
+      logger.error(tableStoreMsg)
     }
     if (badTableResult.isError) {
       badTableResult.getException.printStackTrace()
@@ -73,7 +80,7 @@ object Environment {
     val targetResult = badTableResult.getTargetResult
     if (targetResult != null) {
       if (!targetResult.isSuccess) {
-        System.err.println(targetResult.getMessage)
+        logger.error(targetResult.getMessage)
       }
       if (targetResult.isError) {
         targetResult.getException.printStackTrace()
@@ -82,7 +89,7 @@ object Environment {
     val dependencyResult = badTableResult.getDependencyResult
     if (dependencyResult != null) {
       if (!dependencyResult.isSuccess) {
-        System.err.println(dependencyResult.getMessage)
+        logger.error(dependencyResult.getMessage)
       }
       if (dependencyResult.isError) {
         dependencyResult.getException.printStackTrace()
@@ -92,7 +99,7 @@ object Environment {
     if ((sourceResults != null) && sourceResults.nonEmpty) {
       sourceResults.foreach(sr => {
         if (!sr.isSuccess) {
-          System.err.println(sr.getMessage)
+          logger.error(sr.getMessage)
         }
         if (sr.isError) {
           sr.getException.printStackTrace()
@@ -208,7 +215,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
       val ident = TableIdent(t.getArea, t.getVertical, t.getName, t.getVersion)
       val storeRes = store.tableService.save(t, true)
       if (!storeRes.isSuccess) {
-        System.err.println(storeRes.getMessage)
+        logger.error(storeRes.getMessage)
       } else {
         val storedT  = storeRes.getNewResult
         val userFunc = getTableFunctionDynamic(t)
@@ -241,7 +248,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
       if (userFuncs.contains(ident)) {
         val storeRes = store.tableService.save(t, overwrite)
         if (!storeRes.isSuccess) {
-          System.err.println("TableStore failed: " + storeRes.getMessage)
+          logger.error("TableStore failed: " + storeRes.getMessage)
         } else {
           val storedT  = storeRes.getNewResult
           val userFunc = userFuncs(ident)

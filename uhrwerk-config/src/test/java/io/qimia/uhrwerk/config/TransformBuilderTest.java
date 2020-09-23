@@ -1,8 +1,10 @@
 package io.qimia.uhrwerk.config;
 
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 class TransformBuilderTest {
+  private final Logger logger = Logger.getLogger(this.getClass());
 
   @Test
   void builderTest() {
@@ -34,10 +36,10 @@ class TransformBuilderTest {
             .done()
             .build();
 
-    System.out.println(transform1);
-    System.out.println(transform2);
-    System.out.println(transform3);
-    System.out.println(transform4);
+    logger.info(transform1);
+    logger.info(transform2);
+    logger.info(transform3);
+    logger.info(transform4);
   }
 
   @Test
@@ -56,8 +58,8 @@ class TransformBuilderTest {
             .partition(partition)
             .build();
 
-    System.out.println(transform1);
-    System.out.println(transform2);
+    logger.info(transform1);
+    logger.info(transform2);
   }
 
 

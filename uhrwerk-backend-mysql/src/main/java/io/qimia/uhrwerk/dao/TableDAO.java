@@ -8,6 +8,7 @@ import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResult;
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResultSet;
 import io.qimia.uhrwerk.common.model.Connection;
 import io.qimia.uhrwerk.common.model.*;
+import org.apache.log4j.Logger;
 
 import java.sql.*;
 import java.time.Duration;
@@ -24,6 +25,7 @@ public class TableDAO implements TableDependencyService, TableService {
   private final TargetDAO targetDAO;
   private final DependencyDAO dependencyDAO;
   private final SourceDAO sourceDAO;
+  private final Logger logger;
 
   private static final String SELECT_BY_ID =
           "SELECT id, area, vertical, name, partition_unit, partition_size, parallelism, max_bulk_size, version, partitioned,\n"
@@ -37,6 +39,7 @@ public class TableDAO implements TableDependencyService, TableService {
     this.targetDAO = new TargetDAO(db);
     this.dependencyDAO = new DependencyDAO(db);
     this.sourceDAO = new SourceDAO(db);
+    this.logger = Logger.getLogger(this.getClass());
   }
 
   private static final String INSERT =
@@ -381,7 +384,7 @@ public class TableDAO implements TableDependencyService, TableService {
 
     Dependency[] tableDependencies = table.getDependencies();
     if (tablePartitionSpecs.size() != tableDependencies.length) {
-      System.err.println("Could not find all specifications for all dependencies in metastore");
+      logger.error("Could not find all specifications for all dependencies in metastore");
       return buildResultSet(new LocalDateTime[0], new DependencyResult[0][0], new TreeSet<>());
     }
     Map<Long, Dependency> dependenciesMap = new HashMap<>();

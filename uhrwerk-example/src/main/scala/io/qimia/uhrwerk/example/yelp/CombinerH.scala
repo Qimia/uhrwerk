@@ -2,20 +2,19 @@ package io.qimia.uhrwerk.example.yelp
 
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import org.apache.log4j.{Level, Logger}
+import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 
 object CombinerH extends App {
+  private val logger: Logger = Logger.getLogger(this.getClass)
+
   val sparkSess = SparkSession
     .builder()
     .appName("CombinerH")
     .master("local[*]")
     .getOrCreate()
-
-  Logger.getLogger("org").setLevel(Level.WARN)
 
   def transformationFunction(in: TaskInput): TaskOutput = {
     val review = in.getTableFrame("staging", "yelp_db", "table_a_parq").as("review")
@@ -40,5 +39,5 @@ object CombinerH extends App {
     LocalDateTime.of(2012, 5, 5, 0, 0)
   )
   val results = wrapper.get.runTasksAndWait(runTimes)
-  println(results)
+  logger.info(results)
 }

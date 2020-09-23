@@ -3,19 +3,19 @@ package io.qimia.uhrwerk.example.retail_examples
 import io.qimia.uhrwerk.engine.Environment.SourceIdent
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import org.apache.log4j.{Level, Logger}
+import org.apache.log4j.Logger
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, hash}
-import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object LoadDims extends App {
+  private val logger: Logger = Logger.getLogger(this.getClass)
+
   val sparkSess = SparkSession
     .builder()
     .appName("loadDims")
     .master("local[*]")
     .config("driver-memory", "6g")
     .getOrCreate()
-
-  Logger.getLogger("org").setLevel(Level.WARN)
 
   def simpleHashLoad(ident: SourceIdent, colName: String): (TaskInput => TaskOutput) = {
     def udf(in: TaskInput): TaskOutput = {
@@ -50,8 +50,8 @@ object LoadDims extends App {
   val employeeResult = employeeWrapper.get.runTasksAndWait()
   val storeResult = storeWrapper.get.runTasksAndWait()
 
-  println(s"Product Dimension processed: ${prodResult}")
-  println(s"Employee Dimension processed: ${employeeResult}")
-  println(s"Store Dimension processed: ${storeResult}")
+  logger.info(s"Product Dimension processed: ${prodResult}")
+  logger.info(s"Employee Dimension processed: ${employeeResult}")
+  logger.info(s"Store Dimension processed: ${storeResult}")
 
 }

@@ -2,11 +2,13 @@ package io.qimia.uhrwerk;
 
 import io.qimia.uhrwerk.common.model.PartitionTransformType;
 import io.qimia.uhrwerk.common.model.PartitionUnit;
+import org.apache.log4j.Logger;
 
 import java.time.Duration;
 import java.util.ArrayList;
 
 public class PartitionDurationTester {
+  private final static Logger logger = Logger.getLogger(PartitionDurationTester.class);
 
   /**
    * Convert a PartitionUnit + size pair (denoting a length of time) to a single java Duration
@@ -32,7 +34,7 @@ public class PartitionDurationTester {
         partitionSize = Duration.ofMinutes(size);
         break;
       default:
-        System.err.println("Unsupported partitionunit given");
+        logger.error("Unsupported partitionunit given");
     }
     return partitionSize;
   }

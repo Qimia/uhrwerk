@@ -4,11 +4,13 @@ import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import org.apache.log4j.{Level, Logger}
+import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{max, min}
 
 object LoaderD extends App {
+  private val logger: Logger = Logger.getLogger(this.getClass)
+
   val sparkSess = SparkSession.builder()
     .appName("LoaderD")
     .master("local[*]")
@@ -16,10 +18,6 @@ object LoaderD extends App {
     .config("spark.eventLog.enabled", "true")
     .config("spark.eventLog.dir", "./docker/spark_logs")
     .getOrCreate()
-
-  Logger.getLogger("org").setLevel(Level.WARN)
-  Logger.getLogger("akka").setLevel(Level.ERROR)
-
 
   def loaderDFunc(in: TaskInput): TaskOutput = {
     val aDF = in.loadedInputFrames.values.head
@@ -44,5 +42,5 @@ object LoaderD extends App {
     LocalDateTime.of(2012, 5, 6, 0, 0)
   )
   val results = wrapper.get.runTasksAndWait(runTimes, false)
-  println(results)
+  logger.info(results)
 }

@@ -5,6 +5,7 @@ import io.qimia.uhrwerk.common.metastore.config.PartitionService;
 import io.qimia.uhrwerk.common.model.Partition;
 import io.qimia.uhrwerk.common.model.PartitionUnit;
 import io.qimia.uhrwerk.common.tools.TimeTools;
+import org.apache.log4j.Logger;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -13,10 +14,12 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class PartitionDAO implements PartitionService {
-  private java.sql.Connection db;
+  private final java.sql.Connection db;
+  private final Logger logger;
 
   public PartitionDAO(java.sql.Connection db) {
     this.db = db;
+    this.logger = Logger.getLogger(this.getClass());
   }
 
   private static final String INSERT_PARTITION =
@@ -141,7 +144,7 @@ public class PartitionDAO implements PartitionService {
           return result;
         }
       } else {
-        System.out.println("Deleting the old partition");
+        logger.info("Deleting the old partition");
         deleteById(partition.getId());
       }
       saveToDb(partition);

@@ -7,9 +7,11 @@ import io.qimia.uhrwerk.common.tools.TimeTools
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.dag.{DagTaskBuilder, DagTaskDispatcher}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
+import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 
 object UhrwerkAppRunner {
+  private val logger: Logger = Logger.getLogger(this.getClass)
 
   /**
     * Run Uhrwerk framework as application
@@ -117,7 +119,7 @@ object UhrwerkAppRunner {
       overwrite: Boolean
   ): Unit = {
     if (!environment.tables.contains(runTable)) {
-      System.err.println("Unknown table to run")
+      logger.error("Unknown table to run")
       return
     }
     val tableToRun = environment.getTable(runTable).get

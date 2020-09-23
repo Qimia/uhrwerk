@@ -2,14 +2,18 @@ package io.qimia.uhrwerk.engine.dag
 
 import java.util.concurrent.Executors
 
+import org.apache.log4j.Logger
+
 import scala.concurrent._
 
 object DagTaskDispatcher {
+  private val logger: Logger = Logger.getLogger(this.getClass)
 
   /**
-    * Execute the taskqueue
-    * @param tasks a list of tables that need to be processed and their partition-times
-    */
+   * Execute the taskqueue
+   *
+   * @param tasks a list of tables that need to be processed and their partition-times
+   */
   def runTasks(tasks: Seq[DagTask]): Unit = {
     val executor                                            = Executors.newSingleThreadExecutor()
     implicit val executionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor(executor)
@@ -18,7 +22,7 @@ object DagTaskDispatcher {
       val futures = task.table.runTasks(task.partitions.toArray)
       val result  = Await.result(Future.sequence(futures), duration.Duration(24, duration.HOURS))
       if (!result.forall(res => res)) {
-        System.err.println(s"Task table ${task.table.wrappedTable.getName} failed for ${task.partitions}")
+        logger.error(s"Task table ${task.table.wrappedTable.getName} failed for ${task.partitions}")
       }
     }
     val deduplicatedTasks = DagTaskBuilder.distinctDagTasks(tasks)
@@ -48,7 +52,7 @@ object DagTaskDispatcher {
         Await.result(Future.sequence(futures.map(_._1)), duration.Duration(24, duration.HOURS)).zip(futures.map(_._2))
       result.foreach(res => {
         if (!res._1) {
-          System.err.println(
+          logger.error(
             s"Task table ${tasks(res._2).table.wrappedTable.getName} failed for ${tasks(res._2).partitions}")
         }
       })

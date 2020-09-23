@@ -1,8 +1,10 @@
 package io.qimia.uhrwerk.config;
 
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 class SourceBuilderTest {
+  private final Logger logger = Logger.getLogger(this.getClass());
 
   @Test
   void buildTest() {
@@ -27,7 +29,7 @@ class SourceBuilderTest {
             .column("created_ts")
             .done()
             .build();
-    System.out.println(source);
+    logger.info(source);
   }
 
   @Test
@@ -50,7 +52,7 @@ class SourceBuilderTest {
             .parallelLoad(parallelLoad)
             .select(select)
             .build();
-    System.out.println(source);
+    logger.info(source);
   }
 
   @Test
@@ -72,6 +74,6 @@ class SourceBuilderTest {
             .parallelLoad(parallelLoad)
             .select(select)
             .build();
-    System.out.println(source);
+    logger.info(source);
   }
 }

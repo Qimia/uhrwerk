@@ -4,6 +4,7 @@ import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.common.framemanager.FrameManager
 import io.qimia.uhrwerk.common.model.Source
+import org.apache.log4j.Logger
 import org.apache.spark.sql.DataFrame
 
 import scala.collection.mutable
@@ -23,16 +24,18 @@ case class DependentLoaderSource(
     endTSExcl: Option[LocalDateTime] = Option.empty
 ) {
   private val collectedIdsWithPlaceholders = mutable.ArrayBuffer[(Array[String], String)]()
-  private var dependentSet: Boolean        = false
+  private var dependentSet: Boolean = false
+  private val logger: Logger = Logger.getLogger(this.getClass)
+
 
   /**
-    * Adds a dependent DataFrame that should be used for loading the Table.
-    * The distinct values in the DataFrame's [[columnName]] will get collected
-    * and placed instead of the [[queryPlaceholder]] into the select query.
-    * The function can be called several times with various DataFrames or columns.
-    * For each of them there needs to be a separate placeholder.
-    *
-    * @param df               DataFrame to get the values from.
+   * Adds a dependent DataFrame that should be used for loading the Table.
+   * The distinct values in the DataFrame's [[columnName]] will get collected
+   * and placed instead of the [[queryPlaceholder]] into the select query.
+   * The function can be called several times with various DataFrames or columns.
+   * For each of them there needs to be a separate placeholder.
+   *
+   * @param df                DataFrame to get the values from.
     * @param columnName       DataFrame's column.
     * @param queryPlaceholder The select query's placeholder where to put the values from the DataFrame.
     */
@@ -55,7 +58,7 @@ case class DependentLoaderSource(
       .collect
       .map(row => row.get(0).toString)
 
-    println("Number of collected ids: " + collectedIds.length)
+    logger.info("Number of collected ids: " + collectedIds.length)
 
     collectedIdsWithPlaceholders.append((collectedIds, queryPlaceholder))
 
@@ -84,7 +87,7 @@ case class DependentLoaderSource(
           val filledSelectQuery =
             (Array((largestIds, groupedPlaceholder)) ++ sorted.tail).foldLeft(originalSelectQuery)(
               (query: String, ids: (Array[String], String)) => {
-                println(s"placeholder: ${ids._2}, array size: ${ids._1.length}")
+                logger.info(s"placeholder: ${ids._2}, array size: ${ids._1.length}")
                 val collectedString = "'" + ids._1.mkString("','") + "'"
                 query.replace(ids._2, collectedString)
               }
