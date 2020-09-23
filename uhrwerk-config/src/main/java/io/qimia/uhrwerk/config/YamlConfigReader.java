@@ -32,11 +32,13 @@ public class YamlConfigReader {
     if (queryOrFile.endsWith(".sql")) {
       String query = "FILEQUERY FAILED";
       StringBuilder contentBuilder = new StringBuilder();
-      try (Stream<String> stream = Files.lines( Paths.get( Thread.currentThread().getContextClassLoader().getResource(queryOrFile).getPath() ) )){
+      try (Stream<String> stream = Files.lines(Paths.get(Thread.currentThread().getContextClassLoader().getResource(queryOrFile).getPath()))) {
         stream.forEach(s -> contentBuilder.append(s).append(" "));
       } catch (IOException e) {
         e.printStackTrace();
         return query;
+      } catch (NullPointerException e) {
+        throw new IllegalArgumentException("Something went wrong with reading the sql query file: " + queryOrFile, e);
       }
       return contentBuilder.toString();
     }
