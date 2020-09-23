@@ -19,47 +19,57 @@ class CommandLineInterface extends Callable[Int] {
 
   @Option(names = Array("-g", "--global"), paramLabel = "ENV_CONF",
     description = Array("Path to the Environment Configuration"), required = false)
-  private val environmentConfig = ""
+  private var environmentConfig = ""
 
   @Option(names = Array("-c", "--cons"), paramLabel = "CON_CONF",
     description = Array("Paths to the Connection Configuration(s)"), required = false)
-  private val connectionConfAL = new util.ArrayList[String]
+  private var connectionConfAL = new util.ArrayList[String]
 
   @Option(names = Array("-t", "--tables"), paramLabel = "TAB_CONF",
     description = Array("Paths to the Table Configuration(s)"), required = false)
-  private val tableConfAL = new util.ArrayList[String]
+  private var tableConfAL = new util.ArrayList[String]
 
   @Option(names = Array("-d", "--dag"), paramLabel = "DAG_CONF",
     description = Array("Path to the Dag Configuration"), required = false)
-  private val dagConfig = ""
+  private var dagConfig = ""
 
   @Option(names = Array("-r", "--run"), paramLabel = "RUN_TAB",
     description = Array("Table to run as area.vertical.table.version"), required = true)
-  private val runTable = ""
+  private var runTable = ""
 
   @Option(names = Array("-st", "--start"), paramLabel = "STARTTS",
     description = Array("Start point for the execution"), required = false)
-  private val startTime = ""
+  private var startTime = ""
 
   @Option(names = Array("-et", "--end"), paramLabel = "ENDTS",
     description = Array("End point for the execution"), required = true)
-  private val endTime = ""
+  private var endTime = ""
 
   @Option(names = Array("-dm", "--dagmode"), paramLabel = "DAGMD",
     description = Array(""))
-  private val dagM = "y"
+  private var dagM = "y"
 
   @Option(names = Array("-p", "--parallel"), paramLabel = "PARALLEL",
     description = Array("Size of the threadpool for running the tasks"), required = false)
-  private val parallelRun = 1
+  private var parallelRun = 1
 
   @Option(names = Array("-o", "--ovw"), paramLabel = "OVERWR",
     description = Array("If entries should be updated if they already exist"), required = false)
-  private val overw = "n"
+  private var overw = "n"
 
   @Option(names = Array("--cont"), paramLabel = "CONMODE",
     description = Array("Run pipeline in continuous mode instead of batch"), required = false)
-  private val conM = "n"
+  private var conM = "n"
+
+  def convertDateString(t: String): LocalDateTime = {
+    try {
+      LocalDateTime.of(t.substring(0, 4).toInt, t.substring(5, 7).toInt, t.substring(8, 10).toInt,
+        t.substring(11, 13).toInt, t.substring(14, 16).toInt, t.substring(17).toInt)
+    }
+    catch {
+      case exception: Exception => throw new Exception("Error parsing DateString to LocalDateTime")
+    }
+  }
 
   override def call(): Int = {
     val dagMode = dagM match {
@@ -75,10 +85,12 @@ class CommandLineInterface extends Callable[Int] {
       case _ => false
     }
 
-    val config = new SparkConf()
-    config.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    /** val config = new SparkConf()
+     *config.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+     * *
+     * val spark = SparkSession.builder().config(config).getOrCreate() **/
 
-    val spark = SparkSession.builder().config(config).getOrCreate()
+    val spark = SparkSession.builder().appName("test").master("local[*]").getOrCreate()
 
     val components = runTable.split("_")
     val target = try {
@@ -87,6 +99,8 @@ class CommandLineInterface extends Callable[Int] {
     catch {
       case e: Exception => throw new Exception("Parsing target failed. Please check the specified runTable.")
     }
+    val start = convertDateString(startTime)
+    val end = convertDateString(endTime)
 
     if (dagConfig == "") {
       val connectionConf = connectionConfAL.asScala.toArray
@@ -94,7 +108,7 @@ class CommandLineInterface extends Callable[Int] {
 
       try {
         UhrwerkAppRunner.runFiles(spark, environmentConfig, connectionConf,
-          tableConf, target, startTime.asInstanceOf[LocalDateTime], endTime.asInstanceOf[LocalDateTime], dagMode, parallelRun, overwrite)
+          tableConf, target, start, end, dagMode, parallelRun, overwrite)
         0
       }
       catch {
@@ -104,7 +118,7 @@ class CommandLineInterface extends Callable[Int] {
     else {
       try {
         UhrwerkAppRunner.runDagFile(spark, environmentConfig, dagConfig, target,
-          startTime.asInstanceOf[LocalDateTime], endTime.asInstanceOf[LocalDateTime], dagMode, parallelRun, overwrite)
+          start, end, dagMode, parallelRun, overwrite)
         0
       }
       catch {
