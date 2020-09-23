@@ -3,6 +3,8 @@ package io.qimia.uhrwerk.config;
 import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class TargetBuilderTest {
   private final Logger logger = Logger.getLogger(this.getClass());
 
@@ -16,6 +18,11 @@ class TargetBuilderTest {
             .format("csv")
             .build();
     logger.info(target);
+
+    assertEquals("conName", target.getConnection_name());
+    assertEquals("csv", target.getFormat());
+
   }
+
 
 }

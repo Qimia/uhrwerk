@@ -3,6 +3,8 @@ package io.qimia.uhrwerk.config;
 import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class ConnectionBuilderTest {
   private final Logger logger = Logger.getLogger(this.getClass());
 
@@ -44,6 +46,15 @@ class ConnectionBuilderTest {
     logger.info(connection2);
     logger.info(connection3);
 
+    assertEquals("s3", connection1.getName());
+    assertEquals("s3Path", connection1.getPath());
+
+    assertEquals("file", connection2.getName());
+    assertEquals("filePath", connection2.getPath());
+
+    assertEquals("jdbc", connection3.getName());
+    assertEquals("pass", connection3.getJdbcPass());
+
   }
 
   @Test
@@ -69,6 +80,13 @@ class ConnectionBuilderTest {
 
     logger.info(con1);
     logger.info(con2);
+
+    assertEquals("s3_1", con1.getName());
+    assertEquals("s3Path", con1.getPath());
+
+    assertEquals("s3_2", con2.getName());
+    assertEquals("s3Path2", con2.getPath());
+
   }
 
 

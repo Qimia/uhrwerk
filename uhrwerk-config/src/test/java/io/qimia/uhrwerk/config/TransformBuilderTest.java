@@ -1,7 +1,10 @@
 package io.qimia.uhrwerk.config;
 
+import io.qimia.uhrwerk.common.model.PartitionTransformType;
 import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TransformBuilderTest {
   private final Logger logger = Logger.getLogger(this.getClass());
@@ -40,6 +43,20 @@ class TransformBuilderTest {
     logger.info(transform2);
     logger.info(transform3);
     logger.info(transform4);
+
+    assertEquals("identity", transform1.getType());
+    assertEquals(null, transform1.getPartition());
+
+
+    assertEquals("aggregate", transform2.getType());
+    assertEquals(2, transform2.getPartition().getSize());
+
+    assertEquals("window", transform3.getType());
+    assertEquals(3, transform3.getPartition().getSize());
+
+    assertEquals("temporal_aggregate", transform4.getType());
+    assertEquals(4, transform4.getPartition().getSize());
+
   }
 
   @Test
@@ -60,6 +77,12 @@ class TransformBuilderTest {
 
     logger.info(transform1);
     logger.info(transform2);
+
+    assertEquals("temporal_aggregate", transform1.getType());
+    assertEquals(10, transform1.getPartition().getSize());
+
+    assertEquals("temporal_aggregate", transform2.getType());
+    assertEquals(5, transform2.getPartition().getSize());
   }
 
 

@@ -1,8 +1,12 @@
 package io.qimia.uhrwerk.config;
 
+
+import io.qimia.uhrwerk.common.model.PartitionUnit;
 import io.qimia.uhrwerk.common.model.Table;
 import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TableBuilderTest {
   private final Logger logger = Logger.getLogger(this.getClass());
@@ -120,6 +124,13 @@ class TableBuilderTest {
             .build();
     logger.info(table);
 
+    assertEquals(10, table.getSources()[0].getParallelLoadNum());
+    assertEquals("TableArea", table.getArea());
+    assertEquals("TableArea.TableVertical.TableTable.TableVersion", table.getClassName());
+    assertEquals(PartitionUnit.HOURS, table.getPartitionUnit());
+
+
+
   }
 
   @Test
@@ -189,6 +200,14 @@ class TableBuilderTest {
                 .dependency(dependency)
             .build();
     logger.info(table);
+
+    assertEquals(8, table.getSources()[0].getParallelLoadNum());
+    assertEquals("TableArea", table.getArea());
+    assertEquals("my.class.name", table.getClassName());
+    assertEquals("connection", table.getSources()[0].getConnection().getName());
+    assertEquals("area", table.getDependencies()[0].getArea());
+    assertEquals("conName", table.getTargets()[0].getConnection().getName());
+    assertEquals(PartitionUnit.DAYS, table.getPartitionUnit());
   }
 
 }
