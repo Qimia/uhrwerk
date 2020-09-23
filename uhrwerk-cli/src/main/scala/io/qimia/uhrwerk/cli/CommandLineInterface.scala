@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.cli
 
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util
 import java.util.concurrent.Callable
 
@@ -61,15 +62,9 @@ class CommandLineInterface extends Callable[Int] {
     description = Array("Run pipeline in continuous mode instead of batch"), required = false)
   private var conM = "n"
 
-  def convertDateString(t: String): LocalDateTime = {
-    try {
-      LocalDateTime.of(t.substring(0, 4).toInt, t.substring(5, 7).toInt, t.substring(8, 10).toInt,
-        t.substring(11, 13).toInt, t.substring(14, 16).toInt, t.substring(17).toInt)
-    }
-    catch {
-      case exception: Exception => throw new Exception("Error parsing DateString to LocalDateTime")
-    }
-  }
+  def convertTSToTimeObj(date: String): LocalDateTime =
+    LocalDateTime.parse(date, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+
 
   override def call(): Int = {
     val dagMode = dagM match {
@@ -85,12 +80,12 @@ class CommandLineInterface extends Callable[Int] {
       case _ => false
     }
 
-    /** val config = new SparkConf()
-     *config.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-     * *
-     * val spark = SparkSession.builder().config(config).getOrCreate() **/
+    val config = new SparkConf()
+    config.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 
-    val spark = SparkSession.builder().appName("test").master("local[*]").getOrCreate()
+    val spark = SparkSession.builder().config(config).getOrCreate()
+
+    //val spark = SparkSession.builder().appName("test").master("local[*]").getOrCreate()
 
     val components = runTable.split("_")
     val target = try {
@@ -99,8 +94,8 @@ class CommandLineInterface extends Callable[Int] {
     catch {
       case e: Exception => throw new Exception("Parsing target failed. Please check the specified runTable.")
     }
-    val start = convertDateString(startTime)
-    val end = convertDateString(endTime)
+    val start = convertTSToTimeObj(startTime)
+    val end = convertTSToTimeObj(endTime)
 
     if (dagConfig == "") {
       val connectionConf = connectionConfAL.asScala.toArray
@@ -112,7 +107,9 @@ class CommandLineInterface extends Callable[Int] {
         0
       }
       catch {
-        case e: Exception => 1
+        case e: Exception =>
+          throw new Exception(e)
+          1
       }
     }
     else {
@@ -122,7 +119,9 @@ class CommandLineInterface extends Callable[Int] {
         0
       }
       catch {
-        case e: Exception => 1
+        case e: Exception =>
+          throw new Exception(e)
+          1
       }
     }
   }

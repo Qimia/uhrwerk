@@ -7,11 +7,13 @@ import io.qimia.uhrwerk.config.representation.*;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
+import java.io.File;
 
 public class YamlConfigReader {
 
@@ -286,14 +288,14 @@ public class YamlConfigReader {
 
   public io.qimia.uhrwerk.common.model.Connection[] readConnections(String file) {
     Yaml yaml = new Yaml();
-    InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
+    InputStream stream = getInputStream(file);
     Connection[] connections = yaml.loadAs(stream, Connection[].class);
     return getModelConnections(connections);
   }
 
   public io.qimia.uhrwerk.common.model.Dag readDag(String file) {
     Yaml yaml = new Yaml();
-    InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
+    InputStream stream = getInputStream(file);
     Dag dag = yaml.loadAs(stream, Dag.class);
     return getModelDag(dag);
   }
@@ -301,15 +303,28 @@ public class YamlConfigReader {
 
   public io.qimia.uhrwerk.common.model.Metastore readEnv(String file) {
     Yaml yaml = new Yaml();
-    InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
+    InputStream stream = getInputStream(file);
     Metastore metastore = yaml.loadAs(stream, Env.class).getMetastore();
     return (getModelMetastore(metastore));
   }
 
+  public InputStream getInputStream(String file) {
+    InputStream stream;
+    stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
+    if (stream == null) {
+      try {
+        File fileO = new java.io.File(file);
+        stream = new FileInputStream(fileO);
+      } catch (Exception f) {
+        throw new IllegalArgumentException("Could not read the file. Please check your file paths.", f);
+      }
+    }
+    return stream;
+  }
 
   public io.qimia.uhrwerk.common.model.Table readTable(String file) {
     Yaml yaml = new Yaml();
-    InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
+    InputStream stream = getInputStream(file);
     try {
       Table table = yaml.loadAs(stream, Table.class);
       return getModelTable(table);
