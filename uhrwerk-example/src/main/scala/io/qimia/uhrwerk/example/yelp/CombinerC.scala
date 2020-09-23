@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
+import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.monotonically_increasing_id
 
@@ -15,6 +16,8 @@ object CombinerC extends App {
     .appName("CombinerC")
     .master("local[3]")
     .getOrCreate()
+
+  private val logger: Logger = Logger.getLogger(this.getClass)
 
   def CombinerCFunc(in: TaskInput): TaskOutput = {
     // The most basic userFunction simply returns the input dataframe
@@ -42,5 +45,5 @@ object CombinerC extends App {
     LocalDateTime.of(2012, 5, 2, 3, 4)
   )
   val results = wrapper.get.runTasksAndWait(runTimes, false)
-  println(results)
+  logger.info(results)
 }

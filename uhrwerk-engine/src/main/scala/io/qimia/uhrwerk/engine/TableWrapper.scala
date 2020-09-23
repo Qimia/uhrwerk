@@ -8,6 +8,7 @@ import io.qimia.uhrwerk.common.metastore.dependency.{TablePartitionResult, Table
 import io.qimia.uhrwerk.common.model.{Partition, PartitionUnit, Table, Target}
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent}
 import io.qimia.uhrwerk.engine.tools.{DependencyHelper, SourceHelper, TimeHelper}
+import org.apache.log4j.Logger
 import org.apache.spark.sql.DataFrame
 
 import scala.concurrent._
@@ -38,6 +39,7 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
   } else {
     TimeHelper.convertToDuration(PartitionUnit.MINUTES, 1)
   }
+  private val logger: Logger = Logger.getLogger(this.getClass)
 
   /**
    * Single invocation of usercode (possibly bulk-modus)
@@ -54,8 +56,8 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
       val lastInclusivePartitionTs = partitionTS.last
       Option(lastInclusivePartitionTs.plus(tableDuration))
     }
-    println("Start of Single Run")
-    println(s"TS: ${startTs} Optional end-TS: ${endTs}")
+    logger.info("Start of Single Run")
+    logger.info(s"TS: ${startTs} Optional end-TS: ${endTs}")
 
     val loadedInputDepDFs: List[(Ident, DataFrame)] =
       if (dependencyResults.nonEmpty) {
@@ -123,12 +125,12 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
         true
       } catch {
         case e: Throwable => {
-          System.err.println("Task failed: " + startTs.toString)
+          logger.error("Task failed: " + startTs.toString)
           e.printStackTrace()
           false
         }
       }
-    println("End of Single Run")
+    logger.info("End of Single Run")
     // TODO: Proper logging here
     success
   }
@@ -147,13 +149,13 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
       metastore.tableDependencyService.processingPartitions(table, partitionsTs)
 
     if (dependencyRes.getFailedTs != null) {
-      println(s"Failed partitionTs: ${dependencyRes.getFailedTs.mkString(", ")}")
+      logger.info(s"Failed partitionTs: ${dependencyRes.getFailedTs.mkString(", ")}")
     }
 
     // If no tasks to be done => quit
     val taskTimes = dependencyRes.getResolvedTs
     if ((taskTimes == null) || taskTimes.isEmpty) {
-      println("No tasks ready to run")
+      logger.info("No tasks ready to run")
       return Nil
     }
 
@@ -165,7 +167,7 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
       val localGroupTs: Array[LocalDateTime] = partitionGroup.map(_.getPartitionTs)
       val bulkInput: List[BulkDependencyResult] =
         DependencyHelper.extractBulkDependencyResult(partitionGroup)
-      println(s"BulkInput length: ${bulkInput.length}")
+      logger.info(s"BulkInput length: ${bulkInput.length}")
       Future {
         val res = singleRun(bulkInput, localGroupTs)
         if (res) {
@@ -213,7 +215,7 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
       }
     } else {
       if (!table.isPartitioned) {
-        println(
+        logger.info(
           "Specifying startTimes for unpartitioned tables is not necessary, " +
             "it will always run with the current timestamp."
         )

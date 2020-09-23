@@ -1,8 +1,10 @@
 package io.qimia.uhrwerk.config;
 
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 class DependencyBuilderTest {
+  private final Logger logger = Logger.getLogger(this.getClass());
 
   @Test
   void builderTest() {
@@ -23,7 +25,7 @@ class DependencyBuilderTest {
             .done()
             .done()
             .build();
-    System.out.println(dependency);
+    logger.info(dependency);
   }
 
   @Test
@@ -40,7 +42,7 @@ class DependencyBuilderTest {
             .version("1.0")
             .transform(transform)
             .build();
-    System.out.println(dependency);
+    logger.info(dependency);
   }
 
   @Test
@@ -57,7 +59,7 @@ class DependencyBuilderTest {
             .version("1.0")
             .transform(transform)
             .build();
-    System.out.println(dependency);
+    logger.info(dependency);
   }
 
 
@@ -87,7 +89,7 @@ class DependencyBuilderTest {
             .transform(transform)
             .build();
 
-    System.out.println(dependency1);
-      System.out.println(dependency2);
+    logger.info(dependency1);
+    logger.info(dependency2);
   }
 }

@@ -6,14 +6,13 @@ import io.qimia.uhrwerk.engine.Environment
 import io.qimia.uhrwerk.engine.Environment.SourceIdent
 import io.qimia.uhrwerk.engine.dag.{DagTask, DagTaskBuilder, DagTaskDispatcher}
 import io.qimia.uhrwerk.example.retail_examples.LoadDims.simpleHashLoad
-import io.qimia.uhrwerk.example.retail_examples.LoadFacts.{computeFactTable, computeAggregation, simpleLoad}
+import io.qimia.uhrwerk.example.retail_examples.LoadFacts.{computeAggregation, computeFactTable, simpleLoad}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import org.apache.log4j.{Level, Logger}
+import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 
 object RetailDAG extends App {
-  Logger.getLogger("org").setLevel(Level.WARN)
-  Logger.getLogger("akka").setLevel(Level.ERROR)
+  private val logger: Logger = Logger.getLogger(this.getClass)
 
   val numberOfCores = Runtime.getRuntime.availableProcessors
 
@@ -57,7 +56,7 @@ object RetailDAG extends App {
     LocalDateTime.of(2020, 6, 7, 0, 0)
   )
 
-  println("task list size: " + taskList.size)
-  taskList.foreach(t => println(s"${t.table.wrappedTable.getArea}/${t.table.wrappedTable.getVertical}/${t.table.wrappedTable.getName} - partitions: ${t.partitions.toString()}"))
+  logger.info("task list size: " + taskList.size)
+  taskList.foreach(t => logger.info(s"${t.table.wrappedTable.getArea}/${t.table.wrappedTable.getVertical}/${t.table.wrappedTable.getName} - partitions: ${t.partitions.toString()}"))
   DagTaskDispatcher.runTasksParallel(taskList, 2)
 }

@@ -6,11 +6,13 @@ import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.common.model.{Dependency, PartitionUnit, Table}
 import io.qimia.uhrwerk.common.tools.TimeTools
+import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Column, DataFrame}
 
 object SparkFrameManagerUtils {
+  private val logger: Logger = Logger.getLogger(this.getClass)
   val timeColumns: List[String] =
     List("year", "month", "day", "hour", "minute")
   private[framemanager] val timeColumnsFormats: List[String] =
@@ -202,7 +204,7 @@ object SparkFrameManagerUtils {
         return true
       }
     } catch {
-      case _: Exception => println("The df doesn't contain time columns")
+      case _: Exception => logger.info("The df doesn't contain time columns")
     }
     false
   }

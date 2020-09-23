@@ -4,14 +4,13 @@ import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import org.apache.log4j.{Level, Logger}
+import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{max, min}
 
 
 object LoaderBParq extends App {
-  Logger.getLogger("org").setLevel(Level.WARN)
-  Logger.getLogger("akka").setLevel(Level.ERROR)
+  private val logger: Logger = Logger.getLogger(this.getClass)
 
   val sparkSess = SparkSession.builder()
     .appName("loaderB")
@@ -41,6 +40,6 @@ object LoaderBParq extends App {
     LocalDateTime.of(2012, 5, 5, 0, 0)
   )
   val results = wrapper.get.runTasksAndWait(runTimes, false)
-  println(results)
+  logger.info(results)
 
 }

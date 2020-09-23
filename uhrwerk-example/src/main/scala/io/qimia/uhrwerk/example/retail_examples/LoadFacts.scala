@@ -5,19 +5,19 @@ import java.time.LocalDateTime
 import io.qimia.uhrwerk.engine.Environment.{SourceIdent, TableIdent}
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import org.apache.log4j.{Level, Logger}
+import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, count, sum}
 
 object LoadFacts extends App {
+  private val logger: Logger = Logger.getLogger(this.getClass)
+
   val numberOfCores = Runtime.getRuntime.availableProcessors
   val sparkSess = SparkSession.builder()
     .appName("loadDims")
     .master(s"local[${numberOfCores - 1}]")
     .config("driver-memory", "4g")
     .getOrCreate()
-
-  Logger.getLogger("org").setLevel(Level.WARN)
 
   def simpleLoad(ident: SourceIdent): (TaskInput => TaskOutput) = {
     def udf(in: TaskInput): TaskOutput = {
@@ -94,7 +94,7 @@ object LoadFacts extends App {
   val salesFactResult = salesFactWrapper.get.runTasksAndWait(runTimes)
   val salesFactDailyResult = salesFactDailyWrapper.get.runTasksAndWait(runTimes)
 
-  println(s"Sales Fact processed: ${salesResult}")
-  println(s"Sales Fact processed to dwh: ${salesFactResult}")
-  println(s"Sales Fact Daily processed to dwh: ${salesFactDailyResult}")
+  logger.info(s"Sales Fact processed: ${salesResult}")
+  logger.info(s"Sales Fact processed to dwh: ${salesFactResult}")
+  logger.info(s"Sales Fact Daily processed to dwh: ${salesFactDailyResult}")
 }

@@ -1,9 +1,11 @@
 package io.qimia.uhrwerk.config;
 
 import io.qimia.uhrwerk.common.model.Table;
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 class TableBuilderTest {
+  private final Logger logger = Logger.getLogger(this.getClass());
 
   @Test
   public void tableBuilderTest() {
@@ -116,7 +118,7 @@ class TableBuilderTest {
               .done()
             .done()
             .build();
-    System.out.println(table);
+    logger.info(table);
 
   }
 
@@ -186,7 +188,7 @@ class TableBuilderTest {
                 .target(target)
                 .dependency(dependency)
             .build();
-    System.out.println(table);
+    logger.info(table);
   }
 
 }

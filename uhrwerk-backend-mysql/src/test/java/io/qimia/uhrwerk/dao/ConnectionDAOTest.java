@@ -6,6 +6,7 @@ import io.qimia.uhrwerk.common.metastore.config.ConnectionService;
 import io.qimia.uhrwerk.common.model.Connection;
 import io.qimia.uhrwerk.common.model.ConnectionType;
 import io.qimia.uhrwerk.config.ConnectionBuilder;
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 import java.sql.PreparedStatement;
@@ -19,12 +20,14 @@ class ConnectionDAOTest {
   java.sql.Connection db;
   ConnectionService service;
   String[] connNames = {"S3", "JDBC", "file"};
+  private Logger logger;
 
   @org.junit.jupiter.api.BeforeEach
   void setUp() throws SQLException {
     db =
             ConnectionHelper.getConnection();
     service = new ConnectionDAO(db);
+    logger = Logger.getLogger(this.getClass());
   }
 
   @org.junit.jupiter.api.AfterEach
@@ -43,7 +46,7 @@ class ConnectionDAOTest {
     assertTrue(result.isSuccess());
     assertNotNull(result.getNewConnection());
     assertNotNull(result.getNewConnection().getId());
-    System.out.println(result.getNewConnection());
+    logger.info(result.getNewConnection());
   }
 
   @Test
@@ -59,7 +62,7 @@ class ConnectionDAOTest {
     assertTrue(result.isSuccess());
     assertNotNull(result.getNewConnection());
     assertNotNull(result.getNewConnection().getId());
-    System.out.println(result.getNewConnection());
+    logger.info(result.getNewConnection());
   }
 
   @Test
@@ -98,8 +101,8 @@ class ConnectionDAOTest {
       assertTrue(result.isSuccess());
       assertNotNull(result.getNewConnection());
       assertNotNull(result.getNewConnection().getId());
-      System.out.println(c);
-      System.out.println(result.getNewConnection());
+      logger.info(c);
+      logger.info(result.getNewConnection());
     }
   }
 
@@ -108,11 +111,11 @@ class ConnectionDAOTest {
     try {
       for (String n : connNames) {
         Connection con = service.getByName(n);
-        System.out.println(con);
+        logger.info(con);
         assertEquals(n, con.getName());
       }
     } catch (SQLException e) {
-      System.out.println("caught in Connection.");
+      logger.info("caught in Connection.");
     }
   }
 
@@ -124,11 +127,11 @@ class ConnectionDAOTest {
         testCon.setName(n);
         testCon.setKey();
         Connection con = service.getById(testCon.getId());
-        System.out.println(con);
+        logger.info(con);
         assertEquals(testCon.getId(), con.getId());
       }
     } catch (SQLException e) {
-      System.out.println("caught in Connection.");
+      logger.info("caught in Connection.");
     }
   }
 
@@ -142,11 +145,11 @@ class ConnectionDAOTest {
           db.prepareStatement("SELECT * FROM CONNECTION WHERE NAME in ();");
       Connection[] con = service.getConnections(statement);
       for (int i = 0; i < con.length; i++) {
-        System.out.println(con[i]);
+        logger.info(con[i]);
         assertEquals(connNames[i], con[i].getName());
       }
     } catch (SQLException e) {
-      System.out.println("caught in Connection.");
+      logger.info("caught in Connection.");
     }
   }
 }

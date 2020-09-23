@@ -12,6 +12,7 @@ import io.qimia.uhrwerk.config.ConnectionBuilder;
 import io.qimia.uhrwerk.config.DependencyBuilder;
 import io.qimia.uhrwerk.config.SourceBuilder;
 import io.qimia.uhrwerk.config.TableBuilder;
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
@@ -23,7 +24,7 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TableDAOTest {
-
+  private final Logger logger = Logger.getLogger(this.getClass());
   java.sql.Connection db;
   TableDAO tableDAO;
   ConnectionDAO connectionDAO;
@@ -164,7 +165,7 @@ class TableDAOTest {
 
     var result = tableDAO.save(table, false);
 
-    System.out.println(result.getMessage());
+    logger.info(result.getMessage());
     assertTrue(result.isSuccess());
     Arrays.stream(result.getSourceResults())
         .forEach(sourceResult -> assertTrue(sourceResult.isSuccess()));
@@ -202,7 +203,7 @@ class TableDAOTest {
 
     var result2 = tableDAO.save(table, false);
 
-    System.out.println(result2.getMessage());
+    logger.info(result2.getMessage());
     assertTrue(result2.isSuccess());
     Arrays.stream(result2.getSourceResults())
         .forEach(sourceResult -> assertTrue(sourceResult.isSuccess()));
@@ -223,7 +224,7 @@ class TableDAOTest {
     table.setPartitioned(false);
     result = tableDAO.save(table, false);
 
-    System.out.println(result.getMessage());
+    logger.info(result.getMessage());
     assertFalse(result.isSuccess());
   }
 
@@ -237,7 +238,7 @@ class TableDAOTest {
 
     result = tableDAO.save(table, false);
 
-    System.out.println(result.getMessage());
+    logger.info(result.getMessage());
     assertTrue(result.isSuccess());
   }
 
@@ -389,10 +390,10 @@ class TableDAOTest {
 
     for (int i = 0; i < partitionResultSet.getResolvedTs().length; i++) {
       TablePartitionResult partitionResult = partitionResultSet.getResolved()[i];
-      System.out.println(partitionResultSet.getResolvedTs()[i]);
+      logger.info(partitionResultSet.getResolvedTs()[i]);
       DependencyResult resolvedDependency = partitionResult.getResolvedDependencies()[0];
       for (int j = 0; j < resolvedDependency.getSucceeded().length; j++) {
-        System.out.println(resolvedDependency.getSucceeded()[j]);
+        logger.info(resolvedDependency.getSucceeded()[j]);
       }
     }
   }

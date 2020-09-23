@@ -2,9 +2,11 @@ package io.qimia.uhrwerk.dao;
 
 import io.qimia.uhrwerk.common.model.Dependency;
 import net.openhft.hashing.LongHashFunction;
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 public class HashIdTest {
+  private final Logger logger = Logger.getLogger(this.getClass());
 
   @Test
   void test() {
@@ -21,12 +23,12 @@ public class HashIdTest {
             .append(dep.getVertical())
             .append(dep.getTableName())
             .append(dep.getVersion());
-    System.out.println("without format: " + res.toString());
+    logger.info("without format: " + res.toString());
     long tableId = LongHashFunction.xx().hashChars(res);
-    System.out.println("tableId: " + tableId);
+    logger.info("tableId: " + tableId);
     res = res.append(dep.getFormat());
-    System.out.println("with format: " + res.toString());
+    logger.info("with format: " + res.toString());
     long depId = LongHashFunction.xx().hashChars(res);
-    System.out.println("depId: " + depId);
+    logger.info("depId: " + depId);
   }
 }

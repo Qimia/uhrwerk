@@ -7,10 +7,12 @@ import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
 import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.common.tools.{JDBCTools, TimeTools}
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils._
+import org.apache.log4j.Logger
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.{col, udf}
 
 class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
+  private val logger: Logger = Logger.getLogger(this.getClass)
 
   /**
    * Loads a source dataframe. Either one batch or the full path.
@@ -298,7 +300,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           .option("dbtable", source.getPath) // area-vertical.tableName-version
       }
 
-    println(s"Loading source ${source.getPath}")
+    logger.info(s"Loading source ${source.getPath}")
 
     val df: DataFrame = dfReaderWithQuery
       .load()
@@ -454,7 +456,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           writerWithOptions
         }
 
-      println(s"Saving DF to $fullPath")
+      logger.info(s"Saving DF to $fullPath")
       if (isJDBC) {
         val jdbcWriter = writerWithPartitioning
           .option("url", target.getConnection.getJdbcUrl)
@@ -467,8 +469,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             .save()
         } catch {
           case e: Exception =>
-            println(e.getLocalizedMessage)
-            println("Trying to create the database")
+            logger.warn(e.getLocalizedMessage)
+            logger.warn("Trying to create the database")
             JDBCTools.createJDBCDatabase(
               target.getConnection,
               fullPath.split("\\.")(0)

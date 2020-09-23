@@ -4,6 +4,7 @@ import io.qimia.uhrwerk.ConnectionHelper;
 import io.qimia.uhrwerk.common.metastore.config.SourceResult;
 import io.qimia.uhrwerk.common.metastore.config.SourceService;
 import io.qimia.uhrwerk.common.model.*;
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
@@ -13,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SourceDAOTest {
     java.sql.Connection db;
     SourceService service;
+    private final Logger logger = Logger.getLogger(this.getClass());
 
     static Table generateTable() {
         Table table = new Table();
@@ -130,7 +132,7 @@ public class SourceDAOTest {
         service.save(source, table, false);
         SourceResult resultSame = service.save(source, table, false);
 
-        System.out.println(resultSame.getMessage());
+        logger.info(resultSame.getMessage());
         assertTrue(resultSame.isSuccess());
         assertFalse(resultSame.isError());
         assertNotNull(resultSame.getNewResult());
@@ -201,7 +203,7 @@ public class SourceDAOTest {
         SourceResult result = service.save(source, table, true);
 
         // without foreign keys this should fail as well
-        System.out.println(result.getMessage());
+        logger.info(result.getMessage());
         assertFalse(result.isSuccess());
         assertTrue(result.isError());
         assertNotNull(result.getNewResult());
@@ -212,7 +214,7 @@ public class SourceDAOTest {
         SourceResult resultConnectionNull = service.save(source, table, true);
 
         // with connection null this should fail
-        System.out.println(resultConnectionNull.getMessage());
+        logger.info(resultConnectionNull.getMessage());
         assertTrue(resultConnectionNull.isError());
         assertFalse(resultConnectionNull.isSuccess());
         assertNotNull(resultConnectionNull.getNewResult());
@@ -236,7 +238,7 @@ public class SourceDAOTest {
 
         SourceResult result = service.save(source, table, true);
 
-        System.out.println(result.getMessage());
+        logger.info(result.getMessage());
         assertTrue(result.isSuccess());
         assertFalse(result.isError());
         assertNotNull(result.getNewResult());
@@ -292,13 +294,13 @@ public class SourceDAOTest {
         SourceResult result = service.save(source, null, true);
 
         // without foreign keys this should work
-        System.out.println(result.getMessage());
+        logger.info(result.getMessage());
         assertTrue(result.isSuccess());
         assertFalse(result.isError());
         assertNotNull(result.getNewResult());
         assertNotNull(result.getNewResult().getId());
         assertEquals(source, result.getNewResult());
-        System.out.println(result.getMessage());
+        logger.info(result.getMessage());
 
         source.setTableId(null);
         SourceResult resultConnectionNull = service.save(source, null, true);
@@ -309,7 +311,7 @@ public class SourceDAOTest {
         assertNotNull(resultConnectionNull.getNewResult());
         assertNotNull(resultConnectionNull.getNewResult().getId());
         assertEquals(source, resultConnectionNull.getNewResult());
-        System.out.println(resultConnectionNull.getMessage());
+        logger.info(resultConnectionNull.getMessage());
     }
 
     @Test
@@ -340,7 +342,7 @@ public class SourceDAOTest {
         // updating a source where the connection changed
         SourceResult result = service.save(source, table, true);
 
-        System.out.println(result.getMessage());
+        logger.info(result.getMessage());
         assertTrue(result.isSuccess());
         assertFalse(result.isError());
         assertNotNull(result.getNewResult());

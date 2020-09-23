@@ -10,7 +10,7 @@ import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.common.tools.{JDBCTools, TimeTools}
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils
 import io.qimia.uhrwerk.tags.{DbTest, Slow}
-import org.apache.spark.SparkContext
+import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -27,6 +27,8 @@ trait BuildTeardown extends BeforeAndAfterAll {
   val DATABASE_NAME2: String = "source_testdb"
   val DATABASE_NAME3: String = "staging_testdb"
 
+  protected val logger: Logger = Logger.getLogger(this.getClass)
+
   override def afterAll() {
     val foldersToClean: ListBuffer[Path] = new ListBuffer[Path]
     foldersToClean.append(Paths.get("src/test/resources/testlake/"))
@@ -40,8 +42,8 @@ trait BuildTeardown extends BeforeAndAfterAll {
         cleanFolder(p)
       } catch {
         case exception: Exception =>
-          println("Couldn't remove folder")
-          println(exception.getLocalizedMessage)
+          logger.error("Couldn't remove folder")
+          logger.error(exception.getLocalizedMessage)
       }
     })
   }
@@ -76,9 +78,6 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       .appName("TestFrameManager2")
       .master(s"local[${numberOfCores - 1}]")
       .getOrCreate()
-
-    val sc: SparkContext = spark.sparkContext
-    sc.setLogLevel("WARN")
 
     spark
   }
@@ -441,7 +440,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     )
 
     (batchDates ++ extraTs).foreach(bd => {
-      println(bd)
+      logger.info(bd)
       val df = createMockDataFrame(spark, Option(bd))
       manager.writeDataFrame(df, table, Array(bd))
     })
@@ -800,7 +799,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val df: DataFrame = hours
       .map(h =>
         minutes.map(m => {
-          println(h + " - " + m)
+          logger.info(h + " - " + m)
           val dt = LocalDateTime.of(2020, 9, 7, h, m)
           createMockDataFrame(spark, Option(dt))
         })

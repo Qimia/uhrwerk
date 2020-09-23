@@ -1,8 +1,10 @@
 package io.qimia.uhrwerk.config;
 
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 class JDBCBuilderTest {
+  private final Logger logger = Logger.getLogger(this.getClass());
 
   @Test
   void builderTest() {
@@ -14,7 +16,7 @@ class JDBCBuilderTest {
             .user("user")
             .pass("pass")
             .build();
-    System.out.println(jdbc);
+    logger.info(jdbc);
   }
 
 }

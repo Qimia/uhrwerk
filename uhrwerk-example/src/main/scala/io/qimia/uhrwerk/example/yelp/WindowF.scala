@@ -5,19 +5,17 @@ import java.time.LocalDateTime
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils
-import org.apache.log4j.{Level, Logger}
+import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{max, min}
 
 object WindowF extends App {
+  private val logger: Logger = Logger.getLogger(this.getClass)
+
   val sparkSess = SparkSession.builder()
     .appName("WindowF")
     .master("local")
     .getOrCreate()
-
-    Logger.getLogger("org").setLevel(Level.WARN)
-    Logger.getLogger("akka").setLevel(Level.ERROR)
-
 
   def loaderAFunc(in: TaskInput): TaskOutput = {
     val aDF = in.loadedInputFrames.values.head
@@ -41,6 +39,6 @@ object WindowF extends App {
   )
   if (wrapper.isDefined) {
     val results = wrapper.get.runTasksAndWait(runTimes, false)
-    println(results)
+    logger.info(results)
   }
 }
