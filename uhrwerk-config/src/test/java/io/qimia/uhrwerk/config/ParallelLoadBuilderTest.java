@@ -3,6 +3,8 @@ package io.qimia.uhrwerk.config;
 import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class ParallelLoadBuilderTest {
   private final Logger logger = Logger.getLogger(this.getClass());
 
@@ -16,6 +18,8 @@ class ParallelLoadBuilderTest {
             .num(5)
             .build();
     logger.info(parallelLoad);
+
+    assertEquals(5, parallelLoad.getNum());
   }
 
 }

@@ -44,6 +44,7 @@ class DagBuilderTest {
             .vertical("TableVertical")
             .table("TableTable")
             .version("TableVersion")
+            .className("my.new.class.name")
             .parallelism(2)
             .maxBulkSize(2)
             .partition()
@@ -149,6 +150,12 @@ class DagBuilderTest {
             .build();
 
     logger.info(dag);
+
+    assertEquals("TableTable", dag.getTables()[0].getName());
+    assertEquals("TableArea.TableVertical.TableTable.TableVersion", dag.getTables()[0].getClassName());
+    assertEquals(4, dag.getTables()[0].getPartitionSize());
+
+
 
   }
 
@@ -275,6 +282,7 @@ class DagBuilderTest {
     table2.setVertical(table1.getVertical());
     table2.setTable(table1.getTable());
     table2.setArea("somedifferent");
+    table2.setClass_name("my.class.name");
 
     var connection1 = new ConnectionBuilder()
             .name("s3")
@@ -307,6 +315,22 @@ class DagBuilderTest {
             .build();
 
     logger.info(dag);
+
+    assertEquals(2, dag.getTables().length);
+    assertEquals(2, dag.getConnections().length);
+
+    assertEquals("TableTable", dag.getTables()[0].getName());
+    assertEquals("TableArea", dag.getTables()[0].getArea());
+    assertEquals("TableArea.TableVertical.TableTable.TableVersion", dag.getTables()[0].getClassName());
+    assertEquals(4, dag.getTables()[0].getPartitionSize());
+
+    assertEquals("TableTable", dag.getTables()[1].getName());
+    assertEquals("somedifferent", dag.getTables()[1].getArea());
+    assertEquals("my.class.name", dag.getTables()[1].getClassName());
+    assertEquals(4, dag.getTables()[1].getPartitionSize());
+
+
+
   }
 
   @Test
@@ -437,6 +461,7 @@ class DagBuilderTest {
     table2.setVertical(table1.getVertical());
     table2.setTable(table1.getTable());
     table2.setArea("somedifferent");
+    table2.setClass_name("my.class.name");
 
     var connection1 = new ConnectionBuilder()
             .name("s3")
@@ -475,6 +500,20 @@ class DagBuilderTest {
     assertEquals(false, dag.getTables()[0].getSources()[1].isPartitioned());
     assertEquals(PartitionTransformType.NONE, dag.getTables()[1].getDependencies()[0].getTransformType());
     assertEquals(PartitionTransformType.IDENTITY, dag.getTables()[1].getDependencies()[1].getTransformType());
+
+    assertEquals("TableTable", dag.getTables()[0].getName());
+    assertEquals("TableArea", dag.getTables()[0].getArea());
+    assertEquals("TableArea.TableVertical.TableTable.TableVersion", dag.getTables()[0].getClassName());
+    assertEquals(0, dag.getTables()[0].getPartitionSize());
+
+    assertEquals("TableTable", dag.getTables()[1].getName());
+    assertEquals("somedifferent", dag.getTables()[1].getArea());
+    assertEquals("my.class.name", dag.getTables()[1].getClassName());
+    assertEquals(10, dag.getTables()[1].getPartitionSize());
+
+    assertEquals("s3", dag.getConnections()[0].getName());
+    assertEquals("file", dag.getConnections()[1].getName());
+
   }
 
 }

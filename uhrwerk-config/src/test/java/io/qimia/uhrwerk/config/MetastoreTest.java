@@ -7,6 +7,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class MetastoreTest {
   private final Logger logger = Logger.getLogger(this.getClass());
 
@@ -17,5 +19,7 @@ public class MetastoreTest {
     Yaml yaml = new Yaml();
     Env env = yaml.loadAs(stream, Env.class);
     logger.info(env);
+
+    assertEquals("Xq92vFqEKF7TB8H9", env.getMetastore().getPass());
   }
 }
