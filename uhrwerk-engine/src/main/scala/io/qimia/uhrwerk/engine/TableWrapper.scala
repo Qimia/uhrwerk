@@ -236,4 +236,27 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
     executor.shutdown()
     result
   }
+
+  /**
+   * Get timestamp of latest processed partition datetime.
+   * In case there was no partition returns empty
+   * In case there are multiple targets it returns the earliest of all the targets their latest partition
+   * @return localdatetime of the partition or empty if there is no
+   */
+  def getTimeLatestPartition(): Option[LocalDateTime] = {
+    val targets = metastore.targetService.getTableTargets(wrappedTable.getId)
+    val latestPartitions = targets.map(t => metastore.partitionService.getLatestPartition(t.getId)).filter(_ != null)
+    if (latestPartitions.isEmpty) {
+      Option.empty
+    } else {
+      val earliestLatestPartition = latestPartitions.reduce((partA, partB) => {
+        if (partA.getPartitionTs.isAfter(partB.getPartitionTs)) {
+          partB
+        } else {
+          partA
+        }
+      })
+      Option(earliestLatestPartition.getPartitionTs)
+    }
+  }
 }

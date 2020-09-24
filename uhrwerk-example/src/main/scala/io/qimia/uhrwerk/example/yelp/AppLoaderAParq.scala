@@ -18,8 +18,8 @@ object AppLoaderAParq extends App {
     Array("testing-connection-config.yml"),
     Array("loader-A-parq-app.yml"),
     TableIdent("staging", "yelp_db", "table_a_parq", "1.0"),
-    LocalDateTime.of(2012, 5, 1, 0, 0),
-    LocalDateTime.of(2012, 5, 6, 0, 0),
+    Option(LocalDateTime.of(2012, 5, 1, 0, 0)),
+    Option(LocalDateTime.of(2012, 5, 6, 0, 0)),
     false,
     1,
     false

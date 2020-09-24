@@ -22,8 +22,8 @@ object AppLoaderSales extends App {
     Array("testing-connection-config.yml"),
     Array("LoadTableSalesTest.yml"),
     TableIdent("staging", "qimia_oltp", "sales", "1.0"),
-    LocalDateTime.of(2020, 6, 1, 0, 0),
-    LocalDateTime.of(2020, 6, 5, 0, 0),
+    Option(LocalDateTime.of(2020, 6, 1, 0, 0)),
+    Option(LocalDateTime.of(2020, 6, 5, 0, 0)),
     false,
     1,
     false

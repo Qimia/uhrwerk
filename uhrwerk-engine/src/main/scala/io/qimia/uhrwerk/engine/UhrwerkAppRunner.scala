@@ -32,8 +32,8 @@ object UhrwerkAppRunner {
       connectionConfigs: Array[String],
       tableConfigs: Array[String],
       runTable: TableIdent,
-      startTime: LocalDateTime,
-      endTime: LocalDateTime,
+      startTime: Option[LocalDateTime],
+      endTime:Option[LocalDateTime],
       dagMode: Boolean,
       parallelRun: Int,
       overwrite: Boolean
@@ -64,8 +64,8 @@ object UhrwerkAppRunner {
       environmentConfig: String,
       dagConfig: String,
       runTable: TableIdent,
-      startTime: LocalDateTime,
-      endTime: LocalDateTime,
+      startTime: Option[LocalDateTime],
+      endTime: Option[LocalDateTime],
       dagMode: Boolean,
       parallelRun: Int,
       overwrite: Boolean
@@ -96,8 +96,8 @@ object UhrwerkAppRunner {
       connectionConfigs: Array[Connection],
       tableConfigs: Array[Table],
       runTable: TableIdent,
-      startTime: LocalDateTime,
-      endTime: LocalDateTime,
+      startTime: Option[LocalDateTime],
+      endTime: Option[LocalDateTime],
       dagMode: Boolean,
       parallelRun: Int,
       overwrite: Boolean
@@ -109,11 +109,53 @@ object UhrwerkAppRunner {
     runEnvironment(uhrwerkEnvironment, runTable, startTime, endTime, dagMode, parallelRun, overwrite)
   }
 
+  /**
+   * fill in Option values for start end time
+   * (Only do this when it isn't an unpartitioned table)
+   * Uses getTimeLatestPartition for startTime if needed (and stops if it doesn't find anything at all)
+   * Uses lowerBoundOfCurrentTimestamp for endTime if needed
+   * @param table TableWrapper for the table that needs to run or is targeted by the dag-execution
+   * @param startTime option of start-time
+   * @param endTime option of end-time
+   * @return tuple with start and end-time
+   */
+  private def getStartEndTime(table: TableWrapper, startTime: Option[LocalDateTime],
+                              endTime: Option[LocalDateTime]): (LocalDateTime, LocalDateTime) = {
+    val callStartTime = if (startTime.isEmpty) {
+      val lastPartitionTime = table.getTimeLatestPartition()
+      if (lastPartitionTime.isEmpty) {
+        logger.error("Calling without start time only functions when partitions have been processed before")
+        throw new RuntimeException("Couldn't find latest partition")
+      } else {
+        lastPartitionTime.get
+      }
+    } else {
+      startTime.get
+    }
+    val callEndTime = if (endTime.isEmpty) {
+      val currentTime = LocalDateTime.now()
+      TimeTools.lowerBoundOfCurrentTimestamp(callStartTime, currentTime, table.wrappedTable.getPartitionUnit, table.wrappedTable.getPartitionSize)
+    } else {
+      endTime.get
+    }
+    (callStartTime, callEndTime)
+  }
+
+  /**
+   * Run a pre-loaded environment for a particular table
+   * @param environment environment with loaded table (s)
+   * @param runTable table that needs to be processed
+   * @param startTime possible starting point of partitions to process
+   * @param endTime possible ending point of partitions to process (exclusive = first start timestamp of partition not to process)
+   * @param dagMode if activated, this will also process all dependencies using dag-execution (requires all tables to be loaded in environment)
+   * @param parallelRun number of threads used by either the dag-execution or the table-wrapper
+   * @param overwrite allow overwriting of configs and partitions in the store
+   */
   def runEnvironment(
       environment: Environment,
       runTable: TableIdent,
-      startTime: LocalDateTime,
-      endTime: LocalDateTime,
+      startTime: Option[LocalDateTime],
+      endTime: Option[LocalDateTime],
       dagMode: Boolean,
       parallelRun: Int,
       overwrite: Boolean
@@ -123,12 +165,14 @@ object UhrwerkAppRunner {
       return
     }
     val tableToRun = environment.getTable(runTable).get
+
     if (dagMode) {
+      val (callStartTime, callEndTime) = getStartEndTime(tableToRun, startTime, endTime)
       val dagTaskBuilder = new DagTaskBuilder(environment)
       val taskList = dagTaskBuilder.buildTaskListFromTable(
         tableToRun,
-        startTime,
-        endTime
+        callStartTime,
+        callEndTime
       )
       if (parallelRun > 1) {
         DagTaskDispatcher.runTasksParallel(taskList, parallelRun)
@@ -136,9 +180,14 @@ object UhrwerkAppRunner {
         DagTaskDispatcher.runTasks(taskList)
       }
     } else {
-      val partitionTs = TimeTools
-        .convertRangeToBatch(startTime, endTime, tableToRun.tableDuration)
-        .toArray
+      val partitionTs = if (tableToRun.wrappedTable.isPartitioned) {
+        val (callStartTime, callEndTime) = getStartEndTime(tableToRun, startTime, endTime)
+        TimeTools
+          .convertRangeToBatch(callStartTime, callEndTime, tableToRun.tableDuration)
+          .toArray
+      } else {
+        Array.empty[LocalDateTime]
+      }
       if (parallelRun > 1) {
         val _ = tableToRun.runTasksAndWait(partitionTs, overwrite, Option(parallelRun))
       } else {
