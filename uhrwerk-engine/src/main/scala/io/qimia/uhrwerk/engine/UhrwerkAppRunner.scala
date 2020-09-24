@@ -119,7 +119,7 @@ object UhrwerkAppRunner {
       overwrite: Boolean
   ): Unit = {
     if (!environment.tables.contains(runTable)) {
-      logger.error("Unknown table to run")
+      logger.error("Unknown table to run: " + runTable.toString)
       return
     }
     val tableToRun = environment.getTable(runTable).get
