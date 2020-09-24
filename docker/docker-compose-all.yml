@@ -36,6 +36,7 @@ services:
     volumes:
       - ./spark_datadir:/spark_datadir
       - ./spark_logs:/spark_logs
+      - ./spark_jars:/spark_jars
 
   spark-worker-1:
     image: uhrwerk/spark-worker:3.0.1-hadoop2.7
@@ -47,6 +48,7 @@ services:
     volumes:
       - ./spark_datadir:/spark_datadir
       - ./spark_logs:/spark_logs
+      - ./spark_jars:/spark_jars
     environment:
       - "SPARK_MASTER=spark://spark-master:7077"
 
@@ -59,5 +61,4 @@ services:
     ports:
       - 18080:18080
     volumes:
-      - ./spark_datadir:/spark_datadir
       - ./spark_logs:/spark_logs
