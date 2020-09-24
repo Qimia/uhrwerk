@@ -52,8 +52,6 @@ USER $NB_UID
 RUN mkdir /home/$NB_USER/work && \
     fix-permissions /home/$NB_USER
 
-RUN wget -P /spark/jars/ https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.21/mysql-connector-java-8.0.21.jar
-
 # Fix the value of PYTHONHASHSEED
 # Note: this is needed when you use Python 3.3 or greater
 ENV PYTHONHASHSEED 1

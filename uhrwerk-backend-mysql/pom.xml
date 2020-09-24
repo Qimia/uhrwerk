@@ -15,12 +15,12 @@
         <dependency>
             <groupId>io.qimia</groupId>
             <artifactId>uhrwerk-common</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>io.qimia</groupId>
             <artifactId>uhrwerk-config</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>mysql</groupId>
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>zero-allocation-hashing</artifactId>
-            <version>0.12</version>
+            <version>${zero-allocation-hashing.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -45,18 +45,27 @@
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
-            <version>1.2.17</version>
+            <version>${log4j.version}</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>commons-collections</groupId>
             <artifactId>commons-collections</artifactId>
-            <version>3.2.2</version>
+            <version>${commons-collections.version}</version>
             <scope>provided</scope>
         </dependency>
 
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
