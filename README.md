@@ -9,6 +9,7 @@ A data-dependency manager, data-pipeline scheduler, and data-lake build tool.
 - Uhrwerk-framemanager: implementation of the load/read dataframe interface.
 - Uhrwerk-engine: Management of Tables and methods to execute tasks
 - Uhrwerk-example: Example usage of Uhrwerk
+- Uhrwerk-cli: Uhrwerk's CLI
 
 ## Testing
 For quick unit tests run `mvn -DtagsToExclude=io.qimia.uhrwerk.tags.DbTest,io.qimia.uhrwerk.tags.Slow test` to disable Mysql dependent and slower tests.
