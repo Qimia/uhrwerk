@@ -87,9 +87,16 @@ class CommandLineInterface extends Callable[Int] {
 
     //val spark = SparkSession.builder().appName("test").master("local[*]").getOrCreate()
 
-    val components = runTable.split("_")
+    val sep = '.'
+    val components = runTable.split(sep)
     val target = try {
-      TableIdent(components(0), components(1), components(2), components(3))
+      val area = components.head
+      var rest = components.tail
+      val vertical = rest.head
+      rest = rest.tail
+      val tableName = rest.head
+      val version = rest.tail.mkString(sep.toString)
+      TableIdent(area, vertical, tableName, version)
     }
     catch {
       case e: Exception => throw new Exception("Parsing target failed. Please check the specified runTable.")
