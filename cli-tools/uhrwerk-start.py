@@ -3,10 +3,71 @@ import subprocess
 import shlex
 import argparse
 from datetime import datetime
+from pathlib import Path
 
 import pystache
 
-SPARK_SUBMIT_TEMPLATE_LOCATION = "templates/spark_submit_template.mustache"
+FILE_LOC = Path(__file__).parent.absolute()
+SPARK_SUBMIT_TEMPLATE_LOCATION = (
+    FILE_LOC / "templates" / "spark_submit_template.mustache"
+)
+UHRWERK_LOC = FILE_LOC.parent
+
+
+def get_confdir_locations(confdir_setting, dagmode, table_id):
+    """Retrieve configuration options according to config directory
+    convention"""
+
+    def path_generator(path_loc, eq_dir):
+        return (x for x in path_loc.iterdir() if (x.is_dir() == eq_dir))
+
+    dir_loc = Path(confdir_setting)
+    if not dir_loc.is_dir():
+        print("configuration-directory can't be found")
+        exit(1)
+    uhrwerk_loc = dir_loc / "uhrwerk.yml"
+    if not uhrwerk_loc.exists():
+        print("uhrwerk config not found")
+        exit(1)
+    uhrwerk_loc = str(uhrwerk_loc)
+    connection_configs = [
+        str(x) for x in dir_loc.iterdir() if (not x.is_dir()) and (x.stem != "uhrwerk")
+    ]
+    if len(connection_configs) < 1:
+        print("Some connection config needs to be present in the config-dir")
+        exit(1)
+
+    table_configs = []
+    if dagmode:
+        for area_dir in path_generator(dir_loc, True):
+            for vert_dir in path_generator(area_dir, True):
+                for tab_dir in path_generator(vert_dir, True):
+                    latest_tab = ""
+                    # Note: Currently only loads the latest table
+                    # TODO: Relies on alphabetical ordering of version numbers
+                    for somef in path_generator(tab_dir, False):
+                        somef_loc = str(somef)
+                        if latest_tab < somef_loc:
+                            latest_tab = somef_loc
+                    if latest_tab != "":
+                        table_configs.append(latest_tab)
+    else:
+        split_char = "."
+        table_parts = table_id.split(split_char)
+        area = table_parts[0]
+        vertical = table_parts[1]
+        table_name = table_parts[2]
+        version = split_char.join(table_parts[3:])
+        table_config_path = (
+            dir_loc
+            / area
+            / vertical
+            / table_name
+            / (table_name + "_" + version + ".yml")
+        )
+        table_configs.append(str(table_config_path))
+
+    return (uhrwerk_loc, connection_configs, table_configs)
 
 
 def convert_bool(bool_val):
@@ -30,18 +91,27 @@ def render_template(parameters, load_mode):
     settings["parallel"] = parameters.parallel
     settings["continuous_mode"] = convert_bool(parameters.continuous)
     settings["conf_spark"] = parameters.spark_properties
-    settings["global_conf_location"] = parameters.uhrwerk_config
     settings["uhrwerk_user_jar"] = (
         parameters.uhrwerk_jar_location + " " + parameters.usercode_jar
     )
 
-    if load_mode == "loadtable":
+    if load_mode == "loadconfdir":
+        uhrwerk_config, conn_configs, table_configs = get_confdir_locations(
+            parameters.config_directory, parameters.dag_mode, parameters.table_id
+        )
+        conn_str = "--cons {}".format(" ".join(conn_configs))
+        table_str = "--tables {}".format(" ".join(table_configs))
+        settings["user_configuration_options"] = conn_str + "\n" + table_str
+        settings["global_conf_location"] = uhrwerk_config
+    elif load_mode == "loadtable":
         conn_str = "--cons {}".format(" ".join(parameters.conn_configs))
         table_str = "--tables {}".format(" ".join(parameters.table_configs))
         settings["user_configuration_options"] = conn_str + "\n" + table_str
+        settings["global_conf_location"] = parameters.uhrwerk_config
     elif load_mode == "loaddag":
         dag_str = "--dag {}".format(parameters.dag_config)
         settings["user_configuration_options"] = dag_str
+        settings["global_conf_location"] = parameters.uhrwerk_config
 
     time_str = ""
     if parameters.lower_bound is not None:
@@ -79,7 +149,16 @@ def check_load_type(parameters):
         table_given = True
     if parameters.dag_config is not None:
         dag_given = True
-    if table_given and dag_given:
+
+    if parameters.config_directory is not None:
+        if table_given:
+            print(
+                "Using config directory and skipping individual tables / connections parameters"
+            )
+        if dag_given:
+            print("Using config directory and skipping dag parameter")
+        return "loadconfdir"
+    elif table_given and dag_given:
         print("Both Tables and Dag given, ignoring the tables given")
         return "loaddag"
     elif table_given:
@@ -112,12 +191,14 @@ if __name__ == "__main__":
         help="Table to run as area.vertical.table.version",
     )
     parser.add_argument(
-        "uhrwerk_config",
-        metavar="GLOBAL_CONF",
-        help="location of Uhrwerk configuration",
+        "usercode_jar", metavar="USER_JAR", help="location of jar with usercode",
     )
     parser.add_argument(
-        "usercode_jar", metavar="USER_JAR", help="location of jar with usercode",
+        "--uhrwerk_config",
+        action="store",
+        metavar="UC",
+        type=str,
+        help="location of Uhrwerk configuration",
     )
     parser.add_argument(
         "--table_configs",
@@ -144,12 +225,20 @@ if __name__ == "__main__":
         help="complete dag configurations",
     )
     parser.add_argument(
+        "--config_directory",
+        action="store",
+        dest="config_directory",
+        metavar="CD",
+        type=str,
+        help="directory location with configs in standard pattern",
+    )
+    parser.add_argument(
         "--spark_properties",
         action="store",
         dest="spark_properties",
         metavar="SP",
         type=str,
-        default="example_spark.conf",
+        default=str(FILE_LOC / "example_spark.conf"),
         help="location spark properties file with spark-settings",
     )
     parser.add_argument(
@@ -223,11 +312,23 @@ if __name__ == "__main__":
         metavar="UJL",
         dest="uhrwerk_jar_location",
         type=str,
-        default="../uhrwerk-cli/target/uhrwerk-cli-0.1.0-SNAPSHOT-jar-with-dependencies.jar",
+        default=str(
+            UHRWERK_LOC
+            / "uhrwerk-cli"
+            / "target"
+            / "uhrwerk-cli-0.1.0-SNAPSHOT-jar-with-dependencies.jar"
+        ),
         help="location uhrwerk jar",
     )
 
     parameters = parser.parse_args()
+    if parameters.uhrwerk_config is None:
+        if parameters.config_directory is None:
+            print(
+                "When loading individual table files or a dag file,"
+                + " always specify a location for the uhrwerk configuration"
+            )
+            exit(1)
     load_mode = check_load_type(parameters)
     rendered_command = render_template(parameters, load_mode)
     if parameters.dryrun:
