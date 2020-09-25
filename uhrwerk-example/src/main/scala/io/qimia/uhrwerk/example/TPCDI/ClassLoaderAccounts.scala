@@ -1,8 +1,8 @@
-package io.qimia.uhrwerk.example.retail
+package io.qimia.uhrwerk.example.TPCDI
 
 import io.qimia.uhrwerk.engine.{TableTransformation, TaskInput, TaskOutput}
 
-class ClassLoaderSales extends TableTransformation {
+class ClassLoaderAccounts extends TableTransformation {
   /**
    * Code for the transformation required to produce a particular Table
    * (UserCode)
