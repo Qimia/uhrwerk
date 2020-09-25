@@ -1,0 +1,126 @@
+- name: "retail_mysql"
+  jdbc:
+    jdbc_url: 'jdbc:mysql://localhost:43306/'
+    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    user: root
+    pass: mysql
+
+area: "staging"
+vertical: "retail"
+table: "salesFacts"
+version: "1.0"
+class_name: "io.qimia.uhrwerk.example.retail_examples.HashLoad"
+parallelism: 1
+max_bulk_size: 1
+partition:
+  unit: "days"
+  size: 1
+
+sources:
+  - connection_name: "retail_mysql"
+    path: "qimia_oltp.sales_items"
+    format: "jdbc"
+    version: "1.0"
+    partition:
+      unit: "days"
+      size: 1
+    select:
+      query: "retail_examples/staging/retail/salesFact-loader.sql"
+      column: "selling_date"
+
+targets:
+  - connection_name: "retail_mysql"
+    format: "jdbc"
+
+area: "staging"
+vertical: "retail"
+table: "productDim"
+version: "1.0"
+class_name: "io.qimia.uhrwerk.example.retail_examples.HashLoad"
+parallelism: 1
+max_bulk_size: 1
+
+sources:
+  - connection_name: "retail_mysql"
+    path: "qimia_oltp.products"
+    format: "jdbc"
+    version: "1.0"
+
+targets:
+  - connection_name: "retail_mysql"
+    format: "jdbc"
+
+area: "staging"
+vertical: "retail"
+table: "employeeDim"
+version: "1.0"
+class_name: "io.qimia.uhrwerk.example.retail_examples.HashLoad"
+parallelism: 1
+max_bulk_size: 1
+
+sources:
+  - connection_name: "retail_mysql"
+    path: "qimia_oltp.employees"
+    format: "jdbc"
+    version: "1.0"
+
+targets:
+  - connection_name: "retail_mysql"
+    format: "jdbc"
+
+area: "staging"
+vertical: "retail"
+table: "storeDim"
+version: "1.0"
+class_name: "io.qimia.uhrwerk.example.retail_examples.HashLoad"
+parallelism: 1
+max_bulk_size: 1
+
+sources:
+  - connection_name: "retail_mysql"
+    path: "qimia_oltp.stores"
+    format: "jdbc"
+    version: "1.0"
+
+targets:
+  - connection_name: "retail_mysql"
+    format: "jdbc"
+
+area: "dwh"
+vertical: "retail"
+table: "salesFact"
+version: "1.0"
+class_name: "io.qimia.uhrwerk.example.retail_examples.DWHSalesFact"
+parallelism: 1
+max_bulk_size: 1
+partition:
+  unit: "days"
+  size: 1
+
+dependencies:
+  - area: "staging"
+    vertical: "retail"
+    table: "salesFacts"
+    format: "jdbc"
+    version: "1.0"
+    transform:
+      type: "identity"
+  - area: "staging"
+    vertical: "retail"
+    table: "productDim"
+    format: "jdbc"
+    version: "1.0"
+  - area: "staging"
+    vertical: "retail"
+    table: "employeeDim"
+    format: "jdbc"
+    version: "1.0"
+  - area: "staging"
+    vertical: "retail"
+    table: "storeDim"
+    format: "jdbc"
+    version: "1.0"
+
+targets:
+  - connection_name: "retail_mysql"
+    format: "jdbc"

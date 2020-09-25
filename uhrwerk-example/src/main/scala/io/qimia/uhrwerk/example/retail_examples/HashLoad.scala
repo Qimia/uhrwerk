@@ -15,18 +15,12 @@ class HashLoad extends TableTransformation {
   override def process(in: TaskInput): TaskOutput = {
     val dfIdent = in.loadedInputFrames.head._1
     val df = in.loadedInputFrames.head._2
-    TaskOutput(df.withColumn(s"${getTableName(dfIdent)}", hash(df.columns.map(col): _*)))
+    TaskOutput(df.withColumn(s"${getTableName(dfIdent)}Key", hash(df.columns.map(col): _*)))
   }
 
   def getTableName(i: Ident): String = {
     i match {
-      case SourceIdent(connection, path, format) =>
-        val parts = path.split(".")
-        if (parts.length > 1) {
-          parts(parts.length - 1)
-        } else {
-          path
-        }
+      case SourceIdent(connection, path, format) => path.split("\\.").last
       case TableIdent(area, vertical, name, version) => name
     }
   }
