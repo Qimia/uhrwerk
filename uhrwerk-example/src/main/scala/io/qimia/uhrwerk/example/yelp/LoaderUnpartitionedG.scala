@@ -11,6 +11,8 @@ object LoaderUnpartitionedG extends App {
   val sparkSess = SparkSession.builder()
     .appName("loaderUnpartitionedG")
     .master("local[*]")
+    .config("spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version", "2")
+    .config("driver-memory", "4g")
     .getOrCreate()
 
   def loaderUnpartitionedGFunc(in: TaskInput): TaskOutput = {
