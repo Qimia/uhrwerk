@@ -33,6 +33,7 @@ object TableWrapper {
     partitions.map(t => {
       val newPart = new Partition()
       newPart.setPartitionTs(t)
+      newPart.setPartitioned(partitioned)
       newPart.setPartitionSize(partitionSize)
       newPart.setPartitionUnit(partitionUnit) // Warning: Sets null directly from table object
       newPart.setTargetId(targetId)
