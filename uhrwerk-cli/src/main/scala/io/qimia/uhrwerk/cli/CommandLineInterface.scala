@@ -43,7 +43,7 @@ class CommandLineInterface extends Callable[Int] {
   private var startTime = ""
 
   @Option(names = Array("-et", "--end"), paramLabel = "ENDTS",
-    description = Array("End point for the execution"), required = true)
+    description = Array("End point for the execution"), required = false)
   private var endTime = ""
 
   @Option(names = Array("-dm", "--dagmode"), paramLabel = "DAGMD",
@@ -101,8 +101,16 @@ class CommandLineInterface extends Callable[Int] {
     catch {
       case e: Exception => throw new Exception("Parsing target failed. Please check the specified runTable.")
     }
-    val start = convertTSToTimeObj(startTime)
-    val end = convertTSToTimeObj(endTime)
+    val start: scala.Option[LocalDateTime] = if (startTime.length > 0) {
+      scala.Option(convertTSToTimeObj(startTime))
+    } else {
+      scala.Option.empty
+    }
+    val end =  if (endTime.length > 0) {
+      scala.Option(convertTSToTimeObj(endTime))
+    } else {
+      scala.Option.empty
+    }
 
     if (dagConfig == "") {
       val connectionConf = connectionConfAL.asScala.toArray

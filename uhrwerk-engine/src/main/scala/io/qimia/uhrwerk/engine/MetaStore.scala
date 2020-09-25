@@ -2,20 +2,10 @@ package io.qimia.uhrwerk.engine
 
 import java.sql.{Driver, DriverManager}
 
-import io.qimia.uhrwerk.common.metastore.config.{
-  ConnectionService,
-  PartitionDependencyService,
-  PartitionService,
-  TableService
-}
+import io.qimia.uhrwerk.common.metastore.config.{ConnectionService, PartitionDependencyService, PartitionService, TableService, TargetService}
 import io.qimia.uhrwerk.common.metastore.dependency.TableDependencyService
 import io.qimia.uhrwerk.common.model.{Metastore => MetastoreConnInfo}
-import io.qimia.uhrwerk.dao.{
-  ConnectionDAO,
-  PartitionDAO,
-  PartitionDependencyDAO,
-  TableDAO
-}
+import io.qimia.uhrwerk.dao.{ConnectionDAO, PartitionDAO, PartitionDependencyDAO, TableDAO, TargetDAO}
 
 object MetaStore {
 
@@ -32,6 +22,7 @@ object MetaStore {
     val tableDao = new TableDAO(dbConn)
     MetaStore(new ConnectionDAO(dbConn),
               tableDao,
+              new TargetDAO(dbConn),
               tableDao,
               new PartitionDAO(dbConn),
               new PartitionDependencyDAO(dbConn))
@@ -41,6 +32,7 @@ object MetaStore {
 case class MetaStore(
     connectionService: ConnectionService,
     tableService: TableService,
+    targetService: TargetService,
     tableDependencyService: TableDependencyService,
     partitionService: PartitionService,
     partitionDependencyService: PartitionDependencyService

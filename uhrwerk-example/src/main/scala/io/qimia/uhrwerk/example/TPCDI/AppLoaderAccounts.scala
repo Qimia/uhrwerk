@@ -19,8 +19,8 @@ object AppLoaderAccounts extends App {
     Array("TPCDI/connection-config.yml"),
     Array("TPCDI/LoadAccounts.yml"),
     TableIdent("staging", "tpcdi", "accounts", "1.0"),
-    LocalDateTime.of(2007, 7, 3, 0, 0),
-    LocalDateTime.of(2007, 7, 10, 0, 0),
+    Option(LocalDateTime.of(2007, 7, 3, 0, 0)),
+    Option(LocalDateTime.of(2007, 7, 10, 0, 0)),
     false,
     1,
     true
