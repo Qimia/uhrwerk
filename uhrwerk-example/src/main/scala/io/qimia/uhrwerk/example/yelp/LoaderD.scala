@@ -16,7 +16,7 @@ object LoaderD extends App {
     .master("local[*]")
     .config("driver-memory", "2g")
     .config("spark.eventLog.enabled", "true")
-    .config("spark.eventLog.dir", "./docker/spark_logs")
+//    .config("spark.eventLog.dir", "./docker/spark_logs")
     .getOrCreate()
 
   def loaderDFunc(in: TaskInput): TaskOutput = {

@@ -17,7 +17,7 @@ sources:
       unit: "days"
       size: 1
     select:
-      query: "business-loader-D.sql"
+      query: "yelp_test/staging/yelp_db/table_d/business-loader-D.sql"
       column: "date"
 
 targets:
