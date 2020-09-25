@@ -14,8 +14,18 @@ import org.apache.spark.sql.DataFrame
 import scala.concurrent._
 
 object TableWrapper {
+  /**
+   * Construct an array of partitions for a particular target
+   * @param partitions for which datetimes to create partitions (startTime of partition)
+   * @param partitioned set to false if partitions belong to a "snapshot table"
+   * @param partitionUnit partition-duration: for which length of time
+   * @param partitionSize partition-duration: how many times that length of time
+   * @param targetId id of target (to which the partitions belong)
+   * @return Array of partition objects
+   */
   def createPartitions(
       partitions: Array[LocalDateTime],
+      partitioned: Boolean,
       partitionUnit: PartitionUnit,
       partitionSize: Int,
       targetId: Long
@@ -24,7 +34,7 @@ object TableWrapper {
       val newPart = new Partition()
       newPart.setPartitionTs(t)
       newPart.setPartitionSize(partitionSize)
-      newPart.setPartitionUnit(partitionUnit)
+      newPart.setPartitionUnit(partitionUnit) // Warning: Sets null directly from table object
       newPart.setTargetId(targetId)
       newPart.setKey()
       newPart
@@ -173,7 +183,7 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
         if (res) {
           table.getTargets.foreach((t: Target) => {
             val partitions =
-              TableWrapper.createPartitions(localGroupTs, table.getPartitionUnit, table.getPartitionSize, t.getId)
+              TableWrapper.createPartitions(localGroupTs, table.isPartitioned, table.getPartitionUnit, table.getPartitionSize, t.getId)
             val _ = metastore.partitionService.save(partitions, overwrite)
             partitions
               .zip(partitionGroup)
