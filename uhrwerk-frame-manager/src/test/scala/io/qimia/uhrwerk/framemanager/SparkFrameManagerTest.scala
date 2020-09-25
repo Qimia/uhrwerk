@@ -583,6 +583,9 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     val dependency = Converters.convertTargetToDependency(target, table)
     val partition = new Partition
     partition.setPartitionTs(LocalDateTime.of(2020, 2, 4, 10, 30))
+    partition.setPartitioned(true)
+    partition.setPartitionSize(30)
+    partition.setPartitionUnit(PartitionUnit.MINUTES)
     val dependencyResult = BulkDependencyResult(
       Array(dateTime),
       dependency,
@@ -902,6 +905,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
     dependency.setTransformType(PartitionTransformType.NONE)
     val partition = new Partition
     partition.setPartitionTs(dateTime)
+    partition.setPartitioned(false)
     val dependencyResult = BulkDependencyResult(
       Array(dateTime),
       dependency,

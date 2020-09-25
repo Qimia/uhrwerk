@@ -125,28 +125,19 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         if (isJDBC) {
           col(timeColumnJDBC) === TimeTools.convertTSToUTCString(p.getPartitionTs)
         } else {
-          val (yearLowerBound, monthLowerBound, dayLowerBound, hourLowerBound, minuteLowerBound) =
-            getTimeValues(p.getPartitionTs)
-          val (yearUpperBound, monthUpperBound, dayUpperBound, hourUpperBound, minuteUpperBound) =
-            if (p.getPartitionUnit != null) {
+          val minuteLowerBound = getTimeValues(p.getPartitionTs)._5
+          if (p.isPartitioned) {
+            val minuteUpperBound =
               getTimeValues(
                 TimeTools.addPartitionSizeToTimestamp(p.getPartitionTs, p.getPartitionSize, p.getPartitionUnit)
-              )
-            } else {
-              ("", "", "", "", "")
-            }
-          p.getPartitionUnit match {
-            case null => col("minute") === minuteLowerBound // unpartitioned
-            //            case PartitionUnit.HOURS => col("hour") >= hourLowerBound && col("hour") < hourUpperBound
-            //            case PartitionUnit.DAYS => col("day") >= dayLowerBound && col("day") < dayUpperBound
-            //            case PartitionUnit.WEEKS => col("day") >= dayLowerBound && col("day") < dayUpperBound
-            case _ => col("minute") >= minuteLowerBound && col("minute") < minuteUpperBound
+              )._5
+            col("minute") >= minuteLowerBound && col("minute") < minuteUpperBound
+          } else {
+            col("minute") === minuteLowerBound
           }
         }
       )
       .reduce((a, b) => a || b)
-
-    // todo speedup when full year/month/day..
 
     val dfReader = sparkSession.read
       .format(dependencyResult.dependency.getFormat)
