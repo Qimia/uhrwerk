@@ -2,7 +2,7 @@ area: "staging"
 vertical: "retail"
 table: "employeeDim"
 version: "1.0"
-class_name: "io.qimia.uhrwerk.example.yelp.ClassLoaderAParq"
+class_name: "io.qimia.uhrwerk.example.retail_examples.HashLoad"
 parallelism: 1
 max_bulk_size: 1
 
