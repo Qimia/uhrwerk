@@ -3,6 +3,7 @@ package io.qimia.uhrwerk.engine
 import java.sql.DriverManager
 
 import io.qimia.uhrwerk.common.model.{Metastore => MetastoreConnInfo}
+import io.qimia.uhrwerk.config.ConfigException
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -83,14 +84,14 @@ class EnvironmentTableTest extends AnyFlatSpec with BeforeAndAfterEach {
     assert(wrappers.forall(_.isDefined))
   }
 
-  // A malformed-unit config
-  ignore should "be rejected" in {
+  "A malformed-unit config" should "be rejected" in {
     val env = new Environment(metaStore, null)
     env.addConnectionFile("EnvTableConn1.yml")
     // FIXME: Needs validate this before loading into model pojo's
     // in model pojo's a unit of null means it is an unpartitioned table
-    val wrapper = env.addTableFile("EnvTableTest1Bad1.yml", identityUserFunc)
-    assert(wrapper.isEmpty)
+    assertThrows[ConfigException] {
+      val wrapper = env.addTableFile("EnvTableTest1Bad1.yml", identityUserFunc)
+    }
   }
 
   // A not matching source-partition-size

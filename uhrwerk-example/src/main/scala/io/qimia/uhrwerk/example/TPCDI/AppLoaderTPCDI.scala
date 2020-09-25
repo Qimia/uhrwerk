@@ -17,14 +17,19 @@ object AppLoaderTPCDI extends App {
     "TPCDI/env-config.yml",
     "TPCDI/dag_tpcdi.yml",
     Array(
-      TableIdent("staging", "tpcdi", "accounts", "1.0"),
-      TableIdent("staging", "tpcdi", "DIM_StatusType", "1.0")
+      TableIdent("staging", "tpcdi", "Accounts", "1.0"),
+      TableIdent("staging", "tpcdi", "CustomerMgmt", "1.0"),
+      TableIdent("staging", "tpcdi", "DailyMarket", "1.0"),
+      TableIdent("staging", "tpcdi", "Fact_Trade", "1.0"),
+      TableIdent("staging", "tpcdi", "DIM_StatusType", "1.0"),
+      TableIdent("staging", "tpcdi", "DIM_TradeType", "1.0"),
+      TableIdent("staging", "tpcdi", "Dim_Date", "1.0")
     ),
-    Option(LocalDateTime.of(2007, 7, 3, 0, 0)),
-    Option(LocalDateTime.of(2007, 7, 10, 0, 0)),
-    false,
-    1,
-    true
+    Option(LocalDateTime.of(2015, 7, 6, 0, 0)),
+    Option(LocalDateTime.of(2015, 8, 6, 0, 0)),
+    true,
+    10,
+    false
   )
 
 }

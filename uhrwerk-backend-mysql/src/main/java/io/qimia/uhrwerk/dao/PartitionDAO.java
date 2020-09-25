@@ -88,7 +88,10 @@ public class PartitionDAO implements PartitionService {
       res.setTargetId(record.getLong("pt.target_id"));
       res.setPartitionTs(record.getTimestamp("pt.partition_ts").toLocalDateTime());
       res.setPartitioned(record.getBoolean("pt.partitioned"));
-      res.setPartitionUnit(PartitionUnit.valueOf(record.getString("tb.partition_unit")));
+      var partitionUnit = record.getString("tb.partition_unit");
+      if (partitionUnit != null) {
+        res.setPartitionUnit(PartitionUnit.valueOf(partitionUnit));
+      }
       res.setPartitionSize(record.getInt("tb.partition_size"));
 
       return res;
