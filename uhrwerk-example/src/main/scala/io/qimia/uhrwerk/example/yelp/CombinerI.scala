@@ -20,9 +20,9 @@ object CombinerI extends App {
 
   val frameManager = new SparkFrameManager(sparkSess)
 
-  val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTableFile("combiner-I.yml", transformationFunction)
+  val uhrwerkEnvironment = Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_i/table_i_1.0.yml", transformationFunction)
 
   val results = wrapper.get.runTasksAndWait()
   logger.info(results)

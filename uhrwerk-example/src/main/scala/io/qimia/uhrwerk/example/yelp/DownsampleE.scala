@@ -26,9 +26,9 @@ object DownsampleE  extends App {
 
   val frameManager = new SparkFrameManager(sparkSess)
 
-  val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTableFile("downsample-E.yml", loaderEFunc, true)
+  val uhrwerkEnvironment = Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_e/table_e_1.0.yml", loaderEFunc, true)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 1, 0, 0),

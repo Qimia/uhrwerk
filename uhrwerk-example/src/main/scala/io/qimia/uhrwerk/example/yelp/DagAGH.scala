@@ -18,12 +18,12 @@ object DagAGH extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment =
-    Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+    Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
 
-  val wrapperA = uhrwerkEnvironment.addTableFile("loader-A-parq.yml", loaderAFunc, false).get
-  val wrapperG = uhrwerkEnvironment.addTableFile("loader-unpartitioned-G.yml", loaderUnpartitionedGFunc).get
-  val wrapperH = uhrwerkEnvironment.addTableFile("combiner-H.yml", transformationFunction).get
+  val wrapperA = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_a_parq/table_a_parq_1.0.yml", loaderAFunc, false).get
+  val wrapperG = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_g/table_g_1.0.yml", loaderUnpartitionedGFunc).get
+  val wrapperH = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_h/table_h_1.0.yml", transformationFunction).get
 
   val dagTaskBuilder = new DagTaskBuilder(uhrwerkEnvironment)
   val taskList = dagTaskBuilder.buildTaskListFromTable(

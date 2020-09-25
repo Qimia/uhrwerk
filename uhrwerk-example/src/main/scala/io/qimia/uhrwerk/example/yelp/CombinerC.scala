@@ -21,9 +21,9 @@ object CombinerC extends App {
 
   def CombinerCFunc(in: TaskInput): TaskOutput = {
     // The most basic userFunction simply returns the input dataframe
-    val aDF = in.loadedInputFrames(TableIdent("staging", "yelp_db", "table_a", "1.0"))
+    val aDF = in.loadedInputFrames(TableIdent("staging", "yelp_db", "table_a_parq", "1.0"))
       .drop("id", "user_id", "year", "month", "day", "hour", "minute", "date")
-    val bDF = in.loadedInputFrames(TableIdent("staging", "yelp_db", "table_b", "1.0"))
+    val bDF = in.loadedInputFrames(TableIdent("staging", "yelp_db", "table_b_parq", "1.0"))
       .drop("id", "business_id")
       .withColumnRenamed("text", "othertext")
     val outDF = aDF
@@ -36,10 +36,10 @@ object CombinerC extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment =
-    Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+    Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
   val wrapper =
-    uhrwerkEnvironment.addTableFile("combiner-C-parq.yml", CombinerCFunc, true)
+    uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_c_parq/table_c_parq_1.0.yml", CombinerCFunc, true)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 2, 3, 4)

@@ -27,9 +27,9 @@ object CombinerH extends App {
 
   val frameManager = new SparkFrameManager(sparkSess)
 
-  val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTableFile("combiner-H.yml", transformationFunction)
+  val uhrwerkEnvironment = Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_h/table_h_1.0.yml", transformationFunction)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 1, 0, 0),

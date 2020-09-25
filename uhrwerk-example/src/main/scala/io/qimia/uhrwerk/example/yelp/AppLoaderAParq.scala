@@ -14,9 +14,9 @@ object AppLoaderAParq extends App {
 
   UhrwerkAppRunner.runFiles(
     sparkSess,
-    "testing-env-config.yml",
-    Array("testing-connection-config.yml"),
-    Array("loader-A-parq-app.yml"),
+    "yelp_test/uhrwerk.yml",
+    Array("yelp_test/testing-connection-config.yml"),
+    Array("yelp_test/staging/yelp_db/table_a_parq_app/table_a_parq_app_1.0.yml"),
     TableIdent("staging", "yelp_db", "table_a_parq", "1.0"),
     Option(LocalDateTime.of(2012, 5, 1, 0, 0)),
     Option(LocalDateTime.of(2012, 5, 6, 0, 0)),

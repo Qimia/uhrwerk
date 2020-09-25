@@ -25,8 +25,8 @@ object RetailDAG extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment =
-    Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+    Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
 
   val prodWrapper = uhrwerkEnvironment.addTableFile(
     "retail_examples/staging/retail/productDim_1.0.yml",

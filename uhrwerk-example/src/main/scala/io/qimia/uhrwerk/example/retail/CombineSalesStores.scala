@@ -31,8 +31,8 @@ object CombineSalesStores extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment =
-    Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+    Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
   val wrapperStore =
     uhrwerkEnvironment.addTableFile("LoadTableStoresTest.yml", loaderBFunc, true).get
   val wrapperSales =
