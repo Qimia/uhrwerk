@@ -78,6 +78,35 @@ object UhrwerkAppRunner {
 
   /**
     * Run Uhrwerk framework as application
+    * @param sparkSession spark session required by framemanagers
+    * @param environmentConfig location of the environment configuration
+    * @param dagConfig location of the dag configuration
+    * @param runTables Array of identities of exact tables that need to be processed
+    * @param startTime starting time partitions inclusive
+    * @param endTime end time partitions exclusive
+    * @param dagMode run all the dependencies as well (true) or only particular table (false)
+    * @param parallelRun run tables in parallel or each
+    * @param overwrite
+    */
+  def runDagFile(
+                  sparkSession: SparkSession,
+                  environmentConfig: String,
+                  dagConfig: String,
+                  runTables: Array[TableIdent],
+                  startTime: Option[LocalDateTime],
+                  endTime: Option[LocalDateTime],
+                  dagMode: Boolean,
+                  parallelRun: Int,
+                  overwrite: Boolean
+                ): Unit = {
+    val frameManager       = new SparkFrameManager(sparkSession)
+    val uhrwerkEnvironment = Environment.build(environmentConfig, frameManager)
+    uhrwerkEnvironment.setupDagFileConvention(dagConfig, overwrite)
+    runTables.foreach(tab => runEnvironment(uhrwerkEnvironment, tab, startTime, endTime, dagMode, parallelRun, overwrite))
+  }
+
+  /**
+    * Run Uhrwerk framework as application
     *
     * @param sparkSession      spark session required by framemanagers
     * @param environmentConfig the environment configuration
