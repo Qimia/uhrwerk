@@ -1,16 +1,16 @@
 #!/usr/bin/python3
-import subprocess
-import shlex
 import argparse
+import pystache
+import shlex
+import subprocess
 from datetime import datetime
 from pathlib import Path
 
-import pystache
-
 FILE_LOC = Path(__file__).parent.absolute()
 SPARK_SUBMIT_TEMPLATE_LOCATION = (
-    FILE_LOC / "templates" / "spark_submit_template.mustache"
+        FILE_LOC / "templates" / "spark_submit_template.mustache"
 )
+SPARK_SUBMIT_TEMPLATE_DOCKER_LOCATION = (FILE_LOC / "templates" / "spark_submit_template_docker.mustache")
 UHRWERK_LOC = FILE_LOC.parent
 
 
@@ -127,7 +127,12 @@ def render_template(parameters, load_mode):
     else:
         settings["deploy_mode"] = "client"
 
-    with open(SPARK_SUBMIT_TEMPLATE_LOCATION) as gmfile:
+    if parameters.spark_docker:
+        spark_template_location = SPARK_SUBMIT_TEMPLATE_DOCKER_LOCATION
+    else:
+        spark_template_location = SPARK_SUBMIT_TEMPLATE_LOCATION
+
+    with open(spark_template_location) as gmfile:
         template = gmfile.readlines()
         return pystache.render("".join(template), settings)
 
@@ -319,6 +324,13 @@ if __name__ == "__main__":
             / "uhrwerk-cli-0.1.0-SNAPSHOT-jar-with-dependencies.jar"
         ),
         help="location uhrwerk jar",
+    )
+    parser.add_argument(
+        "--spark_docker",
+        action="store_true",
+        dest="spark_docker",
+        default=False,
+        help="Run Spark inside docker"
     )
 
     parameters = parser.parse_args()

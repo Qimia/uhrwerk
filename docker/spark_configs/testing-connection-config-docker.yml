@@ -1,0 +1,30 @@
+# For testing only a yelp source from db and a datalake
+
+- name: "yelp_mysql"
+  jdbc:
+    jdbc_url: 'jdbc:mysql://mysql-uhrwerk-metastore:3306/yelp_db'
+    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    user: root
+    pass: 61ePGqq20u9TZjbNhf0
+
+- name: "local_fs_lake"
+  file:
+    path: '/spark_datadir/example_datalake'
+
+- name: "local_fs_source"
+  file:
+    path: '/spark_datadir/example_dataset'
+
+- name: "yelp_dwh"
+  jdbc:
+    jdbc_url: 'jdbc:mysql://mysql-uhrwerk-metastore:3306'
+    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    user: root
+    pass: 61ePGqq20u9TZjbNhf0
+
+- name: "qimia_oltp"
+  jdbc:
+    jdbc_url: 'jdbc:mysql://mysql-uhrwerk-metastore:3306/qimia_oltp'
+    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    user: UHRWERK_USER
+    pass: Xq92vFqEKF7TB8H9
