@@ -36,11 +36,11 @@ class DWHSalesFact extends TableTransformation {
 
     val sFacts = pFacts.as("p").join(storeDim.as("s"), col("p.store") === col("s.store_id"))
       .select("p.product_id", "p.quantity", "p.sales_id", "p.cashier", "p.store", "p.selling_date", "p.year",
-        "p.month", "p.day", "p.productKey", "s.storesKey")
+        "p.month", "p.day", "p.productsKey", "s.storesKey")
 
     val eFacts = sFacts.as("s").join(employeeDim.as("e"), col("s.cashier") === col("e.employee_id"))
       .select("s.product_id", "s.quantity", "s.sales_id", "s.store", "s.selling_date", "s.year",
-        "s.month", "s.day", "s.productKey", "s.storeKey", "e.employeesKey")
+        "s.month", "s.day", "s.productsKey", "s.storesKey", "e.employeesKey")
 
     TaskOutput(eFacts)
   }
