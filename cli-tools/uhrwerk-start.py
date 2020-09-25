@@ -8,9 +8,11 @@ from pathlib import Path
 
 FILE_LOC = Path(__file__).parent.absolute()
 SPARK_SUBMIT_TEMPLATE_LOCATION = (
-        FILE_LOC / "templates" / "spark_submit_template.mustache"
+    FILE_LOC / "templates" / "spark_submit_template.mustache"
 )
-SPARK_SUBMIT_TEMPLATE_DOCKER_LOCATION = (FILE_LOC / "templates" / "spark_submit_template_docker.mustache")
+SPARK_SUBMIT_TEMPLATE_DOCKER_LOCATION = (
+    FILE_LOC / "templates" / "spark_submit_template_docker.mustache"
+)
 UHRWERK_LOC = FILE_LOC.parent
 
 
@@ -18,8 +20,8 @@ def get_confdir_locations(confdir_setting, dagmode, table_id):
     """Retrieve configuration options according to config directory
     convention"""
 
-    def path_generator(path_loc, eq_dir):
-        return (x for x in path_loc.iterdir() if (x.is_dir() == eq_dir))
+    def path_generator(path_loc):
+        return (x for x in path_loc.iterdir() if x.is_dir())
 
     dir_loc = Path(confdir_setting)
     if not dir_loc.is_dir():
@@ -31,7 +33,11 @@ def get_confdir_locations(confdir_setting, dagmode, table_id):
         exit(1)
     uhrwerk_loc = str(uhrwerk_loc)
     connection_configs = [
-        str(x) for x in dir_loc.iterdir() if (not x.is_dir()) and (x.stem != "uhrwerk")
+        str(x)
+        for x in dir_loc.iterdir()
+        if (not x.is_dir())
+        and (x.stem != "uhrwerk")
+        and (x.parts[-1].split(".")[-1] in ["yaml", "yml"])
     ]
     if len(connection_configs) < 1:
         print("Some connection config needs to be present in the config-dir")
@@ -39,16 +45,19 @@ def get_confdir_locations(confdir_setting, dagmode, table_id):
 
     table_configs = []
     if dagmode:
-        for area_dir in path_generator(dir_loc, True):
-            for vert_dir in path_generator(area_dir, True):
-                for tab_dir in path_generator(vert_dir, True):
+        for area_dir in path_generator(dir_loc):
+            for vert_dir in path_generator(area_dir):
+                for tab_dir in path_generator(vert_dir):
                     latest_tab = ""
                     # Note: Currently only loads the latest table
                     # TODO: Relies on alphabetical ordering of version numbers
-                    for somef in path_generator(tab_dir, False):
-                        somef_loc = str(somef)
-                        if latest_tab < somef_loc:
-                            latest_tab = somef_loc
+                    for somef in tab_dir.iterdir():
+                        if (somef.is_dir() == False) and (
+                            somef.parts[-1].split(".")[-1] in ["yaml", "yml"]
+                        ):
+                            somef_loc = str(somef)
+                            if latest_tab < somef_loc:
+                                latest_tab = somef_loc
                     if latest_tab != "":
                         table_configs.append(latest_tab)
     else:
@@ -65,6 +74,9 @@ def get_confdir_locations(confdir_setting, dagmode, table_id):
             / table_name
             / (table_name + "_" + version + ".yml")
         )
+        if not table_config_path.exists():
+            print("table config not found")
+            exit(1)
         table_configs.append(str(table_config_path))
 
     return (uhrwerk_loc, connection_configs, table_configs)
@@ -330,7 +342,7 @@ if __name__ == "__main__":
         action="store_true",
         dest="spark_docker",
         default=False,
-        help="Run Spark inside docker"
+        help="Run Spark inside docker",
     )
 
     parameters = parser.parse_args()
