@@ -18,8 +18,8 @@ object AppLoaderSales extends App {
 
   UhrwerkAppRunner.runFiles(
     sparkSess,
-    "testing-env-config.yml",
-    Array("testing-connection-config.yml"),
+    "yelp_test/uhrwerk.yml",
+    Array("yelp_test/testing-connection-config.yml"),
     Array("LoadTableSalesTest.yml"),
     TableIdent("staging", "qimia_oltp", "sales", "1.0"),
     Option(LocalDateTime.of(2020, 6, 1, 0, 0)),

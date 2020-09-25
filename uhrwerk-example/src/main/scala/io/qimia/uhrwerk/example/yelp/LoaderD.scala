@@ -16,7 +16,7 @@ object LoaderD extends App {
     .master("local[*]")
     .config("driver-memory", "2g")
     .config("spark.eventLog.enabled", "true")
-    .config("spark.eventLog.dir", "./docker/spark_logs")
+//    .config("spark.eventLog.dir", "./docker/spark_logs")
     .getOrCreate()
 
   def loaderDFunc(in: TaskInput): TaskOutput = {
@@ -29,9 +29,9 @@ object LoaderD extends App {
 
   val frameManager = new SparkFrameManager(sparkSess)
 
-  val uhrwerkEnvironment = Environment.build("testing-env-config.yml" ,frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTableFile("loader-D.yml", loaderDFunc, true)
+  val uhrwerkEnvironment = Environment.build("yelp_test/uhrwerk.yml",frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_d/table_d_1.0.yml", loaderDFunc, true)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 1, 0, 0),

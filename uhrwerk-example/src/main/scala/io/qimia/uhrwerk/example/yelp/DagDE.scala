@@ -16,11 +16,11 @@ object DagDE extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment =
-    Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+    Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
 
-  val wrapperD = uhrwerkEnvironment.addTableFile("loader-D.yml", loaderEFunc, true).get
-  val wrapperE = uhrwerkEnvironment.addTableFile("downsample-E.yml", loaderEFunc, true).get
+  val wrapperD = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_d/table_d_1.0.yml", loaderEFunc, true).get
+  val wrapperE = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_e/table_e_1.0.yml", loaderEFunc, true).get
 
   val dagTaskBuilder = new DagTaskBuilder(uhrwerkEnvironment)
   val taskList = dagTaskBuilder.buildTaskListFromTable(

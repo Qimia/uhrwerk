@@ -17,11 +17,11 @@ object DagGI extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment =
-    Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+    Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
 
-  val wrapperG = uhrwerkEnvironment.addTableFile("loader-unpartitioned-G.yml", loaderUnpartitionedGFunc).get
-  val wrapperI = uhrwerkEnvironment.addTableFile("combiner-I.yml", transformationFunction).get
+  val wrapperG = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_g/table_g_1.0.yml", loaderUnpartitionedGFunc).get
+  val wrapperI = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_i/table_i_1.0.yml", transformationFunction).get
 
   val now = LocalDateTime.now()
   val dagTaskBuilder = new DagTaskBuilder(uhrwerkEnvironment)

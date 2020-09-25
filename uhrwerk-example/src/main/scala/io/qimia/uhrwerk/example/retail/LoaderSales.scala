@@ -23,8 +23,8 @@ object LoaderSales extends App {
 
   val frameManager = new SparkFrameManager(sparkSess)
 
-  val uhrwerkEnvironment = Environment.build("testing-env-config.yml" ,frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+  val uhrwerkEnvironment = Environment.build("yelp_test/uhrwerk.yml",frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
   val wrapper = uhrwerkEnvironment.addTableFile("LoadTableSalesTest.yml", loaderAFunc, false).get
 
 

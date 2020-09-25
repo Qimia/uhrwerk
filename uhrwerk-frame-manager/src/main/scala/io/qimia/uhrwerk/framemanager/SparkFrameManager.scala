@@ -287,11 +287,6 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             .option("partitionColumn", source.getParallelLoadColumn)
             .option("lowerBound", minId)
             .option("upperBound", maxId)
-        } else if (!isStringEmpty(source.getSelectColumn) && startTS.isDefined && endTSExcl.isDefined) {
-          dfReaderWithQuery
-            .option("partitionColumn", source.getSelectColumn)
-            .option("lowerBound", TimeTools.convertTSToUTCString(startTS.get))
-            .option("upperBound", TimeTools.convertTSToUTCString(endTSExcl.get))
         } else {
           dfReaderWithQuery
         }
