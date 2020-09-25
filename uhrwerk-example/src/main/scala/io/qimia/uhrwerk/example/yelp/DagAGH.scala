@@ -14,6 +14,7 @@ object DagAGH extends App {
   val sparkSess = SparkSession.builder()
     .appName(this.getClass.toString)
     .master("local[3]")
+    .config("spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version", "2")
     .getOrCreate()
   val frameManager = new SparkFrameManager(sparkSess)
 

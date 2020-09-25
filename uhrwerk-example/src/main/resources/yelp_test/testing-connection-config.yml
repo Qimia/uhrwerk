@@ -9,11 +9,11 @@
 
 - name: "local_fs_lake"
   file:
-    path: '/home/frans/Code/Qimia/UW/uhrwerk/uhrwerk-example/example_datalake'
+    path: 'uhrwerk-example/example_datalake'
 
 - name: "local_fs_source"
   file:
-    path: '/home/frans/Code/Qimia/UW/uhrwerk/uhrwerk-example/example_dataset'
+    path: 'uhrwerk-example/example_dataset'
 
 - name: "yelp_dwh"
   jdbc:
