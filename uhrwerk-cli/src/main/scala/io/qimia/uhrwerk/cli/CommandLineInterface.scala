@@ -129,7 +129,7 @@ class CommandLineInterface extends Callable[Int] {
     }
     else {
       try {
-        UhrwerkAppRunner.runDagFile(spark, environmentConfig, dagConfig, target,
+        UhrwerkAppRunner.runDagFile(spark, environmentConfig, dagConfig, Array(target),
           start, end, dagMode, parallelRun, overwrite)
         0
       }

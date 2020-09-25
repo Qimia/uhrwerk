@@ -11,6 +11,4 @@ EXPOSE 8081
 RUN echo 'alias ll="ls -l"' >> ~/.bashrc
 RUN echo 'alias python="/usr/bin/python3"' >> ~/.bashrc
 
-COPY uhrwerk-cli-0.1.0-SNAPSHOT-jar-with-dependencies.jar /spark/jars/
-
 CMD ["/bin/bash", "/worker.sh"]
