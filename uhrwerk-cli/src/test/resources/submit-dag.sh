@@ -11,6 +11,6 @@ spark-submit \
   -t "/home/falk/IdeaProjects/uhrwerk/uhrwerk-example/src/main/resources/retail_examples/staging/retail/storeDimApp_1.0.yml" \
   -t "/home/falk/IdeaProjects/uhrwerk/uhrwerk-example/src/main/resources/retail_examples/staging/retail/salesFactApp_1.0.yml" \
   -t "/home/falk/IdeaProjects/uhrwerk/uhrwerk-example/src/main/resources/retail_examples/dwh/retail/salesFactApp_1.0.yml" \
-  -r "dwh.retail.salesFactApp.1.0" \
+  -r "dwh.retail.salesFact.1.0" \
   -st "2020-06-01T00:00:00" \
   -et "2020-06-03T00:00:00"
