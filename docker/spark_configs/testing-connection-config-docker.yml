@@ -31,7 +31,7 @@
 
 - name: "tpcdi_mysql"
   jdbc:
-    jdbc_url: 'jdbc:mysql://my-mysql:3306/db_uhrwerk_generator'
+    jdbc_url: 'jdbc:mysql://tpcdi-mysql:3306/db_uhrwerk_generator'
     jdbc_driver: 'com.mysql.cj.jdbc.Driver'
     user: root
-    pass: password2
+    pass: tpcdi_password

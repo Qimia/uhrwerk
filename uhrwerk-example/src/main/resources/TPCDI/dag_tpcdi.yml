@@ -4,7 +4,7 @@ connections:
     jdbc_url: 'jdbc:mysql://127.0.0.1:63306/db_uhrwerk_generator'
     jdbc_driver: 'com.mysql.cj.jdbc.Driver'
     user: root
-    pass: password2
+    pass: tpcdi_password
 
 - name: "local_fs_lake"
   file:
