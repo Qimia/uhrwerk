@@ -1,18 +1,45 @@
 #!/usr/bin/python3
 import re
 import argparse
+from datetime import datetime
 
 import yaml
+import pystache
 import pymysql.cursors
 
 QUERY_PARTITIONS_LOCATION = "templates/query_partitions.sql"
 
 
-def load_sql_template():
-    """Get sql query template"""
+def get_query(cl_params):
+    where_table = ""
+    where_time = ""
+    if cl_params.table_id is not None:
+        split_char = "."
+        table_parts = cl_params.table_id.split(split_char)
+        area = table_parts[0]
+        where_table += f"WHERE tab.area = \'{area}\'\n"
+        vertical = table_parts[1]
+        where_table += f"AND tab.vertical = \'{vertical}\'\n"
+        table_name = table_parts[2]
+        where_table += f"AND tab.name = \'{table_name}\'\n"
+        version = split_char.join(table_parts[3:])
+        where_table += f"AND tab.version = \'{version}\'"
+    if cl_params.lower_bound:
+        where_time += f"WHERE par.partition_ts >= \'{str(cl_params.lower_bound)}\'\n"
+    if cl_params.upper_bound:
+        if len(where_time) > 0:
+            where_time += f"AND par.partition_ts < \'{str(cl_params.upper_bound)}\'\n"
+        else:
+            where_time += f"WHERE par.partition_ts < \'{str(cl_params.upper_bound)}\'\n"
+    else:
+        where_time = where_time[:-1]
 
     with open(QUERY_PARTITIONS_LOCATION) as qfile:
-        return qfile.read()
+        query_template = qfile.read()
+
+        return pystache.render(
+            query_template, {"where_table": where_table, "where_time": where_time}
+        )
 
 
 def load_connection(uhrwerk_config):
@@ -33,16 +60,12 @@ def load_connection(uhrwerk_config):
         return (host_loc, host_port, config_metastore["user"], config_metastore["pass"])
 
 
-def run_partition_check(cl_params, db_info, sql_template):
+def run_partition_check(cl_params, db_info):
     """Query the database for which partitions are available
     and print out the result"""
 
-    split_char = "."
-    table_parts = cl_params.table_id.split(split_char)
-    area = table_parts[0]
-    vertical = table_parts[1]
-    table_name = table_parts[2]
-    version = split_char.join(table_parts[3:])
+    sql_query = get_query(cl_params)
+    print(sql_query)
 
     connection = pymysql.connect(
         host=db_info[0],
@@ -56,12 +79,13 @@ def run_partition_check(cl_params, db_info, sql_template):
 
     try:
         with connection.cursor() as cursor:
-            cursor.execute(sql_template, (area, vertical, table_name, version))
+            cursor.execute(sql_query)
             print("Found {} results".format(cursor.rowcount))
-            print("Format\t\tDate\t\t\t\tPartitioned")
+            print("Table\t\tFormat\t\tDate\t\t\t\tPartitioned")
             for cur_row in cursor:
                 print(
-                    "{}\t\t{}\t\t{}".format(
+                    "{}\t\t{}\t\t{}\t\t{}\t\t".format(
+                        cur_row["table_name"],
                         cur_row["target_format"],
                         str(cur_row["partition_ts"]),
                         bool(cur_row["partitioned"]),
@@ -71,23 +95,53 @@ def run_partition_check(cl_params, db_info, sql_template):
         connection.close()
 
 
+def valid_date(date_str):
+    """Check if date input is a valid date"""
+    try:
+        datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S")
+        return date_str
+    except ValueError:
+        msg = "Not a valid date: '{0}'.".format(date_str)
+        raise argparse.ArgumentTypeError(msg)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="uhrwerk-partitions-table.py",
         description="Check which partitions have been given for a table",
     )
     parser.add_argument(
-        "table_id",
-        metavar="TABLE_ID",
-        help="Table to run as area.vertical.table.version",
-    )
-    parser.add_argument(
         "uhrwerk_config",
         metavar="GLOBAL_CONF",
         help="location of Uhrwerk configuration",
     )
+    parser.add_argument(
+        "--table_id",
+        metavar="TI",
+        action="store",
+        dest="table_id",
+        type=str,
+        help="Table to run as area.vertical.table.version",
+    )
+    parser.add_argument(
+        "-l",
+        "--lower_bound",
+        action="store",
+        dest="lower_bound",
+        metavar="LB",
+        type=valid_date,
+        help="Start date YYYY-MM-DDTHH:MM:SS",
+    )
+    parser.add_argument(
+        "-u",
+        "--upper_bound",
+        action="store",
+        dest="upper_bound",
+        metavar="UB",
+        type=valid_date,
+        help="End date YYYY-MM-DDTHH:MM:SS",
+    )
 
     params = parser.parse_args()
     db_info = load_connection(params.uhrwerk_config)
-    sql_temp = load_sql_template()
-    run_partition_check(params, db_info, sql_temp)
+    run_partition_check(params, db_info)
