@@ -25,6 +25,7 @@
         <zero-allocation-hashing.version>0.12</zero-allocation-hashing.version>
         <commons-collections.version>3.2.2</commons-collections.version>
         <maven.surefire.plugin.version>2.22.2</maven.surefire.plugin.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <!-- sub modules -->

@@ -25,7 +25,7 @@ object SparkFrameManagerUtils {
    * @param df DataFrame.
    * @return Converted DataFrame.
    */
-  private[framemanager] def convertTimeColumnsToStrings(df: DataFrame, partitionUnit: PartitionUnit): DataFrame = {
+  private[framemanager] def convertTimeColumnsToStrings(df: DataFrame): DataFrame = {
     timeColumns
       .foldLeft(df)((tmp, timeColumn) => tmp.withColumn(timeColumn, col(timeColumn).cast(StringType)))
   }
@@ -96,7 +96,7 @@ object SparkFrameManagerUtils {
     (year, month, day, hour, minute)
   }
 
-  private[framemanager] def createDatePath(startTS: LocalDateTime, partitionUnit: PartitionUnit): String = {
+  private[framemanager] def createDatePath(startTS: LocalDateTime): String = {
     val (year, month, day, hour, minute) = getTimeValues(startTS)
     val listOfTimeColumns = List(s"year=$year", s"month=$month", s"day=$day", s"hour=$hour", s"minute=$minute")
 

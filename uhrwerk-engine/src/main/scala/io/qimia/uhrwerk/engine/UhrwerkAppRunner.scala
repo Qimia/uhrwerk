@@ -123,7 +123,7 @@ object UhrwerkAppRunner {
   private def getStartEndTime(table: TableWrapper, startTime: Option[LocalDateTime],
                               endTime: Option[LocalDateTime]): (LocalDateTime, LocalDateTime) = {
     val callStartTime = if (startTime.isEmpty) {
-      val lastPartitionTime = table.getTimeLatestPartition()
+      val lastPartitionTime = table.getTimeLatestPartition
       if (lastPartitionTime.isEmpty) {
         logger.error("Calling without start time only functions when partitions have been processed before")
         throw new RuntimeException("Couldn't find latest partition")

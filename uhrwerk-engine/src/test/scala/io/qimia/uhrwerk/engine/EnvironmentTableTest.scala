@@ -20,14 +20,14 @@ class EnvironmentTableTest extends AnyFlatSpec with BeforeAndAfterEach {
   testConnInfo.setJdbc_driver("com.mysql.cj.jdbc.Driver")
   testConnInfo.setUser("UHRWERK_USER")
   testConnInfo.setPass("Xq92vFqEKF7TB8H9")
-  val metaStore = MetaStore.build(testConnInfo)
+  val metaStore: MetaStore = MetaStore.build(testConnInfo)
 
   def identityUserFunc(in: TaskInput): TaskOutput = {
     TaskOutput(in.loadedInputFrames.values.head)
   }
 
   override protected def afterEach(): Unit = {
-    try super.afterEach()
+    super.afterEach()
     val db =
       DriverManager.getConnection(metastoreUrl, "UHRWERK_USER", "Xq92vFqEKF7TB8H9")
     val deleteDependencyStm = db.createStatement
@@ -71,7 +71,7 @@ class EnvironmentTableTest extends AnyFlatSpec with BeforeAndAfterEach {
     val wrapper1 = env.addTableFile("EnvTableTest3.yml", identityUserFunc)
     assert(wrapper1.isEmpty)
     val wrapper2A = env.addTableFile("EnvTableTest1.yml", identityUserFunc)
-    val wrapper2B = env.addTableFile("EnvTableTest3.yml", identityUserFunc, true)
+    val wrapper2B = env.addTableFile("EnvTableTest3.yml", identityUserFunc, overwrite = true)
     assert(wrapper2A.isDefined)
     assert(wrapper2B.isEmpty)
   }
@@ -90,7 +90,7 @@ class EnvironmentTableTest extends AnyFlatSpec with BeforeAndAfterEach {
     // FIXME: Needs validate this before loading into model pojo's
     // in model pojo's a unit of null means it is an unpartitioned table
     assertThrows[ConfigException] {
-      val wrapper = env.addTableFile("EnvTableTest1Bad1.yml", identityUserFunc)
+      env.addTableFile("EnvTableTest1Bad1.yml", identityUserFunc)
     }
   }
 

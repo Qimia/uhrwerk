@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.engine.tools
 import java.time.{Duration, LocalDateTime}
 
 import io.qimia.uhrwerk.common.metastore.dependency.{DependencyResult, TablePartitionResult, TablePartitionResultSet}
-import io.qimia.uhrwerk.common.model.{Connection, Dependency, Partition, PartitionTransformType, PartitionUnit}
+import io.qimia.uhrwerk.common.model._
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.annotation.tailrec
@@ -224,7 +224,7 @@ class DependencyHelperTest extends AnyFlatSpec {
     // Now lets pivot this
     val testRes = DependencyHelper.extractBulkDependencyResult(Array(res1, res2, res3))
     assert(2 === testRes.length)
-    val depABulk = testRes(0)
+    val depABulk = testRes.head
     assert(depABulk.dependency.getTableName === "sometable")
     assert(depABulk.partitionTimestamps === Array(time1, time2, time3))
     val depBBulk = testRes(1)

@@ -29,7 +29,7 @@ object LoaderAParq extends App {
 
   val uhrwerkEnvironment = Environment.build("testing-env-config-docker.yml", frameManager)
   uhrwerkEnvironment.addConnectionFile("testing-connection-config-docker.yml")
-  val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_a_parq/table_a_parq_1.0.yml", loaderAFunc, true)
+  val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_a_parq/table_a_parq_1.0.yml", loaderAFunc, overwrite = true)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 1, 0, 0),
@@ -38,6 +38,6 @@ object LoaderAParq extends App {
     LocalDateTime.of(2012, 5, 4, 0, 0),
     LocalDateTime.of(2012, 5, 5, 0, 0)
   )
-  val results = wrapper.get.runTasksAndWait(runTimes, false)
+  val results = wrapper.get.runTasksAndWait(runTimes, overwrite = false)
   logger.info(results)
 }

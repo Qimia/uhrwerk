@@ -23,7 +23,7 @@ class TimeToolsTest extends AnyFlatSpec {
       LocalDateTime.of(2020, Month.JANUARY, 5, 11, 30, 0),
       LocalDateTime.of(2020, Month.JANUARY, 5, 11, 45, 0)
     )
-    out.zip(predictList).foreach((tup) => assert(tup._1.compareTo(tup._2) == 0))
+    out.zip(predictList).foreach(tup => assert(tup._1.compareTo(tup._2) == 0))
   }
 
   "a given duration with batchsize with A two hour range over 2 days" should "be split in 8 perfect quarters" in {
@@ -42,7 +42,7 @@ class TimeToolsTest extends AnyFlatSpec {
       LocalDateTime.of(2020, Month.JANUARY, 6, 0, 30, 0),
       LocalDateTime.of(2020, Month.JANUARY, 6, 0, 45, 0)
     )
-    out.zip(predictList).foreach((tup) => assert(tup._1.compareTo(tup._2) == 0))
+    out.zip(predictList).foreach(tup => assert(tup._1.compareTo(tup._2) == 0))
   }
 
   "a range with a too large stepsize" should "be round down to lowest number of full batches" in {

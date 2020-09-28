@@ -17,12 +17,12 @@ class TableWrapperIntegrationTest extends AnyFlatSpec with BeforeAndAfterEach {
   testConnInfo.setJdbc_driver("com.mysql.cj.jdbc.Driver")
   testConnInfo.setUser("UHRWERK_USER")
   testConnInfo.setPass("Xq92vFqEKF7TB8H9")
-  val metaStore = MetaStore.build(testConnInfo)
+  val metaStore: MetaStore = MetaStore.build(testConnInfo)
 
   var table: Table = _
 
   override protected def beforeEach(): Unit = {
-    try super.beforeEach()
+    super.beforeEach()
     val connBuilder1               = new ConnectionBuilder()
     val singleSourceTestConnection = connBuilder1.name("testConn").file.path("/some/path/on/disk/").done.build
     metaStore.connectionService.save(singleSourceTestConnection, false)
@@ -67,7 +67,7 @@ class TableWrapperIntegrationTest extends AnyFlatSpec with BeforeAndAfterEach {
   }
 
   override protected def afterEach(): Unit = {
-    try super.afterEach()
+    super.afterEach()
     val db =
       DriverManager.getConnection(metastoreUrl, "UHRWERK_USER", "Xq92vFqEKF7TB8H9")
     val deleteDependencyStm = db.createStatement
@@ -97,7 +97,7 @@ class TableWrapperIntegrationTest extends AnyFlatSpec with BeforeAndAfterEach {
 
   "A tableWrapper without written partitions" should "return no last partition timestamp" in {
     val wrapper = new TableWrapper(metaStore, table, x => TaskOutput(x.loadedInputFrames.head._2), null)
-    val res = wrapper.getTimeLatestPartition()
+    val res = wrapper.getTimeLatestPartition
     assert(res.isEmpty)
   }
 
@@ -114,12 +114,12 @@ class TableWrapperIntegrationTest extends AnyFlatSpec with BeforeAndAfterEach {
       part.setPartitionSize(20)
       part.setPartitionUnit(PartitionUnit.MINUTES)
       part.setPartitionTs(dt)
-      part.setTargetId(table.getTargets().head.getId)
+      part.setTargetId(table.getTargets.head.getId)
       part.setKey()
       val savePartA = metaStore.partitionService.save(part, false)
       assert(savePartA.isSuccess)
     })
-    val res = wrapper.getTimeLatestPartition()
+    val res = wrapper.getTimeLatestPartition
     assert(requestedTimes.last === res.get)
   }
 

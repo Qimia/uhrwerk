@@ -8,20 +8,21 @@ public interface DependencyStoreService {
     /**
      * Save all dependencies for a given table
      *
-     * @param table the table
+     * @param table     the table
      * @param overwrite overwrite the previously stored dependencies or not
      * @return DependencyStoreResult object with stored objects, info about success, exceptions and
-     *     other results
+     * other results
      */
-    public DependencyStoreResult save(
+    DependencyStoreResult save(
             Table table,
             boolean overwrite
     );
 
     /**
      * Retrieve all stored dependencies for a given table
+     *
      * @param tableId tableId of the table for which the dependencies are returned
      * @return model Dependency objects
      */
-    public Dependency[] get(Long tableId);
+    Dependency[] get(Long tableId);
 }

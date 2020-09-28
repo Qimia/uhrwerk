@@ -20,9 +20,9 @@ object AppLoaderAParq extends App {
     TableIdent("staging", "yelp_db", "table_a_parq_app", "1.0"),
     Option(LocalDateTime.of(2012, 5, 1, 0, 0)),
     Option(LocalDateTime.of(2012, 5, 6, 0, 0)),
-    false,
+    dagMode = false,
     1,
-    false
+    overwrite = false
   )
 
 }

@@ -31,7 +31,7 @@
 
 - name: "qimia_oltp"
   jdbc:
-    jdbc_url: 'jdbc:mysql://127.0.0.1:53306/qimia_oltp'
+    jdbc_url: 'jdbc:mysql://127.0.0.1:43306/qimia_oltp'
     jdbc_driver: 'com.mysql.cj.jdbc.Driver'
-    user: UHRWERK_USER
-    pass: Xq92vFqEKF7TB8H9
+    user: root
+    pass: mysql

@@ -2,7 +2,6 @@ package io.qimia.uhrwerk.dao;
 
 import io.qimia.uhrwerk.ConnectionHelper;
 import io.qimia.uhrwerk.common.model.*;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.sql.PreparedStatement;
@@ -13,13 +12,13 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ProcessPartitionTest {
 
   java.sql.Connection db;
   final String insertPartitionQuery =
       "INSERT INTO PARTITION_(id, target_id, partition_ts, partitioned)\n" + "VALUES(?,?,?,?)";
-  ;
 
   Connection connFS;
   Table tableDepA;
@@ -559,8 +558,8 @@ public class ProcessPartitionTest {
     var dao = new TableDAO(db);
     var requestTime1 = LocalDateTime.now();
     var resultSet = dao.processingPartitions(tableOut, new LocalDateTime[]{requestTime1});
-    assertEquals (1, resultSet.getResolved().length);
-    assertEquals (null, resultSet.getFailed());
+    assertEquals(1, resultSet.getResolved().length);
+    assertNull(resultSet.getFailed());
 
     // Now add a partition for tableOut
     var partitionlessTs = LocalDateTime.now();
@@ -580,15 +579,15 @@ public class ProcessPartitionTest {
     // Now we request to run again within the 60 seconds
     LocalDateTime withinTime = partitionlessTs.plus(Duration.ofSeconds(10));
     resultSet = dao.processingPartitions(tableOut, new LocalDateTime[]{withinTime});
-    assertEquals (null, resultSet.getFailed());
-    assertEquals (null, resultSet.getResolved());
-    assertEquals (1, resultSet.getProcessed().length);
+    assertNull(resultSet.getFailed());
+    assertNull(resultSet.getResolved());
+    assertEquals(1, resultSet.getProcessed().length);
 
     // And if we run outside of the 60 seconds
     LocalDateTime outsideTime = partitionlessTs.plus(Duration.ofMinutes(5));
     resultSet = dao.processingPartitions(tableOut, new LocalDateTime[]{outsideTime});
-    assertEquals (null, resultSet.getFailed());
-    assertEquals (null, resultSet.getProcessed());
-    assertEquals (1, resultSet.getResolved().length);
+    assertNull(resultSet.getFailed());
+    assertNull(resultSet.getProcessed());
+    assertEquals(1, resultSet.getResolved().length);
   }
 }

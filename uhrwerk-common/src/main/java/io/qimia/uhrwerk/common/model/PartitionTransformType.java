@@ -5,5 +5,5 @@ public enum PartitionTransformType {
   IDENTITY,
   AGGREGATE,
   WINDOW,
-  TEMPORAL_AGGREGATE;
+  TEMPORAL_AGGREGATE
 }

@@ -6,11 +6,11 @@ import java.util
 import java.util.concurrent.Callable
 
 import io.qimia.uhrwerk.engine.Environment.TableIdent
-import picocli.CommandLine
-import picocli.CommandLine.{Command, Option}
 import io.qimia.uhrwerk.engine.UhrwerkAppRunner
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.SparkSession
+import picocli.CommandLine
+import picocli.CommandLine.{Command, Option}
 
 import scala.collection.JavaConverters._
 
@@ -75,10 +75,6 @@ class CommandLineInterface extends Callable[Int] {
       case "y" => true
       case _ => false
     }
-    val conMode = conM match {
-      case "y" => true
-      case _ => false
-    }
 
     val config = new SparkConf()
     config.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
@@ -99,7 +95,7 @@ class CommandLineInterface extends Callable[Int] {
       TableIdent(area, vertical, tableName, version)
     }
     catch {
-      case e: Exception => throw new Exception("Parsing target failed. Please check the specified runTable.")
+      case _: Exception => throw new Exception("Parsing target failed. Please check the specified runTable.")
     }
     val start: scala.Option[LocalDateTime] = if (startTime.length > 0) {
       scala.Option(convertTSToTimeObj(startTime))

@@ -16,7 +16,6 @@ public class HashIdTest {
     dep.setTableName("test-table");
     dep.setFormat("json");
     dep.setVersion("version");
-    dep.getArea().toCharArray();
     StringBuilder res =
         new StringBuilder()
             .append(dep.getArea())

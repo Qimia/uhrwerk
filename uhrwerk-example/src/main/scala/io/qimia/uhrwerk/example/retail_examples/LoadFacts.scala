@@ -19,7 +19,7 @@ object LoadFacts extends App {
     .config("driver-memory", "4g")
     .getOrCreate()
 
-  def simpleLoad(ident: SourceIdent): (TaskInput => TaskOutput) = {
+  def simpleLoad(ident: SourceIdent): TaskInput => TaskOutput = {
     def udf(in: TaskInput): TaskOutput = {
       in.loadedInputFrames.get(ident) match {
         case Some(x) => TaskOutput(x)
@@ -94,7 +94,7 @@ object LoadFacts extends App {
   val salesFactResult = salesFactWrapper.get.runTasksAndWait(runTimes)
   val salesFactDailyResult = salesFactDailyWrapper.get.runTasksAndWait(runTimes)
 
-  logger.info(s"Sales Fact processed: ${salesResult}")
-  logger.info(s"Sales Fact processed to dwh: ${salesFactResult}")
-  logger.info(s"Sales Fact Daily processed to dwh: ${salesFactDailyResult}")
+  logger.info(s"Sales Fact processed: $salesResult")
+  logger.info(s"Sales Fact processed to dwh: $salesFactResult")
+  logger.info(s"Sales Fact Daily processed to dwh: $salesFactDailyResult")
 }

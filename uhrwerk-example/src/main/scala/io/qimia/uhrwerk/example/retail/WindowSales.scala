@@ -6,11 +6,9 @@ import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.dag.{DagTaskBuilder, DagTaskDispatcher}
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.example.retail.LoaderSales.loaderAFunc
-import io.qimia.uhrwerk.example.retail.LoaderStores.loaderBFunc
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{max, min}
-import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object WindowSales extends App {
 
@@ -35,9 +33,9 @@ object WindowSales extends App {
     Environment.build("yelp_test/uhrwerk.yml", frameManager)
   uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
   val wrapperSales =
-    uhrwerkEnvironment.addTableFile("LoadTableSalesTest.yml", loaderAFunc, true).get
+    uhrwerkEnvironment.addTableFile("LoadTableSalesTest.yml", loaderAFunc, overwrite = true).get
   val wrapperWindow =
-    uhrwerkEnvironment.addTableFile("windowSales.yml", WindowCFunc, true).get
+    uhrwerkEnvironment.addTableFile("windowSales.yml", WindowCFunc, overwrite = true).get
 
   val dagTaskBuilder = new DagTaskBuilder(uhrwerkEnvironment)
   val taskList = dagTaskBuilder.buildTaskListFromTable(

@@ -17,7 +17,7 @@ object JDBCTools {
     try {
       val jdbcConnection = getJDBCConnection(connection)
       val statement = jdbcConnection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
-      val indexName = s"index_${tableSchema}_${tableName}_${timeColumnJDBC}"
+      val indexName = s"index_${tableSchema}_${tableName}_$timeColumnJDBC"
 
       // todo add support for dbs other than mysql
       val isResult = statement.execute(
@@ -67,7 +67,7 @@ object JDBCTools {
     try {
       val jdbcConnection = getJDBCConnection(connection)
       val statement = jdbcConnection.createStatement
-      statement.execute(s"CREATE DATABASE ${databaseName}")
+      statement.execute(s"CREATE DATABASE $databaseName")
       jdbcConnection.close()
     } catch {
       case e: Exception => logger.warn(e.getLocalizedMessage)
@@ -207,11 +207,10 @@ object JDBCTools {
           )
       }
     } catch {
-      case e: Exception => {
+      case e: Exception =>
         throw new Exception(
           "No rows returned in minMaxQueryIds\n" + e.getLocalizedMessage
         )
-      }
     }
   }
 

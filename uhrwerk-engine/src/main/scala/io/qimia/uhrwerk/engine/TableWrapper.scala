@@ -55,7 +55,7 @@ object TableWrapper {
           .map(failedDep => failedDep.getDependency)
           .map(dep => dep.getTableName)
           .mkString(", ")
-        logger.info(s"Failed partition TS: ${failedPartitionResult.getPartitionTs} - missing: ${failedDepNames}")
+        logger.info(s"Failed partition TS: ${failedPartitionResult.getPartitionTs} - missing: $failedDepNames")
       })
     }
 
@@ -72,7 +72,7 @@ object TableWrapper {
 }
 
 class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => TaskOutput, frameManager: FrameManager) {
-  val wrappedTable = table
+  val wrappedTable: Table = table
   val tableDuration: Duration = if (table.isPartitioned) {
     TimeHelper.convertToDuration(table.getPartitionUnit, table.getPartitionSize)
   } else {
@@ -95,7 +95,7 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
       val lastInclusivePartitionTs = partitionTS.last
       Option(lastInclusivePartitionTs.plus(tableDuration))
     }
-    logger.info(s"Start single run TS: ${startTs} Optional end-TS: ${endTs}")
+    logger.info(s"Start single run TS: $startTs Optional end-TS: $endTs")
 
     val loadedInputDepDFs: List[(Ident, DataFrame)] =
       if (dependencyResults.nonEmpty) {
@@ -162,13 +162,12 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
         }
         true
       } catch {
-        case e: Throwable => {
+        case e: Throwable =>
           logger.error("Task failed: " + startTs.toString)
           e.printStackTrace()
           false
-        }
       }
-    logger.info(s"Single run done, success = ${success}")
+    logger.info(s"Single run done, success = $success")
     // TODO: Proper logging here
     success
   }
@@ -277,13 +276,14 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
   }
 
   /**
-    * Get timestamp of latest processed partition datetime.
-    * In case there was no partition returns empty
-    * In case there are multiple targets it returns the earliest of all the targets their latest partition
-    * @return localdatetime of the partition or empty if there is no
-    */
-  def getTimeLatestPartition(): Option[LocalDateTime] = {
-    val targets          = metastore.targetService.getTableTargets(wrappedTable.getId)
+   * Get timestamp of latest processed partition datetime.
+   * In case there was no partition returns empty
+   * In case there are multiple targets it returns the earliest of all the targets their latest partition
+   *
+   * @return localdatetime of the partition or empty if there is no
+   */
+  def getTimeLatestPartition: Option[LocalDateTime] = {
+    val targets = metastore.targetService.getTableTargets(wrappedTable.getId)
     val latestPartitions = targets.map(t => metastore.partitionService.getLatestPartition(t.getId)).filter(_ != null)
     if (latestPartitions.isEmpty) {
       Option.empty

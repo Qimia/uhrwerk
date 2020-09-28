@@ -35,7 +35,7 @@ case class TaskInput(loadedInputFrames: Map[Ident, DataFrame],
       .filter(tup =>
         tup._1 match {
           case TableIdent(areaI, verticalI, nameI, _) =>
-            ((areaI == area) && (verticalI == vertical) && (nameI == name))
+            (areaI == area) && (verticalI == vertical) && (nameI == name)
           case SourceIdent(_, _, _) => false
       })
       .values

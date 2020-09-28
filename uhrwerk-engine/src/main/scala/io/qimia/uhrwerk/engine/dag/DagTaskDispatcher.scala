@@ -18,9 +18,9 @@ object DagTaskDispatcher {
     val executor                                            = Executors.newSingleThreadExecutor()
     implicit val executionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor(executor)
 
-    def procTask(task: DagTask) = {
+    def procTask(task: DagTask): Unit = {
       val futures = task.table.runTasks(task.partitions.toArray)
-      val result  = Await.result(Future.sequence(futures), duration.Duration(24, duration.HOURS))
+      val result = Await.result(Future.sequence(futures), duration.Duration(24, duration.HOURS))
       if (!result.forall(res => res)) {
         logger.error(s"Task table ${task.table.wrappedTable.getName} failed for ${task.partitions}")
       }
@@ -42,7 +42,7 @@ object DagTaskDispatcher {
     }
     implicit val executionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor(executor)
 
-    def procTasks(tasks: Seq[DagTask]) = {
+    def procTasks(tasks: Seq[DagTask]): Unit = {
       val futures = tasks.zipWithIndex.flatMap(taskWIndex => {
         val task = taskWIndex._1
         task.table.runTasks(task.partitions.toArray).map(res => (res, taskWIndex._2))

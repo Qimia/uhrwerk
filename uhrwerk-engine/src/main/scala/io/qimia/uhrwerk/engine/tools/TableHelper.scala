@@ -1,6 +1,5 @@
 package io.qimia.uhrwerk.engine.tools
 
-import io.qimia.uhrwerk.common.framemanager.BulkDependencyResult
 import io.qimia.uhrwerk.common.model.Table
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent, TableIdent}
 
@@ -28,7 +27,7 @@ object TableHelper {
       .filter(id =>
         id match {
           case TableIdent(areaI, verticalI, nameI, _) =>
-            ((areaI == area) && (verticalI == vertical) && (nameI == name))
+            (areaI == area) && (verticalI == vertical) && (nameI == name)
           case SourceIdent(_, _, _) => false
       })
       .head
