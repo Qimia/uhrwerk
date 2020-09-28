@@ -19,8 +19,8 @@ object AppJoinTPCDI extends App {
     Array(
       TableIdent("processing", "tpcdi", "Trades", "1.0")
     ),
+    Option(LocalDateTime.of(2015, 7, 8, 0, 0)),
     Option(LocalDateTime.of(2015, 7, 10, 0, 0)),
-    Option(LocalDateTime.of(2015, 7, 15, 0, 0)),
     true,
     10,
     true
