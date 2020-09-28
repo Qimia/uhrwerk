@@ -28,14 +28,14 @@ object DownsampleE  extends App {
 
   val uhrwerkEnvironment = Environment.build("yelp_test/uhrwerk.yml", frameManager)
   uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_e/table_e_1.0.yml", loaderEFunc, true)
+  val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_e/table_e_1.0.yml", loaderEFunc, overwrite = true)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 1, 0, 0),
     LocalDateTime.of(2012, 5, 4, 0, 0),
   )
   if (wrapper.isDefined) {
-    val results = wrapper.get.runTasksAndWait(runTimes, false)
+    val results = wrapper.get.runTasksAndWait(runTimes, overwrite = false)
     logger.info(results)
   }
 }

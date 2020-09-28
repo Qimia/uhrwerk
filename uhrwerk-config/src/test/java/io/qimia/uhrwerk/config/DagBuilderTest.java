@@ -7,7 +7,7 @@ import io.qimia.uhrwerk.config.representation.Table;
 import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class DagBuilderTest {
   private final Logger logger = Logger.getLogger(this.getClass());
@@ -484,30 +484,30 @@ class DagBuilderTest {
     tables[0] = table1;
     tables[1] = table2;
 
-    var connections = new Connection[2];
-    connections[0] = connection1;
-    connections[1] = connection2;
+      var connections = new Connection[2];
+      connections[0] = connection1;
+      connections[1] = connection2;
 
-    var dag = new DagBuilder()
-            .tables(tables)
-            .connections(connections)
-            .build();
+      var dag = new DagBuilder()
+              .tables(tables)
+              .connections(connections)
+              .build();
 
-    logger.info(dag);
-    assertEquals(false, dag.getTables()[0].isPartitioned());
-    assertEquals(true, dag.getTables()[1].isPartitioned());
-    assertEquals(true, dag.getTables()[0].getSources()[0].isPartitioned());
-    assertEquals(false, dag.getTables()[0].getSources()[1].isPartitioned());
-    assertEquals(PartitionTransformType.NONE, dag.getTables()[1].getDependencies()[0].getTransformType());
-    assertEquals(PartitionTransformType.IDENTITY, dag.getTables()[1].getDependencies()[1].getTransformType());
+      logger.info(dag);
+      assertFalse(dag.getTables()[0].isPartitioned());
+      assertTrue(dag.getTables()[1].isPartitioned());
+      assertTrue(dag.getTables()[0].getSources()[0].isPartitioned());
+      assertFalse(dag.getTables()[0].getSources()[1].isPartitioned());
+      assertEquals(PartitionTransformType.NONE, dag.getTables()[1].getDependencies()[0].getTransformType());
+      assertEquals(PartitionTransformType.IDENTITY, dag.getTables()[1].getDependencies()[1].getTransformType());
 
-    assertEquals("TableTable", dag.getTables()[0].getName());
-    assertEquals("TableArea", dag.getTables()[0].getArea());
-    assertEquals("TableArea.TableVertical.TableTable.TableVersion", dag.getTables()[0].getClassName());
-    assertEquals(0, dag.getTables()[0].getPartitionSize());
+      assertEquals("TableTable", dag.getTables()[0].getName());
+      assertEquals("TableArea", dag.getTables()[0].getArea());
+      assertEquals("TableArea.TableVertical.TableTable.TableVersion", dag.getTables()[0].getClassName());
+      assertEquals(0, dag.getTables()[0].getPartitionSize());
 
-    assertEquals("TableTable", dag.getTables()[1].getName());
-    assertEquals("somedifferent", dag.getTables()[1].getArea());
+      assertEquals("TableTable", dag.getTables()[1].getName());
+      assertEquals("somedifferent", dag.getTables()[1].getArea());
     assertEquals("my.class.name", dag.getTables()[1].getClassName());
     assertEquals(10, dag.getTables()[1].getPartitionSize());
 

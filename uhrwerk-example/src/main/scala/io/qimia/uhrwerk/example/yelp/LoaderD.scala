@@ -31,7 +31,7 @@ object LoaderD extends App {
 
   val uhrwerkEnvironment = Environment.build("yelp_test/uhrwerk.yml",frameManager)
   uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_d/table_d_1.0.yml", loaderDFunc, true)
+  val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_d/table_d_1.0.yml", loaderDFunc, overwrite = true)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 1, 0, 0),
@@ -41,6 +41,6 @@ object LoaderD extends App {
     LocalDateTime.of(2012, 5, 5, 0, 0),
     LocalDateTime.of(2012, 5, 6, 0, 0)
   )
-  val results = wrapper.get.runTasksAndWait(runTimes, false)
+  val results = wrapper.get.runTasksAndWait(runTimes, overwrite = false)
   logger.info(results)
 }

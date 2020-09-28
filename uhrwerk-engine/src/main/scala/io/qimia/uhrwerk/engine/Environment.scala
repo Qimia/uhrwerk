@@ -112,7 +112,7 @@ object Environment {
 class Environment(store: MetaStore, frameManager: FrameManager) {
   val configReader                             = new YamlConfigReader()
   val tables: mutable.Map[Ident, TableWrapper] = mutable.HashMap()
-  val metaStore = store
+  val metaStore: MetaStore = store
 
   /**
     * Add and load connections to uhrwerk

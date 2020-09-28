@@ -2,22 +2,22 @@
 
 - name: "yelp_mysql"
   jdbc:
-    jdbc_url: 'jdbc:mysql://127.0.0.1:53306/yelp_db'
+    jdbc_url: 'jdbc:mysql://localhost:53306/yelp_db'
     jdbc_driver: 'com.mysql.cj.jdbc.Driver'
     user: root
     pass: 61ePGqq20u9TZjbNhf0
 
 - name: "local_fs_lake"
   file:
-    path: 'uhrwerk-example/example_datalake'
+    path: '/spark_datadir/example_datalake'
 
 - name: "local_fs_source"
   file:
-    path: 'uhrwerk-example/example_dataset'
+    path: '/spark_datadir/example_dataset'
 
 - name: "yelp_dwh"
   jdbc:
-    jdbc_url: 'jdbc:mysql://127.0.0.1:53306'
+    jdbc_url: 'jdbc:mysql://localhost:53306'
     jdbc_driver: 'com.mysql.cj.jdbc.Driver'
     user: root
     pass: 61ePGqq20u9TZjbNhf0
@@ -25,13 +25,6 @@
 - name: "retail_mysql"
   jdbc:
     jdbc_url: 'jdbc:mysql://localhost:43306/'
-    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
-    user: root
-    pass: mysql
-
-- name: "qimia_oltp"
-  jdbc:
-    jdbc_url: 'jdbc:mysql://127.0.0.1:43306/qimia_oltp'
-    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    jdbc_driver: 'com.myqsl.cj.jdbc.Driver'
     user: root
     pass: mysql

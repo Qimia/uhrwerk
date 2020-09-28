@@ -23,7 +23,7 @@ object DagAGH extends App {
     Environment.build("yelp_test/uhrwerk.yml", frameManager)
   uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
 
-  val wrapperA = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_a_parq/table_a_parq_1.0.yml", loaderAFunc, false).get
+  val wrapperA = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_a_parq/table_a_parq_1.0.yml", loaderAFunc, overwrite = false).get
   val wrapperG = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_g/table_g_1.0.yml", loaderUnpartitionedGFunc).get
   val wrapperH = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_h/table_h_1.0.yml", transformationFunction).get
 

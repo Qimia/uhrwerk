@@ -14,8 +14,8 @@ import java.util.Optional;
 
 public class TargetDAO implements TargetService {
 
-    java.sql.Connection db;
-    ConnectionDAO connectionRetriever;
+    final java.sql.Connection db;
+    final ConnectionDAO connectionRetriever;
 
     public TargetDAO(Connection db) {
         this.db = db;

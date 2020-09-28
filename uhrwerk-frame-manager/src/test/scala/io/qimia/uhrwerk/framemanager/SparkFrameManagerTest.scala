@@ -846,7 +846,7 @@ class SparkFrameManagerTest extends AnyFlatSpec with BuildTeardown {
       aggTS.forall(ts =>
         new File(
           "src/test/resources/testlake/area=staging/vertical=testdb/table=testaggregates/version=1/format=parquet/" +
-            SparkFrameManagerUtils.createDatePath(ts, PartitionUnit.MINUTES)
+            SparkFrameManagerUtils.createDatePath(ts)
         ).isDirectory
       )
     )

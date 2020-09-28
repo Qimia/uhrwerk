@@ -109,8 +109,8 @@ public class SourceDAOTest {
         assertEquals(PartitionUnit.DAYS, result.getNewResult().getPartitionUnit());
         assertEquals(1, result.getNewResult().getPartitionSize());
         assertEquals(40, result.getNewResult().getParallelLoadNum());
-        assertEquals(true, result.getNewResult().isPartitioned());
-        assertEquals(false, result.getNewResult().isAutoloading());
+        assertTrue(result.getNewResult().isPartitioned());
+        assertFalse(result.getNewResult().isAutoloading());
     }
 
     @Test

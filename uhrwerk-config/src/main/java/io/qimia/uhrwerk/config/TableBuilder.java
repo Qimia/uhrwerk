@@ -1,10 +1,7 @@
 package io.qimia.uhrwerk.config;
 
 
-
-
 import io.qimia.uhrwerk.config.representation.*;
-
 
 import java.util.ArrayList;
 
@@ -26,16 +23,19 @@ public class TableBuilder {
     private Source[] sources;
     private Target[] targets;
     private Dependency[] dependencies;
-    private ArrayList<Source> sourcesList = new ArrayList<Source>();
-    private ArrayList<Dependency> dependenciesList = new ArrayList<Dependency>();
-    private ArrayList<Target> targetsList = new ArrayList<Target>();
+    private final ArrayList<Source> sourcesList = new ArrayList<>();
+    private final ArrayList<Dependency> dependenciesList = new ArrayList<>();
+    private final ArrayList<Target> targetsList = new ArrayList<>();
 
 
-    public TableBuilder() {}
+    public TableBuilder() {
+    }
 
-    public TableBuilder(DagBuilder parent) { this.parent = parent; }
+    public TableBuilder(DagBuilder parent) {
+        this.parent = parent;
+    }
 
-    public TableBuilder area(String area){
+    public TableBuilder area(String area) {
         this.area = area;
         return this;
     }

@@ -4,8 +4,7 @@ import io.qimia.uhrwerk.common.model.*;
 import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 class YamlConfigReaderTest {
@@ -20,28 +19,28 @@ class YamlConfigReaderTest {
     }
     assertEquals(connections[0].getName(), "mysql1");
     assertEquals(connections[1].getName(), "s3_test");
-    assertEquals(connections[2].getName(),"local_filesystem_test");
-    assertEquals(connections[0].getJdbcUrl(),"jdbc:mysql://localhost:3306");
-    assertEquals(connections[1].getJdbcUrl(),null);
-    assertEquals(connections[2].getJdbcUrl(),null);
-    assertEquals(connections[0].getJdbcDriver(),"com.mysql.jdbc.Driver");
-    assertEquals(connections[1].getJdbcDriver(),null);
-    assertEquals(connections[2].getJdbcDriver(),null);
-    assertEquals(connections[0].getJdbcUser(),"root");
-    assertEquals(connections[1].getJdbcUser(),null);
-    assertEquals(connections[2].getJdbcUser(),null);
-    assertEquals(connections[0].getJdbcPass(),"mysql");
-    assertEquals(connections[1].getJdbcPass(),null);
-    assertEquals(connections[2].getJdbcPass(),null);
-    assertEquals(connections[0].getPath(),null);
-    assertEquals(connections[1].getPath(),"s3://bucketname/somesuffix/");
-    assertEquals(connections[2].getPath(),"/path/to/local/datalake");
-    assertEquals(connections[0].getAwsAccessKeyID(),null);
-    assertEquals(connections[1].getAwsAccessKeyID(),"blabla");
-    assertEquals(connections[2].getAwsAccessKeyID(),null);
-    assertEquals(null  , connections[0].getAwsSecretAccessKey());
+    assertEquals(connections[2].getName(), "local_filesystem_test");
+    assertEquals(connections[0].getJdbcUrl(), "jdbc:mysql://localhost:3306");
+    assertNull(connections[1].getJdbcUrl());
+    assertNull(connections[2].getJdbcUrl());
+    assertEquals(connections[0].getJdbcDriver(), "com.mysql.jdbc.Driver");
+    assertNull(connections[1].getJdbcDriver());
+    assertNull(connections[2].getJdbcDriver());
+    assertEquals(connections[0].getJdbcUser(), "root");
+    assertNull(connections[1].getJdbcUser());
+    assertNull(connections[2].getJdbcUser());
+    assertEquals(connections[0].getJdbcPass(), "mysql");
+    assertNull(connections[1].getJdbcPass());
+    assertNull(connections[2].getJdbcPass());
+    assertNull(connections[0].getPath());
+    assertEquals(connections[1].getPath(), "s3://bucketname/somesuffix/");
+    assertEquals(connections[2].getPath(), "/path/to/local/datalake");
+    assertNull(connections[0].getAwsAccessKeyID());
+    assertEquals(connections[1].getAwsAccessKeyID(), "blabla");
+    assertNull(connections[2].getAwsAccessKeyID());
+    assertNull(connections[0].getAwsSecretAccessKey());
     assertEquals("yaya", connections[1].getAwsSecretAccessKey());
-    assertEquals(null  , connections[2].getAwsSecretAccessKey());
+    assertNull(connections[2].getAwsSecretAccessKey());
 
 
   }
@@ -52,14 +51,14 @@ class YamlConfigReaderTest {
     Dag dag =
             (new YamlConfigReader()).readDag("config/dag-config.yml");
     logger.info(dag);
-    assertEquals(true, dag.getTables()[0].isPartitioned());
-      assertEquals(false, dag.getTables()[1].isPartitioned());
-      assertEquals(true, dag.getTables()[0].getSources()[0].isPartitioned());
-      assertEquals(false, dag.getTables()[0].getSources()[1].isPartitioned());
-      assertEquals("load.class.name", dag.getTables()[0].getClassName());
-      assertEquals("processing.sourcedb_1.load_a_table.1.0", dag.getTables()[1].getClassName());
-      assertEquals(PartitionTransformType.NONE, dag.getTables()[1].getDependencies()[0].getTransformType());
-      assertEquals(PartitionTransformType.IDENTITY, dag.getTables()[1].getDependencies()[1].getTransformType());
+    assertTrue(dag.getTables()[0].isPartitioned());
+    assertFalse(dag.getTables()[1].isPartitioned());
+    assertTrue(dag.getTables()[0].getSources()[0].isPartitioned());
+    assertFalse(dag.getTables()[0].getSources()[1].isPartitioned());
+    assertEquals("load.class.name", dag.getTables()[0].getClassName());
+    assertEquals("processing.sourcedb_1.load_a_table.1.0", dag.getTables()[1].getClassName());
+    assertEquals(PartitionTransformType.NONE, dag.getTables()[1].getDependencies()[0].getTransformType());
+    assertEquals(PartitionTransformType.IDENTITY, dag.getTables()[1].getDependencies()[1].getTransformType());
   }
 
   @Test
@@ -86,7 +85,4 @@ class YamlConfigReaderTest {
 
   }
 
-
-  @Test
-  public void yamlArray() {}
 }

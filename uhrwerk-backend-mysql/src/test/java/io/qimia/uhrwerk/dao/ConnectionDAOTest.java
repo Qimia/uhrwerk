@@ -19,7 +19,7 @@ class ConnectionDAOTest {
 
   java.sql.Connection db;
   ConnectionService service;
-  String[] connNames = {"S3", "JDBC", "file"};
+  final String[] connNames = {"S3", "JDBC", "file"};
   private Logger logger;
 
   @org.junit.jupiter.api.BeforeEach
@@ -134,9 +134,6 @@ class ConnectionDAOTest {
       logger.info("caught in Connection.");
     }
   }
-
-  @Test
-  void getDependency() {}
 
   @Test
   void getByStatementConnection() {

@@ -12,7 +12,7 @@ class TableWrapperTest extends AnyFlatSpec {
     val partitionSize = 30
     val targetId = 1234L
 
-    val partitions = TableWrapper.createPartitions(ts, true, partitionUnit, partitionSize, targetId)
+    val partitions = TableWrapper.createPartitions(ts, partitioned = true, partitionUnit, partitionSize, targetId)
 
     assert(partitions.length == 2)
     partitions

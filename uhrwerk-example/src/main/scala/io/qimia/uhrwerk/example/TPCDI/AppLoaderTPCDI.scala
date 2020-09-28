@@ -27,9 +27,9 @@ object AppLoaderTPCDI extends App {
     ),
     Option(LocalDateTime.of(2015, 7, 6, 0, 0)),
     Option(LocalDateTime.of(2015, 8, 6, 0, 0)),
-    true,
+    dagMode = true,
     10,
-    false
+    overwrite = false
   )
 
 }

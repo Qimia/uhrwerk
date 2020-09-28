@@ -14,20 +14,20 @@ import java.util.List;
 
 public class PartitionDependencyDAO implements PartitionDependencyService {
 
-    private static String INSERT_PARTDEP = "INSERT INTO PARTITION_DEPENDENCY (id, partition_id, dependency_partition_id) " +
+    private static final String INSERT_PARTDEP = "INSERT INTO PARTITION_DEPENDENCY (id, partition_id, dependency_partition_id) " +
             "VALUES (?, ?, ?)";
 
-    private static String REMOVE_PARTDEP = "DELETE FROM PARTITION_DEPENDENCY WHERE id = ?";
+    private static final String REMOVE_PARTDEP = "DELETE FROM PARTITION_DEPENDENCY WHERE id = ?";
 
-    private static String REMOVE_PARTDEP_BY_PART_ID = "DELETE FROM PARTITION_DEPENDENCY WHERE partition_id = ?";
+    private static final String REMOVE_PARTDEP_BY_PART_ID = "DELETE FROM PARTITION_DEPENDENCY WHERE partition_id = ?";
 
-    private static String GET_DEP_PART_ID_BY_PART_ID = "SELECT dependency_partition_id FROM PARTITION_DEPENDENCY " +
+    private static final String GET_DEP_PART_ID_BY_PART_ID = "SELECT dependency_partition_id FROM PARTITION_DEPENDENCY " +
             "WHERE partition_id = ?";
 
-    private static String GET_PART_ID_BY_DEP_PART_ID = "SELECT partition_id FROM PARTITION_DEPENDENCY " +
+    private static final String GET_PART_ID_BY_DEP_PART_ID = "SELECT partition_id FROM PARTITION_DEPENDENCY " +
             "WHERE dependency_partition_id = ?";
 
-    private java.sql.Connection db;
+    private final java.sql.Connection db;
 
     public PartitionDependencyDAO(java.sql.Connection db) {
         this.db = db;
@@ -236,7 +236,7 @@ public class PartitionDependencyDAO implements PartitionDependencyService {
     @Override
     public List<Partition> getParentPartitions(Partition childPartition) {
         PartitionDAO partitionRetriever = new PartitionDAO(db);
-        ArrayList<Partition> parentPartitions = new ArrayList<>();;
+        ArrayList<Partition> parentPartitions = new ArrayList<>();
         try {
             var parentIds = getParentIds(childPartition.getId());
             for (Long parentId: parentIds) {

@@ -11,8 +11,8 @@ import java.sql.*;
 import java.util.ArrayList;
 
 public class SourceDAO implements SourceService {
-  private java.sql.Connection db;
-  private ConnectionDAO connectionDAO;
+  private final java.sql.Connection db;
+  private final ConnectionDAO connectionDAO;
 
   public SourceDAO(java.sql.Connection db) {
     this.db = db;

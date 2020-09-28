@@ -32,7 +32,7 @@ public class YamlConfigReader {
   public io.qimia.uhrwerk.common.model.Table getModelTable(Table table) {
     if (table != null) {
       table.validate("");
-      io.qimia.uhrwerk.common.model.Table result = new io.qimia.uhrwerk.common.model.Table();
+      io.qimia.uhrwerk.common.model.Table result;
       io.qimia.uhrwerk.common.model.Table tab = new io.qimia.uhrwerk.common.model.Table();
       result = tab;
       tab.setArea(table.getArea());
@@ -190,8 +190,7 @@ public class YamlConfigReader {
 
   public io.qimia.uhrwerk.common.model.Connection getModelConnection(Connection connection) {
     connection.validate("");
-    io.qimia.uhrwerk.common.model.Connection result =
-            new io.qimia.uhrwerk.common.model.Connection();
+    io.qimia.uhrwerk.common.model.Connection result;
     io.qimia.uhrwerk.common.model.Connection conn = new io.qimia.uhrwerk.common.model.Connection();
     result = conn;
     conn.setName(connection.getName());

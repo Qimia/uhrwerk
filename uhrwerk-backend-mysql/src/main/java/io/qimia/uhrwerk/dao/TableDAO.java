@@ -331,14 +331,14 @@ public class TableDAO implements TableDependencyService, TableService {
 
     TablePartitionResultSet tablePartitionResultSet = new TablePartitionResultSet();
     tablePartitionResultSet.setProcessed(
-        processed.toArray(new TablePartitionResult[processed.size()]));
+            processed.toArray(new TablePartitionResult[0]));
     tablePartitionResultSet.setResolved(
-        resolved.toArray(new TablePartitionResult[resolved.size()]));
+            resolved.toArray(new TablePartitionResult[0]));
     tablePartitionResultSet.setFailed(new TablePartitionResult[0]);
 
     tablePartitionResultSet.setProcessedTs(
-        processedTs.toArray(new LocalDateTime[processedTs.size()]));
-    tablePartitionResultSet.setResolvedTs(resolvedTs.toArray(new LocalDateTime[resolvedTs.size()]));
+            processedTs.toArray(new LocalDateTime[0]));
+    tablePartitionResultSet.setResolvedTs(resolvedTs.toArray(new LocalDateTime[0]));
     tablePartitionResultSet.setFailedTs(new LocalDateTime[0]);
     return tablePartitionResultSet;
   }
@@ -471,8 +471,8 @@ public class TableDAO implements TableDependencyService, TableService {
             TreeSet<LocalDateTime> failed = new TreeSet<>(Arrays.asList(partitionTs[i]));
             failed.removeAll(succeeded);
             dependencyResult.setSuccess(false);
-            dependencyResult.setFailed(failed.toArray(new LocalDateTime[failed.size()]));
-            dependencyResult.setSucceeded(succeeded.toArray(new LocalDateTime[succeeded.size()]));
+            dependencyResult.setFailed(failed.toArray(new LocalDateTime[0]));
+            dependencyResult.setSucceeded(succeeded.toArray(new LocalDateTime[0]));
           }
           dependencyResults[i][j] = dependencyResult;
         }
@@ -536,7 +536,7 @@ public class TableDAO implements TableDependencyService, TableService {
     TablePartitionResultSet tablePartitionResultSet = new TablePartitionResultSet();
     tablePartitionResultSet.setProcessed(processed.toArray(new TablePartitionResult[0]));
     tablePartitionResultSet.setResolved(resolved.toArray(new TablePartitionResult[0]));
-    tablePartitionResultSet.setFailed(failed.toArray(new TablePartitionResult[failed.size()]));
+    tablePartitionResultSet.setFailed(failed.toArray(new TablePartitionResult[0]));
 
     tablePartitionResultSet.setProcessedTs(processedTs.toArray(new LocalDateTime[0]));
     tablePartitionResultSet.setResolvedTs(resolvedTs.toArray(new LocalDateTime[0]));
@@ -615,25 +615,25 @@ public class TableDAO implements TableDependencyService, TableService {
   }
 
   private static class TablePartitionSpec {
-    private Long dependencyId;
-    private Long targetId;
-    private Long tableId;
-    private PartitionUnit partitionUnit = null;
-    private Integer partitionSize = null;
-    private PartitionTransformType transformType = null;
-    private PartitionUnit transformUnit = null;
-    private Integer transformSize = null;
-    private Long connectionId = null;
+    private final Long dependencyId;
+    private final Long targetId;
+    private final Long tableId;
+    private PartitionUnit partitionUnit;
+    private Integer partitionSize;
+    private PartitionTransformType transformType;
+    private PartitionUnit transformUnit;
+    private Integer transformSize;
+    private Long connectionId;
 
     public TablePartitionSpec(
-        Long dependencyId,
-        Long targetId,
-        Long tableId,
-        PartitionUnit partitionUnit,
-        Integer partitionSize,
-        PartitionTransformType transformType,
-        PartitionUnit transformUnit,
-        Integer transformSize,
+            Long dependencyId,
+            Long targetId,
+            Long tableId,
+            PartitionUnit partitionUnit,
+            Integer partitionSize,
+            PartitionTransformType transformType,
+            PartitionUnit transformUnit,
+            Integer transformSize,
         Long connectionId) {
       this.dependencyId = dependencyId;
       this.targetId = targetId;

@@ -17,7 +17,7 @@ object LoadDims extends App {
     .config("driver-memory", "6g")
     .getOrCreate()
 
-  def simpleHashLoad(ident: SourceIdent, colName: String): (TaskInput => TaskOutput) = {
+  def simpleHashLoad(ident: SourceIdent, colName: String): TaskInput => TaskOutput = {
     def udf(in: TaskInput): TaskOutput = {
       in.loadedInputFrames.get(ident) match {
         case Some(df) => TaskOutput(df.withColumn(colName, hash(df.columns.map(col): _*)))
@@ -50,8 +50,8 @@ object LoadDims extends App {
   val employeeResult = employeeWrapper.get.runTasksAndWait()
   val storeResult = storeWrapper.get.runTasksAndWait()
 
-  logger.info(s"Product Dimension processed: ${prodResult}")
-  logger.info(s"Employee Dimension processed: ${employeeResult}")
-  logger.info(s"Store Dimension processed: ${storeResult}")
+  logger.info(s"Product Dimension processed: $prodResult")
+  logger.info(s"Employee Dimension processed: $employeeResult")
+  logger.info(s"Store Dimension processed: $storeResult")
 
 }

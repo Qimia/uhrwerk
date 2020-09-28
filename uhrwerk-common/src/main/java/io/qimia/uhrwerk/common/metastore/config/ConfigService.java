@@ -4,8 +4,9 @@ import io.qimia.uhrwerk.common.model.Connection;
 import io.qimia.uhrwerk.common.model.Table;
 
 public interface ConfigService {
-  public Connection save(Connection connection);
-  public Table tableConfig(String area, String vertical, String name, String version);
+  Connection save(Connection connection);
 
-  public Table tableConfig(Table table);
+  Table tableConfig(String area, String vertical, String name, String version);
+
+  Table tableConfig(Table table);
 }

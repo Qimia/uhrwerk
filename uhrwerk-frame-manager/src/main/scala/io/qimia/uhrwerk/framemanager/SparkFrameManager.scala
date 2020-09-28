@@ -174,7 +174,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             )
         }
       } catch {
-        case exception: Exception => {
+        case exception: Exception =>
           throw new Exception(
             s"Something went wrong with reading of the DataFrame for dependency: $dependencyPath" +
               "\nThe DataFrame was probably saved in previous steps with empty partitions only." +
@@ -186,14 +186,13 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
               "\nExcept when all saved partitions were empty, then the table doesn't yet exist on the datalake (database).",
             exception
           )
-        }
       }
     }
 
     val convertedColumns = if (isJDBC) {
       df
     } else {
-      convertTimeColumnsToStrings(df, dependencyResult.succeeded.head.getPartitionUnit)
+      convertTimeColumnsToStrings(df)
     }
     val filtered = convertedColumns.filter(filter)
 
@@ -359,7 +358,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           (path, jdbcDF)
           // for fs remove all time columns (year/month/day/hour/minute)
         } else {
-          val datePath = createDatePath(partitionTS.head, table.getPartitionUnit)
+          val datePath = createDatePath(partitionTS.head)
 
           (concatenatePaths(path, datePath), frame.drop(timeColumns: _*))
         }

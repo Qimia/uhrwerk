@@ -5,5 +5,5 @@ public enum ConnectionType {
   JDBC,
   S3,
   GC,
-  ABS;
+  ABS
 }

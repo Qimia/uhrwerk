@@ -2,8 +2,6 @@ package io.qimia.uhrwerk.config.representation;
 
 import io.qimia.uhrwerk.config.ConfigException;
 
-import java.lang.reflect.Field;
-
 public class Connection{
     private String name;
     private JDBC jdbc;

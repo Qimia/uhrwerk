@@ -9,15 +9,14 @@ import io.qimia.uhrwerk.common.model.Partition;
 import io.qimia.uhrwerk.common.model.PartitionUnit;
 import io.qimia.uhrwerk.common.model.Table;
 import io.qimia.uhrwerk.config.ConnectionBuilder;
-import io.qimia.uhrwerk.config.PartitionBuilder;
-import io.qimia.uhrwerk.config.SourceBuilder;
 import io.qimia.uhrwerk.config.TableBuilder;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.stream.Collector;
 
 import static org.junit.jupiter.api.Assertions.*;
 

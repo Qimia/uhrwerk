@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 import io.qimia.uhrwerk.engine.dag.{DagTaskBuilder, DagTaskDispatcher}
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 object LoaderStores extends App {
 
@@ -23,7 +23,7 @@ object LoaderStores extends App {
 
   val uhrwerkEnvironment = Environment.build("yelp_test/uhrwerk.yml",frameManager)
   uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTableFile("LoadTableStoresTest.yml", loaderBFunc, true).get
+  val wrapper = uhrwerkEnvironment.addTableFile("LoadTableStoresTest.yml", loaderBFunc, overwrite = true).get
 
 
   val dagTaskBuilder = new DagTaskBuilder(uhrwerkEnvironment)
