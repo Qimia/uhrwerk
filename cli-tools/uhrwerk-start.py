@@ -111,13 +111,13 @@ def render_template(parameters, load_mode):
         uhrwerk_config, conn_configs, table_configs = get_confdir_locations(
             parameters.config_directory, parameters.dag_mode, parameters.table_id
         )
-        conn_str = "--cons {}".format(" ".join(conn_configs))
-        table_str = "--tables {}".format(" ".join(table_configs))
+        conn_str = " ".join(map("--cons {}".format, conn_configs))
+        table_str = " ".join(map("--tables {}".format, table_configs))
         settings["user_configuration_options"] = conn_str + "\n" + table_str
         settings["global_conf_location"] = uhrwerk_config
     elif load_mode == "loadtable":
-        conn_str = "--cons {}".format(" ".join(parameters.conn_configs))
-        table_str = "--tables {}".format(" ".join(parameters.table_configs))
+        conn_str = " ".join(map("--cons {}".format, parameters.conn_configs))
+        table_str = " ".join(map("--tables {}".format, parameters.table_configs))
         settings["user_configuration_options"] = conn_str + "\n" + table_str
         settings["global_conf_location"] = parameters.uhrwerk_config
     elif load_mode == "loaddag":
