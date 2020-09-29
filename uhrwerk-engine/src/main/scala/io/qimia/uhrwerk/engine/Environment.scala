@@ -210,10 +210,10 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
    * @param dagConfig full dag configuration object
    */
   def setupDagConvention(dagConfig: Dag, overwrite: Boolean = false){
-    dagConfig.getConnections.foreach(conn => store.connectionService.save(conn, true))
+    dagConfig.getConnections.foreach(conn => store.connectionService.save(conn, overwrite))
     dagConfig.getTables.foreach(t => {
       val ident = TableIdent(t.getArea, t.getVertical, t.getName, t.getVersion)
-      val storeRes = store.tableService.save(t, true)
+      val storeRes = store.tableService.save(t, overwrite)
       if (!storeRes.isSuccess) {
         logger.error(storeRes.getMessage)
       } else {
