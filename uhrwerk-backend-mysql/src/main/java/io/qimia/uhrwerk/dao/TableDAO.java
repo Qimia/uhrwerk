@@ -8,6 +8,7 @@ import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResult;
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResultSet;
 import io.qimia.uhrwerk.common.model.Connection;
 import io.qimia.uhrwerk.common.model.*;
+import org.apache.log4j.Logger;
 
 import java.sql.*;
 import java.time.Duration;
@@ -24,10 +25,11 @@ public class TableDAO implements TableDependencyService, TableService {
   private final TargetDAO targetDAO;
   private final DependencyDAO dependencyDAO;
   private final SourceDAO sourceDAO;
+  private final Logger logger;
 
   private static final String SELECT_BY_ID =
-          "SELECT id, area, vertical, name, partition_unit, partition_size, parallelism, max_bulk_size, version, partitioned\n"
-          + "FROM TABLE_\n"
+          "SELECT id, area, vertical, name, partition_unit, partition_size, parallelism, max_bulk_size, version, partitioned,\n"
+          + "class_name FROM TABLE_\n"
           + "WHERE id = ?";
 
   public TableDAO(java.sql.Connection db) {
@@ -37,11 +39,12 @@ public class TableDAO implements TableDependencyService, TableService {
     this.targetDAO = new TargetDAO(db);
     this.dependencyDAO = new DependencyDAO(db);
     this.sourceDAO = new SourceDAO(db);
+    this.logger = Logger.getLogger(this.getClass());
   }
 
   private static final String INSERT =
-          "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, partitioned) "
-                  + "VALUES(?,?,?,?,?,?,?,?,?,?)";
+          "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, partitioned, "
+                  + "class_name) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
 
   private static final String DELETE_BY_ID = "DELETE FROM TABLE_ WHERE id = ?";
 
@@ -153,6 +156,7 @@ public class TableDAO implements TableDependencyService, TableService {
     insert.setInt(8, table.getParallelism());
     insert.setInt(9, table.getMaxBulkSize());
     insert.setBoolean(10, table.isPartitioned());
+    insert.setString(11, table.getClassName());
     insert.executeUpdate();
   }
 
@@ -187,6 +191,7 @@ public class TableDAO implements TableDependencyService, TableService {
       res.setMaxBulkSize(record.getInt("max_bulk_size"));
       res.setVersion(record.getString("version"));
       res.setPartitioned(record.getBoolean("partitioned"));
+      res.setClassName(record.getString("class_name"));
 
       return res;
     }
@@ -207,7 +212,7 @@ public class TableDAO implements TableDependencyService, TableService {
     var resultSet = new TablePartitionResultSet();
     // FIXME checks only the first target of the table (see FIXME normal processingPartitions)
     Partition processedPartition =
-        partitionDAO.getLatestUnpartitioned(table.getTargets()[0].getId());
+            partitionDAO.getLatestPartition(table.getTargets()[0].getId());
     if (processedPartition != null) {
       // If partition found -> check if it has been processed in the last 1 minute
 
@@ -255,7 +260,7 @@ public class TableDAO implements TableDependencyService, TableService {
       dependencyResult.setConnection(connectionsMap.get(spec.connectionId));
       dependencyResult.setDependency(dependenciesMap.get(spec.dependencyId));
 
-      Partition depPartition = partitionDAO.getLatestUnpartitioned(spec.targetId);
+      Partition depPartition = partitionDAO.getLatestPartition(spec.targetId);
       if (depPartition == null) {
         dependencyResult.setSuccess(false);
         dependencyResult.setFailed(new LocalDateTime[] {requestTime});
@@ -326,14 +331,14 @@ public class TableDAO implements TableDependencyService, TableService {
 
     TablePartitionResultSet tablePartitionResultSet = new TablePartitionResultSet();
     tablePartitionResultSet.setProcessed(
-        processed.toArray(new TablePartitionResult[processed.size()]));
+            processed.toArray(new TablePartitionResult[0]));
     tablePartitionResultSet.setResolved(
-        resolved.toArray(new TablePartitionResult[resolved.size()]));
+            resolved.toArray(new TablePartitionResult[0]));
     tablePartitionResultSet.setFailed(new TablePartitionResult[0]);
 
     tablePartitionResultSet.setProcessedTs(
-        processedTs.toArray(new LocalDateTime[processedTs.size()]));
-    tablePartitionResultSet.setResolvedTs(resolvedTs.toArray(new LocalDateTime[resolvedTs.size()]));
+            processedTs.toArray(new LocalDateTime[0]));
+    tablePartitionResultSet.setResolvedTs(resolvedTs.toArray(new LocalDateTime[0]));
     tablePartitionResultSet.setFailedTs(new LocalDateTime[0]);
     return tablePartitionResultSet;
   }
@@ -379,7 +384,7 @@ public class TableDAO implements TableDependencyService, TableService {
 
     Dependency[] tableDependencies = table.getDependencies();
     if (tablePartitionSpecs.size() != tableDependencies.length) {
-      System.err.println("Could not find all specifications for all dependencies in metastore");
+      logger.error("Could not find all specifications for all dependencies in metastore");
       return buildResultSet(new LocalDateTime[0], new DependencyResult[0][0], new TreeSet<>());
     }
     Map<Long, Dependency> dependenciesMap = new HashMap<>();
@@ -394,7 +399,7 @@ public class TableDAO implements TableDependencyService, TableService {
       if (spec.transformType.equals(PartitionTransformType.NONE)) {
         // If not partitioned then check single
 
-        Partition depPartition = partitionDAO.getLatestUnpartitioned(spec.getTargetId());
+        Partition depPartition = partitionDAO.getLatestPartition(spec.getTargetId());
         if (depPartition == null) {
           // If there is nothing, set all to unsuccessful
           DependencyResult dependencyResult = new DependencyResult();
@@ -466,8 +471,8 @@ public class TableDAO implements TableDependencyService, TableService {
             TreeSet<LocalDateTime> failed = new TreeSet<>(Arrays.asList(partitionTs[i]));
             failed.removeAll(succeeded);
             dependencyResult.setSuccess(false);
-            dependencyResult.setFailed(failed.toArray(new LocalDateTime[failed.size()]));
-            dependencyResult.setSucceeded(succeeded.toArray(new LocalDateTime[succeeded.size()]));
+            dependencyResult.setFailed(failed.toArray(new LocalDateTime[0]));
+            dependencyResult.setSucceeded(succeeded.toArray(new LocalDateTime[0]));
           }
           dependencyResults[i][j] = dependencyResult;
         }
@@ -531,7 +536,7 @@ public class TableDAO implements TableDependencyService, TableService {
     TablePartitionResultSet tablePartitionResultSet = new TablePartitionResultSet();
     tablePartitionResultSet.setProcessed(processed.toArray(new TablePartitionResult[0]));
     tablePartitionResultSet.setResolved(resolved.toArray(new TablePartitionResult[0]));
-    tablePartitionResultSet.setFailed(failed.toArray(new TablePartitionResult[failed.size()]));
+    tablePartitionResultSet.setFailed(failed.toArray(new TablePartitionResult[0]));
 
     tablePartitionResultSet.setProcessedTs(processedTs.toArray(new LocalDateTime[0]));
     tablePartitionResultSet.setResolvedTs(resolvedTs.toArray(new LocalDateTime[0]));
@@ -610,25 +615,25 @@ public class TableDAO implements TableDependencyService, TableService {
   }
 
   private static class TablePartitionSpec {
-    private Long dependencyId;
-    private Long targetId;
-    private Long tableId;
-    private PartitionUnit partitionUnit = null;
-    private Integer partitionSize = null;
-    private PartitionTransformType transformType = null;
-    private PartitionUnit transformUnit = null;
-    private Integer transformSize = null;
-    private Long connectionId = null;
+    private final Long dependencyId;
+    private final Long targetId;
+    private final Long tableId;
+    private PartitionUnit partitionUnit;
+    private Integer partitionSize;
+    private PartitionTransformType transformType;
+    private PartitionUnit transformUnit;
+    private Integer transformSize;
+    private Long connectionId;
 
     public TablePartitionSpec(
-        Long dependencyId,
-        Long targetId,
-        Long tableId,
-        PartitionUnit partitionUnit,
-        Integer partitionSize,
-        PartitionTransformType transformType,
-        PartitionUnit transformUnit,
-        Integer transformSize,
+            Long dependencyId,
+            Long targetId,
+            Long tableId,
+            PartitionUnit partitionUnit,
+            Integer partitionSize,
+            PartitionTransformType transformType,
+            PartitionUnit transformUnit,
+            Integer transformSize,
         Long connectionId) {
       this.dependencyId = dependencyId;
       this.targetId = targetId;

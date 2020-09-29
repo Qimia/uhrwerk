@@ -5,19 +5,21 @@ import java.time.{Duration, LocalDateTime}
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.{DependentLoaderSource, Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import org.apache.log4j.{Level, Logger}
+import org.apache.log4j.Logger
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object LoaderJ extends App {
   val sparkSess = SparkSession
     .builder()
-    .appName("loaderJ")
+    .appName("LoaderJ")
     .master("local[*]")
     .config("driver-memory", "2g")
+    .config("spark.eventLog.enabled", "true")
+    .config("spark.eventLog.dir", "./docker/spark_logs")
     .getOrCreate()
 
-  Logger.getLogger("org").setLevel(Level.WARN)
+  private val logger: Logger = Logger.getLogger(this.getClass)
 
   def transformationFunction(in: TaskInput): TaskOutput = {
     val user: DataFrame = in.loadedInputFrames.find(t => t._1.asInstanceOf[TableIdent].name == "table_g").get._2
@@ -37,7 +39,7 @@ object LoaderJ extends App {
 
     val review = reviewLoader.getFrame()
 
-    println("Count: " + review.count())
+    logger.info("Count: " + review.count())
 
     val dataFrameWriterOptions = Option(Array(Map("partitionBy" -> "user_id,business_id")))
 
@@ -46,13 +48,13 @@ object LoaderJ extends App {
 
   val frameManager = new SparkFrameManager(sparkSess)
 
-  val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTableFile("loader-J.yml", transformationFunction)
+  val uhrwerkEnvironment = Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_j/table_j_1.0.yml", transformationFunction)
 
   val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0))
   val now = LocalDateTime.now()
   val results = wrapper.get.runTasksAndWait(runTimes)
-  println(results)
-  println("Took " + Duration.between(now, LocalDateTime.now()).getSeconds + " s.")
+  logger.info(results)
+  logger.info("Took " + Duration.between(now, LocalDateTime.now()).getSeconds + " s.")
 }

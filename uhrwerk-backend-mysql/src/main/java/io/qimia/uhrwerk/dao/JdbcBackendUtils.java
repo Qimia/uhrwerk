@@ -2,7 +2,6 @@ package io.qimia.uhrwerk.dao;
 
 import io.qimia.uhrwerk.common.model.PartitionTransformType;
 import io.qimia.uhrwerk.common.model.PartitionUnit;
-import org.apache.commons.collections.bidimap.DualHashBidiMap;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

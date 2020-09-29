@@ -2,6 +2,7 @@ package io.qimia.uhrwerk.dao;
 
 import io.qimia.uhrwerk.common.model.PartitionTransformType;
 import io.qimia.uhrwerk.common.model.PartitionUnit;
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -12,9 +13,11 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class JdbcBackendUtilsTests {
+  private final Logger logger = Logger.getLogger(this.getClass());
+
   @Test
   void checkdependencyPartitions() {
-    LocalDateTime[] partitions = new LocalDateTime[] {LocalDateTime.of(2020, 8, 18, 12, 0)};
+    LocalDateTime[] partitions = new LocalDateTime[]{LocalDateTime.of(2020, 8, 18, 12, 0)};
     // FIXME: Doesn't pass yet
     //    LocalDateTime[][] identityPartitions = JdbcBackendUtils.dependencyPartitions(
     //            partitions,
@@ -55,8 +58,8 @@ public class JdbcBackendUtilsTests {
             3,
             null);
     for (int i = 0; i < partitions.length; i++) {
-      System.out.println("Table-partition: " + partitions[i]);
-      System.out.println("Dependency-partition: " + Arrays.toString(aggPartitions[i]));
+      logger.info("Table-partition: " + partitions[i]);
+      logger.info("Dependency-partition: " + Arrays.toString(aggPartitions[i]));
     }
 
     LocalDateTime[][] windowPartitions =
@@ -70,8 +73,8 @@ public class JdbcBackendUtilsTests {
             4,
             null);
     for (int i = 0; i < partitions.length; i++) {
-      System.out.println("Table-partition: " + partitions[i]);
-      System.out.println("Dependency-partition: " + Arrays.toString(windowPartitions[i]));
+      logger.info("Table-partition: " + partitions[i]);
+      logger.info("Dependency-partition: " + Arrays.toString(windowPartitions[i]));
     }
   }
 
@@ -82,7 +85,7 @@ public class JdbcBackendUtilsTests {
     Duration duration = Duration.of(30, ChronoUnit.MINUTES);
     LocalDateTime[] partitionTs = JdbcBackendUtils.getPartitionTs(start, end, duration);
     for (int i = 0; i < partitionTs.length; i++) {
-      System.out.println(partitionTs[i]);
+      logger.info(partitionTs[i]);
     }
   }
 }

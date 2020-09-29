@@ -7,10 +7,12 @@ import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
 import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.common.tools.{JDBCTools, TimeTools}
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils._
+import org.apache.log4j.Logger
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.{col, udf}
 
 class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
+  private val logger: Logger = Logger.getLogger(this.getClass)
 
   /**
    * Loads a source dataframe. Either one batch or the full path.
@@ -123,28 +125,19 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         if (isJDBC) {
           col(timeColumnJDBC) === TimeTools.convertTSToUTCString(p.getPartitionTs)
         } else {
-          val (yearLowerBound, monthLowerBound, dayLowerBound, hourLowerBound, minuteLowerBound) =
-            getTimeValues(p.getPartitionTs)
-          val (yearUpperBound, monthUpperBound, dayUpperBound, hourUpperBound, minuteUpperBound) =
-            if (p.getPartitionUnit != null) {
+          val minuteLowerBound = getTimeValues(p.getPartitionTs)._5
+          if (p.isPartitioned) {
+            val minuteUpperBound =
               getTimeValues(
                 TimeTools.addPartitionSizeToTimestamp(p.getPartitionTs, p.getPartitionSize, p.getPartitionUnit)
-              )
-            } else {
-              ("", "", "", "", "")
-            }
-          p.getPartitionUnit match {
-            case null => col("minute") === minuteLowerBound // unpartitioned
-            //            case PartitionUnit.HOURS => col("hour") >= hourLowerBound && col("hour") < hourUpperBound
-            //            case PartitionUnit.DAYS => col("day") >= dayLowerBound && col("day") < dayUpperBound
-            //            case PartitionUnit.WEEKS => col("day") >= dayLowerBound && col("day") < dayUpperBound
-            case _ => col("minute") >= minuteLowerBound && col("minute") < minuteUpperBound
+              )._5
+            col("minute") >= minuteLowerBound && col("minute") < minuteUpperBound
+          } else {
+            col("minute") === minuteLowerBound
           }
         }
       )
       .reduce((a, b) => a || b)
-
-    // todo speedup when full year/month/day..
 
     val dfReader = sparkSession.read
       .format(dependencyResult.dependency.getFormat)
@@ -181,7 +174,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             )
         }
       } catch {
-        case exception: Exception => {
+        case exception: Exception =>
           throw new Exception(
             s"Something went wrong with reading of the DataFrame for dependency: $dependencyPath" +
               "\nThe DataFrame was probably saved in previous steps with empty partitions only." +
@@ -193,14 +186,13 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
               "\nExcept when all saved partitions were empty, then the table doesn't yet exist on the datalake (database).",
             exception
           )
-        }
       }
     }
 
     val convertedColumns = if (isJDBC) {
       df
     } else {
-      convertTimeColumnsToStrings(df, dependencyResult.succeeded.head.getPartitionUnit)
+      convertTimeColumnsToStrings(df)
     }
     val filtered = convertedColumns.filter(filter)
 
@@ -285,11 +277,6 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             .option("partitionColumn", source.getParallelLoadColumn)
             .option("lowerBound", minId)
             .option("upperBound", maxId)
-        } else if (!isStringEmpty(source.getSelectColumn) && startTS.isDefined && endTSExcl.isDefined) {
-          dfReaderWithQuery
-            .option("partitionColumn", source.getSelectColumn)
-            .option("lowerBound", TimeTools.convertTSToUTCString(startTS.get))
-            .option("upperBound", TimeTools.convertTSToUTCString(endTSExcl.get))
         } else {
           dfReaderWithQuery
         }
@@ -298,7 +285,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           .option("dbtable", source.getPath) // area-vertical.tableName-version
       }
 
-    println(s"Loading source ${source.getPath}")
+    logger.info(s"Loading source ${source.getPath}")
 
     val df: DataFrame = dfReaderWithQuery
       .load()
@@ -371,7 +358,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           (path, jdbcDF)
           // for fs remove all time columns (year/month/day/hour/minute)
         } else {
-          val datePath = createDatePath(partitionTS.head, table.getPartitionUnit)
+          val datePath = createDatePath(partitionTS.head)
 
           (concatenatePaths(path, datePath), frame.drop(timeColumns: _*))
         }
@@ -454,7 +441,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           writerWithOptions
         }
 
-      println(s"Saving DF to $fullPath")
+      logger.info(s"Saving DF to $fullPath")
       if (isJDBC) {
         val jdbcWriter = writerWithPartitioning
           .option("url", target.getConnection.getJdbcUrl)
@@ -467,8 +454,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             .save()
         } catch {
           case e: Exception =>
-            println(e.getLocalizedMessage)
-            println("Trying to create the database")
+            logger.warn(e.getLocalizedMessage)
+            logger.warn("Trying to create the database")
             JDBCTools.createJDBCDatabase(
               target.getConnection,
               fullPath.split("\\.")(0)

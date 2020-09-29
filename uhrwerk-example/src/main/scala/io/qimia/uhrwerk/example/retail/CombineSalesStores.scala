@@ -3,13 +3,12 @@ package io.qimia.uhrwerk.example.retail
 import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.engine.Environment.TableIdent
-import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
-import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import org.apache.spark.sql.functions.monotonically_increasing_id
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import io.qimia.uhrwerk.engine.dag.{DagTaskBuilder, DagTaskDispatcher}
+import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.example.retail.LoaderSales.loaderAFunc
 import io.qimia.uhrwerk.example.retail.LoaderStores.loaderBFunc
+import io.qimia.uhrwerk.framemanager.SparkFrameManager
+import org.apache.spark.sql.SparkSession
 
 object CombineSalesStores extends App {
 
@@ -31,14 +30,14 @@ object CombineSalesStores extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment =
-    Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+    Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
   val wrapperStore =
-    uhrwerkEnvironment.addTableFile("LoadTableStoresTest.yml", loaderBFunc, true).get
+    uhrwerkEnvironment.addTableFile("LoadTableStoresTest.yml", loaderBFunc, overwrite = true).get
   val wrapperSales =
-    uhrwerkEnvironment.addTableFile("LoadTableSalesTest.yml", loaderAFunc, true).get
+    uhrwerkEnvironment.addTableFile("LoadTableSalesTest.yml", loaderAFunc, overwrite = true).get
   val wrapperCombine =
-    uhrwerkEnvironment.addTableFile("combineSalesStores.yml", CombinerCFunc, true).get
+    uhrwerkEnvironment.addTableFile("combineSalesStores.yml", CombinerCFunc, overwrite = true).get
 
   val dagTaskBuilder = new DagTaskBuilder(uhrwerkEnvironment)
   val taskList = dagTaskBuilder.buildTaskListFromTable(

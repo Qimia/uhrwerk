@@ -12,6 +12,7 @@ public class Table {
     String vertical;
     String name;
     String version;
+    String className;
     int parallelism;
     int maxBulkSize;
     PartitionUnit partitionUnit;
@@ -70,6 +71,14 @@ public class Table {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
     }
 
     public int getParallelism() {
@@ -192,6 +201,9 @@ public class Table {
                 + '\''
                 + ", vertical='"
                 + vertical
+                + '\''
+                + ", className='"
+                + className
                 + '\''
                 + ", name='"
                 + name

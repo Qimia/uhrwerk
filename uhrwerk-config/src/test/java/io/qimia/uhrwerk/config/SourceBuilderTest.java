@@ -1,8 +1,12 @@
 package io.qimia.uhrwerk.config;
 
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class SourceBuilderTest {
+  private final Logger logger = Logger.getLogger(this.getClass());
 
   @Test
   void buildTest() {
@@ -27,7 +31,11 @@ class SourceBuilderTest {
             .column("created_ts")
             .done()
             .build();
-    System.out.println(source);
+    logger.info(source);
+
+    assertEquals(8, source.getParallel_load().getNum());
+    assertEquals("connection", source.getConnection_name());
+    assertEquals("created_ts", source.getSelect().getColumn());
   }
 
   @Test
@@ -36,7 +44,7 @@ class SourceBuilderTest {
     var partition = new PartitionBuilder<>().unit("hours").size(1).build();
 
     var parallelLoad =
-        new ParallelLoadBuilder().query("Select * from TableA").column("id").num(8).build();
+        new ParallelLoadBuilder().query("Select * from TableA").column("id").num(6).build();
 
     var select = new SelectBuilder().query("SELECT * FROM TableA").column("created_ts").build();
 
@@ -50,7 +58,12 @@ class SourceBuilderTest {
             .parallelLoad(parallelLoad)
             .select(select)
             .build();
-    System.out.println(source);
+    logger.info(source);
+
+    assertEquals(6, source.getParallel_load().getNum());
+    assertEquals("connection", source.getConnection_name());
+    assertEquals("created_ts", source.getSelect().getColumn());
+
   }
 
   @Test
@@ -58,7 +71,7 @@ class SourceBuilderTest {
 
     var partition = new PartitionBuilder<>().unit("hours").size(1);
 
-    var parallelLoad = new ParallelLoadBuilder().query("Select * from TableA").column("id").num(8);
+    var parallelLoad = new ParallelLoadBuilder().query("Select * from TableA").column("id").num(5);
 
     var select = new SelectBuilder().query("SELECT * FROM TableA").column("created_ts");
 
@@ -72,6 +85,11 @@ class SourceBuilderTest {
             .parallelLoad(parallelLoad)
             .select(select)
             .build();
-    System.out.println(source);
+    logger.info(source);
+
+    assertEquals(5, source.getParallel_load().getNum());
+    assertEquals("connection", source.getConnection_name());
+    assertEquals("created_ts", source.getSelect().getColumn());
+
   }
 }

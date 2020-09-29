@@ -5,19 +5,17 @@ import java.time.LocalDateTime
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils
-import org.apache.log4j.{Level, Logger}
+import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{max, min}
 
 object WindowF extends App {
+  private val logger: Logger = Logger.getLogger(this.getClass)
+
   val sparkSess = SparkSession.builder()
     .appName("WindowF")
     .master("local")
     .getOrCreate()
-
-    Logger.getLogger("org").setLevel(Level.WARN)
-    Logger.getLogger("akka").setLevel(Level.ERROR)
-
 
   def loaderAFunc(in: TaskInput): TaskOutput = {
     val aDF = in.loadedInputFrames.values.head
@@ -29,9 +27,9 @@ object WindowF extends App {
 
   val frameManager = new SparkFrameManager(sparkSess)
 
-  val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTableFile("window-F.yml", loaderAFunc, true)
+  val uhrwerkEnvironment = Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_f/table_f_1.0.yml", loaderAFunc, overwrite = true)
 
   val runTimes = Array(
     LocalDateTime.of(2012, 5, 3, 0, 0),
@@ -40,7 +38,7 @@ object WindowF extends App {
     LocalDateTime.of(2012, 5, 6, 0, 0)
   )
   if (wrapper.isDefined) {
-    val results = wrapper.get.runTasksAndWait(runTimes, false)
-    println(results)
+    val results = wrapper.get.runTasksAndWait(runTimes, overwrite = false)
+    logger.info(results)
   }
 }

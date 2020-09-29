@@ -6,11 +6,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public interface ConnectionService {
-  public ConnectionResult save(Connection connection, boolean overwrite);
+  ConnectionResult save(Connection connection, boolean overwrite);
 
-  public Connection getByName(String name) throws SQLException;
+  Connection getByName(String name) throws SQLException;
 
-    public Connection getById(Long id) throws SQLException;
+  Connection getById(Long id) throws SQLException;
 
-  public Connection[] getConnections(PreparedStatement select) throws SQLException;
+  Connection[] getConnections(PreparedStatement select) throws SQLException;
 }

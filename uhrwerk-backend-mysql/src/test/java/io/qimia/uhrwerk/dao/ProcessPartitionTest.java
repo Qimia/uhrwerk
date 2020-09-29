@@ -2,7 +2,6 @@ package io.qimia.uhrwerk.dao;
 
 import io.qimia.uhrwerk.ConnectionHelper;
 import io.qimia.uhrwerk.common.model.*;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.sql.PreparedStatement;
@@ -13,13 +12,13 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ProcessPartitionTest {
 
   java.sql.Connection db;
   final String insertPartitionQuery =
       "INSERT INTO PARTITION_(id, target_id, partition_ts, partitioned)\n" + "VALUES(?,?,?,?)";
-  ;
 
   Connection connFS;
   Table tableDepA;
@@ -85,10 +84,10 @@ public class ProcessPartitionTest {
     tableDepA.setKey();
     Statement b = db.createStatement();
     b.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableDepA.getId()
-            + ", 'area1', 'vertical1', 'name1', '1.0', 'HOURS', 1, 1, 1)");
+            + ", 'area1', 'vertical1', 'name1', '1.0', 'HOURS', 1, 1, 1, 'area1.vertical1.name1.1.0')");
     b.close();
 
     depATarget = new Target();
@@ -170,10 +169,10 @@ public class ProcessPartitionTest {
 
     Statement tableStm = db.createStatement();
     tableStm.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableOut.getId()
-            + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 1, 1, 1)");
+            + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 1, 1, 1, 'area1.vertical1.tableout.1.0')");
     tableStm.close();
 
     PreparedStatement depStm =
@@ -276,10 +275,10 @@ public class ProcessPartitionTest {
 
     Statement tableStm = db.createStatement();
     tableStm.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableOut.getId()
-            + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 1, 1, 1)");
+            + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 1, 1, 1, 'area1.vertical1.tableout.1.0')");
     tableStm.close();
 
     PreparedStatement depStm =
@@ -388,10 +387,10 @@ public class ProcessPartitionTest {
 
     Statement tableStm = db.createStatement();
     tableStm.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, partition_unit, partition_size, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableOut.getId()
-            + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 2, 1, 1)");
+            + ", 'area1', 'vertical1', 'tableout', '1.0', 'HOURS', 2, 1, 1, 'area1.vertical1.tableout.1.0')");
     tableStm.close();
 
     PreparedStatement depStm =
@@ -490,10 +489,10 @@ public class ProcessPartitionTest {
     tableDepB.setKey();
     Statement b = db.createStatement();
     b.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableDepB.getId()
-            + ", 'area1', 'vertical1', 'name1', '1.0', 1, 1)");
+            + ", 'area1', 'vertical1', 'name1', '1.0', 1, 1, 'area1.vertical1.name1.1.0')");
     b.close();
 
     depBTarget = new Target();
@@ -537,10 +536,10 @@ public class ProcessPartitionTest {
 
     Statement tableStm = db.createStatement();
     tableStm.executeUpdate(
-        "INSERT INTO TABLE_(id, area, vertical, name, version, parallelism, max_bulk_size)"
+        "INSERT INTO TABLE_(id, area, vertical, name, version, parallelism, max_bulk_size, class_name)"
             + "VALUES ("
             + tableOut.getId()
-            + ", 'area1', 'vertical1', 'tableout', '1.0', 1, 1)");
+            + ", 'area1', 'vertical1', 'tableout', '1.0', 1, 1, 'area1.vertical1.tableout.1.0')");
     tableStm.close();
 
     Statement tarStm = db.createStatement();
@@ -559,8 +558,8 @@ public class ProcessPartitionTest {
     var dao = new TableDAO(db);
     var requestTime1 = LocalDateTime.now();
     var resultSet = dao.processingPartitions(tableOut, new LocalDateTime[]{requestTime1});
-    assertEquals (1, resultSet.getResolved().length);
-    assertEquals (null, resultSet.getFailed());
+    assertEquals(1, resultSet.getResolved().length);
+    assertNull(resultSet.getFailed());
 
     // Now add a partition for tableOut
     var partitionlessTs = LocalDateTime.now();
@@ -580,15 +579,15 @@ public class ProcessPartitionTest {
     // Now we request to run again within the 60 seconds
     LocalDateTime withinTime = partitionlessTs.plus(Duration.ofSeconds(10));
     resultSet = dao.processingPartitions(tableOut, new LocalDateTime[]{withinTime});
-    assertEquals (null, resultSet.getFailed());
-    assertEquals (null, resultSet.getResolved());
-    assertEquals (1, resultSet.getProcessed().length);
+    assertNull(resultSet.getFailed());
+    assertNull(resultSet.getResolved());
+    assertEquals(1, resultSet.getProcessed().length);
 
     // And if we run outside of the 60 seconds
     LocalDateTime outsideTime = partitionlessTs.plus(Duration.ofMinutes(5));
     resultSet = dao.processingPartitions(tableOut, new LocalDateTime[]{outsideTime});
-    assertEquals (null, resultSet.getFailed());
-    assertEquals (null, resultSet.getProcessed());
-    assertEquals (1, resultSet.getResolved().length);
+    assertNull(resultSet.getFailed());
+    assertNull(resultSet.getProcessed());
+    assertEquals(1, resultSet.getResolved().length);
   }
 }

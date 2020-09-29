@@ -1,4 +1,4 @@
-version: '3.1'
+version: "3.2"
 
 services:
   adminer-uhrwerk-metastore:
@@ -19,7 +19,7 @@ services:
     volumes:
       - ./mysql_datadir:/var/lib/mysql
     environment:
-      MYSQL_ROOT_PASSWORD: "mysql"
+      MYSQL_ROOT_PASSWORD: "61ePGqq20u9TZjbNhf0"
       MYSQL_DATABASE: "UHRWERK_METASTORE"
       MYSQL_USER: "UHRWERK_USER"
       MYSQL_PASSWORD: "Xq92vFqEKF7TB8H9"

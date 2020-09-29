@@ -1,10 +1,7 @@
 package io.qimia.uhrwerk.config;
 
 
-
-
 import io.qimia.uhrwerk.config.representation.*;
-
 
 import java.util.ArrayList;
 
@@ -19,22 +16,26 @@ public class TableBuilder {
     private String vertical;
     private String table;
     private String version;
+    private String className;
     private int parallelism;
     private int maxBulkSize;
     private Partition partition;
     private Source[] sources;
     private Target[] targets;
     private Dependency[] dependencies;
-    private ArrayList<Source> sourcesList = new ArrayList<Source>();
-    private ArrayList<Dependency> dependenciesList = new ArrayList<Dependency>();
-    private ArrayList<Target> targetsList = new ArrayList<Target>();
+    private final ArrayList<Source> sourcesList = new ArrayList<>();
+    private final ArrayList<Dependency> dependenciesList = new ArrayList<>();
+    private final ArrayList<Target> targetsList = new ArrayList<>();
 
 
-    public TableBuilder() {}
+    public TableBuilder() {
+    }
 
-    public TableBuilder(DagBuilder parent) { this.parent = parent; }
+    public TableBuilder(DagBuilder parent) {
+        this.parent = parent;
+    }
 
-    public TableBuilder area(String area){
+    public TableBuilder area(String area) {
         this.area = area;
         return this;
     }
@@ -51,6 +52,11 @@ public class TableBuilder {
 
     public TableBuilder version(String version){
         this.version = version;
+        return this;
+    }
+
+    public TableBuilder className(String className){
+        this.className = className;
         return this;
     }
 
@@ -203,6 +209,7 @@ public class TableBuilder {
         table.setVertical(this.vertical);
         table.setTable(this.table);
         table.setVersion(this.version);
+        table.setClass_name(this.className);
         table.setParallelism(this.parallelism);
         table.setMax_bulk_size(this.maxBulkSize);
         table.setPartition(this.partition);

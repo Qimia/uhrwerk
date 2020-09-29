@@ -1,9 +1,15 @@
 package io.qimia.uhrwerk.config;
 
+
+import io.qimia.uhrwerk.common.model.PartitionUnit;
 import io.qimia.uhrwerk.common.model.Table;
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class TableBuilderTest {
+  private final Logger logger = Logger.getLogger(this.getClass());
 
   @Test
   public void tableBuilderTest() {
@@ -98,17 +104,17 @@ class TableBuilderTest {
                 .type("aggregate")
                 .partition()
                   .size(2)
-                .done()
-              .done()
+            .done()
+            .done()
             .done()
             .dependency()
-              .area("DepArea4")
-              .version("1.4")
-              .vertical("DepVertical4")
-              .table("DepTableTable4")
-              .format("jdbc")
-              .transform()
-                .type("temporal_aggregate")
+            .area("DepArea4")
+            .version("1.4")
+            .vertical("DepVertical4")
+            .table("DepTableTable4")
+            .format("jdbc")
+            .transform()
+            .type("aggregate")
                 .partition()
                   .size(4)
                   .unit("hours")
@@ -116,7 +122,14 @@ class TableBuilderTest {
               .done()
             .done()
             .build();
-    System.out.println(table);
+    logger.info(table);
+
+    assertEquals(10, table.getSources()[0].getParallelLoadNum());
+    assertEquals("TableArea", table.getArea());
+    assertEquals("TableArea.TableVertical.TableTable.TableVersion", table.getClassName());
+    assertEquals(PartitionUnit.HOURS, table.getPartitionUnit());
+
+
 
   }
 
@@ -137,7 +150,7 @@ class TableBuilderTest {
                     .format("json")
                     .version("1.0")
                     .transform()
-                    .type("temporal_aggregate")
+                    .type("aggregate")
                     .partition()
                     .unit("hours")
                     .size(1)
@@ -178,6 +191,7 @@ class TableBuilderTest {
                 .vertical("TableVertical")
                 .table("TableTable")
                 .version("TableVersion")
+                .className("my.class.name")
                 .parallelism(2)
                 .maxBulkSize(2)
                 .partition(partition)
@@ -185,7 +199,15 @@ class TableBuilderTest {
                 .target(target)
                 .dependency(dependency)
             .build();
-    System.out.println(table);
+    logger.info(table);
+
+    assertEquals(8, table.getSources()[0].getParallelLoadNum());
+    assertEquals("TableArea", table.getArea());
+    assertEquals("my.class.name", table.getClassName());
+    assertEquals("connection", table.getSources()[0].getConnection().getName());
+    assertEquals("area", table.getDependencies()[0].getArea());
+    assertEquals("conName", table.getTargets()[0].getConnection().getName());
+    assertEquals(PartitionUnit.DAYS, table.getPartitionUnit());
   }
 
 }

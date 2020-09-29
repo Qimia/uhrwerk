@@ -8,26 +8,24 @@ import io.qimia.uhrwerk.example.yelp.CombinerH.transformationFunction
 import io.qimia.uhrwerk.example.yelp.LoaderAParq.loaderAFunc
 import io.qimia.uhrwerk.example.yelp.LoaderUnpartitionedG.loaderUnpartitionedGFunc
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
-import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 
 object DagAGH extends App {
-  Logger.getLogger("org").setLevel(Level.WARN)
-  Logger.getLogger("akka").setLevel(Level.ERROR)
-
   val sparkSess = SparkSession.builder()
     .appName(this.getClass.toString)
     .master("local[3]")
+    .config("spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version", "2")
+    .config("driver-memory", "2g")
     .getOrCreate()
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment =
-    Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+    Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
 
-  val wrapperA = uhrwerkEnvironment.addTableFile("loader-A-parq.yml", loaderAFunc, false).get
-  val wrapperG = uhrwerkEnvironment.addTableFile("loader-unpartitioned-G.yml", loaderUnpartitionedGFunc).get
-  val wrapperH = uhrwerkEnvironment.addTableFile("combiner-H.yml", transformationFunction).get
+  val wrapperA = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_a_parq/table_a_parq_1.0.yml", loaderAFunc, overwrite = false).get
+  val wrapperG = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_g/table_g_1.0.yml", loaderUnpartitionedGFunc).get
+  val wrapperH = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_h/table_h_1.0.yml", transformationFunction).get
 
   val dagTaskBuilder = new DagTaskBuilder(uhrwerkEnvironment)
   val taskList = dagTaskBuilder.buildTaskListFromTable(

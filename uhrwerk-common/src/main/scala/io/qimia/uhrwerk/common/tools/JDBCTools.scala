@@ -5,16 +5,19 @@ import java.time.LocalDateTime
 import java.{lang, sql}
 
 import io.qimia.uhrwerk.common.model.Connection
+import org.apache.log4j.Logger
 import org.apache.spark.sql.{DataFrameReader, SparkSession}
 
 import scala.io.Source
 
 object JDBCTools {
+  private val logger: Logger = Logger.getLogger(this.getClass)
+
   def addIndexToTable(connection: Connection, tableSchema: String, tableName: String, timeColumnJDBC: String): Unit = {
     try {
       val jdbcConnection = getJDBCConnection(connection)
       val statement = jdbcConnection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
-      val indexName = s"index_${tableSchema}_${tableName}_${timeColumnJDBC}"
+      val indexName = s"index_${tableSchema}_${tableName}_$timeColumnJDBC"
 
       // todo add support for dbs other than mysql
       val isResult = statement.execute(
@@ -34,7 +37,7 @@ object JDBCTools {
       }
       jdbcConnection.close()
     } catch {
-      case e: Exception => println(e.getLocalizedMessage)
+      case e: Exception => logger.warn(e.getLocalizedMessage)
     }
   }
 
@@ -49,7 +52,6 @@ object JDBCTools {
       .map(s => s.trim)
       .filter(s => s.length > 0)
     sqlCommands.foreach(c => {
-      //      println(c)
       statement.execute(c)
     })
     jdbcConnection.close()
@@ -65,10 +67,10 @@ object JDBCTools {
     try {
       val jdbcConnection = getJDBCConnection(connection)
       val statement = jdbcConnection.createStatement
-      statement.execute(s"CREATE DATABASE ${databaseName}")
+      statement.execute(s"CREATE DATABASE $databaseName")
       jdbcConnection.close()
     } catch {
-      case e: Exception => println(e.getLocalizedMessage)
+      case e: Exception => logger.warn(e.getLocalizedMessage)
     }
   }
 
@@ -98,7 +100,7 @@ object JDBCTools {
       statement.execute(s"DROP DATABASE `$databaseName`")
       jdbcConnection.close()
     } catch {
-      case e: Exception => println(e.getLocalizedMessage)
+      case e: Exception => logger.warn(e.getLocalizedMessage)
     }
   }
 
@@ -205,11 +207,10 @@ object JDBCTools {
           )
       }
     } catch {
-      case e: Exception => {
+      case e: Exception =>
         throw new Exception(
           "No rows returned in minMaxQueryIds\n" + e.getLocalizedMessage
         )
-      }
     }
   }
 

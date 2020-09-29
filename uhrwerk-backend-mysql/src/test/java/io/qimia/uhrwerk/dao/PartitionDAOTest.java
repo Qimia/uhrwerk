@@ -3,6 +3,7 @@ package io.qimia.uhrwerk.dao;
 import io.qimia.uhrwerk.ConnectionHelper;
 import io.qimia.uhrwerk.common.metastore.config.PartitionResult;
 import io.qimia.uhrwerk.common.model.*;
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
@@ -13,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class PartitionDAOTest {
     java.sql.Connection db;
+    private final Logger logger = Logger.getLogger(this.getClass());
 
     private final LocalDateTime[] timestamps = {LocalDateTime.of(2020, 8, 20, 15, 0),
             LocalDateTime.of(2020, 8, 20, 16, 0),
@@ -31,6 +33,9 @@ public class PartitionDAOTest {
         table.setParallelism(8);
         table.setMaxBulkSize(96);
         table.setVersion("1.0");
+        table.setClassName(
+                String.join(
+                        ".", table.getArea(), table.getVertical(), table.getName(), table.getVersion()));
         table.setKey();
         table.setTargets(new Target[]{generateTarget(testName, table.getId())});
 
@@ -119,7 +124,7 @@ public class PartitionDAOTest {
 
         PartitionResult partitionResult = partitionDAO.save(partition, false);
 
-        System.out.println(partitionResult.getMessage());
+        logger.info(partitionResult.getMessage());
         assertTrue(partitionResult.isSuccess());
         assertFalse(partitionResult.isError());
         assertNotNull(partitionResult.getNewResult());
@@ -128,7 +133,7 @@ public class PartitionDAOTest {
 
         // this should succeed
         partitionResult = partitionDAO.save(partition, true);
-        System.out.println(partitionResult.getMessage());
+        logger.info(partitionResult.getMessage());
         assertTrue(partitionResult.isSuccess());
         assertFalse(partitionResult.isError());
     }
@@ -169,7 +174,7 @@ public class PartitionDAOTest {
         assertFalse(partitionResult.isError());
         assertFalse(partitionResult.isSuccess());
         assertNotNull(partitionResult.getNewResult());
-        System.out.println(partitionResult.getMessage());
+        logger.info(partitionResult.getMessage());
         assertTrue(partitionResult.getMessage().contains("exists in the Metastore"));
 
         // if the partition doesn't change it will succeed
@@ -211,7 +216,7 @@ public class PartitionDAOTest {
 
         for (PartitionResult partitionResult : partitionResults) {
             if (partitionResult.getMessage() != null) {
-                System.out.println(partitionResult.getMessage());
+                logger.info(partitionResult.getMessage());
             }
             assertTrue(partitionResult.isSuccess());
         }
@@ -223,8 +228,8 @@ public class PartitionDAOTest {
         Partition[] foundPartitions = partitionDAO.getPartitions(target.getId(), timestamps);
 
         assertEquals(timestamps.length, foundPartitions.length);
-        System.out.println(Arrays.toString(foundPartitions));
-        System.out.println(Arrays.toString(partitions));
+        logger.info(Arrays.toString(foundPartitions));
+        logger.info(Arrays.toString(partitions));
         Arrays.sort(foundPartitions);
         Arrays.sort(partitions);
         assertTrue(Arrays.equals(foundPartitions, partitions));
@@ -236,12 +241,12 @@ public class PartitionDAOTest {
         assertEquals(partitionsSubset.length, foundPartitionsSubset.length);
         Arrays.sort(foundPartitionsSubset);
         Arrays.sort(partitionsSubset);
-        System.out.println(Arrays.toString(foundPartitionsSubset));
-        System.out.println(Arrays.toString(partitionsSubset));
+        logger.info(Arrays.toString(foundPartitionsSubset));
+        logger.info(Arrays.toString(partitionsSubset));
         assertTrue(Arrays.equals(foundPartitionsSubset, partitionsSubset));
 
         // getting the latest partition
-        Partition latestPartition = partitionDAO.getLatestUnpartitioned(target.getId());
+        Partition latestPartition = partitionDAO.getLatestPartition(target.getId());
         assertNotNull(latestPartition);
         assertEquals(expectedLatestPartition, latestPartition);
 

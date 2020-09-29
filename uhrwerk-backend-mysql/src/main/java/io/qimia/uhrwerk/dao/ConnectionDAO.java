@@ -198,7 +198,7 @@ public class ConnectionDAO implements ConnectionService {
       connection.setAwsSecretAccessKey(record.getString(10));
       list.add(connection);
     }
-    return list.toArray(new Connection[list.size()]);
+    return list.toArray(new Connection[0]);
   }
 
   @Override

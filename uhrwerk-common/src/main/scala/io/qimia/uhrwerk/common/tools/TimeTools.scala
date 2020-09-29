@@ -160,8 +160,8 @@ object TimeTools {
     for (p <- partitionTS) {
       val diffDuration = Duration.between(p, ts)
       val diff = partitionUnit match {
-        case "DAYS"    => diffDuration.toDays
-        case "HOURS"   => diffDuration.toHours
+        case "DAYS" => diffDuration.toDays
+        case "HOURS" => diffDuration.toHours
         case "MINUTES" => diffDuration.toMinutes
         case "WEEKS" => diffDuration.toDays / 7
         case _ => 0
@@ -172,5 +172,34 @@ object TimeTools {
     }
 
     ts
+  }
+
+  /**
+   * Calculates the lower bound of the current timestamp.
+   * It also needs one partitionTs to see when exactly that partition starts and also partitionUnit and partitionSize.
+   *
+   * @param partitionTs   An example partition timestamp.
+   * @param nowTs         The current timestamp.
+   * @param partitionUnit Partition Unit.
+   * @param partitionSize Partition Size.
+   * @return A timestamp that fits into the partition style and is smaller or equal to [[nowTs]].
+   */
+  def lowerBoundOfCurrentTimestamp(
+                                    partitionTs: LocalDateTime,
+                                    nowTs: LocalDateTime,
+                                    partitionUnit: PartitionUnit,
+                                    partitionSize: Int
+                                  ): LocalDateTime = {
+    val diff = Duration.between(partitionTs, nowTs)
+    val days = diff.toDays
+    val hours = diff.toHours
+    val minutes = diff.toMinutes
+
+    partitionUnit match {
+      case PartitionUnit.WEEKS => partitionTs.plusDays(days - (days % (7 * partitionSize)))
+      case PartitionUnit.DAYS => partitionTs.plusDays(days - (days % partitionSize))
+      case PartitionUnit.HOURS => partitionTs.plusHours(hours - (hours % partitionSize))
+      case PartitionUnit.MINUTES => partitionTs.plusMinutes(minutes - (minutes % partitionSize))
+    }
   }
 }

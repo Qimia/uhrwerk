@@ -6,11 +6,13 @@ import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.common.model.{Dependency, PartitionUnit, Table}
 import io.qimia.uhrwerk.common.tools.TimeTools
+import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Column, DataFrame}
 
 object SparkFrameManagerUtils {
+  private val logger: Logger = Logger.getLogger(this.getClass)
   val timeColumns: List[String] =
     List("year", "month", "day", "hour", "minute")
   private[framemanager] val timeColumnsFormats: List[String] =
@@ -23,7 +25,7 @@ object SparkFrameManagerUtils {
    * @param df DataFrame.
    * @return Converted DataFrame.
    */
-  private[framemanager] def convertTimeColumnsToStrings(df: DataFrame, partitionUnit: PartitionUnit): DataFrame = {
+  private[framemanager] def convertTimeColumnsToStrings(df: DataFrame): DataFrame = {
     timeColumns
       .foldLeft(df)((tmp, timeColumn) => tmp.withColumn(timeColumn, col(timeColumn).cast(StringType)))
   }
@@ -94,7 +96,7 @@ object SparkFrameManagerUtils {
     (year, month, day, hour, minute)
   }
 
-  private[framemanager] def createDatePath(startTS: LocalDateTime, partitionUnit: PartitionUnit): String = {
+  private[framemanager] def createDatePath(startTS: LocalDateTime): String = {
     val (year, month, day, hour, minute) = getTimeValues(startTS)
     val listOfTimeColumns = List(s"year=$year", s"month=$month", s"day=$day", s"hour=$hour", s"minute=$minute")
 
@@ -202,7 +204,7 @@ object SparkFrameManagerUtils {
         return true
       }
     } catch {
-      case _: Exception => println("The df doesn't contain time columns")
+      case _: Exception => logger.info("The df doesn't contain time columns")
     }
     false
   }

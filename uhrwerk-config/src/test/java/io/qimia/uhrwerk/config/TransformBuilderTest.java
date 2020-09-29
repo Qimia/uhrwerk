@@ -1,8 +1,13 @@
 package io.qimia.uhrwerk.config;
 
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 class TransformBuilderTest {
+  private final Logger logger = Logger.getLogger(this.getClass());
 
   @Test
   void builderTest() {
@@ -27,17 +32,31 @@ class TransformBuilderTest {
             .build();
 
     var transform4 = builder
-            .type("temporal_aggregate")
+            .type("aggregate")
             .partition()
             .size(4)
             .unit("hours")
             .done()
             .build();
 
-    System.out.println(transform1);
-    System.out.println(transform2);
-    System.out.println(transform3);
-    System.out.println(transform4);
+    logger.info(transform1);
+    logger.info(transform2);
+    logger.info(transform3);
+    logger.info(transform4);
+
+      assertEquals("identity", transform1.getType());
+      assertNull(transform1.getPartition());
+
+
+    assertEquals("aggregate", transform2.getType());
+    assertEquals(2, transform2.getPartition().getSize());
+
+    assertEquals("window", transform3.getType());
+    assertEquals(3, transform3.getPartition().getSize());
+
+    assertEquals("aggregate", transform4.getType());
+    assertEquals(4, transform4.getPartition().getSize());
+
   }
 
   @Test
@@ -47,17 +66,23 @@ class TransformBuilderTest {
     var partition = new PartitionBuilder<>().unit("days").size(5).build();
 
     var transform1 = builder
-            .type("temporal_aggregate")
+            .type("aggregate")
             .partition(partitionBuilder)
             .build();
 
     var transform2 = builder
-            .type("temporal_aggregate")
+            .type("aggregate")
             .partition(partition)
             .build();
 
-    System.out.println(transform1);
-    System.out.println(transform2);
+    logger.info(transform1);
+    logger.info(transform2);
+
+    assertEquals("aggregate", transform1.getType());
+    assertEquals(10, transform1.getPartition().getSize());
+
+    assertEquals("aggregate", transform2.getType());
+    assertEquals(5, transform2.getPartition().getSize());
   }
 
 

@@ -1,0 +1,14 @@
+spark-submit
+--name {{table_ident}}
+--class io.qimia.uhrwerk.cli.CommandLineInterface
+--deploy-mode {{deploy_mode}}
+--properties-file {{conf_spark}}
+--jars {{uhrwerk_user_jar}}
+--global {{global_conf_location}}
+{{user_configuration_options}}
+--run {{table_ident}}
+{{time_options}}
+--dagmode {{dag_mode}}
+--parallel {{parallel}}
+--ovw {{overwrite_mode}}
+--cont {{continuous_mode}}

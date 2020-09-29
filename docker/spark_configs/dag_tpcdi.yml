@@ -1,0 +1,240 @@
+connections:
+- name: "tpcdi_mysql"
+  jdbc:
+    jdbc_url: 'jdbc:mysql://tpcdi-mysql:3306/db_uhrwerk_generator'
+    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    user: root
+    pass: tpcdi_password
+
+- name: "local_fs_lake"
+  file:
+    path: '/spark_datadir/example_datalake'
+
+tables:
+- area: "staging"
+  vertical: "tpcdi"
+  table: "Accounts"
+  version: "1.0"
+  class_name: "io.qimia.uhrwerk.example.TPCDI.ClassLoader"
+  parallelism: 4   # Batches at the same time / 0 & 1 means single run at a time
+  max_bulk_size: 30
+  partition:
+    unit: "days"
+    size: 1
+
+  sources:
+  - connection_name: "tpcdi_mysql"
+    path: "Accounts"
+    format: "jdbc"
+    version: "1.0"
+    partition:
+      unit: "days"
+      size: 1
+    select:
+      query: "SELECT * FROM <path> WHERE _ActionTS >= '<lower_bound>' and _ActionTS < '<upper_bound>';"
+      column: "_ActionTS"
+
+  targets:
+  - connection_name: "local_fs_lake"
+    format: "parquet"
+
+- area: "staging"
+  vertical: "tpcdi"
+  table: "DailyMarket"
+  version: "1.0"
+  class_name: "io.qimia.uhrwerk.example.TPCDI.ClassLoader"
+  parallelism: 4   # Batches at the same time / 0 & 1 means single run at a time
+  max_bulk_size: 30
+  partition:
+    unit: "days"
+    size: 7
+
+  sources:
+  - connection_name: "tpcdi_mysql"
+    path: "DailyMarket"
+    format: "jdbc"
+    version: "1.0"
+    partition:
+      unit: "days"
+      size: 1
+    select:
+      query: "SELECT * FROM <path> WHERE DM_DATE >= '<lower_bound>' and DM_DATE < '<upper_bound>';"
+      column: "DM_DATE"
+
+  targets:
+  - connection_name: "local_fs_lake"
+    format: "parquet"
+
+- area: "staging"
+  vertical: "tpcdi"
+  table: "CustomerMgmt"
+  version: "1.0"
+  class_name: "io.qimia.uhrwerk.example.TPCDI.ClassLoader"
+  parallelism: 4   # Batches at the same time / 0 & 1 means single run at a time
+  max_bulk_size: 30
+  partition:
+    unit: "days"
+    size: 1
+
+  sources:
+  - connection_name: "tpcdi_mysql"
+    path: "CustomerMgmt"
+    format: "jdbc"
+    version: "1.0"
+    partition:
+      unit: "days"
+      size: 1
+    select:
+      query: "SELECT * FROM <path> WHERE _ActionTS >= '<lower_bound>' and _ActionTS < '<upper_bound>';"
+      column: "_ActionTS"
+
+  targets:
+  - connection_name: "local_fs_lake"
+    format: "parquet"
+
+- area: "staging"
+  vertical: "tpcdi"
+  table: "Fact_Trade"
+  version: "1.0"
+  class_name: "io.qimia.uhrwerk.example.TPCDI.ClassLoader"
+  parallelism: 4   # Batches at the same time / 0 & 1 means single run at a time
+  max_bulk_size: 30
+  partition:
+    unit: "days"
+    size: 1
+
+  sources:
+  - connection_name: "tpcdi_mysql"
+    path: "Fact_Trade"
+    format: "jdbc"
+    version: "1.0"
+    partition:
+      unit: "days"
+      size: 1
+    select:
+      query: "SELECT * FROM <path> WHERE T_DTS >= '<lower_bound>' and T_DTS < '<upper_bound>';"
+      column: "T_DTS"
+
+  targets:
+  - connection_name: "local_fs_lake"
+    format: "parquet"
+
+
+- area: "staging"
+  vertical: "tpcdi"
+  table: "DIM_StatusType"
+  version: "1.0"
+  class_name: "io.qimia.uhrwerk.example.TPCDI.ClassLoader"
+  parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+  max_bulk_size: 1
+
+  sources:
+  - connection_name: "tpcdi_mysql"
+    path: "DIM_StatusType"
+    format: "jdbc"
+    version: "1.0"
+    select:
+      query: "SELECT * FROM DIM_StatusType;"
+
+  targets:
+  - connection_name: "local_fs_lake"
+    format: "parquet"
+
+- area: "staging"
+  vertical: "tpcdi"
+  table: "DIM_TradeType"
+  version: "1.0"
+  class_name: "io.qimia.uhrwerk.example.TPCDI.ClassLoader"
+  parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+  max_bulk_size: 1
+
+  sources:
+  - connection_name: "tpcdi_mysql"
+    path: "DIM_TradeType"
+    format: "jdbc"
+    version: "1.0"
+    select:
+      query: "SELECT * FROM DIM_TradeType;"
+
+  targets:
+  - connection_name: "local_fs_lake"
+    format: "parquet"
+
+- area: "staging"
+  vertical: "tpcdi"
+  table: "Dim_Date"
+  version: "1.0"
+  class_name: "io.qimia.uhrwerk.example.TPCDI.ClassLoader"
+  parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+  max_bulk_size: 1
+
+  sources:
+  - connection_name: "tpcdi_mysql"
+    path: "Dim_Date"
+    format: "jdbc"
+    version: "1.0"
+    select:
+      query: "SELECT * FROM Dim_Date;"
+
+  targets:
+  - connection_name: "local_fs_lake"
+    format: "parquet"
+
+- area: "staging"
+  vertical: "tpcdi"
+  table: "Accounts_unpartitioned"
+  version: "1.0"
+  class_name: "io.qimia.uhrwerk.example.TPCDI.ClassLoader"
+  parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+  max_bulk_size: 1
+
+  sources:
+  - connection_name: "tpcdi_mysql"
+    path: "Accounts"
+    format: "jdbc"
+    version: "1.0"
+    select:
+      query: "SELECT * FROM <path>"
+
+  targets:
+  - connection_name: "local_fs_lake"
+    format: "parquet"
+
+- area: "processing"
+  vertical: "tpcdi"
+  table: "Trades"
+  version: "1.0"
+  class_name: "io.qimia.uhrwerk.example.TPCDI.ClassJoiner"
+  parallelism: 4   # Batches at the same time / 0 & 1 means single run at a time
+  max_bulk_size: 30
+  partition:
+    unit: "days"
+    size: 1
+
+  dependencies:
+  - area: "staging"
+    vertical: "tpcdi"
+    table: "Fact_Trade"  # On DB
+    format: "parquet"
+    version: "1.0"
+    transform:
+      type: "identity"
+  - area: "staging"
+    vertical: "tpcdi"
+    table: "Accounts_unpartitioned"  # On DB
+    format: "parquet"
+    version: "1.0"
+  - area: "staging"
+    vertical: "tpcdi"
+    table: "DIM_TradeType"  # On DB
+    format: "parquet"
+    version: "1.0"
+  - area: "staging"
+    vertical: "tpcdi"
+    table: "DIM_StatusType"  # On DB
+    format: "parquet"
+    version: "1.0"
+
+  targets:
+  - connection_name: "tpcdi_mysql"
+    format: "jdbc"

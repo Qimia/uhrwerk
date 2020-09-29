@@ -21,6 +21,7 @@ tables:
     vertical: sourcedb_1
     table: load_a_table
     version: "1.0"
+    class_name: "load.class.name"
     parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
     max_bulk_size: 12
     partition:
@@ -97,7 +98,7 @@ tables:
         format: "jdbc"
         version: "1.0"
         transform:
-          type: "temporal_aggregate"
+          type: "aggregate"
           partition:
             unit: "days"
             size: 1

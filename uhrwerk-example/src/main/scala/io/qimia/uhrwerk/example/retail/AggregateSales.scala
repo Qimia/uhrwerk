@@ -2,13 +2,12 @@ package io.qimia.uhrwerk.example.retail
 
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.dag.{DagTaskBuilder, DagTaskDispatcher}
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.example.retail.LoaderSales.loaderAFunc
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{max, min}
-import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object AggregateSales extends App {
 
@@ -36,12 +35,12 @@ object AggregateSales extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment =
-    Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
+    Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
   val wrapperSales =
-    uhrwerkEnvironment.addTableFile("LoadTableSalesTest.yml", loaderAFunc, true).get
+    uhrwerkEnvironment.addTableFile("LoadTableSalesTest.yml", loaderAFunc, overwrite = true).get
   val wrapperAgg =
-    uhrwerkEnvironment.addTableFile("aggSales.yml", AggCFunc, true).get
+    uhrwerkEnvironment.addTableFile("aggSales.yml", AggCFunc, overwrite = true).get
 
   val dagTaskBuilder = new DagTaskBuilder(uhrwerkEnvironment)
   val taskList = dagTaskBuilder.buildTaskListFromTable(

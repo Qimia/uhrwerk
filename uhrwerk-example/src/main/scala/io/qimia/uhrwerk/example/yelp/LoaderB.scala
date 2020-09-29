@@ -4,10 +4,12 @@ import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
+import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 
 
 object LoaderB extends App {
+  private val logger: Logger = Logger.getLogger(this.getClass)
 
   val sparkSess = SparkSession.builder()
     .appName("loaderA")
@@ -21,13 +23,13 @@ object LoaderB extends App {
 
   val frameManager = new SparkFrameManager(sparkSess)
 
-  val uhrwerkEnvironment = Environment.build("testing-env-config.yml", frameManager)
-  uhrwerkEnvironment.addConnectionFile("testing-connection-config.yml")
-  val wrapper = uhrwerkEnvironment.addTableFile("loader-B.yml", loaderBFunc)
+  val uhrwerkEnvironment = Environment.build("yelp_test/uhrwerk.yml", frameManager)
+  uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
+  val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_b/table_b_1.0.yml", loaderBFunc)
 
   val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0),
     LocalDateTime.of(2012, 5, 2, 3, 4))
   val results = wrapper.get.runTasksAndWait(runTimes)
-  println(results)
+  logger.info(results)
 
 }

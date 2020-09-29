@@ -1,8 +1,12 @@
 package io.qimia.uhrwerk.config;
 
+import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class MetastoreBuilderTest {
+  private final Logger logger = Logger.getLogger(this.getClass());
 
   @Test
   void builderTest() {
@@ -15,8 +19,10 @@ class MetastoreBuilderTest {
             .pass("pass")
             .build();
 
-    System.out.println(metastore);
+    logger.info(metastore);
 
+
+    assertEquals("pass", metastore.getPass());
   }
 
 }

@@ -3,7 +3,6 @@ package io.qimia.uhrwerk.framemanager.utils
 import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.common.model.{Dependency, PartitionUnit, Table}
-import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -70,19 +69,19 @@ class SparkFrameManagerUtilsTest extends AnyFlatSpec {
   "createDatePath" should "create a date path from timestamp" in {
     val ts = LocalDateTime.of(2020, 2, 4, 10, 30)
 
-    val datePath = SparkFrameManagerUtils.createDatePath(ts, PartitionUnit.MINUTES)
+    val datePath = SparkFrameManagerUtils.createDatePath(ts)
 
     assert(
       datePath === "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10/minute=2020-02-04-10-30"
     )
 
-    val datePathHour = SparkFrameManagerUtils.createDatePath(ts, PartitionUnit.HOURS)
+    val datePathHour = SparkFrameManagerUtils.createDatePath(ts)
 
     assert(
       datePathHour === "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10/minute=2020-02-04-10-30"
     )
 
-    val datePathDay = SparkFrameManagerUtils.createDatePath(ts, PartitionUnit.DAYS)
+    val datePathDay = SparkFrameManagerUtils.createDatePath(ts)
 
     assert(
       datePathDay === "year=2020/month=2020-02/day=2020-02-04/hour=2020-02-04-10/minute=2020-02-04-10-30"
@@ -96,12 +95,12 @@ class SparkFrameManagerUtilsTest extends AnyFlatSpec {
     table.setName("testsparkframemanager")
     table.setVertical("testdb")
 
-    val tablePath = SparkFrameManagerUtils.getTablePath(table, true, "parquet")
+    val tablePath = SparkFrameManagerUtils.getTablePath(table, fileSystem = true, "parquet")
     assert(
       tablePath === "area=staging/vertical=testdb/table=testsparkframemanager/version=1/format=parquet"
     )
 
-    val tablePathJDBC = SparkFrameManagerUtils.getTablePath(table, false, "jdbc")
+    val tablePathJDBC = SparkFrameManagerUtils.getTablePath(table, fileSystem = false, "jdbc")
     assert(tablePathJDBC === "`staging_testdb`.`testsparkframemanager_1`")
   }
 
@@ -113,12 +112,12 @@ class SparkFrameManagerUtilsTest extends AnyFlatSpec {
     dependency.setVertical("testdb")
     dependency.setFormat("parquet")
 
-    val tablePath = SparkFrameManagerUtils.getDependencyPath(dependency, true)
+    val tablePath = SparkFrameManagerUtils.getDependencyPath(dependency, fileSystem = true)
     assert(
       tablePath === "area=staging/vertical=testdb/table=testsparkframemanager/version=1/format=parquet"
     )
 
-    val tablePathJDBC = SparkFrameManagerUtils.getDependencyPath(dependency, false)
+    val tablePathJDBC = SparkFrameManagerUtils.getDependencyPath(dependency, fileSystem = false)
     assert(tablePathJDBC === "`staging_testdb`.`testsparkframemanager_1`")
   }
 
@@ -126,7 +125,6 @@ class SparkFrameManagerUtilsTest extends AnyFlatSpec {
     val spark = getSparkSession
     val ts = LocalDateTime.of(2015, 10, 12, 20, 0)
     val df = createMockDataFrame(spark, Option(ts))
-    val manager = new SparkFrameManager(spark)
 
     assert(SparkFrameManagerUtils.containsTimeColumns(df, PartitionUnit.MINUTES) === true)
     assert(SparkFrameManagerUtils.containsTimeColumns(df.drop("hour"), PartitionUnit.MINUTES) === false)

@@ -1,6 +1,8 @@
 package io.qimia.uhrwerk.config;
 
-import io.qimia.uhrwerk.config.representation.*;
+import io.qimia.uhrwerk.config.representation.Connection;
+import io.qimia.uhrwerk.config.representation.Dag;
+import io.qimia.uhrwerk.config.representation.Table;
 
 import java.util.ArrayList;
 
@@ -10,10 +12,11 @@ public class DagBuilder {
 
     private Connection[] connections;
     private Table[] tables;
-    private ArrayList<Connection> connectionsList = new ArrayList<Connection>();
-    private ArrayList<Table> tablesList = new ArrayList<Table>();
+    private final ArrayList<Connection> connectionsList = new ArrayList<>();
+    private final ArrayList<Table> tablesList = new ArrayList<>();
 
-    public DagBuilder() {}
+    public DagBuilder() {
+    }
 
     public TableBuilder table() {
         this.tableBuilder = new TableBuilder(this);

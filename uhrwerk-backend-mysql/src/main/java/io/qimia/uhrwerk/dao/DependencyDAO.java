@@ -147,13 +147,13 @@ public class DependencyDAO implements DependencyStoreService {
         partitionTestInputs.toArray(new PartitionDurationTester.PartitionTestDependencyInput[0]));
   }
 
-  private java.sql.Connection db;
+  private final java.sql.Connection db;
 
   public DependencyDAO(java.sql.Connection db) {
     this.db = db;
   }
 
-  class ExistingDepRes {
+  static class ExistingDepRes {
     boolean found;
     boolean correct;
     String problems;

@@ -70,7 +70,7 @@ dependencies:
     format: "jdbc"
     version: "1.0"
     transform:
-      type: "temporal_aggregate"
+      type: "aggregate"
       partition:
         unit: "days"
         size: 1
