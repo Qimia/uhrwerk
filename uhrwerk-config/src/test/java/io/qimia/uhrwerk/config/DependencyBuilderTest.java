@@ -14,13 +14,13 @@ class DependencyBuilderTest {
 
     var dependency =
         builder
-            .area("area")
-            .vertical("vertical")
-            .table("table")
-            .format("json")
-            .version("1.0")
-            .transform()
-            .type("temporal_aggregate")
+                .area("area")
+                .vertical("vertical")
+                .table("table")
+                .format("json")
+                .version("1.0")
+                .transform()
+                .type("aggregate")
             .partition()
             .unit("hours")
             .size(1)

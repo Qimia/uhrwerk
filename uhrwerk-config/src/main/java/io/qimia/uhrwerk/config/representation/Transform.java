@@ -29,17 +29,16 @@ public class Transform{
 
     public void validate(String path){
         path += "transform/";
-        if(type == null){
+        if (type == null) {
             throw new ConfigException("Missing field: " + path + "type");
         }
-        if (!Arrays.asList("identity", "aggregate", "window", "temporal_aggregate").contains(type)) {
+        if (!Arrays.asList("identity", "aggregate", "window").contains(type)) {
             throw new ConfigException("Wrong type! '" + type + "' is not allowed in " + path + "type");
         }
-        if(!type.equals("identity")){
-            if(partition == null){
+        if (!type.equals("identity")) {
+            if (partition == null) {
                 throw new ConfigException("Missing field: " + path + "partition");
-            }
-            else{
+            } else {
                 partition.validate(path, type);
             }
         }

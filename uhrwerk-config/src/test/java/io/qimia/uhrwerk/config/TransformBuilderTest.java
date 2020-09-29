@@ -32,7 +32,7 @@ class TransformBuilderTest {
             .build();
 
     var transform4 = builder
-            .type("temporal_aggregate")
+            .type("aggregate")
             .partition()
             .size(4)
             .unit("hours")
@@ -54,7 +54,7 @@ class TransformBuilderTest {
     assertEquals("window", transform3.getType());
     assertEquals(3, transform3.getPartition().getSize());
 
-    assertEquals("temporal_aggregate", transform4.getType());
+    assertEquals("aggregate", transform4.getType());
     assertEquals(4, transform4.getPartition().getSize());
 
   }
@@ -66,22 +66,22 @@ class TransformBuilderTest {
     var partition = new PartitionBuilder<>().unit("days").size(5).build();
 
     var transform1 = builder
-            .type("temporal_aggregate")
+            .type("aggregate")
             .partition(partitionBuilder)
             .build();
 
     var transform2 = builder
-            .type("temporal_aggregate")
+            .type("aggregate")
             .partition(partition)
             .build();
 
     logger.info(transform1);
     logger.info(transform2);
 
-    assertEquals("temporal_aggregate", transform1.getType());
+    assertEquals("aggregate", transform1.getType());
     assertEquals(10, transform1.getPartition().getSize());
 
-    assertEquals("temporal_aggregate", transform2.getType());
+    assertEquals("aggregate", transform2.getType());
     assertEquals(5, transform2.getPartition().getSize());
   }
 

@@ -149,13 +149,6 @@ public class YamlConfigReader {
                 dep.setTransformPartitionSize(
                         dependencies[j].getTransform().getPartition().getSize());
                 break;
-              case "temporal_aggregate":
-                dep.setTransformType(PartitionTransformType.TEMPORAL_AGGREGATE);
-                dep.setTransformPartitionUnit(
-                        getModelPartitionUnit(dependencies[j].getTransform().getPartition().getUnit()));
-                dep.setTransformPartitionSize(
-                        dependencies[j].getTransform().getPartition().getSize());
-                break;
               case "none":
                 dep.setTransformType(PartitionTransformType.NONE);
                 break;

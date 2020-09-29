@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS DEPENDENCY
     table_id                 BIGINT                                     NOT NULL,
     dependency_target_id     BIGINT                                     NOT NULL,
     dependency_table_id      BIGINT                                     NOT NULL,
-    transform_type           enum ('NONE', 'AGGREGATE', 'WINDOW', 'IDENTITY', 'TEMPORAL_AGGREGATE') NOT NULL,
+    transform_type           enum ('NONE', 'AGGREGATE', 'WINDOW', 'IDENTITY') NOT NULL,
     transform_partition_unit enum ('WEEKS', 'DAYS', 'HOURS', 'MINUTES') NULL,
     transform_partition_size int       DEFAULT 1,
     created_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL,
