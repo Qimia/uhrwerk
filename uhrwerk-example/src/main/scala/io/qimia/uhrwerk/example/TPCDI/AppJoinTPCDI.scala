@@ -8,10 +8,16 @@ import org.apache.spark.sql.SparkSession
 
 object AppJoinTPCDI extends App {
 
-  val sparkSess = SparkSession.builder()
-    .appName("loaderTPCDI")
-    .master("local")
+
+  val sparkSess = SparkSession
+    .builder()
+    .appName("LoaderTPCDI")
+    .master("local[*]")
+    .config("driver-memory", "2g")
+    .config("spark.eventLog.enabled", "true")
+    .config("spark.eventLog.dir", "./docker/spark_logs")
     .getOrCreate()
+
 
   UhrwerkAppRunner.runDagFile(sparkSess,
     "TPCDI/env-config.yml",
