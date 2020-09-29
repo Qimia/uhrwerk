@@ -2,12 +2,15 @@
 import re
 import argparse
 from datetime import datetime
+import os
+import sys
 
 import yaml
 import pystache
 import pymysql.cursors
 
-QUERY_PARTITIONS_LOCATION = "templates/query_partitions.sql"
+ACTUAL_LOCATION = os.path.dirname(sys.argv[0])
+QUERY_PARTITIONS_LOCATION = ACTUAL_LOCATION + "/templates/query_partitions.sql"
 
 
 def get_query(cl_params):
