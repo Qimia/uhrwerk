@@ -2,85 +2,88 @@ package io.qimia.uhrwerk.common.model;
 
 import net.openhft.hashing.LongHashFunction;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Target implements Comparable<Target> {
+public class Target implements Comparable<Target>, Serializable {
 
-    Long tableId;
-    Long id;
-    Connection connection;
-    String format;
+  private static final long serialVersionUID = -3350529307251768851L;
 
-    public void setKey() {
-        StringBuilder res = new StringBuilder().append(tableId).append(format);
-        long id = LongHashFunction.xx().hashChars(res);
-        setId(id);
-    }
+  Long tableId;
+  Long id;
+  Connection connection;
+  String format;
 
-    public Long getTableId() {
-        return tableId;
-    }
+  public void setKey() {
+    StringBuilder res = new StringBuilder().append(tableId).append(format);
+    long id = LongHashFunction.xx().hashChars(res);
+    setId(id);
+  }
 
-    public void setTableId(Long tableId) {
-        this.tableId = tableId;
-    }
+  public Long getTableId() {
+    return tableId;
+  }
 
-    public Long getId() {
-        return id;
-    }
+  public void setTableId(Long tableId) {
+    this.tableId = tableId;
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public Connection getConnection() {
-        return connection;
-    }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public void setConnection(Connection connection) {
-        this.connection = connection;
-    }
+  public Connection getConnection() {
+    return connection;
+  }
 
-    public String getFormat() {
-        return format;
-    }
+  public void setConnection(Connection connection) {
+    this.connection = connection;
+  }
 
-    public void setFormat(String format) {
-        this.format = format;
-    }
+  public String getFormat() {
+    return format;
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Target target = (Target) o;
-        return Objects.equals(connection, target.connection) && Objects.equals(format, target.format);
-    }
+  public void setFormat(String format) {
+    this.format = format;
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(connection, format);
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Target target = (Target) o;
+    return Objects.equals(connection, target.connection) && Objects.equals(format, target.format);
+  }
 
-    @Override
-    public String toString() {
-        return "Target{"
-                + "tableId='"
-                + tableId
-                + '\''
-                + ", id='"
-                + id
-                + '\''
-                + ", connection="
-                + connection
-                + ", format='"
-                + format
-                + '\''
-                + '}';
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(connection, format);
+  }
 
-    @Override
-    public int compareTo(Target o) {
-        return this.getId().compareTo(o.getId());
-    }
+  @Override
+  public String toString() {
+    return "Target{"
+        + "tableId='"
+        + tableId
+        + '\''
+        + ", id='"
+        + id
+        + '\''
+        + ", connection="
+        + connection
+        + ", format='"
+        + format
+        + '\''
+        + '}';
+  }
+
+  @Override
+  public int compareTo(Target o) {
+    return this.getId().compareTo(o.getId());
+  }
 }

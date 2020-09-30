@@ -2,9 +2,13 @@ package io.qimia.uhrwerk.common.model;
 
 import net.openhft.hashing.LongHashFunction;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Dependency implements Comparable<Dependency> {
+public class Dependency implements Comparable<Dependency>, Serializable {
+
+  private static final long serialVersionUID = -1631196520233395698L;
+
   Long id;
   Long tableId;
   Long dependencyTargetId;
@@ -20,21 +24,21 @@ public class Dependency implements Comparable<Dependency> {
 
   public void setKey() {
     StringBuilder res =
-            new StringBuilder()
-                    .append(this.getArea())
-                    .append(this.getVertical())
-                    .append(this.getTableName())
-                    .append(this.getVersion());
+        new StringBuilder()
+            .append(this.getArea())
+            .append(this.getVertical())
+            .append(this.getTableName())
+            .append(this.getVersion());
     long depTableId = LongHashFunction.xx().hashChars(res);
     setDependencyTableId(depTableId);
     StringBuilder res2 = new StringBuilder().append(depTableId).append(this.getFormat());
     long targetId = LongHashFunction.xx().hashChars(res2);
     setDependencyTargetId(targetId);
     StringBuilder res3 =
-            new StringBuilder()
-                    .append(this.getTableId())
-                    .append(depTableId)
-                    .append(this.dependencyTargetId);
+        new StringBuilder()
+            .append(this.getTableId())
+            .append(depTableId)
+            .append(this.dependencyTargetId);
     long id = LongHashFunction.xx().hashChars(res3);
     this.setId(id);
   }
@@ -141,61 +145,61 @@ public class Dependency implements Comparable<Dependency> {
     if (o == null || getClass() != o.getClass()) return false;
     Dependency that = (Dependency) o;
     return transformPartitionSize == that.transformPartitionSize
-            && Objects.equals(area, that.area)
-            && Objects.equals(vertical, that.vertical)
-            && Objects.equals(tableName, that.tableName)
-            && Objects.equals(format, that.format)
-            && Objects.equals(version, that.version)
-            && transformType == that.transformType
-            && transformPartitionUnit == that.transformPartitionUnit;
+        && Objects.equals(area, that.area)
+        && Objects.equals(vertical, that.vertical)
+        && Objects.equals(tableName, that.tableName)
+        && Objects.equals(format, that.format)
+        && Objects.equals(version, that.version)
+        && transformType == that.transformType
+        && transformPartitionUnit == that.transformPartitionUnit;
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-            area,
-            vertical,
-            tableName,
-            format,
-            version,
-            transformType,
-            transformPartitionUnit,
-            transformPartitionSize);
+        area,
+        vertical,
+        tableName,
+        format,
+        version,
+        transformType,
+        transformPartitionUnit,
+        transformPartitionSize);
   }
 
   @Override
   public String toString() {
     return "Dependency{"
-            + "id="
-            + id
-            + ", tableId="
-            + tableId
-            + ", dependencyTargetId="
-            + dependencyTargetId
-            + ", dependencyTableId="
-            + dependencyTableId
-            + ", area='"
-            + area
-            + '\''
-            + ", vertical='"
-            + vertical
-            + '\''
-            + ", tableName='"
-            + tableName
-            + '\''
-            + ", format='"
-            + format
-            + '\''
-            + ", version='"
-            + version
-            + '\''
-            + ", transformType="
-            + transformType
-            + ", transformPartitionUnit="
-            + transformPartitionUnit
-            + ", transformPartitionSize="
-            + transformPartitionSize
-            + '}';
+        + "id="
+        + id
+        + ", tableId="
+        + tableId
+        + ", dependencyTargetId="
+        + dependencyTargetId
+        + ", dependencyTableId="
+        + dependencyTableId
+        + ", area='"
+        + area
+        + '\''
+        + ", vertical='"
+        + vertical
+        + '\''
+        + ", tableName='"
+        + tableName
+        + '\''
+        + ", format='"
+        + format
+        + '\''
+        + ", version='"
+        + version
+        + '\''
+        + ", transformType="
+        + transformType
+        + ", transformPartitionUnit="
+        + transformPartitionUnit
+        + ", transformPartitionSize="
+        + transformPartitionSize
+        + '}';
   }
 
   @Override

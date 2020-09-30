@@ -1,8 +1,12 @@
 package io.qimia.uhrwerk.common.model;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
-public class Dag {
+public class Dag implements Serializable {
+
+  private static final long serialVersionUID = -1481989945913775459L;
+
   Connection[] connections;
   Table[] tables;
 
@@ -27,8 +31,7 @@ public class Dag {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Dag dag = (Dag) o;
-    return Arrays.equals(connections, dag.connections) &&
-            Arrays.equals(tables, dag.tables);
+    return Arrays.equals(connections, dag.connections) && Arrays.equals(tables, dag.tables);
   }
 
   @Override
@@ -40,9 +43,11 @@ public class Dag {
 
   @Override
   public String toString() {
-    return "Dag{" +
-            "connections=" + Arrays.toString(connections) +
-            ", tables=" + Arrays.toString(tables) +
-            '}';
+    return "Dag{"
+        + "connections="
+        + Arrays.toString(connections)
+        + ", tables="
+        + Arrays.toString(tables)
+        + '}';
   }
 }

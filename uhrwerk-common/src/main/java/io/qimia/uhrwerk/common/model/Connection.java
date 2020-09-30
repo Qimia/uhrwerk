@@ -2,9 +2,12 @@ package io.qimia.uhrwerk.common.model;
 
 import net.openhft.hashing.LongHashFunction;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Connection {
+public class Connection  implements Serializable {
+
+  private static final long serialVersionUID = -3946000637155224648L;
 
   Long id;
   String name;

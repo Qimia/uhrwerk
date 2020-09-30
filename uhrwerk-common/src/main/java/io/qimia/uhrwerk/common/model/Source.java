@@ -2,9 +2,12 @@ package io.qimia.uhrwerk.common.model;
 
 import net.openhft.hashing.LongHashFunction;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Source implements Comparable<Source> {
+public class Source implements Comparable<Source>, Serializable {
+  private static final long serialVersionUID = 407099634243598968L;
+
   Long id;
   Long tableId;
   Connection connection;
@@ -30,10 +33,10 @@ public class Source implements Comparable<Source> {
 
   public void setKey() {
     StringBuilder res =
-            new StringBuilder()
-                    .append(this.getConnection().getId())
-                    .append(this.getPath())
-                    .append(this.getFormat());
+        new StringBuilder()
+            .append(this.getConnection().getId())
+            .append(this.getPath())
+            .append(this.getFormat());
     long id = LongHashFunction.xx().hashChars(res);
     this.setId(id);
   }
@@ -148,57 +151,77 @@ public class Source implements Comparable<Source> {
     if (o == null || getClass() != o.getClass()) return false;
     Source source = (Source) o;
     return partitionSize == source.partitionSize
-            && parallelLoadNum == source.parallelLoadNum
-            && partitioned == source.partitioned
-            && Objects.equals(id, source.id)
-            && Objects.equals(tableId, source.tableId)
-            && Objects.equals(connection, source.connection)
-            && Objects.equals(path, source.path)
-            && Objects.equals(format, source.format)
-            && partitionUnit == source.partitionUnit
-            && Objects.equals(parallelLoadQuery, source.parallelLoadQuery)
-            && Objects.equals(parallelLoadColumn, source.parallelLoadColumn)
-            && Objects.equals(selectQuery, source.selectQuery)
-            && Objects.equals(selectColumn, source.selectColumn);
+        && parallelLoadNum == source.parallelLoadNum
+        && partitioned == source.partitioned
+        && Objects.equals(id, source.id)
+        && Objects.equals(tableId, source.tableId)
+        && Objects.equals(connection, source.connection)
+        && Objects.equals(path, source.path)
+        && Objects.equals(format, source.format)
+        && partitionUnit == source.partitionUnit
+        && Objects.equals(parallelLoadQuery, source.parallelLoadQuery)
+        && Objects.equals(parallelLoadColumn, source.parallelLoadColumn)
+        && Objects.equals(selectQuery, source.selectQuery)
+        && Objects.equals(selectColumn, source.selectColumn);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-            id,
-            tableId,
-            connection,
-            path,
-            format,
-            partitionUnit,
-            partitionSize,
-            parallelLoadQuery,
-            parallelLoadColumn,
-            parallelLoadNum,
-            selectQuery,
-            selectColumn,
-            partitioned,
-            autoloading);
+        id,
+        tableId,
+        connection,
+        path,
+        format,
+        partitionUnit,
+        partitionSize,
+        parallelLoadQuery,
+        parallelLoadColumn,
+        parallelLoadNum,
+        selectQuery,
+        selectColumn,
+        partitioned,
+        autoloading);
   }
 
   @Override
   public String toString() {
-    return "Source{" +
-            "id=" + id +
-            ", tableId=" + tableId +
-            ", connection=" + connection +
-            ", path='" + path + '\'' +
-            ", format='" + format + '\'' +
-            ", partitionUnit=" + partitionUnit +
-            ", partitionSize=" + partitionSize +
-            ", parallelLoadQuery='" + parallelLoadQuery + '\'' +
-            ", parallelLoadColumn='" + parallelLoadColumn + '\'' +
-            ", parallelLoadNum=" + parallelLoadNum +
-            ", selectQuery='" + selectQuery + '\'' +
-            ", selectColumn='" + selectColumn + '\'' +
-            ", partitioned=" + partitioned +
-            ", autoloading=" + autoloading +
-            '}';
+    return "Source{"
+        + "id="
+        + id
+        + ", tableId="
+        + tableId
+        + ", connection="
+        + connection
+        + ", path='"
+        + path
+        + '\''
+        + ", format='"
+        + format
+        + '\''
+        + ", partitionUnit="
+        + partitionUnit
+        + ", partitionSize="
+        + partitionSize
+        + ", parallelLoadQuery='"
+        + parallelLoadQuery
+        + '\''
+        + ", parallelLoadColumn='"
+        + parallelLoadColumn
+        + '\''
+        + ", parallelLoadNum="
+        + parallelLoadNum
+        + ", selectQuery='"
+        + selectQuery
+        + '\''
+        + ", selectColumn='"
+        + selectColumn
+        + '\''
+        + ", partitioned="
+        + partitioned
+        + ", autoloading="
+        + autoloading
+        + '}';
   }
 
   @Override

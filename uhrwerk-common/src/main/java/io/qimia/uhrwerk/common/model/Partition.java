@@ -2,13 +2,17 @@ package io.qimia.uhrwerk.common.model;
 
 import net.openhft.hashing.LongHashFunction;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
-public class Partition implements Comparable<Partition> {
+public class Partition implements Comparable<Partition>, Serializable {
+
+  private static final long serialVersionUID = 2874825626697147072L;
+
   Long id;
   Long targetId;
   LocalDateTime partitionTs;

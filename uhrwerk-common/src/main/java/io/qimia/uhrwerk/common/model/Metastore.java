@@ -1,8 +1,12 @@
 package io.qimia.uhrwerk.common.model;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Metastore {
+public class Metastore implements Serializable {
+
+  private static final long serialVersionUID = -7850907844323874344L;
+
   private String jdbc_url;
   private String jdbc_driver;
   private String user;
@@ -45,10 +49,10 @@ public class Metastore {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Metastore metastore = (Metastore) o;
-    return Objects.equals(jdbc_url, metastore.jdbc_url) &&
-            Objects.equals(jdbc_driver, metastore.jdbc_driver) &&
-            Objects.equals(user, metastore.user) &&
-            Objects.equals(pass, metastore.pass);
+    return Objects.equals(jdbc_url, metastore.jdbc_url)
+        && Objects.equals(jdbc_driver, metastore.jdbc_driver)
+        && Objects.equals(user, metastore.user)
+        && Objects.equals(pass, metastore.pass);
   }
 
   @Override
@@ -58,11 +62,19 @@ public class Metastore {
 
   @Override
   public String toString() {
-    return "Metastore{" +
-            "jdbc_url='" + jdbc_url + '\'' +
-            ", jdbc_driver='" + jdbc_driver + '\'' +
-            ", user='" + user + '\'' +
-            ", pass='" + pass + '\'' +
-            '}';
+    return "Metastore{"
+        + "jdbc_url='"
+        + jdbc_url
+        + '\''
+        + ", jdbc_driver='"
+        + jdbc_driver
+        + '\''
+        + ", user='"
+        + user
+        + '\''
+        + ", pass='"
+        + pass
+        + '\''
+        + '}';
   }
 }
