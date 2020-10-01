@@ -2,7 +2,10 @@ package io.qimia.uhrwerk.common.metastore.config;
 
 import io.qimia.uhrwerk.common.model.Source;
 
-public class SourceResult {
+import java.io.Serializable;
+
+public class SourceResult implements Serializable {
+    private static final long serialVersionUID = 5997084266031599153L;
     Source newResult;
     Source oldResult;
     boolean success;

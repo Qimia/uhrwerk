@@ -1,6 +1,9 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
-public class PartitionDependencyResult {
+import java.io.Serializable;
+
+public class PartitionDependencyResult implements Serializable {
+    private static final long serialVersionUID = -8972593554921481622L;
     boolean success;
     boolean error;
     String message;

@@ -2,7 +2,10 @@ package io.qimia.uhrwerk.common.metastore.config;
 
 import io.qimia.uhrwerk.common.model.Table;
 
-public class TableResult {
+import java.io.Serializable;
+
+public class TableResult implements Serializable {
+    private static final long serialVersionUID = 2402210215093160756L;
     private Table newResult;
     private Table oldResult;
     private boolean success;

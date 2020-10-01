@@ -2,7 +2,10 @@ package io.qimia.uhrwerk.common.metastore.config;
 
 import io.qimia.uhrwerk.common.model.Partition;
 
-public class PartitionResult {
+import java.io.Serializable;
+
+public class PartitionResult implements Serializable {
+    private static final long serialVersionUID = 7214861452649281329L;
     Partition newResult;
     Partition oldResult;
     boolean success;

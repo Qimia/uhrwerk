@@ -2,9 +2,11 @@ package io.qimia.uhrwerk.common.metastore.config;
 
 import io.qimia.uhrwerk.common.model.Connection;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class ConnectionResult {
+public class ConnectionResult implements Serializable {
+  private static final long serialVersionUID = 3800840086237687091L;
   Connection newConnection;
   Connection oldConnection;
   boolean success;

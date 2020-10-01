@@ -2,7 +2,10 @@ package io.qimia.uhrwerk.common.metastore.config;
 
 import io.qimia.uhrwerk.common.model.Dependency;
 
-public class DependencyStoreResult {
+import java.io.Serializable;
+
+public class DependencyStoreResult implements Serializable {
+    private static final long serialVersionUID = 2456291293896086088L;
     Dependency[] dependenciesSaved;
     boolean success;
     boolean error;

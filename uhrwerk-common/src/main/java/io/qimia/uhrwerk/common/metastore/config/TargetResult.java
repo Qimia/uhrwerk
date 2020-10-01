@@ -2,8 +2,11 @@ package io.qimia.uhrwerk.common.metastore.config;
 
 import io.qimia.uhrwerk.common.model.Target;
 
-public class TargetResult {
+import java.io.Serializable;
 
+public class TargetResult implements Serializable {
+
+    private static final long serialVersionUID = 740323809677539485L;
     Target[] storedTargets;
     boolean success;
     boolean error;
