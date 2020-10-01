@@ -1,9 +1,11 @@
 package io.qimia.uhrwerk.common.metastore.dependency;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
-public class TablePartitionResultSet {
+public class TablePartitionResultSet implements Serializable {
+  private static final long serialVersionUID = -3922367389127277814L;
   LocalDateTime[] resolvedTs;
   LocalDateTime[] processedTs;
   LocalDateTime[] failedTs;

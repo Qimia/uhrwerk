@@ -4,11 +4,13 @@ import io.qimia.uhrwerk.common.model.Connection;
 import io.qimia.uhrwerk.common.model.Dependency;
 import io.qimia.uhrwerk.common.model.Partition;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class DependencyResult {
+public class DependencyResult implements Serializable {
+  private static final long serialVersionUID = -1009786291331446408L;
   LocalDateTime partitionTs;
   boolean success;
   Dependency dependency;
