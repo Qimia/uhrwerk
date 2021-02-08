@@ -11,7 +11,7 @@ sources:
     format: "jdbc"
     version: "1.0"
     select:
-      query: "SELECT * FROM <path> WHERE date >= '<lower_bound>' and date < '<upper_bound>'"
+      query: "SELECT * FROM <path>"
       column: "FIXME"
 
 targets:

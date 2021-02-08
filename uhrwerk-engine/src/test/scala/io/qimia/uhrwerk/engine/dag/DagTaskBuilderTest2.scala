@@ -50,7 +50,7 @@ class DagTaskBuilderTest2 extends AnyFlatSpec with BeforeAndAfterEach {
     TaskOutput(in.loadedInputFrames.values.head)
   }
 
-  "Building a dag from a table" should "result in only those dependencies needed by a table" in {
+  "Building a dag taskmap from a table" should "result in only those dependencies' tasks needed for that table" in {
     val env = new Environment(metaStore, null)
     env.addConnectionFile("EnvTableConn1.yml")
     List("EnvTableTest1.yml", "EnvTableTest2.yml", "EnvTableTest3.yml", "EnvTableTest4.yml").foreach(
@@ -103,14 +103,42 @@ class DagTaskBuilderTest2 extends AnyFlatSpec with BeforeAndAfterEach {
     )
     doubleUpstreamKeys.foreach(k => {
       val task = windowedTaskmap(k)
-      assert(task.upstreamDependencies.length == 2)
+      assert(task.upstreamDependencies.size == 2)
       assert(task.partitions.length == 1)
       assert(task.missingDependencies.isEmpty)
     })
     val singleUpstreamKey = DT2Key(TableIdent("test", "test_db", "tab1", "1.0"), LocalDateTime.of(2018, 6, 20, 8, 0))
     val singleUpTask      = windowedTaskmap(singleUpstreamKey)
-    assert(singleUpTask.upstreamDependencies.length == 1)
+    assert(singleUpTask.upstreamDependencies.size == 1)
     assert(singleUpTask.partitions.length == 1)
     assert(singleUpTask.missingDependencies.isEmpty)
+  }
+
+  "Building a dag taskmap for a table with a partitionless dependency" should
+    "generate a deduplicated taskmap" in {
+    val env = new Environment(metaStore, null)
+    env.addConnectionFile("EnvTableConn1.yml")
+    val wrappers =
+      List("EnvTableTest1.yml", "EnvTableTest5.yml", "EnvTableTest6.yml").map(env.addTableFile(_, identityUserFunc))
+    val startTs = LocalDateTime.of(2018, 6, 20, 12, 0)
+    val endTs = LocalDateTime.of(2018, 6, 21, 0, 0)
+
+    val builder = new DagTaskBuilder2(env)
+    val taskmap = builder.buildTaskListFromTable(wrappers.last.get, startTs, endTs)
+    assert(taskmap.size === 1 + (2 * 12))
+  }
+
+  "An environment with unpartitioned target table" should "generate a taskmap and with no duplicates" in {
+    val env = new Environment(metaStore, null)
+    env.addConnectionFile("EnvTableConn1.yml")
+    val wrappers =
+      List("EnvTableTest1.yml", "EnvTableTest5.yml", "EnvTableTest7.yml").map(env.addTableFile(_, identityUserFunc))
+    val startTs = LocalDateTime.of(2018, 6, 20, 12, 0)
+    val endTs = LocalDateTime.of(2018, 6, 21, 0, 0)
+
+    val builder = new DagTaskBuilder2(env)
+    val needed = builder.buildTaskListFromTable(wrappers.last.get, startTs, endTs)
+
+    assert(needed.size == 2)
   }
 }

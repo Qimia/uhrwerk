@@ -16,7 +16,7 @@ class DT2(
     table: TableWrapper,
     parts: mutable.ListBuffer[LocalDateTime],
     missingDeps: mutable.Set[DT2Key],
-    upstreamDeps: mutable.ListBuffer[DT2Key]
+    upstreamDeps: mutable.Set[DT2Key]
 ) {
   val tableWrapper = table
   val partitions = parts
