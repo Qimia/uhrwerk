@@ -1,0 +1,25 @@
+area: "test"
+vertical: "test_db"
+table: "tab8"
+version: "1.0"
+parallelism: 1
+max_bulk_size: 4
+partition:
+  unit: "minutes"
+  size: 15
+
+sources:
+  - connection_name: "test1"
+    path: "differenttable"
+    format: "jdbc"
+    version: "1.0"
+    partition:
+      unit: "minutes"
+      size: 15
+    select:
+      query: "SELECT * FROM <path> WHERE date >= '<lower_bound>' and date < '<upper_bound>'"
+      column: "date"
+
+targets:
+  - connection_name: "test2"
+    format: "parquet"
