@@ -258,6 +258,8 @@ class DagTaskBuilderTest2 extends AnyFlatSpec with BeforeAndAfterEach {
         assert(task1.missingDependencies.isEmpty)
         // Every 4 partitions only end up in a single target table partition
         assert(task1.upstreamDependencies.size === 1)
+        val upstreamTask = optimizedTaskmap(task1.upstreamDependencies.head)
+        assert(upstreamTask.partitions.size === 3)
       })
     val diffTask1 = optimizedTaskmap(DT2Key(aggregateDepIdent, LocalDateTime.of(2010, 4, 10, 7, 45)))
     val diffTask2 = optimizedTaskmap(DT2Key(aggregateDepIdent, LocalDateTime.of(2010, 4, 10, 8, 0)))
