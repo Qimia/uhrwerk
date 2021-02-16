@@ -66,25 +66,28 @@ object DagTaskDispatcher {
     val task = allTasks(taskKey)
 
     // For this table, schedule all its partitions to run in  a chain.
-    val parentFutureResult = parentFuture.map { res =>
+    val parentFutureResult = parentFuture.map { ancestorsSuccess =>
       {
         recursiveRunLock.synchronized({
           val taskAlreadyScheduled = taskScheduledOrStarted contains taskKey
-          val thereAreFailedTasks = false
-          val state               = (task.missingDependencies.isEmpty, res, taskAlreadyScheduled, thereAreFailedTasks)
-          val missDeps = task.missingDependencies.map(_.ident.asPath).toList.mkString(";")
+          val thereAreFailedTasks  = false
+          val state                = (task.missingDependencies.isEmpty, ancestorsSuccess, taskAlreadyScheduled, thereAreFailedTasks)
+          val missDeps             = task.missingDependencies.map(_.ident.asPath).toList.mkString("; ")
           state match {
             case (true, true, false, false) => {
-              logger.info("The task is ready to run.")
-              logger.debug(f"We mark the task ${taskKey.ident.asPath} as running.")
-              taskScheduledOrStarted += taskKey}
+              logger.info(f"The task ${taskKey.ident.asPath} is ready to run. We mark it as running.")
+              taskScheduledOrStarted += taskKey
+            }
             case (false, _, _, _) =>
-              logger.info(s"Task $taskKey won't be scheduled yet as it has missing dependencies: $missDeps.")
+              logger.info(
+                s"Task ${taskKey.ident.asPath} won't be scheduled yet as it has missing dependencies: '$missDeps'.")
             case (_, false, _, _) =>
-              logger.info(s"Task $taskKey won't be started as one of the predecessor dependencies has failed.")
+              logger.info(
+                s"Task ${taskKey.ident.asPath} won't be started as one of its ancestor dependencies has failed.")
             case (_, _, true, _) =>
-              logger.error(s"Task $taskKey won't be started as the task is already triggered " +
-                s"by some other task. This shouldn't have happened.")
+              logger.error(
+                s"Task ${taskKey.ident.asPath} won't be started as the task is already triggered " +
+                  s"by some other task. This shouldn't have happened.")
             case x =>
               logger.error("This should be caught by something else"); logger.info(x);
           }
@@ -92,37 +95,38 @@ object DagTaskDispatcher {
         })
       }
     }
-    val tableFinishedFuture = parentFutureResult.map{
-      case (true, true, false, false) => {
-        logger.info(s"Running a partition for $taskKey")
-        val subTasksToRun = task.tableWrapper.getTaskRunners(task.partitions.toArray)
-        val taskResult = subTasksToRun.forall(_.apply())
-        logger.info(s"Ran partitions for $taskKey, with success $taskResult")
-        (true, true, false, !taskResult)
+    val tableFinishedFuture = parentFutureResult
+      .map {
+        case (true, true, false, false) => {
+          logger.info(s"${taskKey.ident.asPath}: a partition task failed")
+          val subTasksToRun = task.tableWrapper.getTaskRunners(task.partitions.toArray)
+          val taskResult    = subTasksToRun.forall(_.apply())
+          val taskResultStr = if (taskResult) "success" else "failure"
+          logger.info(s"${taskKey.ident.asPath}: $taskResultStr")
+          (true, true, false, !taskResult)
+        }
+        case (missingDependency, previousTaskFailed, taskAlreadyScheduled, true) => {
+          logger.error(f"${taskKey.ident.asPath}: a task failed as one of its other partitions failed.")
+          (missingDependency, previousTaskFailed, taskAlreadyScheduled, true)
+        }
+        case x => x
       }
-      case (missingDependency, previousTaskFailed, taskAlreadyScheduled, true) => {
-        logger.error(f"Skipping the partition for $taskKey as one of its other partitions failed.")
-        (missingDependency, previousTaskFailed, taskAlreadyScheduled, true)
-      }
-      case x => x
-    }.map {
-      case (true, true, false, false) => {
-        // Task finished successfully
-        recursiveRunLock.synchronized({
-          logger.info(f"The task with key: $taskKey is finished.")
-          // Inform the upstream dependencies that this task is done
-          task.upstreamDependencies.foreach(upstreamTaskKey => {
-            val upstreamTask = allTasks(upstreamTaskKey)
-            logger.warn(s"Removing the dependency ${taskKey.ident.asPath} from ${upstreamTaskKey.ident.asPath}")
-            upstreamTask.missingDependencies.remove(taskKey)
+      .map {
+        case (true, true, false, false) => {
+          // Task finished successfully
+          recursiveRunLock.synchronized({
+            logger.info(f"${taskKey.ident.asPath} is finished.")
+            // Inform the upstream dependencies that this task is done
+            task.upstreamDependencies.foreach(upstreamTaskKey => {
+              val upstreamTask = allTasks(upstreamTaskKey)
+              logger.warn(s"Removing the dependency ${taskKey.ident.asPath} from ${upstreamTaskKey.ident.asPath}")
+              upstreamTask.missingDependencies.remove(taskKey)
+            })
           })
-        })
-        true
+          true
+        }
+        case _ => false
       }
-      case x => {
-        false
-      }
-    }
 
     val upstreamFutures = task.upstreamDependencies.toList.flatMap { nextTaskKey =>
       triggerTasksRecursively(
@@ -139,6 +143,7 @@ object DagTaskDispatcher {
   /**
     * Starts the recursive function @method triggerTasksRecursively
     * Starting from the tasks with no missing dependencies, all will be processed.
+    * Will wait until all the futures are completed.
     * @param tasks List of all tasks in the complete DAG
     * @param threads
     */
@@ -153,7 +158,6 @@ object DagTaskDispatcher {
         triggerTasksRecursively(executionContext, Future {
           true
         }, readyTask, tasks, mutable.Set.empty))
-    //Thread.sleep(10000000)
     futures.foreach(Await.result(_, Duration.Inf))
   }
 
