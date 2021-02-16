@@ -70,15 +70,16 @@ object DagTaskDispatcher {
       {
         recursiveRunLock.synchronized({
           val taskAlreadyScheduled = taskScheduledOrStarted contains taskKey
-          if (!taskAlreadyScheduled) {
-            taskScheduledOrStarted += taskKey
-          }
           val thereAreFailedTasks = false
           val state               = (task.missingDependencies.isEmpty, res, taskAlreadyScheduled, thereAreFailedTasks)
+          val missDeps = task.missingDependencies.map(_.ident.asPath).toList.mkString(";")
           state match {
-            case (true, true, false, false) => "nothing"
+            case (true, true, false, false) => {
+              logger.info("The task is ready to run.")
+              logger.debug(f"We mark the task ${taskKey.ident.asPath} as running.")
+              taskScheduledOrStarted += taskKey}
             case (false, _, _, _) =>
-              logger.info(s"Task $taskKey won't be scheduled yet as it has missing dependencies.")
+              logger.info(s"Task $taskKey won't be scheduled yet as it has missing dependencies: $missDeps.")
             case (_, false, _, _) =>
               logger.info(s"Task $taskKey won't be started as one of the predecessor dependencies has failed.")
             case (_, _, true, _) =>
@@ -103,22 +104,22 @@ object DagTaskDispatcher {
         logger.error(f"Skipping the partition for $taskKey as one of its other partitions failed.")
         (missingDependency, previousTaskFailed, taskAlreadyScheduled, true)
       }
-      case x => logger.warn("WTF???"); x
+      case x => x
     }.map {
       case (true, true, false, false) => {
         // Task finished successfully
         recursiveRunLock.synchronized({
-          logger.info(f"The task with key: $taskKey is finished")
+          logger.info(f"The task with key: $taskKey is finished.")
           // Inform the upstream dependencies that this task is done
           task.upstreamDependencies.foreach(upstreamTaskKey => {
             val upstreamTask = allTasks(upstreamTaskKey)
+            logger.warn(s"Removing the dependency ${taskKey.ident.asPath} from ${upstreamTaskKey.ident.asPath}")
             upstreamTask.missingDependencies.remove(taskKey)
           })
         })
         true
       }
       case x => {
-        logger.info("Something's fucky")
         false
       }
     }

@@ -13,7 +13,9 @@ object Environment {
 
   sealed abstract class Ident
 
-  case class TableIdent(area: String, vertical: String, name: String, version: String) extends Ident
+  case class TableIdent(area: String, vertical: String, name: String, version: String) extends Ident{
+    def asPath = f"$area.$vertical.$name.$version"
+  }
 
   case class SourceIdent(connection: String, path: String, format: String) extends Ident
 

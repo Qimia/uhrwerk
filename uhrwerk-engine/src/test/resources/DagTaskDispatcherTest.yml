@@ -34,6 +34,29 @@ tables:
     targets:
       - connection_name: test2
         format: "parquet"
+  - area: loading
+    vertical: dtd
+    table: table_s2
+    version: "1.0"
+    parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 1
+    partition:
+      unit: "days"
+      size: 1
+    sources:
+      - connection_name: test1
+        path: staging_source_table  # On DB
+        format: "jdbc"
+        version: 1
+        partition:
+          unit: "days"
+          size: 1
+        select:
+          query: "SELECT 1 as id, '<lower_bound>' as created_at, '<lower_bound>' as lower_bound, '<upper_bound>' as upper_bound, '<path>' as path"
+          column: "created_at"
+    targets:
+      - connection_name: test2
+        format: "parquet"
 
   - area: loading
     vertical: dtd
@@ -203,47 +226,7 @@ tables:
       - connection_name: test2
         format: "parquet"
 
-  - area: loading
-    vertical: dtd
-    table: table_1i
-    version: "1.0"
-    parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
-    max_bulk_size: 4
-    partition:
-      unit: "days"
-      size: 1
-    dependencies:
-      - area: loading
-        vertical: dtd
-        table: table_s  # On DB
-        format: "parquet"
-        version: "1.0"
-        transform:
-          type: "identity"
-    targets:
-      - connection_name: test2
-        format: "parquet"
 
-  - area: loading
-    vertical: dtd
-    table: table_2a
-    version: "1.0"
-    parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
-    max_bulk_size: 4
-    partition:
-      unit: "days"
-      size: 1
-    dependencies:
-      - area: loading
-        vertical: dtd
-        table: table_1a  # On DB
-        format: "parquet"
-        version: "1.0"
-        transform:
-          type: "identity"
-    targets:
-      - connection_name: test2
-        format: "parquet"
 
   - area: loading
     vertical: dtd
@@ -286,6 +269,76 @@ tables:
       - area: loading
         vertical: dtd
         table: table_1b  # On DB
+        format: "parquet"
+        version: "1.0"
+        transform:
+          type: "identity"
+    targets:
+      - connection_name: test2
+        format: "parquet"
+
+  - area: loading
+    vertical: dtd
+    table: table_2c
+    version: "1.0"
+    parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 4
+    partition:
+      unit: "days"
+      size: 1
+    dependencies:
+      - area: loading
+        vertical: dtd
+        table: table_1a  # On DB
+        format: "parquet"
+        version: "1.0"
+        transform:
+          type: "identity"
+      - area: loading
+        vertical: dtd
+        table: table_1b  # On DB
+        format: "parquet"
+        version: "1.0"
+        transform:
+          type: "identity"
+      - area: loading
+        vertical: dtd
+        table: table_1c  # On DB
+        format: "parquet"
+        version: "1.0"
+        transform:
+          type: "identity"
+      - area: loading
+        vertical: dtd
+        table: table_1d  # On DB
+        format: "parquet"
+        version: "1.0"
+        transform:
+          type: "identity"
+      - area: loading
+        vertical: dtd
+        table: table_1e  # On DB
+        format: "parquet"
+        version: "1.0"
+        transform:
+          type: "identity"
+      - area: loading
+        vertical: dtd
+        table: table_1f  # On DB
+        format: "parquet"
+        version: "1.0"
+        transform:
+          type: "identity"
+      - area: loading
+        vertical: dtd
+        table: table_1g  # On DB
+        format: "parquet"
+        version: "1.0"
+        transform:
+          type: "identity"
+      - area: loading
+        vertical: dtd
+        table: table_1h  # On DB
         format: "parquet"
         version: "1.0"
         transform:
@@ -342,6 +395,41 @@ tables:
       - area: loading
         vertical: dtd
         table: table_2a  # On DB
+        format: "parquet"
+        version: "1.0"
+        transform:
+          type: "identity"
+    targets:
+      - connection_name: test2
+        format: "parquet"
+
+  - area: loading
+    vertical: dtd
+    table: table_4a
+    version: "1.0"
+    parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 4
+    partition:
+      unit: "days"
+      size: 1
+    dependencies:
+      - area: loading
+        vertical: dtd
+        table: table_3a  # On DB
+        format: "parquet"
+        version: "1.0"
+        transform:
+          type: "identity"
+      - area: loading
+        vertical: dtd
+        table: table_3b  # On DB
+        format: "parquet"
+        version: "1.0"
+        transform:
+          type: "identity"
+      - area: loading
+        vertical: dtd
+        table: table_s2  # On DB
         format: "parquet"
         version: "1.0"
         transform:
