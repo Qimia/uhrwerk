@@ -219,7 +219,7 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
 
     val groups: List[Array[TablePartitionResult]] =
       DependencyHelper.createTablePartitionResultGroups(dependencyRes, tableDuration, table.getMaxBulkSize)
-    val tasks: immutable.List[() => Boolean] = groups.map(partitionGroup => {
+    val tasks: List[() => Boolean] = groups.map(partitionGroup => {
       val localGroupTs: Array[LocalDateTime] = partitionGroup.map(_.getPartitionTs)
       val bulkInput: List[BulkDependencyResult] =
         DependencyHelper.extractBulkDependencyResult(partitionGroup)

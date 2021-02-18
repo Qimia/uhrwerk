@@ -12,11 +12,11 @@ import scala.collection.mutable
   * @param missingDependencies References to tasks which need to be completed before this can be done
   * @param upstreamDependencies After current task, update the dependencies of these other tasks
   */
-class DT2(
-    table: TableWrapper,
-    parts: mutable.ListBuffer[LocalDateTime],
-    missingDeps: mutable.Set[DT2Key],
-    upstreamDeps: mutable.Set[DT2Key]
+class DagTask2(
+           table: TableWrapper,
+           parts: mutable.ListBuffer[LocalDateTime],
+           missingDeps: mutable.Set[DagTask2Key],
+           upstreamDeps: mutable.Set[DagTask2Key]
 ) {
   val tableWrapper = table
   val partitions = parts

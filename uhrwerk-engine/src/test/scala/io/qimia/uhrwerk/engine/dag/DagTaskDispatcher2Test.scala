@@ -17,7 +17,7 @@ import org.scalatest.matchers.should
 import scala.collection.mutable.ListBuffer
 
 
-class DagTaskDispatcherTest extends AnyFlatSpec with BeforeAndAfterEach {
+class DagTaskDispatcher2Test extends AnyFlatSpec with BeforeAndAfterEach {
 
   val sparkSess = SparkSession
     .builder()
@@ -150,7 +150,7 @@ class DagTaskDispatcherTest extends AnyFlatSpec with BeforeAndAfterEach {
     val endTs   = LocalDateTime.of(2018, 6, 21, 0, 0)
     val builder = new DagTaskBuilder2(env)
     val needed  = builder.buildTaskListFromTable(wrap1, startTs, endTs)
-    DagTaskDispatcher.runTasksParallelWithFullDAGGeneration(needed, 2)
+    DagTaskDispatcher2.runTasks(needed, 2)
     val expectedTasks = (
       "table_4a"::
       "table_3a" ::
@@ -162,7 +162,8 @@ class DagTaskDispatcherTest extends AnyFlatSpec with BeforeAndAfterEach {
       "table_1a" ::
       "table_2b" ::
       "table_1b" ::
-      Nil)
+      Nil
+      )
     tasksRan.sortBy(x=>x) should contain theSameElementsAs expectedTasks.sortBy(x=>x)
   }
 
@@ -174,7 +175,7 @@ class DagTaskDispatcherTest extends AnyFlatSpec with BeforeAndAfterEach {
     val endTs   = LocalDateTime.of(2018, 6, 21, 0, 0)
     val builder = new DagTaskBuilder2(env)
     val needed  = builder.buildTaskListFromTable(wrap1, startTs, endTs)
-    DagTaskDispatcher.runTasksParallelWithFullDAGGeneration(needed, 2)
+    DagTaskDispatcher2.runTasks(needed, 2)
     val expectedSuccess = (
       "table_s"::
         "table_1h" ::
@@ -198,7 +199,7 @@ class DagTaskDispatcherTest extends AnyFlatSpec with BeforeAndAfterEach {
     val endTs = LocalDateTime.of(2018, 6, 21, 0, 0)
     val builder = new DagTaskBuilder2(env)
     val needed = builder.buildTaskListFromTable(wrap1, startTs, endTs)
-    DagTaskDispatcher.runTasksParallelWithFullDAGGeneration(needed, 20)
+    DagTaskDispatcher2.runTasks(needed, 20)
 
 
     val maxIndexOfTaskStart = taskLogs

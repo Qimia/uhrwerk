@@ -19,7 +19,7 @@ object DagTaskBuilder2 {
    * @param tasks List of DagTasks
    * @return A single merged DagTask
    */
-  def mergeDagTask(tasks: List[DT2]): DT2 = {
+  def mergeDagTask(tasks: List[DagTask2]): DagTask2 = {
     val endTask = tasks.head
     tasks.tail.foreach(t => {
       endTask.missingDependencies ++= t.missingDependencies
@@ -39,12 +39,12 @@ object DagTaskBuilder2 {
    * @param tasks A list of key-value pairs that belong to this single table
    * @return A list of key-value pairs which have been bulk-optimized
    */
-  def bulkOptimizeTable(tableWrapper: TableWrapper, tasks: List[(DT2Key, DT2)]): List[(DT2Key, DT2)] = {
-    val sortedList = tasks.sortWith((a: (DT2Key, DT2), b: (DT2Key, DT2)) => a._1.partition.isBefore(b._1.partition))
+  def bulkOptimizeTable(tableWrapper: TableWrapper, tasks: List[(DagTask2Key, DagTask2)]): List[(DagTask2Key, DagTask2)] = {
+    val sortedList = tasks.sortWith((a: (DagTask2Key, DagTask2), b: (DagTask2Key, DagTask2)) => a._1.partition.isBefore(b._1.partition))
     val bulkTimeSplits = TimeHelper.groupSequentialIncreasing(sortedList.map(_._1.partition),
                                                               tableWrapper.tableDuration,
                                                               tableWrapper.wrappedTable.getMaxBulkSize)
-    val res: mutable.ListBuffer[(DT2Key, DT2)] = new mutable.ListBuffer
+    val res: mutable.ListBuffer[(DagTask2Key, DagTask2)] = new mutable.ListBuffer
     var leftTableTasks = sortedList
     bulkTimeSplits.foreach(splitNum => {
       val (bulkGroup, rest) = leftTableTasks.splitAt(splitNum)
@@ -62,9 +62,9 @@ object DagTaskBuilder2 {
    * @param taskmap an Dag with only single-partition tasks
    * @return TaskMap with bulk optimizations
    */
-  def bulkOptimizeTaskmap(taskmap: Map[DT2Key, DT2]): Map[DT2Key, DT2] = {
+  def bulkOptimizeTaskmap(taskmap: Map[DagTask2Key, DagTask2]): Map[DagTask2Key, DagTask2] = {
     val tableGroups = taskmap.toList
-      .groupBy((tup: (DT2Key, DT2)) => Environment.getTableIdent(tup._2.tableWrapper.wrappedTable))
+      .groupBy((tup: (DagTask2Key, DagTask2)) => Environment.getTableIdent(tup._2.tableWrapper.wrappedTable))
       .values
 
     tableGroups
@@ -87,12 +87,12 @@ object DagTaskBuilder2 {
    * @param taskmapB a taskmap with a dag for a different target table
    * @return combined Map
    */
-  def mergeTaskLists(taskmapA: Map[DT2Key, DT2], taskmapB: Map[DT2Key, DT2]): Map[DT2Key, DT2] = {
+  def mergeTaskLists(taskmapA: Map[DagTask2Key, DagTask2], taskmapB: Map[DagTask2Key, DagTask2]): Map[DagTask2Key, DagTask2] = {
     val unpartitionedTimeA = taskmapA.values.filterNot(task => task.tableWrapper.wrappedTable.isPartitioned).head.partitions.head
     val BParts = taskmapB.groupBy(tup => taskmapA.contains(tup._1))
 
     // tasks which are in both
-    BParts.filter(tup => tup._1).head._2.foreach((kv: (DT2Key, DT2)) => {
+    BParts.filter(tup => tup._1).head._2.foreach((kv: (DagTask2Key, DagTask2)) => {
       val taskA = taskmapA(kv._1)
       assert(taskA.partitions.size == 1)
       assert(kv._2.partitions.size == 1)
@@ -131,12 +131,12 @@ class DagTaskBuilder2(environment: Environment) {
     * @param endTs    exclusive end timestamp of last partition
     * @return List of TableWrappers and when they need to run.
     */
-  def buildTaskListFromTable(outTable: TableWrapper, startTs: LocalDateTime, endTs: LocalDateTime): Map[DT2Key, DT2] = {
+  def buildTaskListFromTable(outTable: TableWrapper, startTs: LocalDateTime, endTs: LocalDateTime): Map[DagTask2Key, DagTask2] = {
     val callTime = LocalDateTime.now()
 
-    def recursiveBuild(targetTaskKey: DT2Key,
-                       upstreamTask: Option[DT2Key],
-                       mapState: Map[DT2Key, DT2]): Map[DT2Key, DT2] = {
+    def recursiveBuild(targetTaskKey: DagTask2Key,
+                       upstreamTask: Option[DagTask2Key],
+                       mapState: Map[DagTask2Key, DagTask2]): Map[DagTask2Key, DagTask2] = {
 
       // first start with adding current task to the map (or update existing task)
       if (mapState.contains(targetTaskKey)) {
@@ -147,12 +147,12 @@ class DagTaskBuilder2(environment: Environment) {
         mapState
       } else {
         val wrap               = environment.getTable(targetTaskKey.ident).get
-        val upstreamDependants = new mutable.HashSet[DT2Key]
+        val upstreamDependants = new mutable.HashSet[DagTask2Key]
         if (upstreamTask.isDefined) {
           upstreamDependants.add(upstreamTask.get)
         }
         // TODO Figure out what dependencies this target table needs
-        val missingDeps: mutable.Set[DT2Key] = tableCleaner(wrap.wrappedTable).getDependencies
+        val missingDeps: mutable.Set[DagTask2Key] = tableCleaner(wrap.wrappedTable).getDependencies
           .map(d => {
             val ident       = TableIdent(d.getArea, d.getVertical, d.getTableName, d.getVersion)
             val targetTimes = targetTaskKey.partition :: Nil
@@ -164,16 +164,16 @@ class DagTaskBuilder2(environment: Environment) {
                 TimeTools.convertToSmallerBatchList(targetTimes, wrap.tableDuration, d.getTransformPartitionSize)
               case PartitionTransformType.NONE => callTime :: Nil // None's can only run at current time
             }
-            times.map(DT2Key(ident, _))
+            times.map(DagTask2Key(ident, _))
           })
-          .foldLeft(new mutable.HashSet[DT2Key])((s, keys) => s ++ keys)
-        val newDT2     = new DT2(wrap, ListBuffer(targetTaskKey.partition), missingDeps, upstreamDependants)
+          .foldLeft(new mutable.HashSet[DagTask2Key])((s, keys) => s ++ keys)
+        val newDT2     = new DagTask2(wrap, ListBuffer(targetTaskKey.partition), missingDeps, upstreamDependants)
         val updatedMap = mapState + (targetTaskKey -> newDT2)
 
         // Let's do this for every
         if (missingDeps.nonEmpty) {
           missingDeps
-            .map((k: DT2Key) => (inMap: Map[DT2Key, DT2]) => recursiveBuild(k, Option(targetTaskKey), inMap))
+            .map((k: DagTask2Key) => (inMap: Map[DagTask2Key, DagTask2]) => recursiveBuild(k, Option(targetTaskKey), inMap))
             .reduce(_ andThen _)(updatedMap)
         } else {
           updatedMap
@@ -183,9 +183,9 @@ class DagTaskBuilder2(environment: Environment) {
 
     // If it's unpartitioned only run for the calltime
     if (!outTable.wrappedTable.isPartitioned) {
-      return recursiveBuild(DT2Key(getTableIdent(outTable.wrappedTable), callTime),
+      return recursiveBuild(DagTask2Key(getTableIdent(outTable.wrappedTable), callTime),
                             Option.empty,
-                            new immutable.HashMap[DT2Key, DT2])
+                            new immutable.HashMap[DagTask2Key, DagTask2])
     }
 
     val partitionTs = TimeTools
@@ -198,10 +198,10 @@ class DagTaskBuilder2(environment: Environment) {
 
     // We skip the bulking step until later
     val partitionToDoTs = partitionTs.filter(p => !processedPartitions.contains(p))
-    val currentKeys     = partitionToDoTs.map(t => DT2Key(Environment.getTableIdent(outTable.wrappedTable), t))
-    val emptyMap        = new immutable.HashMap[DT2Key, DT2]
+    val currentKeys     = partitionToDoTs.map(t => DagTask2Key(Environment.getTableIdent(outTable.wrappedTable), t))
+    val emptyMap        = new immutable.HashMap[DagTask2Key, DagTask2]
     currentKeys
-      .map((k: DT2Key) => (inMap: Map[DT2Key, DT2]) => recursiveBuild(k, Option.empty, inMap))
+      .map((k: DagTask2Key) => (inMap: Map[DagTask2Key, DagTask2]) => recursiveBuild(k, Option.empty, inMap))
       .reduce(_ andThen _)(emptyMap)
   }
 }
