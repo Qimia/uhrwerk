@@ -10,6 +10,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 
+
 object DagTaskDispatcher {
   private val logger: Logger = Logger.getLogger(this.getClass)
 
@@ -48,6 +49,7 @@ object DagTaskDispatcher {
     */
   private val recursiveRunLock = ""
 
+
   /**
     *
     * @param executionContext
@@ -58,16 +60,16 @@ object DagTaskDispatcher {
     * @return
     */
   def triggerTasksRecursively(implicit executionContext: ExecutionContextExecutor,
-                              parentFuture: Future[Boolean],
+                              parentFuture: Future[(String, Boolean)],
                               taskKey: DT2Key,
                               allTasks: Map[DT2Key, DT2],
-                              taskScheduledOrStarted: mutable.Set[DT2Key]): List[Future[Boolean]] = {
+                              taskScheduledOrStarted: mutable.Set[DT2Key]): List[Future[(String, Boolean)]] = {
     logger.info(s"Recursing $taskKey")
     val task = allTasks(taskKey)
 
     // For this table, schedule all its partitions to run in  a chain.
-    val parentFutureResult = parentFuture.map { ancestorsSuccess =>
-      {
+    val parentFutureResult = parentFuture.map { case (ancestorName, ancestorsSuccess) =>
+      { // check if the task is in runnable state
         recursiveRunLock.synchronized({
           val taskAlreadyScheduled = taskScheduledOrStarted contains taskKey
           val thereAreFailedTasks  = false
@@ -78,12 +80,14 @@ object DagTaskDispatcher {
               logger.info(f"The task ${taskKey.ident.asPath} is ready to run. We mark it as running.")
               taskScheduledOrStarted += taskKey
             }
-            case (false, _, _, _) =>
-              logger.info(
-                s"Task ${taskKey.ident.asPath} won't be scheduled yet as it has missing dependencies: '$missDeps'.")
             case (_, false, _, _) =>
-              logger.info(
-                s"Task ${taskKey.ident.asPath} won't be started as one of its ancestor dependencies has failed.")
+              logger.warn(
+                s"Task ${taskKey.ident.asPath} won't be started yet as its ancestor $ancestorName's dependencies have failed" +
+                  s" or one of its ancestors has beeen skipped for missing dependencies. We'll try again" +
+                  s" automatically once the dependencies are fulfilled.")
+            case (false, _, _, _) =>
+              logger.debug(
+                s"Task ${taskKey.ident.asPath} won't be scheduled yet as it has missing dependencies: '$missDeps'.")
             case (_, _, true, _) =>
               logger.error(
                 s"Task ${taskKey.ident.asPath} won't be started as the task is already triggered " +
@@ -96,23 +100,27 @@ object DagTaskDispatcher {
       }
     }
     val tableFinishedFuture = parentFutureResult
-      .map {
+      .flatMap {
+        // If the state condition is fulfilled, run the task
         case (true, true, false, false) => {
-          logger.info(s"${taskKey.ident.asPath}: a partition task failed")
+          logger.info(s"${taskKey.ident.asPath}: starting to run bulk(s in parallel).")
           val subTasksToRun = task.tableWrapper.getTaskRunners(task.partitions.toArray)
-          val taskResult    = subTasksToRun.forall(_.apply())
-          val taskResultStr = if (taskResult) "success" else "failure"
-          logger.info(s"${taskKey.ident.asPath}: $taskResultStr")
-          (true, true, false, !taskResult)
+          val taskResult    = Future.sequence(subTasksToRun.map(subTask =>
+            Future{(true, true, false, false, subTask.apply())}))
+          //val taskResultStr = if (taskResult) "success" else "failure"
+          //logger.info(s"${taskKey.ident.asPath}: $taskResultStr")
+          taskResult
         }
         case (missingDependency, previousTaskFailed, taskAlreadyScheduled, true) => {
           logger.error(f"${taskKey.ident.asPath}: a task failed as one of its other partitions failed.")
-          (missingDependency, previousTaskFailed, taskAlreadyScheduled, true)
+          Future{((missingDependency, previousTaskFailed, taskAlreadyScheduled, true, true)::Nil)}
         }
-        case x => x
+        case x => Future{((x._1, x._2, x._3, x._4, true)::Nil)}
       }
-      .map {
-        case (true, true, false, false) => {
+      .map(x => (x.head._1, x.head._2, x.head._3, x.head._4, x.map(_._5)))
+      .map(x=>x.copy(_5 = x._5.count(!_))) // Count the number of failures
+      .map{
+        case (true, true, false, false, 0) =>
           // Task finished successfully
           recursiveRunLock.synchronized({
             logger.info(f"${taskKey.ident.asPath} is finished.")
@@ -123,9 +131,13 @@ object DagTaskDispatcher {
               upstreamTask.missingDependencies.remove(taskKey)
             })
           })
-          true
-        }
-        case _ => false
+          (taskKey.ident.asPath, true)
+        case (true, true, false, false, failureCount) =>
+          logger.warn(f"${taskKey.ident.asPath}: $failureCount tasks have failed.")
+          (taskKey.ident.asPath, false)
+        case (false, true, false, false, _) =>
+          (taskKey.ident.asPath, true)
+        case _ => (taskKey.ident.asPath, false)
       }
 
     val upstreamFutures = task.upstreamDependencies.toList.flatMap { nextTaskKey =>
@@ -156,16 +168,16 @@ object DagTaskDispatcher {
       .toList
       .flatMap(readyTask =>
         triggerTasksRecursively(executionContext, Future {
-          true
+          ("root", true)
         }, readyTask, tasks, mutable.Set.empty))
     futures.foreach(Await.result(_, Duration.Inf))
   }
 
   /**
-    * Execute the taskqueue in parallel
-    *
-    * @param tasks a list of tables that need to be processed and their partition-times
-    */
+   * Execute the taskqueue in parallel
+   *
+   * @param tasks a list of tables that need to be processed and their partition-times
+   */
   def runTasksParallel(tasks: Seq[DagTask], threads: Int): Unit = {
     val executor                                            = getExecutor(threads)
     implicit val executionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor(executor)
