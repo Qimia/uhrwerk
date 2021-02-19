@@ -282,6 +282,9 @@ public class YamlConfigReader {
 
   public InputStream getInputStream(String file) {
     InputStream stream;
+    if (file.contains("s3:")) {
+      return io.qimia.uhrwerk.config.S3InputStream.getS3InputStream(file);
+    }
     stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
     if (stream == null) {
       try {

@@ -45,6 +45,11 @@ class YamlConfigReaderTest {
 
   }
 
+//  @Test
+//  public void bsTest() {
+//    Dag dag = (new YamlConfigReader()).readDag("s3://bla/config/dag-config.yml");
+//  }
+
   @Test
   public void readDagTest() {
 
