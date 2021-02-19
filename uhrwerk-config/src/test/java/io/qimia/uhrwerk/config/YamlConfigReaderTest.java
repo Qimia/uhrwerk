@@ -2,6 +2,7 @@ package io.qimia.uhrwerk.config;
 
 import io.qimia.uhrwerk.common.model.*;
 import org.apache.log4j.Logger;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,10 +46,6 @@ class YamlConfigReaderTest {
 
   }
 
-//  @Test
-//  public void bsTest() {
-//    Dag dag = (new YamlConfigReader()).readDag("s3://bla/config/dag-config.yml");
-//  }
 
   @Test
   public void readDagTest() {
@@ -64,6 +61,14 @@ class YamlConfigReaderTest {
     assertEquals("processing.sourcedb_1.load_a_table.1.0", dag.getTables()[1].getClassName());
     assertEquals(PartitionTransformType.NONE, dag.getTables()[1].getDependencies()[0].getTransformType());
     assertEquals(PartitionTransformType.IDENTITY, dag.getTables()[1].getDependencies()[1].getTransformType());
+  }
+
+  @Test
+  @Disabled
+  public void s3ConfigReadTest() {
+    Dag dag = (new YamlConfigReader()).readDag("s3://qimia-aws-test/uhrwerk/dag-config.yml");
+    assertEquals("load.class.name", dag.getTables()[0].getClassName());
+    assertFalse(dag.getTables()[1].isPartitioned());
   }
 
   @Test

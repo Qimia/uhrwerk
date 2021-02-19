@@ -23,6 +23,7 @@ public class S3InputStream {
             if (scheme != null && scheme.equals("s3")) {
                 String bucket = uri.getHost();
                 String path = uri.getPath().replaceFirst("/", "");
+                // default client uses com.amazonaws.auth.DefaultAWSCredentialsProviderChain for auth
                 AmazonS3 client = AmazonS3ClientBuilder.defaultClient();
                 GetObjectRequest request = new GetObjectRequest(bucket, path);
                 S3Object object = client.getObject(request);
