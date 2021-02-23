@@ -13,16 +13,18 @@ object Environment {
 
   sealed abstract class Ident
 
-  case class TableIdent(area: String, vertical: String, name: String, version: String) extends Ident
+  case class TableIdent(area: String, vertical: String, name: String, version: String) extends Ident{
+    def asPath = f"$area.$vertical.$name.$version"
+  }
 
   case class SourceIdent(connection: String, path: String, format: String) extends Ident
 
   private val logger: Logger = Logger.getLogger(this.getClass)
 
   /**
-   * Dynamically retrieve the Table Transformation function based on config parameters (or convention)
-   *
-   * @param table table which still needs the user-function (and has not been loaded yet)
+    * Dynamically retrieve the Table Transformation function based on config parameters (or convention)
+    *
+    * @param table table which still needs the user-function (and has not been loaded yet)
     * @return user's code with the table's transformation function
     */
   def getTableFunctionDynamic(table: Table): TaskInput => TaskOutput = {
@@ -63,6 +65,9 @@ object Environment {
     }
     table
   }
+
+  def getTableIdent(table: Table): TableIdent =
+    TableIdent(table.getArea, table.getVertical, table.getName, table.getVersion)
 
   /**
     * Report table save problems to user over std.err
@@ -112,7 +117,7 @@ object Environment {
 class Environment(store: MetaStore, frameManager: FrameManager) {
   val configReader                             = new YamlConfigReader()
   val tables: mutable.Map[Ident, TableWrapper] = mutable.HashMap()
-  val metaStore: MetaStore = store
+  val metaStore: MetaStore                     = store
 
   /**
     * Add and load connections to uhrwerk
@@ -139,9 +144,11 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     * @param overwrite remove old definitions of table or keep them and stop if changes have been made
     * @return If storing the config was a success a TableWrapper object
     */
-  def addTableFile(tableConfigLoc: String,
-                   userFunc: TaskInput => TaskOutput,
-                   overwrite: Boolean = false): Option[TableWrapper] = {
+  def addTableFile(
+      tableConfigLoc: String,
+      userFunc: TaskInput => TaskOutput,
+      overwrite: Boolean = false
+  ): Option[TableWrapper] = {
     val tableYaml = configReader.readTable(tableConfigLoc)
     addTable(tableYaml, userFunc, overwrite)
   }
@@ -172,9 +179,11 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     * @param overwrite remove old definitions of table or keep them and stop if changes have been made
     * @return If storing the config was a success a TableWrapper object
     */
-  def addTable(tableConfig: Table,
-               userFunc: TaskInput => TaskOutput,
-               overwrite: Boolean = false): Option[TableWrapper] = {
+  def addTable(
+      tableConfig: Table,
+      userFunc: TaskInput => TaskOutput,
+      overwrite: Boolean = false
+  ): Option[TableWrapper] = {
     val cleanedTable = Environment.tableCleaner(tableConfig)
     val storeRes     = store.tableService.save(cleanedTable, overwrite)
     if (!storeRes.isSuccess) {
@@ -183,7 +192,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
       return Option.empty
     }
     val storedTable = storeRes.getNewResult
-    val ident       = TableIdent(storedTable.getArea, storedTable.getVertical, storedTable.getName, storedTable.getVersion)
+    val ident       = getTableIdent(storedTable)
     val wrapper     = new TableWrapper(store, storedTable, userFunc, frameManager)
     tables(ident) = wrapper
     Option(wrapper)
@@ -197,22 +206,22 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
   def getTable(id: Ident): Option[TableWrapper] = tables.get(id)
 
   /**
-   * Setup a full dag based on a configuration file and userCode class config or convention
-   * @param dagConfigLoc location of the full dag configuration file
-   */
+    * Setup a full dag based on a configuration file and userCode class config or convention
+    * @param dagConfigLoc location of the full dag configuration file
+    */
   def setupDagFileConvention(dagConfigLoc: String, overwrite: Boolean = false): Unit = {
     val dagYaml = configReader.readDag(dagConfigLoc)
     setupDagConvention(dagYaml, overwrite)
   }
 
   /**
-   * Setup a full dag based on a configuration
-   * @param dagConfig full dag configuration object
-   */
-  def setupDagConvention(dagConfig: Dag, overwrite: Boolean = false){
+    * Setup a full dag based on a configuration
+    * @param dagConfig full dag configuration object
+    */
+  def setupDagConvention(dagConfig: Dag, overwrite: Boolean = false) {
     dagConfig.getConnections.foreach(conn => store.connectionService.save(conn, overwrite))
     dagConfig.getTables.foreach(t => {
-      val ident = TableIdent(t.getArea, t.getVertical, t.getName, t.getVersion)
+      val ident    = getTableIdent(t)
       val storeRes = store.tableService.save(t, overwrite)
       if (!storeRes.isSuccess) {
         logger.error(storeRes.getMessage)
@@ -226,11 +235,15 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
   }
 
   /**
-   * Setup a full dag based on a configuration file
-   * @param dagConfigLoc location of the full dag configuration file
-   * @param userFuncs a map with the table identity objects mapped to the userfunctions for transformation
-   */
-  def setupDagFile(dagConfigLoc: String, userFuncs: Map[Ident, TaskInput => TaskOutput], overwrite: Boolean = false): Unit = {
+    * Setup a full dag based on a configuration file
+    * @param dagConfigLoc location of the full dag configuration file
+    * @param userFuncs a map with the table identity objects mapped to the userfunctions for transformation
+    */
+  def setupDagFile(
+      dagConfigLoc: String,
+      userFuncs: Map[Ident, TaskInput => TaskOutput],
+      overwrite: Boolean = false
+  ): Unit = {
     // TODO: First fix addConnections + addTable then work those changes back into this function
     val dagYaml = configReader.readDag(dagConfigLoc)
     setupDag(dagYaml, userFuncs, overwrite)
@@ -244,7 +257,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
   def setupDag(dagConfig: Dag, userFuncs: Map[Ident, TaskInput => TaskOutput], overwrite: Boolean = false): Unit = {
     dagConfig.getConnections.foreach(conn => store.connectionService.save(conn, overwrite))
     dagConfig.getTables.foreach(t => {
-      val ident = TableIdent(t.getArea, t.getVertical, t.getName, t.getVersion)
+      val ident = getTableIdent(t)
       if (userFuncs.contains(ident)) {
         val storeRes = store.tableService.save(t, overwrite)
         if (!storeRes.isSuccess) {

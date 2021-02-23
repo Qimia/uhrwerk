@@ -59,6 +59,9 @@
             <plugin>
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
+                <configuration>
+                    <argLine>-Duser.timezone=GMT</argLine>
+                </configuration>
             </plugin>
         </plugins>
     </build>

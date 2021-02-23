@@ -12,6 +12,7 @@ import io.qimia.uhrwerk.engine.tools.{DependencyHelper, SourceHelper, TimeHelper
 import org.apache.log4j.Logger
 import org.apache.spark.sql.DataFrame
 
+import scala.collection.immutable
 import scala.concurrent._
 
 object TableWrapper {
@@ -182,6 +183,27 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
   def runTasks(partitionsTs: Array[LocalDateTime], overwrite: Boolean = false)(
       implicit
       ex: ExecutionContext): List[Future[Boolean]] = {
+    val tasks = getTaskRunners(partitionsTs, overwrite).map(x => Future{x()})
+    /**
+      * Idea: Give a complete report at the end after calling runTasks
+      * Showing partitions already there, partitions with missing dependencies
+      * and if anything failed or went wrong while producing certain partitions
+      * (this also means giving the user more info there)
+      */
+    tasks
+  }
+
+
+  /**
+   * Process table for given array of partition (start) datetimes
+   *
+   * @param partitionsTs Array of localdatetime denoting the starttimes of the partitions
+   * @param ex           execution context onto which the futures are created
+   * @return list of futures for the started tasks
+   */
+  def getTaskRunners(partitionsTs: Array[LocalDateTime], overwrite: Boolean = false)(
+    implicit
+    ex: ExecutionContext): immutable.List[() => Boolean] = {
     val dependencyRes: TablePartitionResultSet =
       metastore.tableDependencyService.processingPartitions(table, partitionsTs)
     reportProcessingPartitions(dependencyRes, logger)
@@ -197,21 +219,21 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
 
     val groups: List[Array[TablePartitionResult]] =
       DependencyHelper.createTablePartitionResultGroups(dependencyRes, tableDuration, table.getMaxBulkSize)
-    val tasks: List[Future[Boolean]] = groups.map(partitionGroup => {
+    val tasks: List[() => Boolean] = groups.map(partitionGroup => {
       val localGroupTs: Array[LocalDateTime] = partitionGroup.map(_.getPartitionTs)
       val bulkInput: List[BulkDependencyResult] =
         DependencyHelper.extractBulkDependencyResult(partitionGroup)
-      logger.info(s"BulkInput length: ${bulkInput.length}")
-      Future {
+      logger.info(s"Bulk input length: ${bulkInput.length}")
+      val e = () => {
         val res = singleRun(bulkInput, localGroupTs)
         if (res) {
           table.getTargets.foreach((t: Target) => {
             val partitions =
               TableWrapper.createPartitions(localGroupTs,
-                                            table.isPartitioned,
-                                            table.getPartitionUnit,
-                                            table.getPartitionSize,
-                                            t.getId)
+                table.isPartitioned,
+                table.getPartitionUnit,
+                table.getPartitionSize,
+                t.getId)
             val _ = metastore.partitionService.save(partitions, overwrite)
             partitions
               .zip(partitionGroup)
@@ -222,16 +244,18 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
         }
         res
       }
+      e
     })
 
     /**
-      * Idea: Give a complete report at the end after calling runTasks
-      * Showing partitions already there, partitions with missing dependencies
-      * and if anything failed or went wrong while producing certain partitions
-      * (this also means giving the user more info there)
-      */
+     * Idea: Give a complete report at the end after calling runTasks
+     * Showing partitions already there, partitions with missing dependencies
+     * and if anything failed or went wrong while producing certain partitions
+     * (this also means giving the user more info there)
+     */
     tasks
   }
+
 
   /**
     * Utility function to create an execution context and block until runTasks is done processing the batches.
