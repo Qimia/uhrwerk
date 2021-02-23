@@ -37,6 +37,8 @@
         <module>uhrwerk-engine</module>
         <module>uhrwerk-example</module>
         <module>uhrwerk-cli</module>
+        <module>uhrwerk-aws</module>
+        <module>uhrwerk-azure</module>
     </modules>
 
     <dependencies>
