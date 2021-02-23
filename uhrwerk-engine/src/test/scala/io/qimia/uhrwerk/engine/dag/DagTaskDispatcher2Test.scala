@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.engine.dag
 
+import java.io.File
 import java.sql.DriverManager
 import java.time.LocalDateTime
 
@@ -12,13 +13,14 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest._
 import matchers.should.Matchers._
-import org.scalatest.matchers.should
 
 import scala.collection.mutable.ListBuffer
+import scala.reflect.io.Directory
 
 
 class DagTaskDispatcher2Test extends AnyFlatSpec with BeforeAndAfterEach {
 
+  //System.setProperty("user.timezone", "UTC")
   val sparkSess = SparkSession
     .builder()
     .appName(this.getClass.toString)
@@ -64,11 +66,14 @@ class DagTaskDispatcher2Test extends AnyFlatSpec with BeforeAndAfterEach {
         db.close()
       }
     }
+    val directory = new Directory(new File(".dagtask_test_data_lake"))
+    if(directory.exists)directory.deleteRecursively()
+
     tasksRan = new ListBuffer[String]()
     taskLogs = new ListBuffer[String]()
     tasksFailed = new ListBuffer[String]()
-  }
 
+  }
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
@@ -94,6 +99,7 @@ class DagTaskDispatcher2Test extends AnyFlatSpec with BeforeAndAfterEach {
     }
     e
   }
+
   def identityUserFuncWithFailure(name: String, waitMillis:Int=0): TaskInput => TaskOutput = {
     val e = (x: TaskInput) => {
       synchronized(tasksFailed) {
@@ -101,7 +107,8 @@ class DagTaskDispatcher2Test extends AnyFlatSpec with BeforeAndAfterEach {
         0}
       synchronized(taskLogs){taskLogs += f"Started $name"; 0}
       Thread.sleep(waitMillis)
-      throw new Exception("A mock exception")
+      throw new Exception("A mock exception thrown from the test itself, ignore me, we just want to make sure the" +
+        " exceptions are handled as expected.")
       val r = TaskOutput(x.loadedInputFrames.values.head)
       synchronized(taskLogs){taskLogs += f"BeforeFinish $name"; 0}
       r
@@ -143,7 +150,6 @@ class DagTaskDispatcher2Test extends AnyFlatSpec with BeforeAndAfterEach {
 
 
   "Building a dag from a dag file" should "result in only those dependencies needed by the target table_4a" in {
-
     val env = getEnv(0)
     val wrap1   = env.getTable(TableIdent("loading", "dtd", "table_4a", "1.0")).get
     val startTs = LocalDateTime.of(2018, 6, 20, 0, 0)
@@ -167,8 +173,8 @@ class DagTaskDispatcher2Test extends AnyFlatSpec with BeforeAndAfterEach {
     tasksRan.sortBy(x=>x) should contain theSameElementsAs expectedTasks.sortBy(x=>x)
   }
 
-  "Building a dag from a dag file for table_2d" should "result in table_s, table_1h succeeding; table_1i, and table_2d failing" in {
 
+  "Building a dag from a dag file for table_2d" should "result in table_s, table_1h succeeding; table_1i, and table_2d failing" in {
     val env = getEnv(0)
     val wrap1   = env.getTable(TableIdent("loading", "dtd", "table_2d", "1.0")).get
     val startTs = LocalDateTime.of(2018, 6, 20, 0, 0)
@@ -188,15 +194,14 @@ class DagTaskDispatcher2Test extends AnyFlatSpec with BeforeAndAfterEach {
   }
 
   "Building a dag with lots of tasks with the same dependency" should "result in all tasks running at the same time" in {
-
     /**
      * We give each task with the same dependency 20 seconds to run; therefore, they should run in parallel.
      * The latest task start should be after the earliest task start.
      */
     val env = getEnv(20000)
     val wrap1 = env.getTable(TableIdent("loading", "dtd", "table_2c", "1.0")).get
-    val startTs = LocalDateTime.of(2018, 6, 20, 0, 0)
-    val endTs = LocalDateTime.of(2018, 6, 21, 0, 0)
+    val startTs = LocalDateTime.of(2012, 6, 20, 0, 0)
+    val endTs = LocalDateTime.of(2012, 6, 21, 0, 0)
     val builder = new DagTaskBuilder2(env)
     val needed = builder.buildTaskListFromTable(wrap1, startTs, endTs)
     DagTaskDispatcher2.runTasks(needed, 20)
