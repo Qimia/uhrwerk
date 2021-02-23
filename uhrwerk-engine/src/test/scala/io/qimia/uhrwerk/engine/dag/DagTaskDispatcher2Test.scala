@@ -3,11 +3,11 @@ package io.qimia.uhrwerk.engine.dag
 import java.io.File
 import java.sql.DriverManager
 import java.time.LocalDateTime
-
 import io.qimia.uhrwerk.common.model.{Metastore => MetastoreConnInfo}
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.{Environment, MetaStore, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
+import io.qimia.uhrwerk.tags.SleepConcurrent
 import org.apache.spark.sql.SparkSession
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
@@ -193,7 +193,7 @@ class DagTaskDispatcher2Test extends AnyFlatSpec with BeforeAndAfterEach {
     tasksFailed.sortBy(x=>x) should contain theSameElementsAs expectedFailure.sortBy(x=>x)
   }
 
-  "Building a dag with lots of tasks with the same dependency" should "result in all tasks running at the same time" in {
+  "Building a dag with lots of tasks with the same dependency" should "result in all tasks running at the same time" taggedAs SleepConcurrent in {
     /**
      * We give each task with the same dependency 20 seconds to run; therefore, they should run in parallel.
      * The latest task start should be after the earliest task start.
