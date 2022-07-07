@@ -1,7 +1,6 @@
 package io.qimia.uhrwerk.example.yelp
 
 import java.time.LocalDateTime
-
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
@@ -9,12 +8,17 @@ import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.monotonically_increasing_id
 
+import java.nio.file.Files
+
 object CombinerC extends App {
+
+  val tmpDir = Files.createTempDirectory("spark-events")
 
   val sparkSess = SparkSession
     .builder()
     .appName("CombinerC")
     .master("local[3]")
+    .config("spark.eventLog.dir", tmpDir.toAbsolutePath.toString)
     .getOrCreate()
 
   private val logger: Logger = Logger.getLogger(this.getClass)

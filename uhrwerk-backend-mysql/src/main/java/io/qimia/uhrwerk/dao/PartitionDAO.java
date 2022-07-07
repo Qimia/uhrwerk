@@ -205,8 +205,8 @@ public class PartitionDAO implements PartitionService {
       }
 
       return partitions.toArray(new Partition[0]);
-    } catch (SQLException throwables) {
-      throwables.printStackTrace();
+    } catch (SQLException throwable) {
+      throwable.printStackTrace();
     }
 
     return null;

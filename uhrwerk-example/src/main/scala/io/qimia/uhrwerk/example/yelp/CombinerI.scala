@@ -5,13 +5,18 @@ import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 
+import java.nio.file.Files
+
 object CombinerI extends App {
   private val logger: Logger = Logger.getLogger(this.getClass)
+
+  val tmpDir = Files.createTempDirectory("spark-events")
 
   val sparkSess = SparkSession
     .builder()
     .appName("CombinerI")
     .master("local[*]")
+    .config("spark.eventLog.dir", tmpDir.toAbsolutePath.toString)
     .getOrCreate()
 
   def transformationFunction(in: TaskInput): TaskOutput = {

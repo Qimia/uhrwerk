@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 import argparse
-import pystache
 import shlex
 import subprocess
 from datetime import datetime
 from pathlib import Path
+
+import chevron
 
 FILE_LOC = Path(__file__).parent.absolute()
 SPARK_SUBMIT_TEMPLATE_LOCATION = (
@@ -146,7 +147,7 @@ def render_template(parameters, load_mode):
 
     with open(spark_template_location) as gmfile:
         template = gmfile.readlines()
-        return pystache.render("".join(template), settings)
+        return chevron.render("".join(template), settings)
 
 
 def run_command(command_str):

@@ -5,14 +5,19 @@ import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 
+import java.nio.file.Files
+
 object LoaderUnpartitionedG extends App {
   private val logger: Logger = Logger.getLogger(this.getClass)
+
+  val tmpDir = Files.createTempDirectory("spark-events")
 
   val sparkSess = SparkSession.builder()
     .appName("loaderUnpartitionedG")
     .master("local[*]")
     .config("spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version", "2")
     .config("driver-memory", "4g")
+    .config("spark.eventLog.dir", tmpDir.toAbsolutePath.toString)
     .getOrCreate()
 
   def loaderUnpartitionedGFunc(in: TaskInput): TaskOutput = {

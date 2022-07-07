@@ -1,15 +1,19 @@
 package io.qimia.uhrwerk.example.yelp
 
 import java.time.LocalDateTime
-
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.UhrwerkAppRunner
 import org.apache.spark.sql.SparkSession
 
+import java.nio.file.Files
+
 object AppLoaderAParq extends App {
+  val tmpDir = Files.createTempDirectory("spark-events")
+
   val sparkSess = SparkSession.builder()
     .appName("loaderA")
     .master("local[3]")
+    .config("spark.eventLog.dir", tmpDir.toAbsolutePath.toString)
     .getOrCreate()
 
   UhrwerkAppRunner.runFiles(

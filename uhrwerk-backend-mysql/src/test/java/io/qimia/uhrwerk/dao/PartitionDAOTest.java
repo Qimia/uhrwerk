@@ -197,11 +197,14 @@ public class PartitionDAOTest {
         Connection connection = generateConnection(testName);
 
         // save connection
-        new ConnectionDAO(db).save(connection, true);
+        var connDao = new ConnectionDAO(db);
+        connDao.save(connection, true);
         // save table
-        new TableDAO(db).save(table, true);
+        var tableDao = new TableDAO(db);
+        tableDao.save(table, true);
         // save target
-        new TargetDAO(db).save(new Target[]{target}, table.getId(), false);
+        var tarDao = new TargetDAO(db);
+        tarDao.save(new Target[]{target}, table.getId(), false);
 
         // prepare some partitions
         Partition[] partitions = new Partition[timestamps.length];

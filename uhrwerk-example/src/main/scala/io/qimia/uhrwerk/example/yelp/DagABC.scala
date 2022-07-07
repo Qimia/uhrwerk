@@ -1,7 +1,6 @@
 package io.qimia.uhrwerk.example.yelp
 
 import java.time.LocalDateTime
-
 import io.qimia.uhrwerk.engine.Environment
 import io.qimia.uhrwerk.engine.dag.{DagTaskBuilder, DagTaskDispatcher}
 import io.qimia.uhrwerk.example.yelp.CombinerC.CombinerCFunc
@@ -10,12 +9,17 @@ import io.qimia.uhrwerk.example.yelp.LoaderBParq.loaderBFunc
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.spark.sql.SparkSession
 
+import java.nio.file.Files
+
 object DagABC extends App {
+  val tmpDir = Files.createTempDirectory("spark-events")
+
   val sparkSess = SparkSession.builder()
     .appName(this.getClass.toString)
     .master("local[3]")
     .config("spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version", "2")
     .config("driver-memory", "2g")
+    .config("spark.eventLog.dir", tmpDir.toAbsolutePath.toString)
     .getOrCreate()
   val frameManager = new SparkFrameManager(sparkSess)
 

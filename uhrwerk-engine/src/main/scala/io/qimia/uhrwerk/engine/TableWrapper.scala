@@ -96,7 +96,7 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
       val lastInclusivePartitionTs = partitionTS.last
       Option(lastInclusivePartitionTs.plus(tableDuration))
     }
-    logger.info(s"Start single run TS: $startTs Optional end-TS: $endTs")
+    logger.info(s"${table.getName}: Start single run TS: $startTs Optional end-TS: $endTs")
 
     val loadedInputDepDFs: List[(Ident, DataFrame)] =
       if (dependencyResults.nonEmpty) {
@@ -104,7 +104,9 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
           .map(bd => {
             val id = DependencyHelper.extractTableIdentity(bd)
             val df = frameManager.loadDependencyDataFrame(bd)
-
+            if (df.isEmpty) {
+              logger.warn(s"${table.getName}: - $id doesn't have any data in DataFrame")
+            }
             id -> df
           })
         //val df: DataFrame = null
@@ -160,15 +162,17 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
         // Note: We are responsible for all standard writing of DataFrames
         if (!frame.isEmpty) {
           frameManager.writeDataFrame(frame, table, partitionTS, taskOutput.dataFrameWriterOptions)
+        } else {
+          logger.warn(s"No output for ${table.getName} (!!)")
         }
         true
       } catch {
         case e: Throwable =>
-          logger.error("Task failed: " + startTs.toString)
+          logger.error(s"${table.getName}: Task failed: " + startTs.toString)
           e.printStackTrace()
           false
       }
-    logger.info(s"Single run done, success = $success")
+    logger.info(s"${table.getName}: Single run done, success = $success")
     // TODO: Proper logging here
     success
   }

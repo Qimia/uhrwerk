@@ -163,7 +163,11 @@ public class DependencyDAOTest {
     var deleteTableStm = db.createStatement();
     deleteTableStm.execute("DELETE FROM TABLE_");
     deleteTableStm.close();
-    if (db != null) if (!db.isClosed()) db.close();
+    if (db != null) {
+      if (!db.isClosed()) {
+        db.close();
+      }
+    }
   }
 
   /**
@@ -237,7 +241,7 @@ public class DependencyDAOTest {
     depC.setTransformType(PartitionTransformType.NONE);
     depC.setTableId(tableId);
     depC.setKey();
-    return new Dependency[] {depA, depB, depC};
+    return new Dependency[]{depA, depB, depC};
   }
 
   Dependency[] createBadDependency(long tableId) {
@@ -251,14 +255,14 @@ public class DependencyDAOTest {
     depA.setTransformPartitionSize(1);
     depA.setTableId(tableId);
     depA.setKey();
-    return new Dependency[] {depA};
+    return new Dependency[]{depA};
   }
 
   @Test
   void findCorrectTest() throws SQLException {
     Table newTable = insertTestTable();
     Dependency[] dependencies = createThreeDependencies(newTable.getId());
-    Dependency[] partitionedDependency = new Dependency[] {dependencies[0], dependencies[1]};
+    Dependency[] partitionedDependency = new Dependency[]{dependencies[0], dependencies[1]};
     newTable.setDependencies(partitionedDependency);
 
     DependencyDAO dao = new DependencyDAO(db);
@@ -360,11 +364,14 @@ public class DependencyDAOTest {
 
     assertEquals("area1", foundDependencies[2].getArea());
     assertEquals("vertical1", foundDependencies[2].getVertical());
-    assertEquals("name1", foundDependencies[2].getTableName());
+    assertEquals(Set.of("name1", "name2", "name3"),
+        Arrays.stream(foundDependencies).map(Dependency::getTableName).collect(
+            Collectors.toSet()));
     assertEquals("1.0", foundDependencies[2].getVersion());
     assertEquals("parquet", foundDependencies[2].getFormat());
-    assertEquals(PartitionTransformType.IDENTITY, foundDependencies[2].getTransformType());
-    assertEquals(1, foundDependencies[2].getTransformPartitionSize());
+    assertEquals(Set.of(PartitionTransformType.IDENTITY, PartitionTransformType.WINDOW, PartitionTransformType.NONE),
+        Arrays.stream(foundDependencies).map(Dependency::getTransformType).collect(
+            Collectors.toSet()));
     assertEquals(newTable.getId(), foundDependencies[2].getTableId());
   }
 
@@ -422,7 +429,7 @@ public class DependencyDAOTest {
     depA.setTransformPartitionSize(1);
     depA.setTableId(unpartitionedTable.getId());
     depA.setKey();
-    var dependencies = new Dependency[] {depA};
+    var dependencies = new Dependency[]{depA};
     unpartitionedTable.setDependencies(dependencies);
 
     DependencyDAO dao = new DependencyDAO(db);

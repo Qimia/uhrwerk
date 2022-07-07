@@ -1,19 +1,23 @@
 package io.qimia.uhrwerk.example.yelp
 
 import java.time.LocalDateTime
-
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 
+import java.nio.file.Files
+
 
 object LoaderB extends App {
   private val logger: Logger = Logger.getLogger(this.getClass)
 
+  val tmpDir = Files.createTempDirectory("spark-events")
+
   val sparkSess = SparkSession.builder()
     .appName("loaderA")
     .master("local")
+    .config("spark.eventLog.dir", tmpDir.toAbsolutePath.toString)
     .getOrCreate()
 
   def loaderBFunc(in: TaskInput): TaskOutput = {
