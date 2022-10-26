@@ -12,7 +12,7 @@ ENV ENABLE_INIT_DAEMON true
 ENV INIT_DAEMON_BASE_URI http://identifier/init-daemon
 ENV INIT_DAEMON_STEP spark_master_init
 
-ENV SPARK_VERSION=3.0.1
+ENV SPARK_VERSION=3.2.1
 ENV HADOOP_VERSION=2.7
 
 COPY wait-for-step.sh /
@@ -45,6 +45,8 @@ RUN groupadd wheel -g 11 && \
     useradd -m -s /bin/bash -N -u $NB_UID $NB_USER && \
     chmod g+w /etc/passwd && \
     fix-permissions $HOME
+
+RUN fix-permissions /spark
 
 USER $NB_UID
 

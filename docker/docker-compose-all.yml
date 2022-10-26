@@ -11,7 +11,7 @@ services:
       - 9080:8080
 
   mysql-uhrwerk-metastore:
-    image: mysql:8.0.21
+    image: mysql:8.0.29
     restart: always
     container_name: mysql-uhrwerk-metastore
     ports:
@@ -26,7 +26,7 @@ services:
     command: "--default-authentication-plugin=mysql_native_password --innodb_buffer_pool_size=1G --innodb_log_file_size=256M --innodb_flush_log_at_trx_commit=1 --innodb_flush_method=O_DIRECT --explicit_defaults_for_timestamp=1"
 
   spark-master:
-    image: uhrwerk/spark-master:3.0.1-hadoop2.7
+    image: uhrwerk/spark-master:3.2.1-hadoop2.7
     restart: always
     container_name: spark-master
     ports:
@@ -41,7 +41,7 @@ services:
       - ./spark_configs:/spark_configs
 
   spark-worker-1:
-    image: uhrwerk/spark-worker:3.0.1-hadoop2.7
+    image: uhrwerk/spark-worker:3.2.1-hadoop2.7
     restart: always
     container_name: spark-worker-1
     depends_on:
@@ -57,7 +57,7 @@ services:
       - "SPARK_MASTER=spark://spark-master:7077"
 
   spark-history-server:
-    image: uhrwerk/spark-history-server:3.0.1-hadoop2.7
+    image: uhrwerk/spark-history-server:3.2.1-hadoop2.7
     restart: always
     container_name: spark-history-server
     depends_on:

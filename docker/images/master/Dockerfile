@@ -1,4 +1,4 @@
-FROM uhrwerk/spark-base:3.0.1-hadoop2.7
+FROM uhrwerk/spark-base:3.2.1-hadoop2.7
 
 USER $NB_USER
 
