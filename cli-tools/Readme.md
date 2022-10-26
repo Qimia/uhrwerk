@@ -12,3 +12,14 @@ On Ubuntu and Debian they require the following packages to be installed
 **uhrwerk-start.py**: A wrapper around spark-submit which helps starting an Uhrwerk job
 
 **uhrwerk-partitions-table.py**: A script to check which partitions have been written for a table
+
+## Setup
+
+You can set up the environment e.g. like this:
+```bash
+python -m venv venv-uhrwerk
+source venv-uhrwerk/bin/activate
+pip install chevron
+```
+
+And then run the cli tools as `python uhrwerk-start.py`
