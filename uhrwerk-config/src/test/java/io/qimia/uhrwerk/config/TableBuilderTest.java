@@ -2,20 +2,21 @@ package io.qimia.uhrwerk.config;
 
 
 import io.qimia.uhrwerk.common.model.PartitionUnit;
-import io.qimia.uhrwerk.common.model.Table;
-import org.apache.log4j.Logger;
+import io.qimia.uhrwerk.common.model.TableModel;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TableBuilderTest {
-  private final Logger logger = Logger.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
 
   @Test
   public void tableBuilderTest() {
     var builder = new TableBuilder();
 
-    Table table = builder
+    TableModel table = builder
             .area("TableArea")
             .vertical("TableVertical")
             .table("TableTable")
@@ -122,7 +123,7 @@ class TableBuilderTest {
               .done()
             .done()
             .build();
-    logger.info(table);
+    logger.info(table.toString());
 
     assertEquals(10, table.getSources()[0].getParallelLoadNum());
     assertEquals("TableArea", table.getArea());
@@ -199,7 +200,7 @@ class TableBuilderTest {
                 .target(target)
                 .dependency(dependency)
             .build();
-    logger.info(table);
+    logger.info(table.toString());
 
     assertEquals(8, table.getSources()[0].getParallelLoadNum());
     assertEquals("TableArea", table.getArea());

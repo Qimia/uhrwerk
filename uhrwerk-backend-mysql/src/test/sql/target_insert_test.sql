@@ -12,7 +12,7 @@ WHERE cn.name = 'fs_connection_1');
 SELECT tr.id, tr.table_id, tr.connection_id, tr.format
 FROM TARGET tr
 JOIN CONNECTION cn on cn.id = tr.connection_id
-WHERE cn.name = 'fs_connection_1';      -- Assumes connection names are unique (!!)
+WHERE cn.name = 'fs_connection_1';      -- Assumes Connection names are unique (!!)
 
 -- Target's id is set based on the tableId and format
 SELECT *

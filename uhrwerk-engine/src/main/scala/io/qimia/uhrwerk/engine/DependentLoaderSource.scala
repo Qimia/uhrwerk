@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.engine
 import java.time.LocalDateTime
 
 import io.qimia.uhrwerk.common.framemanager.FrameManager
-import io.qimia.uhrwerk.common.model.Source
+import io.qimia.uhrwerk.common.model.SourceModel
 import org.apache.log4j.Logger
 import org.apache.spark.sql.DataFrame
 
@@ -18,10 +18,10 @@ import scala.collection.mutable
   * @param endTSExcl    End timestamp for partitioned sources.
   */
 case class DependentLoaderSource(
-    source: Source,
-    frameManager: FrameManager,
-    startTS: Option[LocalDateTime] = Option.empty,
-    endTSExcl: Option[LocalDateTime] = Option.empty
+                                  source: SourceModel,
+                                  frameManager: FrameManager,
+                                  startTS: Option[LocalDateTime] = Option.empty,
+                                  endTSExcl: Option[LocalDateTime] = Option.empty
 ) {
   private val collectedIdsWithPlaceholders = mutable.ArrayBuffer[(Array[String], String)]()
   private var dependentSet: Boolean = false

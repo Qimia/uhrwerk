@@ -5,7 +5,7 @@
     jdbc_url: 'jdbc:mysql://127.0.0.1:53306/yelp_db'
     jdbc_driver: 'com.mysql.cj.jdbc.Driver'
     user: root
-    pass: 61ePGqq20u9TZjbNhf0
+    pass: 61ePGqq20u9TZjbNhf0 aws_secret:<secret_name>
 
 - name: "local_fs_lake"
   file:

@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.engine
 
 import java.sql.DriverManager
 
-import io.qimia.uhrwerk.common.model.{Metastore => MetastoreConnInfo}
+import io.qimia.uhrwerk.common.model.{MetastoreModel => MetastoreConnInfo}
 import io.qimia.uhrwerk.config.ConfigException
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec

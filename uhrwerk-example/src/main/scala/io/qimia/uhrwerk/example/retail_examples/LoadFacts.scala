@@ -84,7 +84,7 @@ object LoadFacts extends App {
   val salesFactWrapper = uhrwerkEnvironment.addTableFile("retail_examples/dwh/retail/salesFact_1.0.yml", computeFactTable)
   val salesFactDailyWrapper = uhrwerkEnvironment.addTableFile("retail_examples/dwh/retail/salesFactsDaily_1.0.yml", computeAggregation)
 
-  val runTimes = Array(
+  val runTimes = List(
     LocalDateTime.of(2020, 6, 1, 0, 0),
     LocalDateTime.of(2020, 6, 2, 0, 0),
     LocalDateTime.of(2020, 6, 3, 0, 0),

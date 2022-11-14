@@ -1,9 +1,10 @@
 package io.qimia.uhrwerk.common.metastore.dependency;
 
-import io.qimia.uhrwerk.common.model.Table;
+import io.qimia.uhrwerk.common.model.TableModel;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface TableDependencyService {
 
@@ -17,5 +18,5 @@ public interface TableDependencyService {
    * @return TablePartitionResultSet containing all info required for the processing and failure reporting
    * @throws SQLException
    */
-  TablePartitionResultSet processingPartitions(Table table, LocalDateTime[] partitionTs) throws SQLException;
+  TablePartitionResultSet processingPartitions(TableModel table, List<LocalDateTime> partitionTs) throws SQLException;
 }

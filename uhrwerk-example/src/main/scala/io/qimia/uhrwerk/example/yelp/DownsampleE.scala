@@ -34,7 +34,7 @@ object DownsampleE  extends App {
   uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
   val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_e/table_e_1.0.yml", loaderEFunc, overwrite = true)
 
-  val runTimes = Array(
+  val runTimes = List(
     LocalDateTime.of(2012, 5, 1, 0, 0),
     LocalDateTime.of(2012, 5, 4, 0, 0),
   )

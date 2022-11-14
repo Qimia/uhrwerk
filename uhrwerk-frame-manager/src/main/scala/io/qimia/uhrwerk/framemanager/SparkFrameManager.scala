@@ -1,7 +1,5 @@
 package io.qimia.uhrwerk.framemanager
 
-import java.sql.Timestamp
-import java.time.LocalDateTime
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
 import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.common.tools.{JDBCTools, TimeTools}
@@ -11,11 +9,13 @@ import org.apache.log4j.Logger
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.{col, udf}
 
+import java.sql.Timestamp
+import java.time.LocalDateTime
+
 class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   private val logger: Logger = Logger.getLogger(this.getClass)
 
-  /**
-    * Loads a source dataframe. Either one batch or the full path.
+  /** Loads a source dataframe. Either one batch or the full path.
     *
     * @param source                 Source
     * @param startTS                Batch Timestamp. If not defined, load the full path.
@@ -25,12 +25,16 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     * @throws IllegalArgumentException In case one or both timestamps are specified but the source select column is empty
     */
   override def loadSourceDataFrame(
-      source: Source,
-      startTS: Option[LocalDateTime] = Option.empty,
-      endTSExcl: Option[LocalDateTime] = Option.empty,
-      dataFrameReaderOptions: Option[Map[String, String]] = Option.empty
+                                    source: SourceModel,
+                                    startTS: Option[LocalDateTime] = Option.empty,
+                                    endTSExcl: Option[LocalDateTime] = Option.empty,
+                                    dataFrameReaderOptions: Option[Map[String, String]] = Option.empty
   ): DataFrame = {
-    if ((startTS.isDefined || endTSExcl.isDefined) && source.isPartitioned && isStringEmpty(source.getSelectColumn)) {
+    if (
+      (startTS.isDefined || endTSExcl.isDefined) && source.isPartitioned && isStringEmpty(
+        source.getSelectColumn
+      )
+    ) {
       throw new IllegalArgumentException(
         "When one or both of the timestamps are specified, " +
           "the source.selectColumn needs to be set as well."
@@ -49,8 +53,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     }
   }
 
-  /**
-    * Loads a dataframe from a file system.
+  /** Loads a dataframe from a file system.
     *
     * @param source                 Source
     * @param startTS                Batch Timestamp. If not defined, load the full path.
@@ -59,10 +62,10 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     * @return Loaded DataFrame.
     */
   private def loadDataFrameFromFileSystem(
-      source: Source,
-      startTS: Option[LocalDateTime],
-      endTSExcl: Option[LocalDateTime],
-      dataFrameReaderOptions: Option[Map[String, String]]
+                                           source: SourceModel,
+                                           startTS: Option[LocalDateTime],
+                                           endTSExcl: Option[LocalDateTime],
+                                           dataFrameReaderOptions: Option[Map[String, String]]
   ): DataFrame = {
     val fullLocation =
       getFullLocation(source.getConnection.getPath, source.getPath)
@@ -78,18 +81,19 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
     val filteredDf: DataFrame = if (startTS.isDefined && endTSExcl.isDefined) {
       df.filter(
-          col(source.getSelectColumn) >= TimeTools
-            .convertTSToString(startTS.get)
-        )
-        .filter(
-          col(source.getSelectColumn) < TimeTools
-            .convertTSToString(endTSExcl.get)
-        )
+        col(source.getSelectColumn) >= TimeTools
+          .convertTSToString(startTS.get)
+      ).filter(
+        col(source.getSelectColumn) < TimeTools
+          .convertTSToString(endTSExcl.get)
+      )
     } else if (startTS.isDefined) {
-      df.filter(
+      val res = df.filter(
         col(source.getSelectColumn) >= TimeTools
           .convertTSToString(startTS.get)
       )
+      res.show(10)
+      res
     } else if (endTSExcl.isDefined) {
       df.filter(
         col(source.getSelectColumn) < TimeTools
@@ -99,15 +103,19 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       df
     }
 
-    if (!isStringEmpty(source.getSelectColumn) && !containsTimeColumns(filteredDf, source.getPartitionUnit)) {
+    if (
+      !isStringEmpty(source.getSelectColumn) && !containsTimeColumns(
+        filteredDf,
+        source.getPartitionUnit
+      )
+    ) {
       addTimeColumnsToDFFromTimestampColumn(filteredDf, source.getSelectColumn)
     } else {
       filteredDf
     }
   }
 
-  /**
-    * Loads all partitions from the succeeded partitions of the DependencyResult.
+  /** Loads all partitions from the succeeded partitions of the DependencyResult.
     *
     * @param dependencyResult       DependencyResult.
     * @param dataFrameReaderOptions Optional Spark reading options.
@@ -120,25 +128,37 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     assert(dependencyResult.succeeded.nonEmpty)
     val isJDBC = dependencyResult.connection.getType.equals(ConnectionType.JDBC)
     if (dependencyResult.connection.getType == ConnectionType.S3) {
-      SparkFrameManagerUtils.setS3Config(sparkSession, dependencyResult.connection)
+      SparkFrameManagerUtils.setS3Config(
+        sparkSession,
+        dependencyResult.connection
+      )
     }
 
     val filter: Column = dependencyResult.succeeded
       .map(p =>
         if (isJDBC) {
-          col(timeColumnJDBC) === TimeTools.convertTSToUTCString(p.getPartitionTs)
+          col(timeColumnJDBC) === TimeTools.convertTSToString(
+            p.getPartitionTs
+          )
         } else {
           val minuteLowerBound = getTimeValues(p.getPartitionTs)._5
           if (p.isPartitioned) {
             val minuteUpperBound =
               getTimeValues(
-                TimeTools.addPartitionSizeToTimestamp(p.getPartitionTs, p.getPartitionSize, p.getPartitionUnit)
+                TimeTools.addPartitionSizeToTimestamp(
+                  p.getPartitionTs,
+                  p.getPartitionSize,
+                  p.getPartitionUnit
+                )
               )._5
-            col("minute") >= minuteLowerBound && col("minute") < minuteUpperBound
+            col("minute") >= minuteLowerBound && col(
+              "minute"
+            ) < minuteUpperBound
           } else {
             col("minute") === minuteLowerBound
           }
-      })
+        }
+      )
       .reduce((a, b) => a || b)
 
     val dfReader = sparkSession.read
@@ -151,7 +171,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       dfReader
     }
 
-    val dependencyPath = getDependencyPath(dependencyResult.dependency, fileSystem = !isJDBC)
+    val dependencyPath =
+      getDependencyPath(dependencyResult.dependency, fileSystem = !isJDBC)
 
     val df = {
       try {
@@ -198,7 +219,11 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     }
     val filtered = convertedColumns.filter(filter)
 
-    if (dependencyResult.dependency.getTransformType.equals(PartitionTransformType.NONE)) {
+    if (
+      dependencyResult.dependency.getTransformType.equals(
+        PartitionTransformType.NONE
+      )
+    ) {
       // unpartitioned data, remove all time columns
       filtered
         .drop(timeColumnJDBC)
@@ -216,8 +241,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     }
   }
 
-  /**
-    * Loads a dataframe from JDBC. Either one batch or the full path.
+  /** Loads a dataframe from JDBC. Either one batch or the full path.
     * If the selectQuery is set, it uses that instead of the path.
     * If the partitionQuery is set, it first runs this to get the partition boundaries.
     *
@@ -228,10 +252,10 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     * @return DataFrame
     */
   private def loadSourceFromJDBC(
-      source: Source,
-      startTS: Option[LocalDateTime],
-      endTSExcl: Option[LocalDateTime],
-      dataFrameReaderOptions: Option[Map[String, String]]
+                                  source: SourceModel,
+                                  startTS: Option[LocalDateTime],
+                                  endTSExcl: Option[LocalDateTime],
+                                  dataFrameReaderOptions: Option[Map[String, String]]
   ): DataFrame = {
 
     val dfReader: DataFrameReader =
@@ -292,15 +316,19 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     val df: DataFrame = dfReaderWithQuery
       .load()
 
-    if (!isStringEmpty(source.getSelectColumn) && !containsTimeColumns(df, source.getPartitionUnit)) {
+    if (
+      !isStringEmpty(source.getSelectColumn) && !containsTimeColumns(
+        df,
+        source.getPartitionUnit
+      )
+    ) {
       addTimeColumnsToDFFromTimestampColumn(df, source.getSelectColumn)
     } else {
       df
     }
   }
 
-  /**
-    * Saves a table to all its targets.
+  /** Saves a table to all its targets.
     * Four possible scenarios regarding the timestamp:
     * 1. Time columns (these five: year, month, day, hour, minute) are in the DF
     * 1.1 Identity transformation (partitionSize = 1)
@@ -325,15 +353,15 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     *                               (extra from the uhrwerk timestamp columns).
     */
   override def writeDataFrame(
-      frame: DataFrame,
-      table: Table,
-      partitionTS: Array[LocalDateTime],
-      dataFrameWriterOptions: Option[Array[Map[String, String]]] = Option.empty
+                               frame: DataFrame,
+                               table: TableModel,
+                               partitionTS: Array[LocalDateTime],
+                               dataFrameWriterOptions: Option[Array[Map[String, String]]] = Option.empty
   ): Unit = {
 
-    table.getTargets.zipWithIndex.foreach((item: (Target, Int)) => {
-      val target: Target = item._1
-      val index: Int     = item._2
+    table.getTargets.zipWithIndex.foreach((item: (TargetModel, Int)) => {
+      val target: TargetModel = item._1
+      val index: Int = item._2
       val targetConnection = target.getConnection
       if (targetConnection == null) {
         throw new IllegalArgumentException(
@@ -345,7 +373,6 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         SparkFrameManagerUtils.setS3Config(sparkSession, targetConnection)
       }
 
-
       val tablePath = getTablePath(table, !isJDBC, target.getFormat)
       val path = if (isJDBC) {
         tablePath
@@ -353,14 +380,16 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         getFullLocation(targetConnection.getPath, tablePath)
       }
 
-      val dfContainsTimeColumns = containsTimeColumns(frame, table.getPartitionUnit)
+      val dfContainsTimeColumns =
+        containsTimeColumns(frame, table.getPartitionUnit)
 
       val (fullPath, df) = if (!dfContainsTimeColumns && !partitionTS.isEmpty) {
         // if time columns are missing, saving just one partition defined in the partitionTS array
 
         // for jdbc add a timestamp column and remove all other time columns (year/month/day/hour/minute) just in case
         if (isJDBC) {
-          val jdbcDF = addJDBCTimeColumn(frame, partitionTS.head).drop(timeColumns: _*)
+          val jdbcDF =
+            addJDBCTimeColumn(frame, partitionTS.head).drop(timeColumns: _*)
 
           (path, jdbcDF)
           // for fs remove all time columns (year/month/day/hour/minute)
@@ -405,7 +434,10 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           // if jdbc and saving several partitions (the df contains the time columns) - add the timestamp column
           // and remove the time columns
           if (isJDBC) {
-            (path, addJDBCTimeColumnFromTimeColumns(frame).drop(timeColumns: _*))
+            (
+              path,
+              addJDBCTimeColumnFromTimeColumns(frame).drop(timeColumns: _*)
+            )
           } else {
             (path, frame)
           }
@@ -416,29 +448,37 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       }
 
       val writer = df.write.mode(SaveMode.Append).format(target.getFormat)
-      val (writerWithOptions: DataFrameWriter[Row], partitionBy: List[String]) = if (dataFrameWriterOptions.isDefined) {
-        val optionsTmp =
-          if (dataFrameWriterOptions.get.length == table.getTargets.length) {
-            dataFrameWriterOptions.get(index)
-          } else {
-            dataFrameWriterOptions.get.head
-          }
-        val (options, partitionBy: List[String]) = if (optionsTmp.contains("partitionBy")) {
+      val (writerWithOptions: DataFrameWriter[Row], partitionBy: List[String]) =
+        if (dataFrameWriterOptions.isDefined) {
+          val optionsTmp =
+            if (dataFrameWriterOptions.get.length == table.getTargets.length) {
+              dataFrameWriterOptions.get(index)
+            } else {
+              dataFrameWriterOptions.get.head
+            }
+          val (options, partitionBy: List[String]) =
+            if (optionsTmp.contains("partitionBy")) {
+              (
+                optionsTmp.filterNot(p => p._1 == "partitionBy"),
+                optionsTmp
+                  .find(p => p._1 == "partitionBy")
+                  .get
+                  ._2
+                  .split(",")
+                  .map(_.trim)
+                  .toList
+              )
+            } else {
+              (optionsTmp, List[String]())
+            }
           (
-            optionsTmp.filterNot(p => p._1 == "partitionBy"),
-            optionsTmp.find(p => p._1 == "partitionBy").get._2.split(",").map(_.trim).toList
+            writer
+              .options(options),
+            partitionBy
           )
         } else {
-          (optionsTmp, List[String]())
+          (writer, List[String]())
         }
-        (
-          writer
-            .options(options),
-          partitionBy
-        )
-      } else {
-        (writer, List[String]())
-      }
 
       val writerWithPartitioning =
         if (!isJDBC && dfContainsTimeColumns) {

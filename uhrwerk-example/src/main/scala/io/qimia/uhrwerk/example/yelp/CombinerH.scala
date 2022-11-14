@@ -35,7 +35,7 @@ object CombinerH extends App {
   uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
   val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_h/table_h_1.0.yml", transformationFunction)
 
-  val runTimes = Array(
+  val runTimes = List(
     LocalDateTime.of(2012, 5, 1, 0, 0),
     LocalDateTime.of(2012, 5, 2, 0, 0),
     LocalDateTime.of(2012, 5, 3, 0, 0),

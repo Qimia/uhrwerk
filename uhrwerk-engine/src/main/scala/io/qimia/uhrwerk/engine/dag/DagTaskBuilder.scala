@@ -11,6 +11,8 @@ import io.qimia.uhrwerk.engine.{Environment, TableWrapper}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
+import scala.collection.JavaConverters._
+
 object DagTaskBuilder {
 
   /**
@@ -83,7 +85,7 @@ class DagTaskBuilder(environment: Environment) {
       .convertRangeToBatch(startTs, endTs, outTable.tableDuration)
 
     val processedPartitions = environment.metaStore.tableDependencyService
-      .processingPartitions(outTable.wrappedTable, partitionTs.toArray)
+      .processingPartitions(outTable.wrappedTable, partitionTs.asJava)
       .getProcessedTs
       .toSet
 

@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.engine.tools
 
-import io.qimia.uhrwerk.common.model.Table
+import io.qimia.uhrwerk.common.model.TableModel
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent, TableIdent}
 
 object TableHelper {
@@ -10,7 +10,7 @@ object TableHelper {
     * @param table table which needs an ident
     * @return a table identifier
     */
-  def extractTableIdentity(table: Table): TableIdent =
+  def extractTableIdentity(table: TableModel): TableIdent =
     TableIdent(table.getArea, table.getVertical, table.getName, table.getVersion)
 
   /**

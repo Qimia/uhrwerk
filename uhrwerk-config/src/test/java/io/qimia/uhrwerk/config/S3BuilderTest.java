@@ -1,15 +1,16 @@
 package io.qimia.uhrwerk.config;
 
-import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class S3BuilderTest {
-  private final Logger logger = Logger.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
 
   @Test
-  void builderTest() {
+  void builderCredsTest() {
     var builder = new S3Builder();
 
     var s3 = builder
@@ -17,7 +18,20 @@ class S3BuilderTest {
             .secretId("secretID")
             .secretKey("secretKey")
             .build();
-    logger.info(s3);
+    logger.info(s3.toString());
+
+    assertEquals("myPath", s3.getPath());
+
+  }
+
+  @Test
+  void builderNoCredsTest() {
+    var builder = new S3Builder();
+
+    var s3 = builder
+            .path("myPath")
+            .build();
+    logger.info(s3.toString());
 
     assertEquals("myPath", s3.getPath());
 

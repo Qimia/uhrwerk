@@ -1,12 +1,13 @@
 package io.qimia.uhrwerk.config;
 
-import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class JDBCBuilderTest {
-  private final Logger logger = Logger.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
 
   @Test
   void builderTest() {
@@ -18,7 +19,7 @@ class JDBCBuilderTest {
             .user("user")
             .pass("pass")
             .build();
-    logger.info(jdbc);
+    logger.info(jdbc.toString());
 
     assertEquals("myDriver", jdbc.getJdbc_driver());
     assertEquals( "myURL", jdbc.getJdbc_url());

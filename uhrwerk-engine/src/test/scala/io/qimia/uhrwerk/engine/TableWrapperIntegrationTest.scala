@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.engine
 import java.sql.DriverManager
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.common.model.{Partition, PartitionUnit, Table, Metastore => MetastoreConnInfo}
+import io.qimia.uhrwerk.common.model.{Partition, PartitionUnit, TableModel, MetastoreModel => MetastoreConnInfo}
 import io.qimia.uhrwerk.config.{ConnectionBuilder, TableBuilder}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
@@ -19,7 +19,7 @@ class TableWrapperIntegrationTest extends AnyFlatSpec with BeforeAndAfterEach {
   testConnInfo.setPass("Xq92vFqEKF7TB8H9")
   val metaStore: MetaStore = MetaStore.build(testConnInfo)
 
-  var table: Table = _
+  var table: TableModel = _
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()
@@ -109,7 +109,7 @@ class TableWrapperIntegrationTest extends AnyFlatSpec with BeforeAndAfterEach {
       LocalDateTime.of(2020, 4, 10, 16, 40),
     )
     requestedTimes.foreach(dt => {
-      val part = new Partition
+      val part = Partition.builder().build()
       part.setPartitioned(true)
       part.setPartitionSize(20)
       part.setPartitionUnit(PartitionUnit.MINUTES)

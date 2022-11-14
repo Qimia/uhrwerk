@@ -142,3 +142,4 @@ spark_logs/
 uhrwerk-backend-mysql/src/main/resources/create_metastore_db_mysql_unit_tests.sql
 uhrwerk-backend-mysql/src/main/resources/metastore_ddl_mysql_unit_tests.sql
 **/.vscode/
+/data/

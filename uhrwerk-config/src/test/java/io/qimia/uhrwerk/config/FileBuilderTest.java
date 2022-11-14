@@ -1,12 +1,13 @@
 package io.qimia.uhrwerk.config;
 
-import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FileBuilderTest {
-  private final Logger logger = Logger.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
 
   @Test
   void builderTest() {
@@ -15,7 +16,7 @@ class FileBuilderTest {
     var file = builder
             .path("myPath")
             .build();
-    logger.info(file);
+    logger.info(file.toString());
 
     assertEquals("myPath", file.getPath());
   }

@@ -1,8 +1,8 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
 import io.qimia.uhrwerk.common.model.Partition;
-
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface PartitionService {
   /**
@@ -23,27 +23,29 @@ public interface PartitionService {
    * with errors, to identify in detail what went wrong where.
    *
    * @param partitions Partitions to save.
-   * @param overwrite  Whether to overwrite non-essential fields.
+   * @param overwrite Whether to overwrite non-essential fields.
    * @return An array with PartitionResults.
    */
-  PartitionResult[] save(Partition[] partitions, boolean overwrite);
+  List<PartitionResult> save(List<Partition> partitions, boolean overwrite);
 
   /**
    * Gets all partitions with the specified targetId and partition timestamps.
    *
-   * @param targetId    Target ID.
+   * @param targetId Target ID.
    * @param partitionTs An array of partition timestamps.
    * @return An array of partitions (can be empty when there were no such partitions) or null in
-   * case something went wrong.
+   *     case something went wrong.
    */
-  Partition[] getPartitions(Long targetId, LocalDateTime[] partitionTs);
+  List<Partition> getPartitions(Long targetId, List<LocalDateTime> partitionTs);
 
   /**
    * Gets the latest partition for a specified target id.
    *
    * @param targetId Target ID.
-   * @return The latest partition for this target. Can be null in case something
-   * went wrong or there are no partitions.
+   * @return The latest partition for this target. Can be null in case something went wrong or there
+   *     are no partitions.
    */
   Partition getLatestPartition(Long targetId);
+
+  Partition getById(Long id);
 }

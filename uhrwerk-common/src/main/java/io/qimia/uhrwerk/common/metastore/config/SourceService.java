@@ -1,9 +1,10 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
-import io.qimia.uhrwerk.common.model.Source;
-import io.qimia.uhrwerk.common.model.Table;
+import io.qimia.uhrwerk.common.model.SourceModel;
+import io.qimia.uhrwerk.common.model.TableModel;
 
 import java.sql.SQLException;
+import java.util.List;
 
 public interface SourceService {
     /**
@@ -15,7 +16,7 @@ public interface SourceService {
      * @param overwrite Whether to overwrite non-essential fields.
      * @return SourceResult.
      */
-    SourceResult save(Source source, Table table, boolean overwrite);
+    SourceResult save(SourceModel source, TableModel table, boolean overwrite);
 
     /**
      * Saves several Sources into the Metastore.
@@ -28,7 +29,7 @@ public interface SourceService {
      * @param overwrite Whether to overwrite non-essential fields.
      * @return An array with SourceResults.
      */
-    SourceResult[] save(Source[] sources, Table table, boolean overwrite);
+    List<SourceResult> save(List<SourceModel> sources, TableModel table, boolean overwrite);
 
     /**
      * Returns all sources belonging to a table.
@@ -38,12 +39,6 @@ public interface SourceService {
      * @throws SQLException         When something goes wrong with the connection to the Metastore.
      * @throws NullPointerException When a source's connection is missing.
      */
-    Source[] getSourcesByTableId(Long tableId) throws SQLException, NullPointerException;
+    List<SourceModel> getSourcesByTableId(Long tableId) throws SQLException, NullPointerException;
 
-    /**
-     * Deletes all sources belonging to a table.
-     *
-     * @param tableId Table id.
-     */
-    void deleteSourcesByTableId(Long tableId) throws SQLException;
 }

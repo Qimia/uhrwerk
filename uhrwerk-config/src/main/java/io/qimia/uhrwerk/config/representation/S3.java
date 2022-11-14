@@ -38,12 +38,6 @@ public class S3{
         if(this.path == null){
             throw new ConfigException("Missing field: " + path + "path");
         }
-        if(secret_id == null){
-            throw new ConfigException("Missing field: " + path + "secret_id");
-        }
-        if(secret_key == null){
-            throw new ConfigException("Missing field: " + path + "secret_key");
-        }
     }
 
 

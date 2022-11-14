@@ -5,7 +5,7 @@ import java.util.concurrent.Executors
 
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
 import io.qimia.uhrwerk.common.metastore.dependency.{TablePartitionResult, TablePartitionResultSet}
-import io.qimia.uhrwerk.common.model.{Partition, PartitionUnit, Table, Target}
+import io.qimia.uhrwerk.common.model.{Partition, PartitionUnit, TableModel, TargetModel}
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent}
 import io.qimia.uhrwerk.engine.TableWrapper.reportProcessingPartitions
 import io.qimia.uhrwerk.engine.tools.{DependencyHelper, SourceHelper, TimeHelper}
@@ -14,6 +14,9 @@ import org.apache.spark.sql.DataFrame
 
 import scala.collection.immutable
 import scala.concurrent._
+
+import scala.collection.JavaConverters._
+
 
 object TableWrapper {
 
@@ -27,14 +30,14 @@ object TableWrapper {
     * @return Array of partition objects
     */
   def createPartitions(
-      partitions: Array[LocalDateTime],
+      partitions: Seq[LocalDateTime],
       partitioned: Boolean,
       partitionUnit: PartitionUnit,
       partitionSize: Int,
       targetId: Long
-  ): Array[Partition] = {
+  ): Seq[Partition] = {
     partitions.map(t => {
-      val newPart = new Partition()
+      val newPart = Partition.builder().build()
       newPart.setPartitionTs(t)
       newPart.setPartitioned(partitioned)
       newPart.setPartitionSize(partitionSize)
@@ -72,8 +75,8 @@ object TableWrapper {
   }
 }
 
-class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => TaskOutput, frameManager: FrameManager) {
-  val wrappedTable: Table = table
+class TableWrapper(metastore: MetaStore, table: TableModel, userFunc: TaskInput => TaskOutput, frameManager: FrameManager) {
+  val wrappedTable: TableModel = table
   val tableDuration: Duration = if (table.isPartitioned) {
     TimeHelper.convertToDuration(table.getPartitionUnit, table.getPartitionSize)
   } else {
@@ -118,7 +121,7 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
     val loadedInputSourceDFs: List[(Ident, DataFrame)] =
       if ((sources != null) && sources.nonEmpty) {
         sources
-          .filter(s => s.isAutoloading)
+          .filter(s => s.isAutoLoad)
           .map(s => {
             val df = if (table.isPartitioned) {
               frameManager.loadSourceDataFrame(s, Option(startTs), endTs)
@@ -136,7 +139,7 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
     val notLoadedInputSources: List[(SourceIdent, DependentLoaderSource)] =
       if ((sources != null) && sources.nonEmpty) {
         sources
-          .filter(s => !s.isAutoloading)
+          .filter(s => !s.isAutoLoad)
           .map(s => {
             val dL = if (table.isPartitioned) {
               DependentLoaderSource(s, frameManager, Option(startTs), endTs)
@@ -184,7 +187,7 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
     * @param ex           execution context onto which the futures are created
     * @return list of futures for the started tasks
     */
-  def runTasks(partitionsTs: Array[LocalDateTime], overwrite: Boolean = false)(
+  def runTasks(partitionsTs: List[LocalDateTime], overwrite: Boolean = false)(
       implicit
       ex: ExecutionContext): List[Future[Boolean]] = {
     val tasks = getTaskRunners(partitionsTs, overwrite).map(x => Future{x()})
@@ -205,11 +208,11 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
    * @param ex           execution context onto which the futures are created
    * @return list of futures for the started tasks
    */
-  def getTaskRunners(partitionsTs: Array[LocalDateTime], overwrite: Boolean = false)(
+  def getTaskRunners(partitionsTs: List[LocalDateTime], overwrite: Boolean = false)(
     implicit
     ex: ExecutionContext): immutable.List[() => Boolean] = {
     val dependencyRes: TablePartitionResultSet =
-      metastore.tableDependencyService.processingPartitions(table, partitionsTs)
+      metastore.tableDependencyService.processingPartitions(table, partitionsTs.asJava)
     reportProcessingPartitions(dependencyRes, logger)
 
     // If no tasks to be done => quit
@@ -231,14 +234,14 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
       val e = () => {
         val res = singleRun(bulkInput, localGroupTs)
         if (res) {
-          table.getTargets.foreach((t: Target) => {
+          table.getTargets.foreach((t: TargetModel) => {
             val partitions =
               TableWrapper.createPartitions(localGroupTs,
                 table.isPartitioned,
                 table.getPartitionUnit,
                 table.getPartitionSize,
                 t.getId)
-            val _ = metastore.partitionService.save(partitions, overwrite)
+            val _ = metastore.partitionService.save(partitions.asJava, overwrite)
             partitions
               .zip(partitionGroup)
               .map(x =>
@@ -269,13 +272,13 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
     * @param threads    number of threads used by the threadpool
     */
   def runTasksAndWait(
-      startTimes: Array[LocalDateTime] = Array(),
+      startTimes: List[LocalDateTime] = List(),
       overwrite: Boolean = false,
       threads: Option[Int] = Option.empty
   ): List[Boolean] = {
     val startTimesAdjusted = if (startTimes.isEmpty) {
       if (!table.isPartitioned) {
-        Array(LocalDateTime.now())
+        List(LocalDateTime.now())
       } else {
         throw new IllegalArgumentException("For partitioned tables the startTimes need to be specified.")
       }
@@ -285,7 +288,7 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
           "Specifying startTimes for unpartitioned tables is not necessary, " +
             "it will always run with the current timestamp."
         )
-        Array(LocalDateTime.now())
+        List(LocalDateTime.now())
       } else {
         startTimes
       }
@@ -311,7 +314,7 @@ class TableWrapper(metastore: MetaStore, table: Table, userFunc: TaskInput => Ta
    * @return localdatetime of the partition or empty if there is no
    */
   def getTimeLatestPartition: Option[LocalDateTime] = {
-    val targets = metastore.targetService.getTableTargets(wrappedTable.getId)
+    val targets = metastore.targetService.getTableTargets(wrappedTable.getId).asScala
     val latestPartitions = targets.map(t => metastore.partitionService.getLatestPartition(t.getId)).filter(_ != null)
     if (latestPartitions.isEmpty) {
       Option.empty

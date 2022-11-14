@@ -1,12 +1,13 @@
 package io.qimia.uhrwerk.config;
 
-import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SelectBuilderTest {
-  private final Logger logger = Logger.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
 
   @Test
   void builderTest() {
@@ -16,7 +17,7 @@ class SelectBuilderTest {
             .column("id")
             .query("SELECT * from TABLE1")
             .build();
-    logger.info(select);
+    logger.info(select.toString());
 
     assertEquals("id", select.getColumn());
   }

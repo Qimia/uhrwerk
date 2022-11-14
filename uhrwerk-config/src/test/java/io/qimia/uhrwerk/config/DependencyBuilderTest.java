@@ -1,12 +1,13 @@
 package io.qimia.uhrwerk.config;
 
-import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DependencyBuilderTest {
-  private final Logger logger = Logger.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
 
   @Test
   void builderTest() {
@@ -27,7 +28,7 @@ class DependencyBuilderTest {
             .done()
             .done()
             .build();
-    logger.info(dependency);
+    logger.info(dependency.toString());
 
     assertEquals("area", dependency.getArea());
     assertEquals(1, dependency.getTransform().getPartition().getSize());
@@ -47,7 +48,7 @@ class DependencyBuilderTest {
             .version("1.0")
             .transform(transform)
             .build();
-    logger.info(dependency);
+    logger.info(dependency.toString());
 
     assertEquals("area", dependency.getArea());
     assertEquals(2, dependency.getTransform().getPartition().getSize());
@@ -67,7 +68,7 @@ class DependencyBuilderTest {
             .version("1.0")
             .transform(transform)
             .build();
-    logger.info(dependency);
+    logger.info(dependency.toString());
 
     assertEquals("area", dependency.getArea());
     assertEquals(3, dependency.getTransform().getPartition().getSize());
@@ -100,8 +101,8 @@ class DependencyBuilderTest {
             .transform(transform)
             .build();
 
-    logger.info(dependency1);
-    logger.info(dependency2);
+    logger.info(dependency1.toString());
+    logger.info(dependency2.toString());
 
     assertEquals("area", dependency1.getArea());
     assertEquals("identity", dependency1.getTransform().getType());

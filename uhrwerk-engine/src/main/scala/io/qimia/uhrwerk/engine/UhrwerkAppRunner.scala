@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.engine
 
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.common.model.{Connection, Table}
+import io.qimia.uhrwerk.common.model.{ConnectionModel, TableModel}
 import io.qimia.uhrwerk.common.tools.TimeTools
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.dag.{DagTaskBuilder, DagTaskDispatcher}
@@ -92,16 +92,16 @@ object UhrwerkAppRunner {
     * @param overwrite
     */
   def run(
-      sparkSession: SparkSession,
-      environmentConfig: String,
-      connectionConfigs: Array[Connection],
-      tableConfigs: Array[Table],
-      runTable: TableIdent,
-      startTime: Option[LocalDateTime],
-      endTime: Option[LocalDateTime],
-      dagMode: Boolean,
-      parallelRun: Int,
-      overwrite: Boolean
+           sparkSession: SparkSession,
+           environmentConfig: String,
+           connectionConfigs: Array[ConnectionModel],
+           tableConfigs: Array[TableModel],
+           runTable: TableIdent,
+           startTime: Option[LocalDateTime],
+           endTime: Option[LocalDateTime],
+           dagMode: Boolean,
+           parallelRun: Int,
+           overwrite: Boolean
   ): Unit = {
     val frameManager       = new SparkFrameManager(sparkSession)
     val uhrwerkEnvironment = Environment.build(environmentConfig, frameManager)
@@ -185,9 +185,8 @@ object UhrwerkAppRunner {
         val (callStartTime, callEndTime) = getStartEndTime(tableToRun, startTime, endTime)
         TimeTools
           .convertRangeToBatch(callStartTime, callEndTime, tableToRun.tableDuration)
-          .toArray
       } else {
-        Array.empty[LocalDateTime]
+        List.empty[LocalDateTime]
       }
       if (parallelRun > 1) {
         val _ = tableToRun.runTasksAndWait(partitionTs, overwrite, Option(parallelRun))

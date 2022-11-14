@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.config;
 
 
+import io.qimia.uhrwerk.common.model.TableModel;
 import io.qimia.uhrwerk.config.representation.*;
 
 import java.util.ArrayList;
@@ -203,7 +204,7 @@ public class TableBuilder {
         return table;
     }
 
-    public io.qimia.uhrwerk.common.model.Table build() {
+    public TableModel build() {
         var table = new Table();
         table.setArea(this.area);
         table.setVertical(this.vertical);

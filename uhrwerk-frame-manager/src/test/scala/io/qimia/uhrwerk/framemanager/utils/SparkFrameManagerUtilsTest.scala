@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.framemanager.utils
 
 import java.time.LocalDateTime
 
-import io.qimia.uhrwerk.common.model.{Dependency, PartitionUnit, Table}
+import io.qimia.uhrwerk.common.model.{DependencyModel, PartitionUnit, TableModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -89,11 +89,11 @@ class SparkFrameManagerUtilsTest extends AnyFlatSpec {
   }
 
   "getTablePath" should "create a table path" in {
-    val table = new Table
-    table.setVersion("1")
-    table.setArea("staging")
-    table.setName("testsparkframemanager")
-    table.setVertical("testdb")
+    val table = TableModel.builder()
+    .version("1")
+    .area("staging")
+    .name("testsparkframemanager")
+    .vertical("testdb").build()
 
     val tablePath = SparkFrameManagerUtils.getTablePath(table, fileSystem = true, "parquet")
     assert(
@@ -105,12 +105,12 @@ class SparkFrameManagerUtilsTest extends AnyFlatSpec {
   }
 
   "getDependencyPath" should "create a dependency path" in {
-    val dependency = new Dependency
-    dependency.setVersion("1")
-    dependency.setArea("staging")
-    dependency.setTableName("testsparkframemanager")
-    dependency.setVertical("testdb")
-    dependency.setFormat("parquet")
+    val dependency = DependencyModel.builder()
+    .version("1")
+    .area("staging")
+    .tableName("testsparkframemanager")
+    .vertical("testdb")
+    .format("parquet").build()
 
     val tablePath = SparkFrameManagerUtils.getDependencyPath(dependency, fileSystem = true)
     assert(

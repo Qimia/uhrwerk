@@ -2,8 +2,8 @@ package io.qimia.uhrwerk.framemanager.utils
 
 import java.nio.file.Paths
 import java.sql.Timestamp
-import java.time.LocalDateTime
-import io.qimia.uhrwerk.common.model.{Connection, ConnectionType, Dependency, PartitionUnit, Table}
+import java.time.{LocalDateTime, ZoneId, ZoneOffset}
+import io.qimia.uhrwerk.common.model.{ConnectionModel, ConnectionType, DependencyModel, PartitionUnit, TableModel}
 import io.qimia.uhrwerk.common.tools.TimeTools
 import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._
@@ -82,19 +82,20 @@ object SparkFrameManagerUtils {
   private[framemanager] def getTimeValues(
       startTS: LocalDateTime
   ): (String, String, String, String, String) = {
-    val year = startTS.getYear.toString
+    val startZTS = startTS.atZone(ZoneId.ofOffset("GMT", ZoneOffset.UTC))
+    val year = startZTS.getYear.toString
     val month = concatenateDateParts(
       year,
-      TimeTools.leftPad(startTS.getMonthValue.toString)
+      TimeTools.leftPad(startZTS.getMonthValue.toString)
     )
     val day = concatenateDateParts(
       month,
-      TimeTools.leftPad(startTS.getDayOfMonth.toString)
+      TimeTools.leftPad(startZTS.getDayOfMonth.toString)
     )
     val hour =
-      concatenateDateParts(day, TimeTools.leftPad(startTS.getHour.toString))
+      concatenateDateParts(day, TimeTools.leftPad(startZTS.getHour.toString))
     val minute =
-      concatenateDateParts(hour, TimeTools.leftPad(startTS.getMinute.toString))
+      concatenateDateParts(hour, TimeTools.leftPad(startZTS.getMinute.toString))
 
     (year, month, day, hour, minute)
   }
@@ -116,9 +117,9 @@ object SparkFrameManagerUtils {
     * @return The concatenated path.
     */
   private[framemanager] def getTablePath(
-      table: Table,
-      fileSystem: Boolean,
-      format: String
+                                          table: TableModel,
+                                          fileSystem: Boolean,
+                                          format: String
   ): String = {
     if (fileSystem) {
       Paths
@@ -136,7 +137,7 @@ object SparkFrameManagerUtils {
     }
   }
 
-  private[framemanager] def getJDBCTableSchemaAndName(table: Table): (String, String) = {
+  private[framemanager] def getJDBCTableSchemaAndName(table: TableModel): (String, String) = {
     (table.getArea + "_" + table.getVertical, table.getName + "_" + table.getVersion.replace(".", "_"))
   }
 
@@ -149,8 +150,8 @@ object SparkFrameManagerUtils {
     * @return The concatenated path.
     */
   private[framemanager] def getDependencyPath(
-      dependency: Dependency,
-      fileSystem: Boolean
+                                               dependency: DependencyModel,
+                                               fileSystem: Boolean
   ): String = {
     if (fileSystem) {
       Paths
@@ -261,7 +262,7 @@ object SparkFrameManagerUtils {
     when(length(c) === 1, concat(lit("0"), c)).otherwise(c)
   }
 
-  private[framemanager] def setS3Config(sparkSession: SparkSession, connection: Connection): Unit = {
+  private[framemanager] def setS3Config(sparkSession: SparkSession, connection: ConnectionModel): Unit = {
     assert(connection.getType == ConnectionType.S3)
     val config = sparkSession.conf
     if(connection.getPath.contains("s3a")) {
@@ -271,8 +272,8 @@ object SparkFrameManagerUtils {
       config.set("fs.s3a.secret.key", connection.getAwsSecretAccessKey)
     } else {
       // s3
-      System.setProperty("aws.accessKeyId", connection.getAwsAccessKeyID)
-      System.setProperty("aws.secretKey", connection.getAwsSecretAccessKey)
+      //System.setProperty("aws.accessKeyId", connection.getAwsAccessKeyID)
+      //System.setProperty("aws.secretKey", connection.getAwsSecretAccessKey)
     }
   }
 }

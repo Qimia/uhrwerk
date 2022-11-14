@@ -35,7 +35,7 @@ object WindowF extends App {
   uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
   val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_f/table_f_1.0.yml", loaderAFunc, overwrite = true)
 
-  val runTimes = Array(
+  val runTimes = List(
     LocalDateTime.of(2012, 5, 3, 0, 0),
     LocalDateTime.of(2012, 5, 4, 0, 0),
     LocalDateTime.of(2012, 5, 5, 0, 0),

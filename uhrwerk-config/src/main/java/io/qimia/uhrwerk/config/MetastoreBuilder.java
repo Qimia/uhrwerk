@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.config;
 
+import io.qimia.uhrwerk.common.model.MetastoreModel;
 import io.qimia.uhrwerk.config.representation.Metastore;
 
 public class MetastoreBuilder {
@@ -31,7 +32,7 @@ public class MetastoreBuilder {
         return this;
     }
 
-    public io.qimia.uhrwerk.common.model.Metastore build(){
+    public MetastoreModel build(){
         var metastore = new Metastore();
         metastore.setJdbc_driver(this.jdbcDriver);
         metastore.setJdbc_url(this.jdbcUrl);

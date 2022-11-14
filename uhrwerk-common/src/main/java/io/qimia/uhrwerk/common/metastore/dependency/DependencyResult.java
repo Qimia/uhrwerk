@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.common.metastore.dependency;
 
-import io.qimia.uhrwerk.common.model.Connection;
-import io.qimia.uhrwerk.common.model.Dependency;
+import io.qimia.uhrwerk.common.model.ConnectionModel;
+import io.qimia.uhrwerk.common.model.DependencyModel;
 import io.qimia.uhrwerk.common.model.Partition;
 
 import java.io.Serializable;
@@ -13,8 +13,8 @@ public class DependencyResult implements Serializable {
   private static final long serialVersionUID = -1009786291331446408L;
   LocalDateTime partitionTs;
   boolean success;
-  Dependency dependency;
-  Connection connection;
+  DependencyModel dependency;
+  ConnectionModel Connection;
   LocalDateTime[] succeeded;
   LocalDateTime[] failed;
   Partition[] partitions;
@@ -35,20 +35,20 @@ public class DependencyResult implements Serializable {
     this.success = success;
   }
 
-  public Dependency getDependency() {
+  public DependencyModel getDependency() {
     return dependency;
   }
 
-  public void setDependency(Dependency dependency) {
+  public void setDependency(DependencyModel dependency) {
     this.dependency = dependency;
   }
 
-  public Connection getConnection() {
-    return connection;
+  public ConnectionModel getConnection() {
+    return Connection;
   }
 
-  public void setConnection(Connection connection) {
-    this.connection = connection;
+  public void setConnection(ConnectionModel Connection) {
+    this.Connection = Connection;
   }
 
   public LocalDateTime[] getSucceeded() {
@@ -83,7 +83,7 @@ public class DependencyResult implements Serializable {
     return success == that.success
         && Objects.equals(partitionTs, that.partitionTs)
         && Objects.equals(dependency, that.dependency)
-        && Objects.equals(connection, that.connection)
+        && Objects.equals(Connection, that.Connection)
         && Arrays.equals(succeeded, that.succeeded)
         && Arrays.equals(failed, that.failed)
         && Arrays.equals(partitions, that.partitions);
@@ -91,7 +91,7 @@ public class DependencyResult implements Serializable {
 
   @Override
   public int hashCode() {
-    int result = Objects.hash(partitionTs, success, dependency, connection);
+    int result = Objects.hash(partitionTs, success, dependency, Connection);
     result = 31 * result + Arrays.hashCode(succeeded);
     result = 31 * result + Arrays.hashCode(failed);
     result = 31 * result + Arrays.hashCode(partitions);
@@ -108,7 +108,7 @@ public class DependencyResult implements Serializable {
         + ", dependency="
         + dependency
         + ", connection="
-        + connection
+        + Connection
         + ", succeeded="
         + Arrays.toString(succeeded)
         + ", failed="

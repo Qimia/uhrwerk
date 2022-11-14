@@ -54,7 +54,7 @@ object LoaderJ extends App {
   uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
   val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_j/table_j_1.0.yml", transformationFunction)
 
-  val runTimes = Array(LocalDateTime.of(2012, 5, 1, 0, 0))
+  val runTimes = List(LocalDateTime.of(2012, 5, 1, 0, 0))
   val now = LocalDateTime.now()
   val results = wrapper.get.runTasksAndWait(runTimes)
   logger.info(results)

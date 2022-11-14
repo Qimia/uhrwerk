@@ -36,7 +36,7 @@ object LoaderBParq extends App {
   uhrwerkEnvironment.addConnectionFile("yelp_test/testing-connection-config.yml")
   val wrapper = uhrwerkEnvironment.addTableFile("yelp_test/staging/yelp_db/table_b_parq/table_b_parq_1.0.yml", loaderBFunc, overwrite = true)
 
-  val runTimes = Array(
+  val runTimes = List(
     LocalDateTime.of(2012, 5, 1, 0, 0),
     LocalDateTime.of(2012, 5, 2, 0, 0),
     LocalDateTime.of(2012, 5, 3, 0, 0),

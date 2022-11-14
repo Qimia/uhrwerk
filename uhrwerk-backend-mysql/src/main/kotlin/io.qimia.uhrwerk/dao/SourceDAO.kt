@@ -1,0 +1,97 @@
+package io.qimia.uhrwerk.dao
+
+import io.qimia.uhrwerk.common.metastore.config.ConnectionService
+import io.qimia.uhrwerk.common.metastore.config.SourceResult
+import io.qimia.uhrwerk.common.metastore.config.SourceService
+import io.qimia.uhrwerk.common.model.ConnectionModel
+import io.qimia.uhrwerk.common.model.HashKeyUtils
+import io.qimia.uhrwerk.common.model.SourceModel
+import io.qimia.uhrwerk.common.model.TableModel
+import io.qimia.uhrwerk.repo.SourceRepo
+import java.sql.SQLException
+
+class SourceDAO : SourceService {
+    private val connService: ConnectionService = ConnectionDAO()
+    private val repo = SourceRepo()
+
+
+    override fun save(source: SourceModel, table: TableModel, overwrite: Boolean): SourceResult {
+        val result = SourceResult()
+        result.newResult = source
+
+        if (!table.isPartitioned && source.isPartitioned) {
+            result.isSuccess = false
+            result.message =
+                "An unpartitioned Table cannot have a partitioned Source. (The other way around it is possible)"
+            return result
+        }
+        try {
+            if (source.connection == null) {
+                throw NullPointerException(
+                    "The connection in this source is null. It needs to be set."
+                )
+            }
+            var conn: ConnectionModel? = null
+            if (source.connection.name != null) {
+                conn = connService.getByHashKey(HashKeyUtils.connectionKey(source.connection))
+            }
+            if (conn == null) {
+                throw NullPointerException(
+                    "The connection for this source is missing in the Metastore."
+                )
+            } else {
+                //FIXME: issue with target connectionId
+                source.connection = conn
+                source.connectionId = conn.id
+            }
+
+            val oldSource: SourceModel? = getByHashKey(source)
+            result.oldResult = oldSource
+            if (!overwrite) {
+                if (oldSource != null) {
+                    if (oldSource != source) {
+                        result.message =
+                            "A Source with id=${oldSource.id} and different values already exists in the Metastore."
+                        result.isSuccess = false
+                    } else {
+                        result.isSuccess = true
+                    }
+                    return result
+                }
+            } else {
+                if (oldSource != null)
+                    repo.deactivateById(oldSource.id)
+            }
+            result.newResult = repo.save(source)
+            result.isSuccess = true
+        } catch (e: SQLException) {
+            result.isError = true
+            result.exception = e
+            result.message = e.message
+        } catch (e: NullPointerException) {
+            result.isError = true
+            result.exception = e
+            result.message = e.message
+        }
+        return result
+    }
+
+    private fun getByHashKey(source: SourceModel): SourceModel? {
+        val sources = repo.getByHashKey(HashKeyUtils.sourceKey(source));
+        if (sources.isNotEmpty())
+            return sources.first()
+        return null
+    }
+
+    override fun save(
+        sources: List<SourceModel>,
+        table: TableModel,
+        overwrite: Boolean
+    ): List<SourceResult> {
+        return sources.map { save(it, table, overwrite) }
+    }
+
+    override fun getSourcesByTableId(tableId: Long): List<SourceModel> {
+        return repo.getSourcesByTableId(tableId)
+    }
+}

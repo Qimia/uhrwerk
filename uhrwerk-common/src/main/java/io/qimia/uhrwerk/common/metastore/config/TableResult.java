@@ -1,13 +1,13 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
-import io.qimia.uhrwerk.common.model.Table;
+import io.qimia.uhrwerk.common.model.TableModel;
 
 import java.io.Serializable;
 
 public class TableResult implements Serializable {
     private static final long serialVersionUID = 2402210215093160756L;
-    private Table newResult;
-    private Table oldResult;
+    private TableModel newResult;
+    private TableModel oldResult;
     private boolean success;
     private boolean error;
     private String message;
@@ -28,19 +28,19 @@ public class TableResult implements Serializable {
         return dependencyResult;
     }
 
-    public Table getNewResult() {
+    public TableModel getNewResult() {
         return newResult;
     }
 
-    public void setNewResult(Table newResult) {
+    public void setNewResult(TableModel newResult) {
         this.newResult = newResult;
     }
 
-    public Table getOldResult() {
+    public TableModel getOldResult() {
         return oldResult;
     }
 
-    public void setOldResult(Table oldResult) {
+    public void setOldResult(TableModel oldResult) {
         this.oldResult = oldResult;
     }
 

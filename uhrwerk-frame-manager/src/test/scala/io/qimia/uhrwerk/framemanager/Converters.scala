@@ -1,11 +1,11 @@
 package io.qimia.uhrwerk.framemanager
 
-import io.qimia.uhrwerk.common.model.{Dependency, PartitionTransformType, Table, Target}
+import io.qimia.uhrwerk.common.model.{DependencyModel, PartitionTransformType, TableModel, TargetModel}
 
 object Converters {
 
-  def convertTargetToDependency(target: Target, table: Table): Dependency = {
-    val dependency = new Dependency
+  def convertTargetToDependency(target: TargetModel, table: TableModel): DependencyModel = {
+    val dependency = DependencyModel.builder().build()
     dependency.setArea(table.getArea)
     dependency.setFormat(target.getFormat)
     dependency.setVersion(table.getVersion)

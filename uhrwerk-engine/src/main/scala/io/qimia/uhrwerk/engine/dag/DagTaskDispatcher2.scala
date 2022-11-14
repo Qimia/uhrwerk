@@ -7,6 +7,7 @@ import org.apache.log4j.Logger
 import scala.collection.mutable
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
+import scala.collection.JavaConverters._
 
 object DagTaskDispatcher2 {
 
@@ -79,7 +80,7 @@ object DagTaskDispatcher2 {
         // If the state condition is fulfilled, run the task
         case (true, true, false, false) => {
           logger.info(s"${taskKey.ident.asPath}: starting to run bulk(s in parallel).")
-          val subTasksToRun = task.tableWrapper.getTaskRunners(task.partitions.toArray)
+          val subTasksToRun = task.tableWrapper.getTaskRunners(task.partitions.toList)
           val taskResult =
             Future.sequence(subTasksToRun.map(subTask => Future { (true, true, false, false, subTask.apply()) }))
           taskResult

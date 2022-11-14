@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.config;
 
+import io.qimia.uhrwerk.common.model.DagModel;
 import io.qimia.uhrwerk.config.representation.Connection;
 import io.qimia.uhrwerk.config.representation.Dag;
 import io.qimia.uhrwerk.config.representation.Table;
@@ -65,7 +66,7 @@ public class DagBuilder {
         return this;
     }
 
-    public io.qimia.uhrwerk.common.model.Dag build() {
+    public DagModel build() {
         var dag = new Dag();
         if (this.connections != null) {
             dag.setConnections(this.connections);

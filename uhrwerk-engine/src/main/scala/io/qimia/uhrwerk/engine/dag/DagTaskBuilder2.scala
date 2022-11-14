@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.engine.dag
 
-import io.qimia.uhrwerk.common.model.{PartitionTransformType, Table}
+import io.qimia.uhrwerk.common.model.{PartitionTransformType, TableModel}
 import io.qimia.uhrwerk.common.tools.TimeTools
 import io.qimia.uhrwerk.engine.{Environment, TableWrapper}
 import io.qimia.uhrwerk.engine.Environment.{TableIdent, getTableIdent, tableCleaner}
@@ -11,6 +11,9 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.collection.immutable
+
+import scala.collection.JavaConverters._
+
 
 object DagTaskBuilder2 {
 
@@ -192,7 +195,7 @@ class DagTaskBuilder2(environment: Environment) {
       .convertRangeToBatch(startTs, endTs, outTable.tableDuration)
 
     val processedPartitions = environment.metaStore.tableDependencyService
-      .processingPartitions(outTable.wrappedTable, partitionTs.toArray)
+      .processingPartitions(outTable.wrappedTable, partitionTs.asJava)
       .getProcessedTs
       .toSet
 

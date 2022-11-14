@@ -1,32 +1,32 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
-import io.qimia.uhrwerk.common.model.Connection;
+import io.qimia.uhrwerk.common.model.ConnectionModel;
 
 import java.io.Serializable;
 import java.util.Objects;
 
 public class ConnectionResult implements Serializable {
   private static final long serialVersionUID = 3800840086237687091L;
-  Connection newConnection;
-  Connection oldConnection;
+  ConnectionModel newConnection;
+  ConnectionModel oldConnection;
   boolean success;
   boolean error;
   String message;
   Exception exception;
 
-  public Connection getNewConnection() {
+  public ConnectionModel getNewConnection() {
     return newConnection;
   }
 
-  public void setNewConnection(Connection newConnection) {
+  public void setNewConnection(ConnectionModel newConnection) {
     this.newConnection = newConnection;
   }
 
-  public Connection getOldConnection() {
+  public ConnectionModel getOldConnection() {
     return oldConnection;
   }
 
-  public void setOldConnection(Connection oldConnection) {
+  public void setOldConnection(ConnectionModel oldConnection) {
     this.oldConnection = oldConnection;
   }
 

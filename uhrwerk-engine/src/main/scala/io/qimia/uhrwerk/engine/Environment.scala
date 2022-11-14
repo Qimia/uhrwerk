@@ -27,7 +27,7 @@ object Environment {
     * @param table table which still needs the user-function (and has not been loaded yet)
     * @return user's code with the table's transformation function
     */
-  def getTableFunctionDynamic(table: Table): TaskInput => TaskOutput = {
+  def getTableFunctionDynamic(table: TableModel): TaskInput => TaskOutput = {
     // Dynamically load the right class and return the function described in it
     // either it is defined in the table object or through the convention of classnaming
     // `area.vertical.name.version`
@@ -56,17 +56,17 @@ object Environment {
     * @param table table to clean
     * @return cleaned table
     */
-  def tableCleaner(table: Table): Table = {
+  def tableCleaner(table: TableModel): TableModel = {
     if (table.getDependencies == null) {
-      table.setDependencies(new Array[Dependency](0))
+      table.setDependencies(new Array[DependencyModel](0))
     }
     if (table.getSources == null) {
-      table.setSources(new Array[Source](0))
+      table.setSources(new Array[SourceModel](0))
     }
     table
   }
 
-  def getTableIdent(table: Table): TableIdent =
+  def getTableIdent(table: TableModel): TableIdent =
     TableIdent(table.getArea, table.getVertical, table.getName, table.getVersion)
 
   /**
@@ -134,7 +134,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     * @param connConfigs connection configuration objects
     * @param overwrite remove old definitions of table or keep them and stop if changes have been made
     */
-  def addConnections(connConfigs: Seq[Connection], overwrite: Boolean = false): Unit =
+  def addConnections(connConfigs: Seq[ConnectionModel], overwrite: Boolean = false): Unit =
     connConfigs.foreach(conn => store.connectionService.save(conn, overwrite))
 
   /**
@@ -169,7 +169,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     * @param tableConfig table configuration
     * @param overwrite remove old definitions of table or keep them and stop if changes have been made
     */
-  def addTableConvention(tableConfig: Table, overwrite: Boolean): Unit =
+  def addTableConvention(tableConfig: TableModel, overwrite: Boolean): Unit =
     addTable(tableConfig, getTableFunctionDynamic(tableConfig), overwrite)
 
   /**
@@ -180,9 +180,9 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     * @return If storing the config was a success a TableWrapper object
     */
   def addTable(
-      tableConfig: Table,
-      userFunc: TaskInput => TaskOutput,
-      overwrite: Boolean = false
+                tableConfig: TableModel,
+                userFunc: TaskInput => TaskOutput,
+                overwrite: Boolean = false
   ): Option[TableWrapper] = {
     val cleanedTable = Environment.tableCleaner(tableConfig)
     val storeRes     = store.tableService.save(cleanedTable, overwrite)
@@ -218,8 +218,9 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     * Setup a full dag based on a configuration
     * @param dagConfig full dag configuration object
     */
-  def setupDagConvention(dagConfig: Dag, overwrite: Boolean = false) {
+  def setupDagConvention(dagConfig: DagModel, overwrite: Boolean = false) {
     dagConfig.getConnections.foreach(conn => store.connectionService.save(conn, overwrite))
+
     dagConfig.getTables.foreach(t => {
       val ident    = getTableIdent(t)
       val storeRes = store.tableService.save(t, overwrite)
@@ -254,7 +255,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     * @param dagConfig full dag configuration object
     * @param userFuncs a map with the table identity objects mapped to the userfunctions for transformation
     */
-  def setupDag(dagConfig: Dag, userFuncs: Map[Ident, TaskInput => TaskOutput], overwrite: Boolean = false): Unit = {
+  def setupDag(dagConfig: DagModel, userFuncs: Map[Ident, TaskInput => TaskOutput], overwrite: Boolean = false): Unit = {
     dagConfig.getConnections.foreach(conn => store.connectionService.save(conn, overwrite))
     dagConfig.getTables.foreach(t => {
       val ident = getTableIdent(t)

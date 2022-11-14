@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
-import io.qimia.uhrwerk.common.model.Table;
+import io.qimia.uhrwerk.common.model.TableModel;
 
 public interface TableService {
     /**
@@ -12,5 +12,5 @@ public interface TableService {
      * @param overwrite Whether to overwrite non-essential fields.
      * @return TableResult.
      */
-    TableResult save(Table table, boolean overwrite);
+    TableResult save(TableModel table, boolean overwrite);
 }

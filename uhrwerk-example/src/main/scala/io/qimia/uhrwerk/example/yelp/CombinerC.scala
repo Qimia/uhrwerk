@@ -45,7 +45,7 @@ object CombinerC extends App {
   val wrapper =
     uhrwerkEnvironment.addTableFile("yelp_test/combining/yelp_db/table_c_parq/table_c_parq_1.0.yml", CombinerCFunc, overwrite = true)
 
-  val runTimes = Array(
+  val runTimes = List(
     LocalDateTime.of(2012, 5, 2, 3, 4)
   )
   val results = wrapper.get.runTasksAndWait(runTimes, overwrite = false)

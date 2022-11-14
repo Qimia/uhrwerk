@@ -1,12 +1,13 @@
 package io.qimia.uhrwerk.config;
 
-import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ParallelLoadBuilderTest {
-  private final Logger logger = Logger.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
 
   @Test
   void builderTest() {
@@ -17,7 +18,7 @@ class ParallelLoadBuilderTest {
             .query("SELECT * from TABLE1")
             .num(5)
             .build();
-    logger.info(parallelLoad);
+    logger.info(parallelLoad.toString());
 
     assertEquals(5, parallelLoad.getNum());
   }

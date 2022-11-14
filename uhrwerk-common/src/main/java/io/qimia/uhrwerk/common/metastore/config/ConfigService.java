@@ -1,12 +1,12 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
-import io.qimia.uhrwerk.common.model.Connection;
-import io.qimia.uhrwerk.common.model.Table;
+import io.qimia.uhrwerk.common.model.ConnectionModel;
+import io.qimia.uhrwerk.common.model.TableModel;
 
 public interface ConfigService {
-  Connection save(Connection connection);
+  ConnectionModel save(ConnectionModel Connection);
 
-  Table tableConfig(String area, String vertical, String name, String version);
+  TableModel tableConfig(String area, String vertical, String name, String version);
 
-  Table tableConfig(Table table);
+  TableModel tableConfig(TableModel table);
 }

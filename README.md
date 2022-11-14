@@ -32,7 +32,7 @@ Uhrwerk needs two things to run:
 2. (Only necessary when running for the first time): Initialise the metastore with `./create-uhrwerk-metastore.sh` (for also running the unit tests, execute `./create-uhrwerk-metastore-unit-tests.sh` and `./uhrwerk-example/load-yelp-data.sh <path-to-yelp_db.sql>`)
 
 3. Now there are two ways how to run jobs:
-    * From IntelliJ with local Spark. Use `testing-connection-config.yml`, and `testing-env-config.yml`.
+    * From IntelliJ with local Spark. Use `testing-Connection-config.yml`, and `testing-env-config.yml`.
     ```scala
     val sparkSess = SparkSession
        .builder()
@@ -51,7 +51,7 @@ Uhrwerk needs two things to run:
       cp uhrwerk-cli/target/uhrwerk-cli-0.1.0-SNAPSHOT-jar-with-dependencies.jar docker/spark_jars/
       cp uhrwerk-example/target/uhrwerk-example-0.1.0-SNAPSHOT.jar docker/spark_jars/
       cp uhrwerk-common/src/main/resources/log4j.properties docker/spark_configs/
-      ./uhrwerk-start.py staging.yelp_db.table_a_parq.1.0 /spark_jars/uhrwerk-example-0.1.0-SNAPSHOT.jar --table_configs /spark_configs/loader-A-parq-app.yml --conn_configs /spark_configs/testing-connection-config-docker.yml --lower_bound 2012-05-01T00:00:00 --upper_bound 2012-05-06T00:00:00 --spark_docker --spark_properties /spark_configs/example_spark_docker.conf --uhrwerk_jar_location /spark_jars/uhrwerk-cli-0.1.0-SNAPSHOT-jar-with-dependencies.jar --uhrwerk_config /spark_configs/testing-env-config-docker.yml
+      ./uhrwerk-start.py staging.yelp_db.table_a_parq.1.0 /spark_jars/uhrwerk-example-0.1.0-SNAPSHOT.jar --table_configs /spark_configs/loader-A-parq-app.yml --conn_configs /spark_configs/testing-Connection-config-docker.yml --lower_bound 2012-05-01T00:00:00 --upper_bound 2012-05-06T00:00:00 --spark_docker --spark_properties /spark_configs/example_spark_docker.conf --uhrwerk_jar_location /spark_jars/uhrwerk-cli-0.1.0-SNAPSHOT-jar-with-dependencies.jar --uhrwerk_config /spark_configs/testing-env-config-docker.yml
       ```
     
 4. When using the Spark docker containers, see the Spark history server at http://0.0.0.0:18080/

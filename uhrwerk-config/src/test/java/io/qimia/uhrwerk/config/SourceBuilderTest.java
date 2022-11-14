@@ -1,12 +1,13 @@
 package io.qimia.uhrwerk.config;
 
-import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SourceBuilderTest {
-  private final Logger logger = Logger.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
 
   @Test
   void buildTest() {
@@ -31,7 +32,7 @@ class SourceBuilderTest {
             .column("created_ts")
             .done()
             .build();
-    logger.info(source);
+    logger.info(source.toString());
 
     assertEquals(8, source.getParallel_load().getNum());
     assertEquals("connection", source.getConnection_name());
@@ -58,7 +59,7 @@ class SourceBuilderTest {
             .parallelLoad(parallelLoad)
             .select(select)
             .build();
-    logger.info(source);
+    logger.info(source.toString());
 
     assertEquals(6, source.getParallel_load().getNum());
     assertEquals("connection", source.getConnection_name());
@@ -85,7 +86,7 @@ class SourceBuilderTest {
             .parallelLoad(parallelLoad)
             .select(select)
             .build();
-    logger.info(source);
+    logger.info(source.toString());
 
     assertEquals(5, source.getParallel_load().getNum());
     assertEquals("connection", source.getConnection_name());

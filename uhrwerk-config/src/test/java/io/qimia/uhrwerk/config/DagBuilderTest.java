@@ -1,21 +1,22 @@
 package io.qimia.uhrwerk.config;
 
-import io.qimia.uhrwerk.common.model.Dag;
+import io.qimia.uhrwerk.common.model.DagModel;
 import io.qimia.uhrwerk.common.model.PartitionTransformType;
 import io.qimia.uhrwerk.config.representation.Connection;
 import io.qimia.uhrwerk.config.representation.Table;
-import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class DagBuilderTest {
-  private final Logger logger = Logger.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
 
   @Test
   public void dagBuilderTest() {
 
-    Dag dag = (new DagBuilder())
+    DagModel dag = (new DagBuilder())
             .connection()
             .name("S3")
             .s3()
@@ -149,7 +150,7 @@ class DagBuilderTest {
             .done()
             .build();
 
-    logger.info(dag);
+    logger.info(dag.toString());
 
     assertEquals("TableTable", dag.getTables()[0].getName());
     assertEquals("TableArea.TableVertical.TableTable.TableVersion", dag.getTables()[0].getClassName());
@@ -314,7 +315,7 @@ class DagBuilderTest {
             .connections(connections)
             .build();
 
-    logger.info(dag);
+    logger.info(dag.toString());
 
     assertEquals(2, dag.getTables().length);
     assertEquals(2, dag.getConnections().length);
@@ -493,7 +494,7 @@ class DagBuilderTest {
               .connections(connections)
               .build();
 
-      logger.info(dag);
+      logger.info(dag.toString());
       assertFalse(dag.getTables()[0].isPartitioned());
       assertTrue(dag.getTables()[1].isPartitioned());
       assertTrue(dag.getTables()[0].getSources()[0].isPartitioned());

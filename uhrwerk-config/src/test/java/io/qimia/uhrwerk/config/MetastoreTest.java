@@ -1,8 +1,9 @@
 package io.qimia.uhrwerk.config;
 
 import io.qimia.uhrwerk.config.representation.Env;
-import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
@@ -10,7 +11,7 @@ import java.io.InputStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MetastoreTest {
-  private final Logger logger = Logger.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
 
   @Test
   public void test() {
@@ -18,7 +19,7 @@ public class MetastoreTest {
         Thread.currentThread().getContextClassLoader().getResourceAsStream("config/env-config.yml");
     Yaml yaml = new Yaml();
     Env env = yaml.loadAs(stream, Env.class);
-    logger.info(env);
+    logger.info(env.toString());
 
     assertEquals("Xq92vFqEKF7TB8H9", env.getMetastore().getPass());
   }

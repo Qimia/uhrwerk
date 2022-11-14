@@ -1,10 +1,9 @@
 package io.qimia.uhrwerk.common.tools
 
+import io.qimia.uhrwerk.common.model.ConnectionModel
 import java.sql.{DriverManager, ResultSet}
 import java.time.LocalDateTime
 import java.{lang, sql}
-
-import io.qimia.uhrwerk.common.model.Connection
 import org.apache.log4j.Logger
 import org.apache.spark.sql.{DataFrameReader, SparkSession}
 
@@ -13,7 +12,7 @@ import scala.io.Source
 object JDBCTools {
   private val logger: Logger = Logger.getLogger(this.getClass)
 
-  def addIndexToTable(connection: Connection, tableSchema: String, tableName: String, timeColumnJDBC: String): Unit = {
+  def addIndexToTable(connection: ConnectionModel, tableSchema: String, tableName: String, timeColumnJDBC: String): Unit = {
     try {
       val jdbcConnection = getJDBCConnection(connection)
       val statement = jdbcConnection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
@@ -41,7 +40,7 @@ object JDBCTools {
     }
   }
 
-  def executeSqlFile(connection: Connection, fileName: String): Unit = {
+  def executeSqlFile(connection: ConnectionModel, fileName: String): Unit = {
     val jdbcConnection = getJDBCConnection(connection)
 
     val statement = jdbcConnection.createStatement
@@ -63,7 +62,7 @@ object JDBCTools {
    * @param connection   JDBC Connection
    * @param databaseName Database name
    */
-  def createJDBCDatabase(connection: Connection, databaseName: String): Unit = {
+  def createJDBCDatabase(connection: ConnectionModel, databaseName: String): Unit = {
     try {
       val jdbcConnection = getJDBCConnection(connection)
       val statement = jdbcConnection.createStatement
@@ -80,7 +79,7 @@ object JDBCTools {
    * @param connection Connection information
    * @return The created SQL connection
    */
-  def getJDBCConnection(connection: Connection): sql.Connection = {
+  def getJDBCConnection(connection: ConnectionModel): sql.Connection = {
     val url = connection.getJdbcUrl
     val username = connection.getJdbcUser
     val password = connection.getJdbcPass
@@ -93,7 +92,7 @@ object JDBCTools {
    * @param connection   Connection information
    * @param databaseName Database name
    */
-  def dropJDBCDatabase(connection: Connection, databaseName: String): Unit = {
+  def dropJDBCDatabase(connection: ConnectionModel, databaseName: String): Unit = {
     try {
       val jdbcConnection = getJDBCConnection(connection)
       val statement = jdbcConnection.createStatement
@@ -123,13 +122,39 @@ object JDBCTools {
     if (lowerBound.isDefined) {
       query = query.replace(
         "<lower_bound>",
-        TimeTools.convertTSToUTCString(lowerBound.get)
+        TimeTools.convertTSToString(lowerBound.get)
       )
     }
     if (upperBound.isDefined) {
       query = query.replace(
         "<upper_bound>",
-        TimeTools.convertTSToUTCString(upperBound.get)
+        TimeTools.convertTSToString(upperBound.get)
+      )
+    }
+    if (path.isDefined) {
+      query = query.replace("<path>", path.get)
+    }
+    query.replace(";", "")
+  }
+
+  /**
+   * Fills in query's parameters if defined.
+   *
+   * @param queryTemplate   Query Template.
+   * @param lastMaxBookmark Optional Last (delta ingestion) Max Bookmark Value.
+   * @param path            Optional path.
+   * @return The enriched query.
+   */
+  def fillInQueryBookmarkParameters(
+                                     queryTemplate: String,
+                                     lastMaxBookmark: Option[String] = Option.empty,
+                                     path: Option[String] = Option.empty
+                                   ): String = {
+    var query = queryTemplate
+    if (lastMaxBookmark.isDefined) {
+      query = query.replace(
+        "<last_max_bookmark>",
+        lastMaxBookmark.get
       )
     }
     if (path.isDefined) {
@@ -167,6 +192,38 @@ object JDBCTools {
   }
 
   /**
+   * Creates a query to obtain the min and max value of the specified partition column.
+   *
+   * @param lowerBound             Optional lower bound
+   * @param upperBound             Optional upper bound
+   * @param partitionColumn        Partition column, e.g. id
+   * @param partitionQueryTemplate The partition query template
+   * @param path                   Optional path with format schema.table
+   * @return
+   */
+  def minMaxBookmarkQuery(
+                           lastMaxBookmark: Option[String],
+                           bookmarkColumn: String,
+                           partitionColumn: String,
+                           partitionQueryTemplate: String,
+                           path: Option[String] = Option.empty
+                         ): String = {
+    val query =
+      fillInQueryBookmarkParameters(
+        partitionQueryTemplate,
+        lastMaxBookmark,
+        path
+      )
+    s"(SELECT " +
+      s"MIN(partition_query_table.$partitionColumn) AS min_id, " +
+      s"MAX(partition_query_table.$partitionColumn) AS max_id, " +
+      s"MAX(partition_query_table.$bookmarkColumn) AS max_bookmark " +
+      s"FROM($query) AS partition_query_table " +
+      s"WHERE partition_query_table.$bookmarkColumn > $lastMaxBookmark) " +
+      s"AS tmp_table"
+  }
+
+  /**
    * Returns the min max values of the partition column using the partition query.
    *
    * @param sparkSessession Spark Session
@@ -180,7 +237,7 @@ object JDBCTools {
    */
   def minMaxQueryIds(
                       sparkSessession: SparkSession,
-                      connection: Connection,
+                      connection: ConnectionModel,
                       partitionColumn: String,
                       partitionQuery: String,
                       lowerBound: Option[LocalDateTime] = Option.empty,
@@ -223,7 +280,7 @@ object JDBCTools {
    */
   def getDbConfig(
                    sparkSession: SparkSession,
-                   connection: Connection
+                   connection: ConnectionModel
                  ): DataFrameReader = {
     sparkSession.read
       .format("jdbc")
@@ -231,6 +288,7 @@ object JDBCTools {
       .option("driver", connection.getJdbcDriver)
       .option("user", connection.getJdbcUser)
       .option("password", connection.getJdbcPass)
+    //connection.getJdbcPass.startsWith("aws_secret:")
   }
 
   /**
