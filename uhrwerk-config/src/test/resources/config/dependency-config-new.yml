@@ -1,0 +1,35 @@
+- ref:
+    area: staging
+    vertical: sourcedb_1
+    table: tableOne  # On DB
+    version: "1.0"
+  format: "jdbc"
+  transform:
+    type: "identity"
+- ref: "staging.sourcedb_1.tableOne:1.0"
+  format: "jdbc"
+  transform:
+    type: "identity"
+- ref: "staging.sourcedb_1.tableOne:1.0"
+  format: "jdbc"
+  transform:
+    type: "aggregate"
+    partition:
+      size: 4
+- ref:
+    area: staging
+    vertical: sourcedb_1
+    table: tableOne  # On DB
+    version: "1.0"
+  format: "jdbc"
+  transform:
+    type: "window"
+    partition:
+      size: 4
+- ref: "staging.sourcedb_1.tableOne:1.0"
+  format: "jdbc"
+  transform:
+    type: "aggregate"
+    partition:
+      unit: "days"
+      size: 1

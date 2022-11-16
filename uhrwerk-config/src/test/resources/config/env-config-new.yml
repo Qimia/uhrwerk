@@ -1,0 +1,6 @@
+meta_store:
+  env_name: config_junit_env
+  jdbc_url: 'jdbc:mysql://localhost:53306/UHRWERK_METASTORE'
+  jdbc_driver: 'com.mysql.jdbc.Driver'
+  user: UHRWERK_USER
+  password: Xq92vFqEKF7TB8H9
