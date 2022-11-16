@@ -1,9 +1,8 @@
 package io.qimia.uhrwerk.engine.dag
 
+import io.qimia.uhrwerk.common.metastore.model.{MetastoreModel => MetastoreConnInfo}
 import java.sql.DriverManager
 import java.time.LocalDateTime
-
-import io.qimia.uhrwerk.common.model.{MetastoreModel => MetastoreConnInfo}
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.{Environment, MetaStore, TaskInput, TaskOutput}
 import org.scalatest.BeforeAndAfterEach

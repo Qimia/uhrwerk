@@ -1,10 +1,9 @@
 package io.qimia.uhrwerk.common.tools
 
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import java.sql.Timestamp
 import java.time._
 import java.time.format.DateTimeFormatter
-
-import io.qimia.uhrwerk.common.model.PartitionUnit
 
 import scala.collection.mutable.ListBuffer
 

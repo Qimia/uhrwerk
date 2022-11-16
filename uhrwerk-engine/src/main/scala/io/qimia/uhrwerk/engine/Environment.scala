@@ -2,8 +2,9 @@ package io.qimia.uhrwerk.engine
 
 import io.qimia.uhrwerk.common.framemanager.FrameManager
 import io.qimia.uhrwerk.common.metastore.config.TableResult
+import io.qimia.uhrwerk.common.metastore.model.{ConnectionModel, DagModel, DependencyModel, SourceModel, TableModel}
 import io.qimia.uhrwerk.common.model._
-import io.qimia.uhrwerk.config.YamlConfigReader
+import io.qimia.uhrwerk.config.builders.YamlConfigReader
 import io.qimia.uhrwerk.engine.Environment._
 import org.apache.log4j.Logger
 

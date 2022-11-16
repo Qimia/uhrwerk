@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.repo
 
-import io.qimia.uhrwerk.common.model.PartitionDependency
+import io.qimia.uhrwerk.common.metastore.builders.PartitionDependencyBuilder
+import io.qimia.uhrwerk.common.metastore.model.PartitionDependency
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 
@@ -29,13 +30,13 @@ class PartitionDependencyRepo : BaseRepo<PartitionDependency>() {
         entity: PartitionDependency,
         insert: PreparedStatement
     ): PreparedStatement {
-        insert.setLong(1, entity.partitionId)
-        insert.setLong(2, entity.dependencyPartitionId)
+        insert.setLong(1, entity.partitionId!!)
+        insert.setLong(2, entity.dependencyPartitionId!!)
         return insert
     }
 
     private fun map(res: ResultSet): PartitionDependency {
-        return PartitionDependency.builder()
+        return PartitionDependencyBuilder()
             .id(res.getLong(1))
             .partitionId(res.getLong(2))
             .dependencyPartitionId(res.getLong(3))

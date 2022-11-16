@@ -1,11 +1,13 @@
 package io.qimia.uhrwerk
 
+import io.qimia.uhrwerk.common.metastore.builders.*
+import io.qimia.uhrwerk.common.metastore.model.*
 import io.qimia.uhrwerk.common.model.*
 import java.time.LocalDateTime
 
 object TestData {
 
-    fun table(name: String): TableModel = TableModel.builder()
+    fun table(name: String): TableModel = TableModelBuilder()
         .area("dwh")
         .vertical("vertical1")
         .name(name)
@@ -28,7 +30,7 @@ object TestData {
         .maxBulkSize(96)
         .build()
 
-    fun connection(name: String): ConnectionModel = ConnectionModel.builder()
+    fun connection(name: String): ConnectionModel = ConnectionModelBuilder()
         .name(name)
         .type(ConnectionType.S3)
         .path("ConnectionRepoTest-Save")
@@ -40,7 +42,7 @@ object TestData {
         path: String,
         tableId: Long,
         connectionId: Long
-    ): SourceModel = SourceModel.builder()
+    ): SourceModel = SourceModelBuilder()
         .tableId(tableId)
         .connectionId(connectionId)
         .path(path)
@@ -55,7 +57,7 @@ object TestData {
         path: String,
         tableId: Long,
         connection: ConnectionModel
-    ): SourceModel = SourceModel.builder()
+    ): SourceModel = SourceModelBuilder()
         .tableId(tableId)
         .connection(connection)
         .path(path)
@@ -70,7 +72,7 @@ object TestData {
         tableId: Long,
         connectionId: Long,
         format: String = "parquet"
-    ): TargetModel = TargetModel.builder()
+    ): TargetModel = TargetModelBuilder()
         .tableId(tableId)
         .connectionId(connectionId)
         .format(format)
@@ -80,9 +82,9 @@ object TestData {
         tableId: Long,
         connName: String = "Test-Connection",
         format: String = "parquet"
-    ): TargetModel = TargetModel.builder()
+    ): TargetModel = TargetModelBuilder()
         .tableId(tableId)
-        .connection(ConnectionModel.builder().name(connName).build())
+        .connection(ConnectionModelBuilder().name(connName).build())
         .format(format)
         .build()
 
@@ -93,7 +95,7 @@ object TestData {
         partitionUnit: PartitionUnit = PartitionUnit.HOURS,
         partitionSize: Int = 1,
     ): Partition =
-        Partition.builder()
+        PartitionBuilder()
             .targetId(targetId)
             .partitionTs(partitionTs)
             .partitioned(partitioned)
@@ -103,7 +105,7 @@ object TestData {
 
     fun partitionDependencies(childPartId: Long, depPartIds: List<Long>) =
         depPartIds.map {
-            PartitionDependency.builder()
+            PartitionDependencyBuilder()
                 .partitionId(childPartId)
                 .dependencyPartitionId(it)
                 .build()
@@ -117,7 +119,7 @@ object TestData {
         tableId: Long,
         dependencyTargetId: Long,
         dependencyTableId: Long
-    ): DependencyModel = DependencyModel.builder()
+    ): DependencyModel = DependencyModelBuilder()
         .tableId(tableId)
         .dependencyTargetId(dependencyTargetId)
         .dependencyTableId(dependencyTableId)
@@ -130,8 +132,8 @@ object TestData {
         format: String,
         trfType: PartitionTransformType = PartitionTransformType.IDENTITY,
         trfPartSize: Int = 1
-    ): DependencyModel = DependencyModel.builder()
-        .tableId(table.id)
+    ): DependencyModel = DependencyModelBuilder()
+        .tableId(table.id!!)
         .table(table)
         .dependencyTable(dependencyTable)
         .area(dependencyTable.area)

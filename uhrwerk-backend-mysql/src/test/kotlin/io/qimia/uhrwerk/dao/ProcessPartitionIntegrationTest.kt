@@ -3,11 +3,11 @@ package io.qimia.uhrwerk.dao
 import io.qimia.uhrwerk.ConnectionHelper
 import io.qimia.uhrwerk.common.metastore.config.*
 import io.qimia.uhrwerk.common.metastore.dependency.DependencyResult
-import io.qimia.uhrwerk.common.model.ConnectionModel
-import io.qimia.uhrwerk.common.model.Partition
-import io.qimia.uhrwerk.common.model.PartitionUnit
-import io.qimia.uhrwerk.config.ConnectionBuilder
-import io.qimia.uhrwerk.config.TableBuilder
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.Partition
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
+import io.qimia.uhrwerk.config.builders.ConnectionBuilder
+import io.qimia.uhrwerk.config.builders.TableBuilder
 import org.junit.jupiter.api.*
 import java.sql.SQLException
 import java.time.LocalDateTime
@@ -36,19 +36,19 @@ class ProcessPartitionIntegrationTest {
         connectionDAO = ConnectionDAO()
         val connBuilder = ConnectionBuilder()
         singleSourceTestConnection = connBuilder
-                .name("testConn")
-                .file()
-                .path("/some/path/on/disk/")
-                .done()
-                .build()
-        connectionDAO!!.save(singleSourceTestConnection,false)
+            .name("testConn")
+            .file()
+            .path("/some/path/on/disk/")
+            .done()
+            .build()
+        connectionDAO!!.save(singleSourceTestConnection, false)
         singleDataLakeConnection = connBuilder
-                .name("testDataLake")
-                .file()
-                .path("/other/path/on/disk/")
-                .done()
-                .build()
-        connectionDAO!!.save(singleDataLakeConnection,false)
+            .name("testDataLake")
+            .file()
+            .path("/other/path/on/disk/")
+            .done()
+            .build()
+        connectionDAO!!.save(singleDataLakeConnection, false)
     }
 
     @AfterEach
@@ -85,145 +85,145 @@ class ProcessPartitionIntegrationTest {
         // First Setup 3 tables to depend on
         val tableBuilderA = TableBuilder()
         val tableA = tableBuilderA
-                .area("test_dependency_area")
-                .vertical("test_vertical")
-                .table("tableA")
-                .version("testVersion")
-                .parallelism(1)
-                .maxBulkSize(1)
-                .partition()
-                .unit("minutes")
-                .size(20)
-                .done()
-                .source()
-                .connectionName(singleSourceTestConnection.name)
-                .path("/further/disk/path/tableASource")
-                .format("parquet")
-                .version("testVersion")
-                .partition()
-                .unit("minutes")
-                .size(20)
-                .done()
-                .select()
-                .query("SELECT * FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>';")
-                .column("created_at")
-                .done()
-                .done()
-                .target()
-                .connectionName(singleDataLakeConnection.name)
-                .format("parquet")
-                .done()
-                .build()
+            .area("test_dependency_area")
+            .vertical("test_vertical")
+            .table("tableA")
+            .version("testVersion")
+            .parallelism(1)
+            .maxBulkSize(1)
+            .partition()
+            .unit("minutes")
+            .size(20)
+            .done()
+            .source()
+            .connectionName(singleSourceTestConnection.name)
+            .path("/further/disk/path/tableASource")
+            .format("parquet")
+            .version("testVersion")
+            .partition()
+            .unit("minutes")
+            .size(20)
+            .done()
+            .select()
+            .query("SELECT * FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>';")
+            .column("created_at")
+            .done()
+            .done()
+            .target()
+            .connectionName(singleDataLakeConnection.name)
+            .format("parquet")
+            .done()
+            .build()
         val saveA = tableDAO!!.save(tableA, false)
         Assertions.assertTrue(saveA.isSuccess)
         val tableBuilderB = TableBuilder()
         val tableBPathName = "/further/disk/path/tableBSource"
         val tableB = tableBuilderB
-                .area("test_dependency_area")
-                .vertical("test_vertical")
-                .table("tableB")
-                .version("testVersion")
-                .parallelism(4)
-                .maxBulkSize(8)
-                .partition()
-                .unit("minutes")
-                .size(20)
-                .done()
-                .source()
-                .connectionName(singleSourceTestConnection.name)
-                .path(tableBPathName)
-                .format("parquet")
-                .version("testVersion")
-                .partition()
-                .unit("minutes")
-                .size(20)
-                .done()
-                .select()
-                .query("SELECT * FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>';")
-                .column("created_at")
-                .done()
-                .done()
-                .target()
-                .connectionName(singleDataLakeConnection.name)
-                .format("parquet")
-                .done()
-                .build()
-        Assertions.assertEquals(tableBPathName, tableB.sources[0].path)
+            .area("test_dependency_area")
+            .vertical("test_vertical")
+            .table("tableB")
+            .version("testVersion")
+            .parallelism(4)
+            .maxBulkSize(8)
+            .partition()
+            .unit("minutes")
+            .size(20)
+            .done()
+            .source()
+            .connectionName(singleSourceTestConnection.name)
+            .path(tableBPathName)
+            .format("parquet")
+            .version("testVersion")
+            .partition()
+            .unit("minutes")
+            .size(20)
+            .done()
+            .select()
+            .query("SELECT * FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>';")
+            .column("created_at")
+            .done()
+            .done()
+            .target()
+            .connectionName(singleDataLakeConnection.name)
+            .format("parquet")
+            .done()
+            .build()
+        Assertions.assertEquals(tableBPathName, tableB.sources!![0].path)
         val saveB = tableDAO!!.save(tableB, false)
         Assertions.assertTrue(saveB.isSuccess)
         val tableBuilderC = TableBuilder()
         val tableC = tableBuilderC
-                .area("test_dependency_area")
-                .vertical("test_vertical")
-                .table("tableC")
-                .version("testVersion")
-                .parallelism(1)
-                .maxBulkSize(1) // Note no partition information
-                .source()
-                .connectionName(singleSourceTestConnection.name)
-                .path("/further/disk/path/tableCSource")
-                .format("parquet")
-                .version("testVersion") // And no partitioning for it's source
-                .select()
-                .query("SELECT * FROM <path>;")
-                .column("FIXME") // TODO: Should not be necessary for unpartitioned tables
-                .done()
-                .done()
-                .target()
-                .connectionName(singleDataLakeConnection.name)
-                .format("parquet")
-                .done()
-                .build()
-        Assertions.assertFalse(tableC.isPartitioned)
+            .area("test_dependency_area")
+            .vertical("test_vertical")
+            .table("tableC")
+            .version("testVersion")
+            .parallelism(1)
+            .maxBulkSize(1) // Note no partition information
+            .source()
+            .connectionName(singleSourceTestConnection.name)
+            .path("/further/disk/path/tableCSource")
+            .format("parquet")
+            .version("testVersion") // And no partitioning for it's source
+            .select()
+            .query("SELECT * FROM <path>;")
+            .column("FIXME") // TODO: Should not be necessary for unpartitioned tables
+            .done()
+            .done()
+            .target()
+            .connectionName(singleDataLakeConnection.name)
+            .format("parquet")
+            .done()
+            .build()
+        Assertions.assertFalse(tableC.partitioned)
         val saveC = tableDAO!!.save(tableC, false)
         Assertions.assertTrue(saveC.isSuccess)
         val tableBuilderOut = TableBuilder()
         val outTable = tableBuilderOut
-                .area("test_out_area")
-                .vertical("test_vertical")
-                .table("tableOut")
-                .version("testVersion")
-                .parallelism(1)
-                .maxBulkSize(1)
-                .partition()
-                .unit("minutes")
-                .size(20)
-                .done()
-                .dependency()
-                .area(tableA.area)
-                .vertical(tableA.vertical)
-                .table(tableA.name)
-                .version(tableA.version)
-                .format("parquet")
-                .transform()
-                .type("identity")
-                .done()
-                .done()
-                .dependency()
-                .area(tableB.area)
-                .vertical(tableB.vertical)
-                .table(tableB.name)
-                .version(tableB.version)
-                .format("parquet")
-                .transform()
-                .type("window")
-                .partition()
-                .size(3)
-                .done()
-                .done()
-                .done()
-                .dependency()
-                .area(tableC.area)
-                .vertical(tableC.vertical)
-                .table(tableC.name)
-                .version(tableC.version)
-                .format("parquet")
-                .done()
-                .target()
-                .connectionName(singleDataLakeConnection.name)
-                .format("parquet")
-                .done()
-                .build()
+            .area("test_out_area")
+            .vertical("test_vertical")
+            .table("tableOut")
+            .version("testVersion")
+            .parallelism(1)
+            .maxBulkSize(1)
+            .partition()
+            .unit("minutes")
+            .size(20)
+            .done()
+            .dependency()
+            .area(tableA.area)
+            .vertical(tableA.vertical)
+            .table(tableA.name)
+            .version(tableA.version)
+            .format("parquet")
+            .transform()
+            .type("identity")
+            .done()
+            .done()
+            .dependency()
+            .area(tableB.area)
+            .vertical(tableB.vertical)
+            .table(tableB.name)
+            .version(tableB.version)
+            .format("parquet")
+            .transform()
+            .type("window")
+            .partition()
+            .size(3)
+            .done()
+            .done()
+            .done()
+            .dependency()
+            .area(tableC.area)
+            .vertical(tableC.vertical)
+            .table(tableC.name)
+            .version(tableC.version)
+            .format("parquet")
+            .done()
+            .target()
+            .connectionName(singleDataLakeConnection.name)
+            .format("parquet")
+            .done()
+            .build()
         val saveOut = tableDAO!!.save(outTable, false)
         Assertions.assertTrue(saveOut.isSuccess)
         val requestedTime = LocalDateTime.of(2020, 4, 10, 14, 0)
@@ -241,13 +241,12 @@ class ProcessPartitionIntegrationTest {
         Assertions.assertFalse(res1n1.isResolved)
 
         // Next we write the partition for table A
-        val partA = Partition.builder().build()
-        partA.isPartitioned = true
+        val partA = Partition()
+        partA.partitioned = true
         partA.partitionSize = 20
         partA.partitionUnit = PartitionUnit.MINUTES
         partA.partitionTs = requestedTime
-        partA.targetId = tableA.targets[0].id
-        partA.setKey()
+        partA.targetId = tableA.targets!![0].id
         val savePartA = partitionDAO!!.save(partA, false)
         Assertions.assertTrue(savePartA.isSuccess)
 
@@ -267,12 +266,11 @@ class ProcessPartitionIntegrationTest {
         Assertions.assertFalse(res2n1.isResolved)
 
         // Next write some old snapshot for table C
-        val oldSnapshotPartC = Partition.builder().build()
+        val oldSnapshotPartC = Partition()
         val oldTime = LocalDateTime.of(2000, 6, 6, 10, 0)
-        oldSnapshotPartC.isPartitioned = false
+        oldSnapshotPartC.partitioned = false
         oldSnapshotPartC.partitionTs = oldTime
-        oldSnapshotPartC.targetId = tableC.targets[0].id
-        oldSnapshotPartC.setKey()
+        oldSnapshotPartC.targetId = tableC.targets!![0].id
         val saveOldPartC = partitionDAO!!.save(oldSnapshotPartC, false)
         Assertions.assertTrue(saveOldPartC.isSuccess)
 
@@ -282,16 +280,15 @@ class ProcessPartitionIntegrationTest {
         val res3n1 = res3.failed[0]
         Assertions.assertEquals(1, res3n1.resolvedDependencies.size)
         val res3FailedDeps = res3n1.failedDependencies
-                .filter { x: DependencyResult -> x.dependency.tableName == tableC.name }
+            .filter { x: DependencyResult -> x.dependency.tableName == tableC.name }
         Assertions.assertEquals(oldTime, res3FailedDeps[0].failed[0])
 
         // Now write a new (up2date) snapshot for table c
-        val newSnapshotPartC = Partition.builder().build()
+        val newSnapshotPartC = Partition()
         val newTime = LocalDateTime.now()
-        newSnapshotPartC.isPartitioned = false
+        newSnapshotPartC.partitioned = false
         newSnapshotPartC.partitionTs = newTime
-        newSnapshotPartC.targetId = tableC.targets[0].id
-        newSnapshotPartC.setKey()
+        newSnapshotPartC.targetId = tableC.targets!![0].id
         val saveNewPartC = partitionDAO!!.save(newSnapshotPartC, false)
         Assertions.assertTrue(saveNewPartC.isSuccess)
 
@@ -302,13 +299,12 @@ class ProcessPartitionIntegrationTest {
         Assertions.assertEquals(2, res4n1.resolvedDependencies.size)
 
         // Now only fill in a single partition of the windowed dependency
-        val partB = Partition.builder().build()
-        partB.isPartitioned = true
+        val partB = Partition()
+        partB.partitioned = true
         partB.partitionSize = 20
         partB.partitionUnit = PartitionUnit.MINUTES
         partB.partitionTs = requestedTime
-        partB.targetId = tableB.targets[0].id
-        partB.setKey()
+        partB.targetId = tableB.targets!![0].id
         val savePartB = partitionDAO!!.save(partB, false)
         Assertions.assertTrue(savePartB.isSuccess)
 
@@ -319,20 +315,18 @@ class ProcessPartitionIntegrationTest {
         Assertions.assertEquals(2, res5n1.resolvedDependencies.size)
 
         // Fill the 2 other partitions required for the window
-        val partBWindow1 = Partition.builder().build()
-        partBWindow1.isPartitioned = true
+        val partBWindow1 = Partition()
+        partBWindow1.partitioned = true
         partBWindow1.partitionSize = 20
         partBWindow1.partitionUnit = PartitionUnit.MINUTES
         partBWindow1.partitionTs = LocalDateTime.of(2020, 4, 10, 13, 40)
-        partBWindow1.targetId = tableB.targets[0].id
-        partBWindow1.setKey()
-        val partBWindow2 = Partition.builder().build()
-        partBWindow2.isPartitioned = true
+        partBWindow1.targetId = tableB.targets!![0].id
+        val partBWindow2 = Partition()
+        partBWindow2.partitioned = true
         partBWindow2.partitionSize = 20
         partBWindow2.partitionUnit = PartitionUnit.MINUTES
         partBWindow2.partitionTs = LocalDateTime.of(2020, 4, 10, 13, 20)
-        partBWindow2.targetId = tableB.targets[0].id
-        partBWindow2.setKey()
+        partBWindow2.targetId = tableB.targets!![0].id
         val savePartBWindow = partitionDAO!!.save(listOf(partBWindow1, partBWindow2), false)
         savePartBWindow.forEach { x: PartitionResult -> Assertions.assertTrue(x.isSuccess) }
 
@@ -343,13 +337,12 @@ class ProcessPartitionIntegrationTest {
         Assertions.assertEquals(3, res6n1.resolvedDependencies.size)
 
         // Add a partition denoting it has been processed
-        val outPart = Partition.builder().build()
-        outPart.isPartitioned = true
+        val outPart = Partition()
+        outPart.partitioned = true
         outPart.partitionSize = 20
         outPart.partitionUnit = PartitionUnit.MINUTES
         outPart.partitionTs = requestedTime
-        outPart.targetId = outTable.targets[0].id
-        outPart.setKey()
+        outPart.targetId = outTable.targets!![0].id
         val saveOutPart = partitionDAO!!.save(outPart, false)
         Assertions.assertTrue(saveOutPart.isSuccess)
 
@@ -363,99 +356,99 @@ class ProcessPartitionIntegrationTest {
     fun testComplexExample2() {
         val tableBuilderA = TableBuilder()
         val tableA = tableBuilderA
-                .area("test_dependency_area")
-                .vertical("test_vertical")
-                .table("tableA")
-                .version("testVersion")
-                .parallelism(1)
-                .maxBulkSize(1)
-                .partition()
-                .unit("hours")
-                .size(6)
-                .done()
-                .source()
-                .connectionName(singleSourceTestConnection.name)
-                .path("/further/disk/path/tableASource")
-                .format("parquet")
-                .version("testVersion")
-                .partition()
-                .unit("minutes")
-                .size(20)
-                .done()
-                .select()
-                .query("SELECT * FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>';")
-                .column("created_at")
-                .done()
-                .done()
-                .target()
-                .connectionName(singleDataLakeConnection.name)
-                .format("parquet")
-                .done()
-                .build()
+            .area("test_dependency_area")
+            .vertical("test_vertical")
+            .table("tableA")
+            .version("testVersion")
+            .parallelism(1)
+            .maxBulkSize(1)
+            .partition()
+            .unit("hours")
+            .size(6)
+            .done()
+            .source()
+            .connectionName(singleSourceTestConnection.name)
+            .path("/further/disk/path/tableASource")
+            .format("parquet")
+            .version("testVersion")
+            .partition()
+            .unit("minutes")
+            .size(20)
+            .done()
+            .select()
+            .query("SELECT * FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>';")
+            .column("created_at")
+            .done()
+            .done()
+            .target()
+            .connectionName(singleDataLakeConnection.name)
+            .format("parquet")
+            .done()
+            .build()
         val saveA = tableDAO!!.save(tableA, false)
         Assertions.assertTrue(saveA.isSuccess)
         val tableBuilderB = TableBuilder()
         val tableB = tableBuilderB
-                .area("test_dependency_area")
-                .vertical("test_vertical")
-                .table("tableB")
-                .version("testVersion")
-                .parallelism(1)
-                .maxBulkSize(1)
-                .source()
-                .connectionName(singleSourceTestConnection.name)
-                .path("/further/disk/path/tableBSource")
-                .format("parquet")
-                .version("testVersion")
-                .select()
-                .query("SELECT * FROM <path>;")
-                .column("FIXME") // TODO: Should not be necessary for unpartitioned tables
-                .done()
-                .done()
-                .target()
-                .connectionName(singleDataLakeConnection.name)
-                .format("parquet")
-                .done()
-                .build()
+            .area("test_dependency_area")
+            .vertical("test_vertical")
+            .table("tableB")
+            .version("testVersion")
+            .parallelism(1)
+            .maxBulkSize(1)
+            .source()
+            .connectionName(singleSourceTestConnection.name)
+            .path("/further/disk/path/tableBSource")
+            .format("parquet")
+            .version("testVersion")
+            .select()
+            .query("SELECT * FROM <path>;")
+            .column("FIXME") // TODO: Should not be necessary for unpartitioned tables
+            .done()
+            .done()
+            .target()
+            .connectionName(singleDataLakeConnection.name)
+            .format("parquet")
+            .done()
+            .build()
         val saveB = tableDAO!!.save(tableB, false)
         Assertions.assertTrue(saveB.isSuccess)
         val tableBuilderOut = TableBuilder()
         val outTable = tableBuilderOut
-                .area("test_out_area")
-                .vertical("test_vertical")
-                .table("tableOut")
-                .version("testVersion")
-                .parallelism(1)
-                .maxBulkSize(1)
-                .partition()
-                .unit("days")
-                .size(1)
-                .done()
-                .dependency()
-                .area(tableA.area)
-                .vertical(tableA.vertical)
-                .table(tableA.name)
-                .version(tableA.version)
-                .format("parquet")
-                .transform()
-                .type("aggregate")
-                .partition()
-                .size(4)
-                .done()
-                .done()
-                .done()
-                .dependency()
-                .area(tableB.area)
-                .vertical(tableB.vertical)
-                .table(tableB.name)
-                .version(tableB.version)
-                .format("parquet")
-                .done()
-                .target()
-                .connectionName(singleDataLakeConnection.name)
-                .format("parquet")
-                .done()
-                .build()
+            .area("test_out_area")
+            .vertical("test_vertical")
+            .table("tableOut")
+            .version("testVersion")
+            .parallelism(1)
+            .maxBulkSize(1)
+            .partition()
+            .unit("days")
+            .size(1)
+            .done()
+            .dependency()
+            .area(tableA.area)
+            .vertical(tableA.vertical)
+            .table(tableA.name)
+            .version(tableA.version)
+            .format("parquet")
+            .transform()
+            .type("aggregate")
+            .partition()
+            .size(4)
+            .done()
+            .done()
+            .done()
+            .dependency()
+            .area(tableB.area)
+            .vertical(tableB.vertical)
+            .table(tableB.name)
+            .version(tableB.version)
+            .format("parquet")
+            .done()
+            .target()
+            .connectionName(singleDataLakeConnection.name)
+            .format("parquet")
+            .done()
+            .build()
         // Test that it's only allowed to save if the partitionSize matches up with the dependency
         val badOutTable = tableBuilderOut.build()
         badOutTable.partitionSize = 8
@@ -464,9 +457,9 @@ class ProcessPartitionIntegrationTest {
         val saveOut = tableDAO!!.save(outTable, true)
         Assertions.assertTrue(saveOut.isSuccess)
         val requestedTimes = listOf(
-                LocalDateTime.of(2020, 2, 10, 0, 0),
-                LocalDateTime.of(2020, 2, 11, 0, 0),
-                LocalDateTime.of(2020, 2, 12, 0, 0)
+            LocalDateTime.of(2020, 2, 10, 0, 0),
+            LocalDateTime.of(2020, 2, 11, 0, 0),
+            LocalDateTime.of(2020, 2, 12, 0, 0)
         )
 
         // First check is without any partitions filled
@@ -477,18 +470,18 @@ class ProcessPartitionIntegrationTest {
 
         // Now fill in some of dependencyA's partitions
         val dependencyTimes2 = listOf(
-                LocalDateTime.of(2020, 2, 10, 0, 0),
-                LocalDateTime.of(2020, 2, 10, 6, 0),
-                LocalDateTime.of(2020, 2, 10, 12, 0),
-                LocalDateTime.of(2020, 2, 10, 18, 0))
+            LocalDateTime.of(2020, 2, 10, 0, 0),
+            LocalDateTime.of(2020, 2, 10, 6, 0),
+            LocalDateTime.of(2020, 2, 10, 12, 0),
+            LocalDateTime.of(2020, 2, 10, 18, 0)
+        )
         for (depATime in dependencyTimes2) {
-            val partA = Partition.builder().build()
-            partA.isPartitioned = true
+            val partA = Partition()
+            partA.partitioned = true
             partA.partitionSize = 6
             partA.partitionUnit = PartitionUnit.HOURS
             partA.partitionTs = depATime
-            partA.targetId = tableA.targets[0].id
-            partA.setKey()
+            partA.targetId = tableA.targets!![0].id
             val savePartA = partitionDAO!!.save(partA, false)
             Assertions.assertTrue(savePartA.isSuccess)
         }
@@ -500,12 +493,11 @@ class ProcessPartitionIntegrationTest {
         Assertions.assertEquals(1, res2failed[0].resolvedDependencies.size)
 
         // Now add a snapshot-partition for table-b
-        val newSnapshotPartB = Partition.builder().build()
+        val newSnapshotPartB = Partition()
         val newTime = LocalDateTime.now()
-        newSnapshotPartB.isPartitioned = false
+        newSnapshotPartB.partitioned = false
         newSnapshotPartB.partitionTs = newTime
-        newSnapshotPartB.targetId = tableB.targets[0].id
-        newSnapshotPartB.setKey()
+        newSnapshotPartB.targetId = tableB.targets!![0].id
         val saveNewPartB = partitionDAO!!.save(newSnapshotPartB, false)
         Assertions.assertTrue(saveNewPartB.isSuccess)
 
@@ -515,13 +507,12 @@ class ProcessPartitionIntegrationTest {
         Assertions.assertEquals(1, res3.resolved.size)
 
         // Filling the outTable for the first partition
-        val outPart = Partition.builder().build()
-        outPart.isPartitioned = true
+        val outPart = Partition()
+        outPart.partitioned = true
         outPart.partitionSize = 1
         outPart.partitionUnit = PartitionUnit.DAYS
         outPart.partitionTs = requestedTimes[0]
-        outPart.targetId = outTable.targets[0].id
-        outPart.setKey()
+        outPart.targetId = outTable.targets!![0].id
         val saveOutPart = partitionDAO!!.save(outPart, false)
         Assertions.assertTrue(saveOutPart.isSuccess)
 
@@ -532,21 +523,21 @@ class ProcessPartitionIntegrationTest {
 
         // fill the rest of dependency A save for 1
         val dependencyTimes5 = listOf(
-                LocalDateTime.of(2020, 2, 11, 0, 0),
-                LocalDateTime.of(2020, 2, 11, 6, 0),
-                LocalDateTime.of(2020, 2, 11, 12, 0),
-                LocalDateTime.of(2020, 2, 11, 18, 0),
-                LocalDateTime.of(2020, 2, 12, 0, 0),  // Skip one here
-                LocalDateTime.of(2020, 2, 12, 12, 0),
-                LocalDateTime.of(2020, 2, 12, 18, 0))
+            LocalDateTime.of(2020, 2, 11, 0, 0),
+            LocalDateTime.of(2020, 2, 11, 6, 0),
+            LocalDateTime.of(2020, 2, 11, 12, 0),
+            LocalDateTime.of(2020, 2, 11, 18, 0),
+            LocalDateTime.of(2020, 2, 12, 0, 0),  // Skip one here
+            LocalDateTime.of(2020, 2, 12, 12, 0),
+            LocalDateTime.of(2020, 2, 12, 18, 0)
+        )
         for (depATime in dependencyTimes5) {
-            val partA = Partition.builder().build()
-            partA.isPartitioned = true
+            val partA = Partition()
+            partA.partitioned = true
             partA.partitionSize = 6
             partA.partitionUnit = PartitionUnit.HOURS
             partA.partitionTs = depATime
-            partA.targetId = tableA.targets[0].id
-            partA.setKey()
+            partA.targetId = tableA.targets!![0].id
             val savePartA = partitionDAO!!.save(partA, false)
             Assertions.assertTrue(savePartA.isSuccess)
         }
@@ -562,49 +553,49 @@ class ProcessPartitionIntegrationTest {
     fun testPartitionlessTableDependency() {
         val tableBuilderA = TableBuilder()
         val tableA = tableBuilderA
-                .area("test_dependency_area")
-                .vertical("test_vertical")
-                .table("tableA")
-                .version("testVersion")
-                .parallelism(1)
-                .maxBulkSize(1)
-                .source()
-                .connectionName(singleSourceTestConnection.name)
-                .path("/further/disk/path/tableASource")
-                .format("parquet")
-                .version("testVersion")
-                .select()
-                .query("SELECT * FROM <path>;")
-                .column("FIXME") // TODO: Should not be necessary for unpartitioned tables
-                .done()
-                .done()
-                .target()
-                .connectionName(singleDataLakeConnection.name)
-                .format("parquet")
-                .done()
-                .build()
+            .area("test_dependency_area")
+            .vertical("test_vertical")
+            .table("tableA")
+            .version("testVersion")
+            .parallelism(1)
+            .maxBulkSize(1)
+            .source()
+            .connectionName(singleSourceTestConnection.name)
+            .path("/further/disk/path/tableASource")
+            .format("parquet")
+            .version("testVersion")
+            .select()
+            .query("SELECT * FROM <path>;")
+            .column("FIXME") // TODO: Should not be necessary for unpartitioned tables
+            .done()
+            .done()
+            .target()
+            .connectionName(singleDataLakeConnection.name)
+            .format("parquet")
+            .done()
+            .build()
         val saveA = tableDAO!!.save(tableA, false)
         Assertions.assertTrue(saveA.isSuccess)
         val tableBuilderOut = TableBuilder()
         val outTable = tableBuilderOut
-                .area("test_out_area")
-                .vertical("test_vertical")
-                .table("tableOut")
-                .version("testVersion")
-                .parallelism(1)
-                .maxBulkSize(1)
-                .dependency()
-                .area(tableA.area)
-                .vertical(tableA.vertical)
-                .table(tableA.name)
-                .version(tableA.version)
-                .format("parquet")
-                .done()
-                .target()
-                .connectionName(singleDataLakeConnection.name)
-                .format("parquet")
-                .done()
-                .build()
+            .area("test_out_area")
+            .vertical("test_vertical")
+            .table("tableOut")
+            .version("testVersion")
+            .parallelism(1)
+            .maxBulkSize(1)
+            .dependency()
+            .area(tableA.area)
+            .vertical(tableA.vertical)
+            .table(tableA.name)
+            .version(tableA.version)
+            .format("parquet")
+            .done()
+            .target()
+            .connectionName(singleDataLakeConnection.name)
+            .format("parquet")
+            .done()
+            .build()
         val saveOut = tableDAO!!.save(outTable, true)
         Assertions.assertTrue(saveOut.isSuccess)
 
@@ -614,11 +605,10 @@ class ProcessPartitionIntegrationTest {
         Assertions.assertEquals(1, res1.failed.size)
 
         // Add dependency partition
-        val newSnapshotPartA = Partition.builder().build()
-        newSnapshotPartA.isPartitioned = false
+        val newSnapshotPartA = Partition()
+        newSnapshotPartA.partitioned = false
         newSnapshotPartA.partitionTs = requestTime
-        newSnapshotPartA.targetId = tableA.targets[0].id
-        newSnapshotPartA.setKey()
+        newSnapshotPartA.targetId = tableA.targets!![0].id
         val saveNewPartB = partitionDAO!!.save(newSnapshotPartA, false)
         Assertions.assertTrue(saveNewPartB.isSuccess)
 
@@ -628,11 +618,10 @@ class ProcessPartitionIntegrationTest {
         Assertions.assertEquals(1, res2.resolved.size)
 
         // Add a new output partition
-        val newSnapshotOutPart = Partition.builder().build()
-        newSnapshotOutPart.isPartitioned = false
+        val newSnapshotOutPart = Partition()
+        newSnapshotOutPart.partitioned = false
         newSnapshotOutPart.partitionTs = requestTime2
-        newSnapshotOutPart.targetId = outTable.targets[0].id
-        newSnapshotOutPart.setKey()
+        newSnapshotOutPart.targetId = outTable.targets!![0].id
         val saveOutPart = partitionDAO!!.save(newSnapshotOutPart, false)
         Assertions.assertTrue(saveOutPart.isSuccess)
 

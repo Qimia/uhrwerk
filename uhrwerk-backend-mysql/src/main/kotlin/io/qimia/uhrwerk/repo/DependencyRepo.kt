@@ -1,9 +1,10 @@
 package io.qimia.uhrwerk.repo
 
-import io.qimia.uhrwerk.common.model.DependencyModel
-import io.qimia.uhrwerk.common.model.HashKeyUtils
-import io.qimia.uhrwerk.common.model.PartitionTransformType
-import io.qimia.uhrwerk.common.model.PartitionUnit
+import io.qimia.uhrwerk.common.metastore.builders.DependencyModelBuilder
+import io.qimia.uhrwerk.common.metastore.model.DependencyModel
+import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
+import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Types
@@ -18,8 +19,8 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
     fun save(dependencies: List<DependencyModel>): List<DependencyModel?>? =
         dependencies.map { save(it) }
 
-    fun getByHashKey(hashKey: Long): List<DependencyModel> =
-        super.findAll(
+    fun getByHashKey(hashKey: Long): DependencyModel? =
+        super.getByHashKey(
             SELECT_BY_HASH_KEY, {
                 it.setLong(1, hashKey)
             }, this::map
@@ -49,9 +50,9 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
         dependency: DependencyModel,
         insert: PreparedStatement
     ): PreparedStatement {
-        insert.setLong(1, dependency.tableId)
-        insert.setLong(2, dependency.dependencyTargetId)
-        insert.setLong(3, dependency.dependencyTableId)
+        insert.setLong(1, dependency.tableId!!)
+        insert.setLong(2, dependency.dependencyTargetId!!)
+        insert.setLong(3, dependency.dependencyTableId!!)
         insert.setString(4, dependency.transformType.toString())
         val transformPartitionUnit = dependency.transformPartitionUnit
         if (transformPartitionUnit != null) {
@@ -59,14 +60,14 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
         } else {
             insert.setNull(5, Types.VARCHAR)
         }
-        insert.setInt(6, dependency.transformPartitionSize)
+        insert.setInt(6, dependency.transformPartitionSize!!)
         insert.setLong(7, HashKeyUtils.dependencyKey(dependency))
         return insert
 
     }
 
     private fun map(rs: ResultSet): DependencyModel {
-        val builder = DependencyModel.builder()
+        val builder = DependencyModelBuilder()
             .id(rs.getLong("dep.id"))
             .tableId(rs.getLong("dep.table_id"))
             .dependencyTargetId(rs.getLong("dep.dependency_target_id"))

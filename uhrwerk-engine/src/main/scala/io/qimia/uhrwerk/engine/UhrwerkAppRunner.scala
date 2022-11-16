@@ -1,8 +1,7 @@
 package io.qimia.uhrwerk.engine
 
+import io.qimia.uhrwerk.common.metastore.model.{ConnectionModel, TableModel}
 import java.time.LocalDateTime
-
-import io.qimia.uhrwerk.common.model.{ConnectionModel, TableModel}
 import io.qimia.uhrwerk.common.tools.TimeTools
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.dag.{DagTaskBuilder, DagTaskDispatcher}
@@ -181,7 +180,7 @@ object UhrwerkAppRunner {
         DagTaskDispatcher.runTasks(taskList)
       }
     } else {
-      val partitionTs = if (tableToRun.wrappedTable.isPartitioned) {
+      val partitionTs = if (tableToRun.wrappedTable.getPartitioned) {
         val (callStartTime, callEndTime) = getStartEndTime(tableToRun, startTime, endTime)
         TimeTools
           .convertRangeToBatch(callStartTime, callEndTime, tableToRun.tableDuration)

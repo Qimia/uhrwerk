@@ -1,0 +1,14 @@
+package io.qimia.uhrwerk.config.builders;
+
+public class SourcePartitionBuilder extends PartitionBuilder<SourcePartitionBuilder> {
+  private final SourceBuilder parent;
+
+  public SourcePartitionBuilder(SourceBuilder parent) {
+    this.parent = parent;
+  }
+
+  public SourceBuilder done() {
+    this.parent.partition(this.build());
+    return this.parent;
+  }
+}

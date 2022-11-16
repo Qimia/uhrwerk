@@ -1,0 +1,12 @@
+- name: jdbc_mysql_conn_1
+  type: jdbc
+  jdbc_url: 'jdbc:mysql://localhost:3306'
+  jdbc_driver: 'com.mysql.jdbc.Driver'
+  user: root
+  password: mysql
+
+- name: s3_dummy_conn_01
+  type: s3
+  path: "s3://dummybucket/uhrwerk_lakehouse/"
+  secret_id: blabla
+  secret_key: yaya

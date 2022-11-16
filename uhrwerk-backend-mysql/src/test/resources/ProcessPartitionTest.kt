@@ -1,4 +1,5 @@
 import io.qimia.uhrwerk.ConnectionHelper
+import io.qimia.uhrwerk.common.metastore.model.*
 import io.qimia.uhrwerk.common.model.*
 import io.qimia.uhrwerk.common.model.TargetModel
 import org.junit.jupiter.api.*

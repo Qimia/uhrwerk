@@ -1,12 +1,13 @@
 package io.qimia.uhrwerk.dao
 
 import com.google.common.truth.Truth
+import com.google.common.truth.Truth.assertThat
 import io.qimia.uhrwerk.TestData
-import io.qimia.uhrwerk.TestHelper
+import TestUtils
 import io.qimia.uhrwerk.common.metastore.config.SourceService
-import io.qimia.uhrwerk.common.model.ConnectionModel
-import io.qimia.uhrwerk.common.model.PartitionUnit
-import io.qimia.uhrwerk.common.model.TableModel
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
+import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.repo.ConnectionRepo
 import io.qimia.uhrwerk.repo.HikariCPDataSource
 import io.qimia.uhrwerk.repo.SourceRepo
@@ -30,15 +31,15 @@ class SourceDAOTest {
 
     @AfterEach
     fun cleanUp() {
-        TestHelper.cleanData("SOURCE", LOGGER)
-        TestHelper.cleanData("TABLE_", LOGGER)
-        TestHelper.cleanData("CONNECTION", LOGGER)
+        TestUtils.cleanData("SOURCE", LOGGER)
+        TestUtils.cleanData("TABLE_", LOGGER)
+        TestUtils.cleanData("CONNECTION", LOGGER)
     }
 
     @BeforeEach
     fun addDeps() {
         connection = ConnectionRepo().save(TestData.connection("Connection-SourceDAOTest"))
-        connection = ConnectionRepo().getById(connection!!.id)
+        connection = ConnectionRepo().getById(connection!!.id!!)
 
         table = TableRepo().save(TestData.table("Table-SourceDAOTest"))
     }
@@ -48,7 +49,7 @@ class SourceDAOTest {
 
         val source = TestData.source(
             "Source-SourceDAOTest",
-            table!!.id,
+            table!!.id!!,
             TestData.connection("Connection-SourceDAOTest")
         )
 
@@ -69,16 +70,16 @@ class SourceDAOTest {
     fun alreadyExistingAndDifferent() {
         val src = TestData.source(
             "Source-SourceDAOTest",
-            table!!.id,
-            connection!!.id
+            table!!.id!!,
+            connection!!.id!!
         )
 
         val source = SourceRepo().save(src)
 
         val src1 = TestData.source(
             "Source-SourceDAOTest",
-            table!!.id,
-            connection!!.id
+            table!!.id!!,
+            connection!!.id!!
         )
         src1.connection = connection
 
@@ -94,8 +95,8 @@ class SourceDAOTest {
 
         val src2 = TestData.source(
             "Source-SourceDAOTest",
-            table!!.id,
-            connection!!.id
+            table!!.id!!,
+            connection!!.id!!
         )
 
         src2.connection = connection
@@ -114,7 +115,7 @@ class SourceDAOTest {
 
         val source = TestData.source(
             "Source-SourceDAOTest",
-            table!!.id,
+            table!!.id!!,
             connection!!
         )
 
@@ -126,7 +127,7 @@ class SourceDAOTest {
 
         val source1 = TestData.source(
             "Source-SourceDAOTest",
-            table!!.id,
+            table!!.id!!,
             connection!!
         )
 
@@ -134,16 +135,25 @@ class SourceDAOTest {
         source1.selectColumn = "column"
         source1.partitionUnit = PartitionUnit.HOURS
         source1.parallelLoadNum = 20
-        source1.isAutoLoad = true
+        source1.autoLoad = true
 
         val resultChanged = service.save(source1, table, true)
+
         Assertions.assertTrue(resultChanged.isSuccess)
         Assertions.assertFalse(resultChanged.isError)
         Assertions.assertNotNull(resultChanged.newResult.id)
-        Assertions.assertEquals(source, resultChanged.oldResult)
-        Assertions.assertEquals(source1, resultChanged.newResult)
 
-        val source2 = SourceRepo().getById(source.id)
+
+
+        assertThat(source).isEqualTo(resultChanged.oldResult)
+
+
+        println(source1)
+        println(resultChanged.newResult)
+
+        assertThat(source1).isEqualTo(resultChanged.newResult)
+
+        val source2 = SourceRepo().getById(source.id!!)
         Truth.assertThat(source2!!.deactivatedTs).isNotNull()
     }
 
@@ -151,7 +161,7 @@ class SourceDAOTest {
     fun failWrongConnectionId() {
         val source = TestData.source(
             "Source-SourceDAOTest",
-            table!!.id,
+            table!!.id!!,
             -100
         )
         val result = service.save(source, table, true)
@@ -171,7 +181,7 @@ class SourceDAOTest {
 
         val source = TestData.source(
             "Source-SourceDAOTest",
-            table!!.id,
+            table!!.id!!,
             -100
         )
         source.connection = connection1
@@ -190,7 +200,7 @@ class SourceDAOTest {
 
         val source = TestData.source(
             "Source-SourceDAOTest",
-            table!!.id,
+            table!!.id!!,
             -100
         )
         source.connection = connection1
@@ -208,7 +218,7 @@ class SourceDAOTest {
         //source with invalid connectionId
         val source = TestData.source(
             "Source-SourceDAOTest",
-            table!!.id,
+            table!!.id!!,
             -100
         )
         Truth.assertThat(source.connectionId).isNotEqualTo(connection!!.id)
@@ -229,7 +239,7 @@ class SourceDAOTest {
         private val LOGGER = LoggerFactory.getLogger(SourceDAOTest::class.java)
 
         @Container
-        var MY_SQL_DB: MySQLContainer<*> = TestHelper.mysqlContainer()
+        var MY_SQL_DB: MySQLContainer<*> = TestUtils.mysqlContainer()
 
         @BeforeAll
         @JvmStatic

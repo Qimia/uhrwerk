@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.repo
 
-import io.qimia.uhrwerk.common.model.PartitionTransformType
-import io.qimia.uhrwerk.common.model.PartitionUnit
+import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.SQLException

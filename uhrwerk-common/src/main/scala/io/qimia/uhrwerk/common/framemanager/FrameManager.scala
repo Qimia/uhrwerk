@@ -1,8 +1,7 @@
 package io.qimia.uhrwerk.common.framemanager
 
+import io.qimia.uhrwerk.common.metastore.model.{SourceModel, TableModel}
 import java.time.LocalDateTime
-
-import io.qimia.uhrwerk.common.model.{SourceModel, TableModel}
 import org.apache.spark.sql.DataFrame
 
 // Trait that describes how to read and write dataframes to and from the datalake/datawarehouse

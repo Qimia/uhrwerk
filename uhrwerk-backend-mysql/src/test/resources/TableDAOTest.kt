@@ -2,12 +2,13 @@ import io.qimia.uhrwerk.ConnectionHelper
 import io.qimia.uhrwerk.common.metastore.config.SourceResult
 import io.qimia.uhrwerk.common.model.*
 import io.qimia.uhrwerk.common.model.TargetModel
-import io.qimia.uhrwerk.config.ConnectionBuilder
-import io.qimia.uhrwerk.config.DependencyBuilder
-import io.qimia.uhrwerk.config.SourceBuilder
-import io.qimia.uhrwerk.config.TableBuilder
+import io.qimia.uhrwerk.config.builders.ConnectionBuilder
+import io.qimia.uhrwerk.config.builders.DependencyBuilder
+import io.qimia.uhrwerk.config.builders.SourceBuilder
+import io.qimia.uhrwerk.config.builders.TableBuilder
 import io.qimia.uhrwerk.dao.JdbcBackendUtils.getPartitionTs
 import io.qimia.uhrwerk.TestData
+import io.qimia.uhrwerk.common.metastore.model.*
 import org.apache.log4j.Logger
 import org.junit.jupiter.api.*
 import java.sql.SQLException

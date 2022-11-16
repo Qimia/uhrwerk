@@ -2,12 +2,12 @@ package io.qimia.uhrwerk.dao
 
 import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
-import io.qimia.uhrwerk.TestHelper
+import TestUtils
 import io.qimia.uhrwerk.common.metastore.config.PartitionDependencyService
 import io.qimia.uhrwerk.common.metastore.dependency.DependencyResult
-import io.qimia.uhrwerk.common.model.ConnectionModel
-import io.qimia.uhrwerk.common.model.Partition
-import io.qimia.uhrwerk.common.model.TableModel
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.Partition
+import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.common.model.TargetModel
 import io.qimia.uhrwerk.repo.*
 import org.junit.jupiter.api.*
@@ -34,24 +34,24 @@ internal class PartitionDependencyDAOTest {
 
     @AfterEach
     fun cleanUp() {
-        TestHelper.cleanData("PARTITION_DEPENDENCY", LOGGER)
-        TestHelper.cleanData("PARTITION_", LOGGER)
-        TestHelper.cleanData("TARGET", LOGGER)
-        TestHelper.cleanData("TABLE_", LOGGER)
-        TestHelper.cleanData("CONNECTION", LOGGER)
+        TestUtils.cleanData("PARTITION_DEPENDENCY", LOGGER)
+        TestUtils.cleanData("PARTITION_", LOGGER)
+        TestUtils.cleanData("TARGET", LOGGER)
+        TestUtils.cleanData("TABLE_", LOGGER)
+        TestUtils.cleanData("CONNECTION", LOGGER)
     }
 
     @BeforeEach
     fun saveData() {
         connection = ConnectionRepo().save(TestData.connection("Connection-PartitionTest"))
         table = TableRepo().save(TestData.table("Table-PartitionTest"))
-        target = TargetRepo().save(TestData.target(connection!!.id, table!!.id))
+        target = TargetRepo().save(TestData.target(connection!!.id!!, table!!.id!!))
 
         timestamps = TestData.timestamps(15)
 
         val parts = timestamps!!.map {
             TestData.partition(
-                targetId = target!!.id,
+                targetId = target!!.id!!,
                 partitionTs = it
             )
         }
@@ -120,7 +120,7 @@ internal class PartitionDependencyDAOTest {
         private val LOGGER = LoggerFactory.getLogger(PartitionDependencyDAOTest::class.java)
 
         @Container
-        var MY_SQL_DB: MySQLContainer<*> = TestHelper.mysqlContainer()
+        var MY_SQL_DB: MySQLContainer<*> = TestUtils.mysqlContainer()
 
         @BeforeAll
         @JvmStatic

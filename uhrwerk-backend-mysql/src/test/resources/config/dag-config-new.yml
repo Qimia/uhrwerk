@@ -1,0 +1,72 @@
+connections:
+  - name: jdbc_mysql_conn_1
+    type: jdbc
+    jdbc_url: 'jdbc:mysql://localhost:3306'
+    jdbc_driver: 'com.mysql.jdbc.Driver'
+    user: root
+    password: mysql
+
+  - name: s3_dummy_conn_01
+    type: s3
+    path: "s3://dummybucket/uhrwerk_lakehouse/"
+    secret_id: blabla
+    secret_key: yaya
+
+tables:
+  - area: staging
+    vertical: some_biz_domain
+    table: source_table_a
+    version: "1.0"
+    class_name: "load.class.name"
+    parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 12
+
+    partition:
+      unit: "hours"
+      size: 4
+
+    sources:
+      - connection_name: jdbc_mysql_conn_1
+        path: source_table_a  # On DB
+        format: "jdbc"
+        version: 1
+
+        partition:
+          unit: "hours"
+          size: 4
+
+        parallel_load:
+          query: "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'"
+          column: "id"
+          num: 8
+
+        select:
+          query: "config/single_source_table/table_test_2_select_query.sql"
+          column: "created_at"
+
+    targets:
+      - connection_name: s3_dummy_conn_01
+        format: "parquet"
+
+  - area: processing
+    vertical: some_biz_domain
+    table: source_table_a
+    version: "1.0"
+    parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
+    max_bulk_size: 12
+
+    partition:
+      unit: "hours"
+      size: 4
+
+    dependencies:
+      - ref: "staging.some_biz_domain.source_table_a:1.0"
+        format: "parquet"
+        transform:
+          type: "identity"
+          partition:
+            size: 4
+
+    targets:
+      - connection_name: s3_dummy_conn_01
+        format: "parquet"

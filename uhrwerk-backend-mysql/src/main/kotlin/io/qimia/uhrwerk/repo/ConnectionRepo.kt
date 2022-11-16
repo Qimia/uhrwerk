@@ -1,8 +1,8 @@
 package io.qimia.uhrwerk.repo
 
-import io.qimia.uhrwerk.common.model.ConnectionModel
-import io.qimia.uhrwerk.common.model.ConnectionType
-import io.qimia.uhrwerk.common.model.HashKeyUtils
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.ConnectionType
+import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 
@@ -12,8 +12,8 @@ class ConnectionRepo : BaseRepo<ConnectionModel>() {
             insertParams(connection, it)
         }
 
-    fun getByHashKey(hashKey: Long): List<ConnectionModel> =
-        super.findAll(
+    fun getByHashKey(hashKey: Long): ConnectionModel? =
+        super.getByHashKey(
             SELECT_BY_HASH_KEY, {
                 it.setLong(1, hashKey)
             }, this::map
@@ -46,7 +46,7 @@ class ConnectionRepo : BaseRepo<ConnectionModel>() {
         insert: PreparedStatement
     ): PreparedStatement {
         insert.setString(1, entity.name)
-        insert.setString(2, entity.type.name)
+        insert.setString(2, entity.type!!.name)
         insert.setString(3, entity.path)
         // jdbc columns values
         insert.setString(4, entity.jdbcUrl)
@@ -61,23 +61,19 @@ class ConnectionRepo : BaseRepo<ConnectionModel>() {
     }
 
     private fun map(res: ResultSet): ConnectionModel {
-        val builder = ConnectionModel.builder()
-            .id(res.getLong(1))
-            .name(res.getString(2))
-            .type(ConnectionType.valueOf(res.getString(3)))
-            .path(res.getString(4))
-            .jdbcUrl(res.getString(5))
-            .jdbcDriver(res.getString(6))
-            .jdbcUser(res.getString(7))
-            .jdbcPass(res.getString(8))
-            .awsAccessKeyID(res.getString(9))
-            .awsSecretAccessKey(res.getString(10))
-
-        val deactivatedTs = res.getTimestamp(11)
-        if (deactivatedTs != null)
-            builder.deactivatedTs(deactivatedTs.toLocalDateTime())
-
-        return builder.build()
+        val conn = ConnectionModel()
+        conn.id = res.getLong(1)
+        conn.name = res.getString(2)
+        conn.type = ConnectionType.valueOf(res.getString(3))
+        conn.path = res.getString(4)
+        conn.jdbcUrl = res.getString(5)
+        conn.jdbcDriver = res.getString(6)
+        conn.jdbcUser = res.getString(7)
+        conn.jdbcPass = res.getString(8)
+        conn.awsAccessKeyID = res.getString(9)
+        conn.awsSecretAccessKey = res.getString(10)
+        conn.deactivatedTs = res.getTimestamp(11)?.toLocalDateTime()
+        return conn
     }
 
     companion object {

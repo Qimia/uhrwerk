@@ -1,9 +1,9 @@
 package io.qimia.uhrwerk.dao
 
+import io.qimia.uhrwerk.common.metastore.builders.PartitionDependencyBuilder
 import io.qimia.uhrwerk.common.metastore.config.PartitionDependencyResult
 import io.qimia.uhrwerk.common.metastore.config.PartitionDependencyService
 import io.qimia.uhrwerk.common.metastore.dependency.DependencyResult
-import io.qimia.uhrwerk.common.model.PartitionDependency
 import io.qimia.uhrwerk.repo.PartitionDependencyRepo
 import java.sql.SQLException
 
@@ -14,7 +14,7 @@ class PartitionDependencyDAO : PartitionDependencyService {
     private fun storeAll(childPartitionId: Long, dependencies: Array<DependencyResult>) {
         val partitionDependencies = dependencies.toList().flatMap { dependency ->
             dependency.partitions.map {
-                PartitionDependency.builder()
+                PartitionDependencyBuilder()
                     .partitionId(childPartitionId)
                     .dependencyPartitionId(it.id)
                     .build()

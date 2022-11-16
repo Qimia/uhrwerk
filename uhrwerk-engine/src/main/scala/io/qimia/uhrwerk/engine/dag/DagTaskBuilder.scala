@@ -1,8 +1,7 @@
 package io.qimia.uhrwerk.engine.dag
 
+import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType
 import java.time.LocalDateTime
-
-import io.qimia.uhrwerk.common.model.PartitionTransformType
 import io.qimia.uhrwerk.common.tools.TimeTools
 import io.qimia.uhrwerk.engine.Environment.{TableIdent, tableCleaner}
 import io.qimia.uhrwerk.engine.tools.TimeHelper
@@ -77,7 +76,7 @@ class DagTaskBuilder(environment: Environment) {
     }
 
     // If it's unpartitioned only run for the calltime
-    if (!outTable.wrappedTable.isPartitioned) {
+    if (!outTable.wrappedTable.getPartitioned) {
       return recursiveBuild(outTable, List(callTime)).reverse
     }
 

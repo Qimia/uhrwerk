@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.dao
 
 import io.qimia.uhrwerk.common.metastore.config.PartitionResult
 import io.qimia.uhrwerk.common.metastore.config.PartitionService
-import io.qimia.uhrwerk.common.model.Partition
+import io.qimia.uhrwerk.common.metastore.model.Partition
 import io.qimia.uhrwerk.repo.PartitionRepo
 import java.sql.SQLException
 import java.time.LocalDateTime
@@ -16,8 +16,8 @@ class PartitionDAO : PartitionService {
         val result = PartitionResult()
         try {
             val oldPartition = repo.getUniqueColumns(
-                partition.targetId,
-                partition.partitionTs
+                partition.targetId!!,
+                partition.partitionTs!!
             )
 
             if (oldPartition != null)
@@ -38,7 +38,7 @@ class PartitionDAO : PartitionService {
             }
 
             if (oldPartition != null)
-                repo.deleteById(oldPartition.id)
+                repo.deleteById(oldPartition.id!!)
 
             val newPartition = repo.save(partition)
             result.isSuccess = true

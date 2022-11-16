@@ -3,8 +3,8 @@ package io.qimia.uhrwerk
 import io.qimia.uhrwerk.PartitionDurationTester.PartitionTestDependencyInput
 import io.qimia.uhrwerk.PartitionDurationTester.checkDependencies
 import io.qimia.uhrwerk.PartitionDurationTester.checkPartitionedDependency
-import io.qimia.uhrwerk.common.model.PartitionTransformType
-import io.qimia.uhrwerk.common.model.PartitionUnit
+import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.time.Duration

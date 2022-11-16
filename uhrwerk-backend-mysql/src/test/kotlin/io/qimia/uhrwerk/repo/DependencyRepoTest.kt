@@ -2,10 +2,10 @@ package io.qimia.uhrwerk.repo
 
 import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
-import io.qimia.uhrwerk.TestHelper
-import io.qimia.uhrwerk.common.model.ConnectionModel
-import io.qimia.uhrwerk.common.model.DependencyModel
-import io.qimia.uhrwerk.common.model.TableModel
+import TestUtils
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.DependencyModel
+import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.common.model.TargetModel
 import org.junit.jupiter.api.*
 import org.slf4j.LoggerFactory
@@ -28,10 +28,10 @@ internal class DependencyRepoTest {
 
     @AfterEach
     fun cleanUp() {
-        TestHelper.cleanData("DEPENDENCY", LOGGER)
-        TestHelper.cleanData("TARGET", LOGGER)
-        TestHelper.cleanData("TABLE_", LOGGER)
-        TestHelper.cleanData("CONNECTION", LOGGER)
+        TestUtils.cleanData("DEPENDENCY", LOGGER)
+        TestUtils.cleanData("TARGET", LOGGER)
+        TestUtils.cleanData("TABLE_", LOGGER)
+        TestUtils.cleanData("CONNECTION", LOGGER)
     }
 
     @BeforeEach
@@ -43,13 +43,13 @@ internal class DependencyRepoTest {
 
         dependencyTable = TableRepo().save(TestData.table("Dependency-Table-DependencyRepoTest"))
 
-        dependencyTarget = TargetRepo().save(TestData.target(dependencyTable!!.id, connection!!.id))
+        dependencyTarget = TargetRepo().save(TestData.target(dependencyTable!!.id!!, connection!!.id!!))
 
         dependency = DependencyRepo().save(
             TestData.dependency(
-                table!!.id,
-                dependencyTarget!!.id,
-                dependencyTable!!.id
+                table!!.id!!,
+                dependencyTarget!!.id!!,
+                dependencyTable!!.id!!
             )
         )
 
@@ -63,7 +63,7 @@ internal class DependencyRepoTest {
 
     @Test
     fun getById() {
-        val dependency = DependencyRepo().getById(dependency!!.id)
+        val dependency = DependencyRepo().getById(dependency!!.id!!)
         Truth.assertThat(dependency).isNotNull()
         Truth.assertThat(dependency!!.tableId).isEqualTo(table!!.id)
         Truth.assertThat(dependency!!.dependencyTargetId).isEqualTo(dependencyTarget!!.id)
@@ -71,7 +71,7 @@ internal class DependencyRepoTest {
 
     @Test
     fun getByTableId() {
-        val dependency = DependencyRepo().getByTableId(table!!.id)
+        val dependency = DependencyRepo().getByTableId(table!!.id!!)
         Truth.assertThat(dependency).isNotNull()
         Truth.assertThat(dependency!!).isNotEmpty()
         Truth.assertThat(dependency!![0].tableId).isEqualTo(table!!.id)
@@ -80,7 +80,7 @@ internal class DependencyRepoTest {
 
     @Test
     fun deleteById() {
-        val effect = DependencyRepo().deleteById(dependency!!.id)
+        val effect = DependencyRepo().deleteById(dependency!!.id!!)
         Truth.assertThat(effect).isNotNull()
         Truth.assertThat(effect!!).isEqualTo(1)
     }
@@ -89,7 +89,7 @@ internal class DependencyRepoTest {
         private val LOGGER = LoggerFactory.getLogger(DependencyRepoTest::class.java)
 
         @Container
-        var MY_SQL_DB: MySQLContainer<*> = TestHelper.mysqlContainer()
+        var MY_SQL_DB: MySQLContainer<*> = TestUtils.mysqlContainer()
 
         @BeforeAll
         @JvmStatic

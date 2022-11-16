@@ -5,6 +5,7 @@ import io.qimia.uhrwerk.PartitionDurationTester.PartitionTestDependencyInput
 import io.qimia.uhrwerk.PartitionDurationTester.PartitionTestResult
 import io.qimia.uhrwerk.common.metastore.config.DependencyService
 import io.qimia.uhrwerk.common.metastore.config.DependencyStoreResult
+import io.qimia.uhrwerk.common.metastore.model.*
 import io.qimia.uhrwerk.common.model.*
 import io.qimia.uhrwerk.repo.DependencyRepo
 import io.qimia.uhrwerk.repo.TableRepo
@@ -65,7 +66,7 @@ class DependencyDAO() : DependencyService {
         // see findTables comment
         val storedDepLookup = HashMap<String, DependencyModel>()
         for (storedDep in storedDeps) {
-            storedDepLookup[storedDep.tableName] = storedDep
+            storedDepLookup[storedDep.tableName!!] = storedDep
         }
         val problemString = StringBuilder()
         for (inDep in dependencies) {
@@ -121,7 +122,7 @@ class DependencyDAO() : DependencyService {
      */
     @Throws(SQLException::class, IllegalArgumentException::class)
     fun findTables(dependencies: Array<DependencyModel>): FindTableRes {
-        val targetIds = dependencies.map { it.dependencyTargetId }
+        val targetIds = dependencies.mapNotNull { it.dependencyTargetId }
 
         // TODO: Assumes tablenames unique in the context of a single table's dependencies
         // now assumes yes but in theory could be no -> then we need to map the missing target-ids back
@@ -131,13 +132,13 @@ class DependencyDAO() : DependencyService {
             val res = TablePartRes()
             res.tableId = it.id
             res.partitionUnit = it.partitionUnit
-            res.partitionSize = it.partitionSize
-            res.partitioned = it.isPartitioned
+            res.partitionSize = it.partitionSize!!
+            res.partitioned = it.partitioned
             res
         }
 
-        val namesFound = depTables.map { it.name }.toSet()
-        var namesToFind = dependencies.map { it.tableName }.toSet().subtract(namesFound)
+        val namesFound = depTables.mapNotNull { it.name }.toSet()
+        var namesToFind = dependencies.mapNotNull { it.tableName }.toSet().subtract(namesFound)
         val results = FindTableRes()
         results.foundTables = foundTables
         results.missingNames = namesToFind
@@ -168,11 +169,10 @@ class DependencyDAO() : DependencyService {
         // won't be found
         val result = DependencyStoreResult()
 
-        val depTableTargets = table.dependencies.flatMap { dep ->
-            tableRepo.getByHashKey(HashKeyUtils.tableKey(dep)).flatMap { tab ->
-                targetRepo.getByTableIdFormat(tab.id, dep.format)
-                    .map { tar -> Triple(dep, tab, tar) }
-            }
+        val depTableTargets = table.dependencies!!.flatMap { dep ->
+            val tab = tableRepo.getByHashKey(HashKeyUtils.tableKey(dep))
+            targetRepo.getByTableIdFormat(tab!!.id!!, dep.format!!)
+                .map { tar -> Triple(dep, tab, tar) }
         }
 
         val dependencies = depTableTargets.map { (dep, tab, tar) ->
@@ -186,7 +186,7 @@ class DependencyDAO() : DependencyService {
 
         if (!overwrite) {
             // check if there are stored dependencies and if they are correct
-            val checkDeps = checkExistingDependencies(table.id, dependencies)
+            val checkDeps = checkExistingDependencies(table.id!!, dependencies)
             if (checkDeps.found && !checkDeps.correct) {
                 result.isSuccess = false
                 result.isError = false
@@ -218,12 +218,12 @@ class DependencyDAO() : DependencyService {
                 "Missing tables: " + tableSearchRes.missingNames.toString() + " (based on id)"
             return result
         }
-        if (table.isPartitioned) {
+        if (table.partitioned) {
             // Check dependency sizes (abort if size does not match)
             val sizeTestResult = checkPartitionSizes(
                 dependencies,
                 table.partitionUnit,
-                table.partitionSize,
+                table.partitionSize!!,
                 tableSearchRes.foundTables
             )
             if (!sizeTestResult.success) {
@@ -247,7 +247,7 @@ class DependencyDAO() : DependencyService {
                     || connectedTable!!.partitioned
                 ) {
                     problem = true
-                    problemDependencies.add(checkDep.tableName)
+                    problemDependencies.add(checkDep.tableName!!)
                 }
             }
             if (problem) {
@@ -265,12 +265,11 @@ class DependencyDAO() : DependencyService {
         // Delete all old dependencies (in case of overwrite) and insert new list
         try {
             if (overwrite) {
-                deactivateByTableId(table.id)
+                deactivateByTableId(table.id!!)
             }
-            dependencyRepo.save(dependencies.toList())
+            result.dependenciesSaved = dependencyRepo.save(dependencies.toList())?.toTypedArray()
             result.isSuccess = true
             result.isError = false
-            result.dependenciesSaved = dependencies
         } catch (e: Exception) {
             result.isSuccess = false
             result.isError = true
@@ -360,7 +359,7 @@ class DependencyDAO() : DependencyService {
 
         /**
          * Test the dependencies partition sizes by giving the partition size of the target table and the
-         * information of the dependencies' tables and the dependencies(' transformations)
+         * information of the dependencies' tables and the dependencies'(transformations)
          *
          * @param dependencies dependencies that need to be tested
          * @param partitionUnit the partition unit of the output table
@@ -384,7 +383,7 @@ class DependencyDAO() : DependencyService {
 
                 newTest.dependencyTableName = dependency!!.tableName
                 newTest.transformType = dependency.transformType
-                newTest.transformSize = dependency.transformPartitionSize
+                newTest.transformSize = dependency.transformPartitionSize!!
 
                 // TODO: Doesn't support transform-partition-unit (and transforms using that) for now
                 newTest.dependencyTablePartitionSize = tableRes.partitionSize

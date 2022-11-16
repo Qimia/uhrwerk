@@ -1,8 +1,9 @@
 package io.qimia.uhrwerk.repo
 
-import io.qimia.uhrwerk.common.model.HashKeyUtils
-import io.qimia.uhrwerk.common.model.PartitionUnit
-import io.qimia.uhrwerk.common.model.TableModel
+import io.qimia.uhrwerk.common.metastore.builders.TableModelBuilder
+import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
+import io.qimia.uhrwerk.common.metastore.model.TableModel
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Types
@@ -14,8 +15,8 @@ class TableRepo() : BaseRepo<TableModel>() {
             insertParams(table, it)
         }
 
-    fun getByHashKey(hashKey: Long): List<TableModel> =
-        super.findAll(
+    fun getByHashKey(hashKey: Long): TableModel? =
+        super.getByHashKey(
             SELECT_BY_HASH_KEY, {
                 it.setLong(1, hashKey)
             }, this::map
@@ -41,12 +42,12 @@ class TableRepo() : BaseRepo<TableModel>() {
         if (table.partitionUnit == null) {
             insert.setNull(5, Types.VARCHAR)
         } else {
-            insert.setString(5, table.partitionUnit.name)
+            insert.setString(5, table.partitionUnit!!.name)
         }
-        insert.setInt(6, table.partitionSize)
-        insert.setInt(7, table.parallelism)
-        insert.setInt(8, table.maxBulkSize)
-        insert.setBoolean(9, table.isPartitioned)
+        insert.setInt(6, table.partitionSize!!)
+        insert.setInt(7, table.parallelism!!)
+        insert.setInt(8, table.maxBulkSize!!)
+        insert.setBoolean(9, table.partitioned)
         insert.setString(10, table.className)
         insert.setLong(11, HashKeyUtils.tableKey(table))
         return insert
@@ -58,7 +59,7 @@ class TableRepo() : BaseRepo<TableModel>() {
         }
 
     private fun map(res: ResultSet): TableModel {
-        val builder = TableModel.builder()
+        val builder = TableModelBuilder()
             .id(res.getLong("tab.id"))
             .area(res.getString("tab.area"))
             .vertical(res.getString("tab.vertical"))

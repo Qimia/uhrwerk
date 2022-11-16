@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.repo
 
 import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
-import io.qimia.uhrwerk.TestHelper
+import TestUtils
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
@@ -18,7 +18,7 @@ internal class TableRepoTest {
 
     @AfterEach
     fun cleanUp() {
-        TestHelper.cleanData("TABLE_", LOGGER)
+        TestUtils.cleanData("TABLE_", LOGGER)
     }
 
     @Test
@@ -36,7 +36,7 @@ internal class TableRepoTest {
         val table1 = repo.save(table)
 
         Truth.assertThat(table1).isNotNull()
-        val table2 = repo.getById(table1!!.id)
+        val table2 = repo.getById(table1!!.id!!)
 
         Truth.assertThat(table2).isNotNull()
         Truth.assertThat(table2!!.name).isEqualTo("getByIdTestTable")
@@ -50,7 +50,7 @@ internal class TableRepoTest {
         val table1 = repo.save(table)
 
         Truth.assertThat(table1).isNotNull()
-        val effect = repo.deactivateById(table1!!.id)
+        val effect = repo.deactivateById(table1!!.id!!)
 
         Truth.assertThat(effect).isNotNull()
         Truth.assertThat(effect!!).isEqualTo(1)
@@ -61,7 +61,7 @@ internal class TableRepoTest {
         private val LOGGER = LoggerFactory.getLogger(TableRepoTest::class.java)
 
         @Container
-        var MY_SQL_DB: MySQLContainer<*> = TestHelper.mysqlContainer()
+        var MY_SQL_DB: MySQLContainer<*> = TestUtils.mysqlContainer()
 
         @BeforeAll
         @JvmStatic

@@ -3,8 +3,8 @@ package io.qimia.uhrwerk.dao
 import io.qimia.uhrwerk.common.metastore.config.ConnectionService
 import io.qimia.uhrwerk.common.metastore.config.TargetResult
 import io.qimia.uhrwerk.common.metastore.config.TargetService
-import io.qimia.uhrwerk.common.model.ConnectionModel
-import io.qimia.uhrwerk.common.model.HashKeyUtils
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
 import io.qimia.uhrwerk.common.model.TargetModel
 import io.qimia.uhrwerk.repo.TargetRepo
 import java.sql.SQLException
@@ -55,7 +55,7 @@ class TargetDAO() : TargetService {
             for (target in targets) {
                 var newTargetConn: ConnectionModel? = null
                 if (target.connection != null) {
-                    newTargetConn = connService.getByHashKey(HashKeyUtils.connectionKey(target.connection))
+                    newTargetConn = connService.getByHashKey(HashKeyUtils.connectionKey(target.connection!!))
                 }
                 if (newTargetConn == null) {
                     saveResult.isSuccess = false
@@ -65,7 +65,7 @@ class TargetDAO() : TargetService {
                     return saveResult
                 } else {
                     target.connection = newTargetConn
-                    target.connectionId = target.connection.id
+                    target.connectionId = target.connection!!.id
                 }
             }
             if (!overwrite) {
@@ -132,7 +132,7 @@ class TargetDAO() : TargetService {
          */
         @JvmStatic
         fun compareTargets(trueTarget: TargetModel, newTarget: TargetModel): Boolean {
-            return trueTarget.format == newTarget.format && trueTarget.connection.name == newTarget.connection.name
+            return trueTarget.format == newTarget.format && trueTarget.connection!!.name == newTarget.connection!!.name
         }
 
         /**

@@ -1,7 +1,8 @@
 package io.qimia.uhrwerk.repo
 
-import io.qimia.uhrwerk.common.model.Partition
-import io.qimia.uhrwerk.common.model.PartitionUnit
+import io.qimia.uhrwerk.common.metastore.builders.PartitionBuilder
+import io.qimia.uhrwerk.common.metastore.model.Partition
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import io.qimia.uhrwerk.common.tools.TimeTools
 import java.sql.PreparedStatement
 import java.sql.ResultSet
@@ -64,16 +65,16 @@ class PartitionRepo : BaseRepo<Partition>() {
         entity: Partition,
         insert: PreparedStatement
     ): PreparedStatement {
-        insert.setLong(1, entity.targetId)
+        insert.setLong(1, entity.targetId!!)
         insert.setTimestamp(2, Timestamp.valueOf(entity.partitionTs))
-        insert.setBoolean(3, entity.isPartitioned)
-        insert.setBoolean(4, entity.isBookmarked)
+        insert.setBoolean(3, entity.partitioned!!)
+        insert.setBoolean(4, entity.bookmarked!!)
         insert.setString(5, entity.maxBookmark)
         return insert
     }
 
     private fun map(res: ResultSet): Partition {
-        val builder = Partition.builder()
+        val builder = PartitionBuilder()
             .id(res.getLong(1))
             .targetId(res.getLong(2))
             .partitionTs(res.getTimestamp(3).toLocalDateTime())

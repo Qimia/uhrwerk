@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk
 
+import TestUtils
 import com.google.common.truth.Truth
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -53,7 +54,7 @@ class TestContainersMySQL {
         private val logger = LoggerFactory.getLogger(TestContainersMySQL::class.java)
 
         @Container
-        var MY_SQL_DB: MySQLContainer<*> = TestHelper.mysqlContainer()
+        var MY_SQL_DB: MySQLContainer<*> = TestUtils.mysqlContainer()
 
         @BeforeAll
         @JvmStatic

@@ -1,10 +1,11 @@
 package io.qimia.uhrwerk.repo
 
-import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
-import io.qimia.uhrwerk.TestHelper
-import io.qimia.uhrwerk.common.model.ConnectionModel
-import io.qimia.uhrwerk.common.model.HashKeyUtils
+import TestUtils
+import com.google.common.truth.Truth.assertThat
+import io.qimia.uhrwerk.common.metastore.builders.ConnectionModelBuilder
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
 import org.junit.jupiter.api.*
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.MySQLContainer
@@ -21,7 +22,7 @@ internal class ConnectionRepoTest {
 
     @AfterEach
     fun cleanUp() {
-        TestHelper.cleanData("CONNECTION", LOGGER)
+        TestUtils.cleanData("CONNECTION", LOGGER)
     }
 
     @BeforeEach
@@ -31,59 +32,53 @@ internal class ConnectionRepoTest {
 
     @Test
     fun save() {
-        Truth.assertThat(connection).isNotNull()
+        assertThat(connection).isNotNull()
+        assertThat(connection!!.id).isNotNull()
     }
 
     @Test
     fun getById() {
-        val conn = repo.getById(connection!!.id)
-        Truth.assertThat(conn).isNotNull()
-        Truth.assertThat(conn!!.name).isEqualTo("Connection-Test")
+        val conn = repo.getById(connection!!.id!!)
+        assertThat(conn).isNotNull()
+        assertThat(conn!!.name).isEqualTo("Connection-Test")
     }
 
     @Test
     fun getByHash() {
         val hashKey = HashKeyUtils.connectionKey(TestData.connection("Connection-Test"))
         val connections = repo.getByHashKey(hashKey)
-        Truth.assertThat(connections).isNotNull()
-        Truth.assertThat(connections).hasSize(1)
-        Truth.assertThat(connections).hasSize(1)
-        Truth.assertThat(connections!!.first().name).isEqualTo("Connection-Test")
-        Truth.assertThat(connections!!.first()).isEqualTo(connection)
+        assertThat(connections).isNotNull()
+        assertThat(connections!!.name).isEqualTo("Connection-Test")
+        assertThat(connections!!).isEqualTo(connection)
     }
 
     @Test
     fun getByHashKey() {
-        val hashKey = HashKeyUtils.connectionKey(ConnectionModel.builder().name("Connection-Test").build())
+        val hashKey = HashKeyUtils.connectionKey(ConnectionModelBuilder().name("Connection-Test").build())
         val conns = repo.getByHashKey(hashKey)
-        Truth.assertThat(conns).isNotEmpty()
-        Truth.assertThat(conns).hasSize(1)
-        Truth.assertThat(conns[0]).isEqualTo(connection)
+        assertThat(conns).isEqualTo(connection)
     }
 
     @Test
     fun deactivateById() {
-        val effect = repo.deactivateById(connection!!.id)
-        Truth.assertThat(effect).isNotNull()
-        Truth.assertThat(effect!!).isEqualTo(1)
+        val effect = repo.deactivateById(connection!!.id!!)
+        assertThat(effect).isNotNull()
+        assertThat(effect!!).isEqualTo(1)
 
-        val hashKey = HashKeyUtils.connectionKey(ConnectionModel.builder().name("Connection-Test").build())
+        val hashKey = HashKeyUtils.connectionKey(ConnectionModelBuilder().name("Connection-Test").build())
         val conns = repo.getByHashKey(hashKey)
-        Truth.assertThat(conns).isEmpty()
 
-        val conn = repo.getById(connection!!.id)
-        Truth.assertThat(conn).isNotNull()
-        Truth.assertThat(conn!!.deactivatedTs).isNotNull()
+        val conn = repo.getById(connection!!.id!!)
+        assertThat(conn).isNotNull()
+        assertThat(conn!!.deactivatedTs).isNotNull()
 
         val conn1 = repo.save(TestData.connection("Connection-Test"))
-        Truth.assertThat(conn).isNotNull()
-        Truth.assertThat(conn).isNotEqualTo(connection)
+        assertThat(conn).isNotNull()
+        assertThat(conn).isNotEqualTo(connection)
 
-        val conns1 = repo.getByHashKey(hashKey)
-        Truth.assertThat(conns1).isNotEmpty()
-        Truth.assertThat(conns1).hasSize(1)
-        Truth.assertThat(conns1[0].name).isEqualTo("Connection-Test")
-        Truth.assertThat(conns1[0].deactivatedTs).isNull()
+        val conn2 = repo.getByHashKey(hashKey)
+        assertThat(conn2?.name).isEqualTo("Connection-Test")
+        assertThat(conn2?.deactivatedTs).isNull()
 
     }
 
@@ -92,7 +87,7 @@ internal class ConnectionRepoTest {
         private val LOGGER = LoggerFactory.getLogger(ConnectionRepoTest::class.java)
 
         @Container
-        var MY_SQL_DB: MySQLContainer<*> = TestHelper.mysqlContainer()
+        var MY_SQL_DB: MySQLContainer<*> = TestUtils.mysqlContainer()
 
         @BeforeAll
         @JvmStatic

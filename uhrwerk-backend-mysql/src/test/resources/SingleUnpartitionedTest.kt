@@ -1,5 +1,9 @@
 import com.google.common.truth.Truth
 import io.qimia.uhrwerk.ConnectionHelper
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.ConnectionType
+import io.qimia.uhrwerk.common.metastore.model.Partition
+import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.common.model.*
 import io.qimia.uhrwerk.common.model.TargetModel
 import org.junit.jupiter.api.Assertions

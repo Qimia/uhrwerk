@@ -5,6 +5,10 @@ import io.qimia.uhrwerk.common.metastore.dependency.DependencyResult
 import io.qimia.uhrwerk.common.metastore.dependency.TableDependencyService
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResult
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResultSet
+import io.qimia.uhrwerk.common.metastore.model.DependencyModel
+import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
+import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType
+import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.common.model.*
 import io.qimia.uhrwerk.repo.TablePartition
 import io.qimia.uhrwerk.repo.TablePartitionRepo
@@ -34,11 +38,10 @@ class TableDAO : TableDependencyService, TableService {
         tableResult.isSuccess = true
         tableResult.isError = false
         tableResult.newResult = table
-        val tableId = table.id
+        val oldTable = tableRepo.getByHashKey(HashKeyUtils.tableKey(table))
         try {
             if (!overwrite) {
-                saveTablesArrays(table, tableResult, overwrite)
-                val oldTable = tableRepo.getByHashKey(HashKeyUtils.tableKey(table)).first()
+                saveTablesArrays(table, tableResult, false)
                 if (oldTable != null) {
                     tableResult.oldResult = oldTable
                     if (oldTable != table) {
@@ -52,7 +55,7 @@ class TableDAO : TableDependencyService, TableService {
                                      Table in the Metastore:
                                      %s
                                      """.trimIndent(),
-                            tableId,
+                            oldTable.id,
                             table.toString(),
                             oldTable.toString()
                         ) // todo improve finding differences
@@ -63,9 +66,10 @@ class TableDAO : TableDependencyService, TableService {
                 }
                 tableResult.newResult = tableRepo.save(table)
             } else {
-                tableRepo.deactivateById(tableId)
-                saveTablesArrays(table, tableResult, overwrite)
+                if (oldTable != null)
+                    tableRepo.deactivateById(oldTable.id!!)
                 tableResult.newResult = tableRepo.save(table)
+                saveTablesArrays(table, tableResult, true)
             }
         } catch (e: SQLException) {
             tableResult.isError = true
@@ -82,8 +86,9 @@ class TableDAO : TableDependencyService, TableService {
     }
 
     private fun saveTablesArrays(table: TableModel, tableResult: TableResult, overwrite: Boolean) {
-        if (table.targets != null && table.targets.isNotEmpty()) {
-            val targetResult = targetService.save(table.targets.toList(), table.id, overwrite)
+        if (table.targets != null && table.targets!!.isNotEmpty()) {
+            table.targets?.forEach { it.tableId = table.id }
+            val targetResult = targetService.save(table.targets!!.toList(), table.id, overwrite)
             tableResult.targetResult = targetResult
             if (targetResult.isSuccess) {
                 table.targets = targetResult.storedTargets
@@ -92,7 +97,8 @@ class TableDAO : TableDependencyService, TableService {
                 return
             }
         }
-        if (table.dependencies != null && table.dependencies.isNotEmpty()) {
+        if (table.dependencies != null && table.dependencies!!.isNotEmpty()) {
+            table.dependencies?.forEach { it.tableId = table.id }
             val dependencyResult = dependencyDAO.save(table, overwrite)
             tableResult.dependencyResult = dependencyResult
             if (dependencyResult.isSuccess) {
@@ -102,12 +108,13 @@ class TableDAO : TableDependencyService, TableService {
                 return
             }
         }
-        if (table.sources != null && table.sources.isNotEmpty()) {
-            val sourceResults = sourceService.save(table.sources.toList(), table, overwrite)
+        if (table.sources != null && table.sources!!.isNotEmpty()) {
+            table.sources?.forEach { it.tableId = table.id }
+            val sourceResults = sourceService.save(table.sources!!.toList(), table, overwrite)
             tableResult.sourceResults = sourceResults.toTypedArray()
             for (i in sourceResults.indices) {
                 if (sourceResults[i].isSuccess) {
-                    table.sources[i] = sourceResults[i].newResult
+                    table.sources!![i] = sourceResults[i].newResult
                 } else {
                     tableResult.isSuccess = false
                     return
@@ -129,11 +136,11 @@ class TableDAO : TableDependencyService, TableService {
         table: TableModel,
         requestTime: LocalDateTime
     ): TablePartitionResultSet {
-        assert(!table.isPartitioned) { "Table can't be partitioned for partitionless processing" }
+        assert(!table.partitioned) { "Table can't be partitioned for partitionless processing" }
         val singleResult = TablePartitionResult()
         val resultSet = TablePartitionResultSet()
         // FIXME checks only the first target of the table (see FIXME normal processingPartitions)
-        val processedPartition = partService.getLatestPartition(table.targets[0].id)
+        val processedPartition = partService.getLatestPartition(table.targets!![0].id)
         if (processedPartition != null) {
             // If partition found -> check if it has been processed in the last 1 minute
             val requestDiff = Duration.between(processedPartition.partitionTs, requestTime)
@@ -150,7 +157,7 @@ class TableDAO : TableDependencyService, TableService {
         singleResult.isProcessed = false
 
         // If there are no dependencies then this table is resolved and ready to run
-        if (table.dependencies == null || table.dependencies.isEmpty()) {
+        if (table.dependencies == null || table.dependencies!!.isEmpty()) {
             singleResult.isResolved = true
             singleResult.partitionTs = requestTime
             singleResult.resolvedDependencies = arrayOfNulls(0)
@@ -159,7 +166,7 @@ class TableDAO : TableDependencyService, TableService {
             resultSet.resolvedTs = arrayOf(requestTime)
             return resultSet
         }
-        val tablePartitionSpecs = tablePartRepo.getTablePartitions(table.id)
+        val tablePartitionSpecs = tablePartRepo.getTablePartitions(table.id!!)
         val connections = connService.getAllTableDeps(table.id)
 
         val connectionsMap = connections!!.map { it.id to it }.toMap()
@@ -221,10 +228,10 @@ class TableDAO : TableDependencyService, TableService {
         table: TableModel, requestedPartitionTs: List<LocalDateTime>
     ): TablePartitionResultSet {
         val processedPartitions =
-            partService.getPartitions(table.targets[0].id, requestedPartitionTs)
+            partService.getPartitions(table.targets!![0].id, requestedPartitionTs)
         val processedTs = TreeSet<LocalDateTime>()
         for (processedPartition in processedPartitions) {
-            processedTs.add(processedPartition.partitionTs)
+            processedTs.add(processedPartition.partitionTs!!)
         }
         val resolvedTs: MutableList<LocalDateTime> = ArrayList()
         val resolved: MutableList<TablePartitionResult> = ArrayList()
@@ -269,10 +276,10 @@ class TableDAO : TableDependencyService, TableService {
     override fun processingPartitions(
         table: TableModel, requestedPartitionTs: List<LocalDateTime>
     ): TablePartitionResultSet {
-        if (!table.isPartitioned) {
+        if (!table.partitioned) {
             return processUnpartitionedTable(table, requestedPartitionTs[0])
         }
-        if (table.dependencies == null || table.dependencies.size == 0) {
+        if (table.dependencies == null || table.dependencies!!.size == 0) {
             return processNoDependencyPartitions(table, requestedPartitionTs)
         }
 
@@ -280,27 +287,27 @@ class TableDAO : TableDependencyService, TableService {
         // FIXME which target for the table should be used for getting (already) processed partition of
         // the table
         val processedPartitions =
-            partService.getPartitions(table.targets[0].id, requestedPartitionTs)
+            partService.getPartitions(table.targets!![0].id, requestedPartitionTs)
         val processedTs = TreeSet<LocalDateTime?>()
         for (i in processedPartitions.indices) {
             processedTs.add(processedPartitions[i].partitionTs)
         }
 
         // Get full spec-objects for each of the dependencies + store all connections
-        val tablePartitionSpecs = tablePartRepo.getTablePartitions(table.id)
+        val tablePartitionSpecs = tablePartRepo.getTablePartitions(table.id!!)
         val connections = connService.getAllTableDeps(table.id)
 
         val connectionsMap = connections!!.map { it.id to it }.toMap()
 
         val tableDependencies = table.dependencies
 
-        if (tablePartitionSpecs.size != tableDependencies.size) {
+        if (tablePartitionSpecs.size != tableDependencies!!.size) {
             logger.error("Could not find all specifications for all dependencies in metastore")
             return buildResultSet(listOf(), listOf(), setOf())
         }
         val dependenciesMap: MutableMap<Long, DependencyModel> = HashMap()
         for (i in tableDependencies.indices) {
-            dependenciesMap[tableDependencies[i].id] = tableDependencies[i]
+            dependenciesMap[tableDependencies[i].id!!] = tableDependencies[i]
         }
         val dependencyResults = mutableListOf<List<DependencyResult>>()
         for (spec: TablePartition in tablePartitionSpecs) {
@@ -322,14 +329,14 @@ class TableDAO : TableDependencyService, TableService {
                     // If there is something, check for every requested partition ->
                     // Is the found dependency-partition's startTS equal or after the endpoint of that partition
                     val depPartitionSnapshotTime = depPartition.partitionTs
-                    val tableChronoUnit = ChronoUnit.valueOf(table.partitionUnit.name)
-                    val tableDuration = Duration.of(table.partitionSize.toLong(), tableChronoUnit)
+                    val tableChronoUnit = ChronoUnit.valueOf(table.partitionUnit!!.name)
+                    val tableDuration = Duration.of(table.partitionSize!!.toLong(), tableChronoUnit)
                     for (i in requestedPartitionTs.indices) {
                         val dependencyResult = DependencyResult()
                         dependencyResult.connection = connectionsMap[spec.connectionId]
                         dependencyResult.dependency = dependenciesMap[spec.dependencyId]
                         val requestedPartitionEndTs = requestedPartitionTs[i].plus(tableDuration)
-                        if (depPartitionSnapshotTime.isEqual(requestedPartitionEndTs) || depPartitionSnapshotTime.isAfter(
+                        if (depPartitionSnapshotTime!!.isEqual(requestedPartitionEndTs) || depPartitionSnapshotTime.isAfter(
                                 requestedPartitionEndTs
                             )
                         ) {
@@ -350,8 +357,8 @@ class TableDAO : TableDependencyService, TableService {
                 // partitioned so first create list of which partitions to check
                 val partitionTs = JdbcBackendUtils.dependencyPartitions(
                     requestedPartitionTs,
-                    table.partitionUnit,
-                    table.partitionSize,
+                    table.partitionUnit!!,
+                    table.partitionSize!!,
                     spec.partitionUnit,
                     spec.partitionSize,
                     spec.transformType,
@@ -374,7 +381,7 @@ class TableDAO : TableDependencyService, TableService {
                             dependencyResult.partitions = depPartitions.toTypedArray()
                             for (partition in depPartitions) {
                                 val ts = partition.partitionTs
-                                succeeded.add(ts)
+                                succeeded.add(ts!!)
                             }
                         }
                         val failed = partTs.subtract(succeeded)

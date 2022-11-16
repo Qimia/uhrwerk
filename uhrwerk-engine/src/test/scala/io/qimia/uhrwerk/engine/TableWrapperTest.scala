@@ -1,8 +1,7 @@
 package io.qimia.uhrwerk.engine
 
+import io.qimia.uhrwerk.common.metastore.model.{Partition, PartitionUnit, TableModel}
 import java.time.{Duration, LocalDateTime}
-
-import io.qimia.uhrwerk.common.model.{Partition, PartitionUnit, TableModel}
 import org.scalatest.flatspec.AnyFlatSpec
 
 class TableWrapperTest extends AnyFlatSpec {
@@ -22,7 +21,7 @@ class TableWrapperTest extends AnyFlatSpec {
         val p = pTs._1
         val timestamp = pTs._2
 
-        assert(p.isPartitioned)
+        assert(p.getPartitioned)
         assert(p.getPartitionSize == partitionSize)
         assert(p.getPartitionTs == timestamp)
         assert(p.getPartitionUnit == partitionUnit)
@@ -31,7 +30,7 @@ class TableWrapperTest extends AnyFlatSpec {
   }
 
   "tableDuration" should "get calculated properly when initiating TableWrapper" in {
-    val partitionedTable = TableModel.builder().build()
+    val partitionedTable = new TableModel()
     partitionedTable.setPartitioned(true)
     partitionedTable.setPartitionUnit(PartitionUnit.DAYS)
     partitionedTable.setPartitionSize(1)
@@ -43,7 +42,7 @@ class TableWrapperTest extends AnyFlatSpec {
 
     assert(new TableWrapper(null, partitionedTable, null, null).tableDuration == Duration.ofMinutes(45))
 
-    val unpartitionedTable = TableModel.builder().build()
+    val unpartitionedTable = new TableModel()
     unpartitionedTable.setPartitioned(false)
 
     assert(new TableWrapper(null, unpartitionedTable, null, null).tableDuration == Duration.ofMinutes(1))

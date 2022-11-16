@@ -1,8 +1,7 @@
 package io.qimia.uhrwerk.engine.tools
 
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import java.time.{Duration, LocalDateTime}
-
-import io.qimia.uhrwerk.common.model.PartitionUnit
 
 import scala.collection.mutable
 

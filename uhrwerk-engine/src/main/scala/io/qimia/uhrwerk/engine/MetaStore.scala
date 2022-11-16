@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.engine
 
 import io.qimia.uhrwerk.common.metastore.config._
 import io.qimia.uhrwerk.common.metastore.dependency.TableDependencyService
-import io.qimia.uhrwerk.common.model.{MetastoreModel => MetastoreConnInfo}
+import io.qimia.uhrwerk.common.metastore.model.{MetastoreModel => MetastoreConnInfo}
 import io.qimia.uhrwerk.dao._
 import io.qimia.uhrwerk.repo.HikariCPDataSource
 

@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.framemanager
 
 import io.qimia.uhrwerk.common.framemanager.BulkDependencyResult
+import io.qimia.uhrwerk.common.metastore.model.{ConnectionModel, ConnectionType, Partition, PartitionTransformType, PartitionUnit, SourceModel, TableModel}
 import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.common.tools.{JDBCTools, TimeTools}
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils

@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.repo
 
 import com.google.common.truth.Truth
-import io.qimia.uhrwerk.TestHelper
+import TestUtils
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -35,7 +35,7 @@ internal class HikariCPDataSourceTest {
         private val LOGGER = LoggerFactory.getLogger(HikariCPDataSourceTest::class.java)
 
         @Container
-        var MY_SQL_DB: MySQLContainer<*> = TestHelper.mysqlContainer()
+        var MY_SQL_DB: MySQLContainer<*> = TestUtils.mysqlContainer()
 
         @BeforeAll
         @JvmStatic

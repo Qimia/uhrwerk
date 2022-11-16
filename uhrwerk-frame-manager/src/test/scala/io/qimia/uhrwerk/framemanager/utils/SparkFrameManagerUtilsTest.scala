@@ -1,8 +1,9 @@
 package io.qimia.uhrwerk.framemanager.utils
 
-import java.time.LocalDateTime
+import io.qimia.uhrwerk.common.metastore.builders.DependencyModelBuilder
+import io.qimia.uhrwerk.common.metastore.model.{DependencyModel, PartitionUnit, TableModel}
 
-import io.qimia.uhrwerk.common.model.{DependencyModel, PartitionUnit, TableModel}
+import java.time.LocalDateTime
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -24,9 +25,9 @@ class SparkFrameManagerUtilsTest extends AnyFlatSpec {
   }
 
   def createMockDataFrame(
-                           spark: SparkSession,
-                           dateTime: Option[LocalDateTime] = Option.empty
-                         ): DataFrame = {
+      spark: SparkSession,
+      dateTime: Option[LocalDateTime] = Option.empty
+  ): DataFrame = {
     import spark.implicits._
     if (dateTime.isDefined) {
       val (year, month, day, hour, minute) =
@@ -89,35 +90,40 @@ class SparkFrameManagerUtilsTest extends AnyFlatSpec {
   }
 
   "getTablePath" should "create a table path" in {
-    val table = TableModel.builder()
-    .version("1")
-    .area("staging")
-    .name("testsparkframemanager")
-    .vertical("testdb").build()
+    val table = new TableModel()
+    table.setVersion("1")
+    table.setArea("staging")
+    table.setName("testsparkframemanager")
+    table.setVertical("testdb")
 
-    val tablePath = SparkFrameManagerUtils.getTablePath(table, fileSystem = true, "parquet")
+    val tablePath =
+      SparkFrameManagerUtils.getTablePath(table, fileSystem = true, "parquet")
     assert(
       tablePath === "area=staging/vertical=testdb/table=testsparkframemanager/version=1/format=parquet"
     )
 
-    val tablePathJDBC = SparkFrameManagerUtils.getTablePath(table, fileSystem = false, "jdbc")
+    val tablePathJDBC =
+      SparkFrameManagerUtils.getTablePath(table, fileSystem = false, "jdbc")
     assert(tablePathJDBC === "`staging_testdb`.`testsparkframemanager_1`")
   }
 
   "getDependencyPath" should "create a dependency path" in {
-    val dependency = DependencyModel.builder()
-    .version("1")
-    .area("staging")
-    .tableName("testsparkframemanager")
-    .vertical("testdb")
-    .format("parquet").build()
+    val dependency = new DependencyModelBuilder()
+      .version("1")
+      .area("staging")
+      .tableName("testsparkframemanager")
+      .vertical("testdb")
+      .format("parquet")
+      .build()
 
-    val tablePath = SparkFrameManagerUtils.getDependencyPath(dependency, fileSystem = true)
+    val tablePath =
+      SparkFrameManagerUtils.getDependencyPath(dependency, fileSystem = true)
     assert(
       tablePath === "area=staging/vertical=testdb/table=testsparkframemanager/version=1/format=parquet"
     )
 
-    val tablePathJDBC = SparkFrameManagerUtils.getDependencyPath(dependency, fileSystem = false)
+    val tablePathJDBC =
+      SparkFrameManagerUtils.getDependencyPath(dependency, fileSystem = false)
     assert(tablePathJDBC === "`staging_testdb`.`testsparkframemanager_1`")
   }
 
@@ -126,12 +132,30 @@ class SparkFrameManagerUtilsTest extends AnyFlatSpec {
     val ts = LocalDateTime.of(2015, 10, 12, 20, 0)
     val df = createMockDataFrame(spark, Option(ts))
 
-    assert(SparkFrameManagerUtils.containsTimeColumns(df, PartitionUnit.MINUTES) === true)
-    assert(SparkFrameManagerUtils.containsTimeColumns(df.drop("hour"), PartitionUnit.MINUTES) === false)
-    assert(SparkFrameManagerUtils.containsTimeColumns(df.drop("hour"), PartitionUnit.HOURS) === false)
+    assert(
+      SparkFrameManagerUtils.containsTimeColumns(
+        df,
+        PartitionUnit.MINUTES
+      ) === true
+    )
+    assert(
+      SparkFrameManagerUtils.containsTimeColumns(
+        df.drop("hour"),
+        PartitionUnit.MINUTES
+      ) === false
+    )
+    assert(
+      SparkFrameManagerUtils.containsTimeColumns(
+        df.drop("hour"),
+        PartitionUnit.HOURS
+      ) === false
+    )
     assert(
       SparkFrameManagerUtils
-        .containsTimeColumns(df.withColumn("day", lit("03")), PartitionUnit.MINUTES) === false
+        .containsTimeColumns(
+          df.withColumn("day", lit("03")),
+          PartitionUnit.MINUTES
+        ) === false
     )
   }
 }

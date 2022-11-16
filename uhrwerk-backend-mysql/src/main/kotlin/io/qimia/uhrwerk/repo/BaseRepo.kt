@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.repo
 
-import io.qimia.uhrwerk.common.model.BaseModel
+import io.qimia.uhrwerk.common.metastore.model.BaseModel
 import org.slf4j.LoggerFactory
 import java.sql.*
 
@@ -22,7 +22,7 @@ abstract class BaseRepo<E : BaseModel> {
                 keys.use {
                     keys.next()
                     val id = keys.getLong(1)
-                    entity.id = id
+                    entity.id(id)
                     return entity
                 }
             }
@@ -86,6 +86,18 @@ abstract class BaseRepo<E : BaseModel> {
                 }
             }
         }
+    }
+
+    @Throws(SQLException::class)
+    protected fun getByHashKey(
+        query: String,
+        setParam: (PreparedStatement) -> Unit,
+        map: (res: ResultSet) -> E
+    ): E? {
+        val entities = findAll(query, setParam, map)
+        if (entities.isNotEmpty())
+            return entities.first()
+        return null
     }
 
     companion object {

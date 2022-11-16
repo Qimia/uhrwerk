@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.dao
 
-import io.qimia.uhrwerk.common.model.PartitionTransformType
-import io.qimia.uhrwerk.common.model.PartitionUnit
+import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import java.sql.PreparedStatement
 import java.sql.SQLException
 import java.time.Duration
@@ -18,13 +18,13 @@ object JdbcBackendUtils {
 
     @JvmStatic
     fun dependencyPartitions(
-            tablePartitions: List<LocalDateTime>,
-            tableUnit: PartitionUnit,
-            tableSize: Int,
-            depTableUnit: PartitionUnit?,
-            depTableSize: Int,
-            transformType: PartitionTransformType,
-            transformSize: Int): List<List<LocalDateTime>> {
+        tablePartitions: List<LocalDateTime>,
+        tableUnit: PartitionUnit,
+        tableSize: Int,
+        depTableUnit: PartitionUnit?,
+        depTableSize: Int,
+        transformType: PartitionTransformType,
+        transformSize: Int): List<List<LocalDateTime>> {
         if (transformType == PartitionTransformType.IDENTITY) {
             assert(tableUnit == depTableUnit && tableSize == depTableSize)
             return tablePartitions.map { listOf(it) }

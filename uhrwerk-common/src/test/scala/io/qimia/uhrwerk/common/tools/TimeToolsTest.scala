@@ -1,8 +1,7 @@
 package io.qimia.uhrwerk.common.tools
 
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import java.time.{Duration, LocalDateTime, Month}
-
-import io.qimia.uhrwerk.common.model.PartitionUnit
 import org.scalatest.flatspec.AnyFlatSpec
 
 class TimeToolsTest extends AnyFlatSpec {

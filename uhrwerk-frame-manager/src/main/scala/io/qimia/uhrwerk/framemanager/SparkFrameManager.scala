@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.framemanager
 
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
+import io.qimia.uhrwerk.common.metastore.model.{ConnectionType, PartitionTransformType, SourceModel, TableModel}
 import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.common.tools.{JDBCTools, TimeTools}
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils
@@ -31,7 +32,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
                                     dataFrameReaderOptions: Option[Map[String, String]] = Option.empty
   ): DataFrame = {
     if (
-      (startTS.isDefined || endTSExcl.isDefined) && source.isPartitioned && isStringEmpty(
+      (startTS.isDefined || endTSExcl.isDefined) && source.getPartitioned && isStringEmpty(
         source.getSelectColumn
       )
     ) {
@@ -142,7 +143,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           )
         } else {
           val minuteLowerBound = getTimeValues(p.getPartitionTs)._5
-          if (p.isPartitioned) {
+          if (p.getPartitioned) {
             val minuteUpperBound =
               getTimeValues(
                 TimeTools.addPartitionSizeToTimestamp(
@@ -283,7 +284,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           .option("dbtable", query)
           .option(
             "numPartitions",
-            source.getParallelLoadNum
+            source.getParallelLoadNum.toString
           )
 
         if (!isStringEmpty(source.getParallelLoadQuery)) {

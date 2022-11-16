@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.engine.dag
 
-import io.qimia.uhrwerk.common.model.{PartitionTransformType, TableModel}
+import io.qimia.uhrwerk.common.metastore.model.{PartitionTransformType, TableModel}
 import io.qimia.uhrwerk.common.tools.TimeTools
 import io.qimia.uhrwerk.engine.{Environment, TableWrapper}
 import io.qimia.uhrwerk.engine.Environment.{TableIdent, getTableIdent, tableCleaner}
@@ -91,7 +91,7 @@ object DagTaskBuilder2 {
    * @return combined Map
    */
   def mergeTaskLists(taskmapA: Map[DagTask2Key, DagTask2], taskmapB: Map[DagTask2Key, DagTask2]): Map[DagTask2Key, DagTask2] = {
-    val unpartitionedTimeA = taskmapA.values.filterNot(task => task.tableWrapper.wrappedTable.isPartitioned).head.partitions.head
+    val unpartitionedTimeA = taskmapA.values.filterNot(task => task.tableWrapper.wrappedTable.getPartitioned).head.partitions.head
     val BParts = taskmapB.groupBy(tup => taskmapA.contains(tup._1))
 
     // tasks which are in both
@@ -103,7 +103,7 @@ object DagTaskBuilder2 {
     })
 
     val notFoundParts = BParts.filterNot(tup => tup._1).head._2
-    val BNotFoundByPartition = notFoundParts.groupBy(kv => kv._2.tableWrapper.wrappedTable.isPartitioned)
+    val BNotFoundByPartition = notFoundParts.groupBy(kv => kv._2.tableWrapper.wrappedTable.getPartitioned)
 
     val unpartitionedUpdates = BNotFoundByPartition.map(partTuple => {
       if (partTuple._1) {
@@ -185,7 +185,7 @@ class DagTaskBuilder2(environment: Environment) {
     }
 
     // If it's unpartitioned only run for the calltime
-    if (!outTable.wrappedTable.isPartitioned) {
+    if (!outTable.wrappedTable.getPartitioned) {
       return recursiveBuild(DagTask2Key(getTableIdent(outTable.wrappedTable), callTime),
                             Option.empty,
                             new immutable.HashMap[DagTask2Key, DagTask2])

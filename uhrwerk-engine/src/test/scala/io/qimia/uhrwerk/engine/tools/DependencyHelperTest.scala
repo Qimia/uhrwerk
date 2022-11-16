@@ -1,10 +1,8 @@
 package io.qimia.uhrwerk.engine.tools
 
-import io.qimia.uhrwerk.common.metastore.dependency.{
-  DependencyResult,
-  TablePartitionResult,
-  TablePartitionResultSet
-}
+import io.qimia.uhrwerk.common.metastore.builders.ConnectionModelBuilder
+import io.qimia.uhrwerk.common.metastore.dependency.{DependencyResult, TablePartitionResult, TablePartitionResultSet}
+import io.qimia.uhrwerk.common.metastore.model.{DependencyModel, Partition, PartitionTransformType, PartitionUnit}
 import io.qimia.uhrwerk.common.model._
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -102,12 +100,11 @@ class DependencyHelperTest extends AnyFlatSpec {
     )
     val partitions = times.map(timeGroup =>
       timeGroup.map(t => {
-        val newPart = Partition.builder().build()
+        val newPart = new Partition()
         newPart.setTargetId(targetId)
         newPart.setPartitionSize(1)
         newPart.setPartitionUnit(PartitionUnit.HOURS)
         newPart.setPartitionTs(t)
-        newPart.setKey()
         newPart
       })
     )
@@ -123,16 +120,15 @@ class DependencyHelperTest extends AnyFlatSpec {
   }
 
   "Going from TablePartitionResult to BulkDependencyResult" should "result in the same data on a different axis" in {
-    val conn1 = ConnectionModel
-      .builder()
+    val conn1 = new ConnectionModelBuilder()
       .name("testConn")
       .build()
 
-    val depA = DependencyModel.builder().build()
+    val depA = new DependencyModel()
     depA.setTableName("sometable")
     depA.setTransformType(PartitionTransformType.IDENTITY)
     depA.setTransformPartitionSize(1)
-    val depB = DependencyModel.builder().build()
+    val depB = new DependencyModel()
     depB.setTableName("anothertable")
     depB.setTransformType(PartitionTransformType.AGGREGATE)
     depB.setTransformPartitionSize(2)
@@ -148,7 +144,7 @@ class DependencyHelperTest extends AnyFlatSpec {
     res1depA.setDependency(depA)
     res1depA.setPartitionTs(time1)
     res1depA.setSucceeded(Array(time1))
-    val res1depAPart1 = Partition.builder().build()
+    val res1depAPart1 = new Partition()
     res1depAPart1.setPartitionUnit(PartitionUnit.HOURS)
     res1depAPart1.setPartitionSize(1)
     res1depAPart1.setPartitionTs(time1)
@@ -160,11 +156,11 @@ class DependencyHelperTest extends AnyFlatSpec {
     res1depB.setPartitionTs(time1)
     val time1Xtra = LocalDateTime.of(2010, 4, 5, 10, 30)
     res1depB.setSucceeded(Array(time1, time1Xtra))
-    val res1depBPart1 = Partition.builder().build()
+    val res1depBPart1 = new Partition()
     res1depBPart1.setPartitionUnit(PartitionUnit.MINUTES)
     res1depBPart1.setPartitionSize(30)
     res1depBPart1.setPartitionTs(time1)
-    val res1depBPart2 = Partition.builder().build()
+    val res1depBPart2 = new Partition()
     res1depBPart2.setPartitionUnit(PartitionUnit.MINUTES)
     res1depBPart2.setPartitionSize(30)
     res1depBPart2.setPartitionTs(time1Xtra)
@@ -182,7 +178,7 @@ class DependencyHelperTest extends AnyFlatSpec {
     res2depA.setDependency(depA)
     res2depA.setPartitionTs(time2)
     res2depA.setSucceeded(Array(time2))
-    val res2depAPart1 = Partition.builder().build()
+    val res2depAPart1 = new Partition()
     res2depAPart1.setPartitionUnit(PartitionUnit.HOURS)
     res2depAPart1.setPartitionSize(1)
     res2depAPart1.setPartitionTs(time2)
@@ -194,11 +190,11 @@ class DependencyHelperTest extends AnyFlatSpec {
     res2depB.setPartitionTs(time2)
     val time2Xtra = LocalDateTime.of(2010, 4, 5, 11, 30)
     res2depB.setSucceeded(Array(time2, time2Xtra))
-    val res2depBPart1 = Partition.builder().build()
+    val res2depBPart1 = new Partition()
     res2depBPart1.setPartitionUnit(PartitionUnit.MINUTES)
     res2depBPart1.setPartitionSize(30)
     res2depBPart1.setPartitionTs(time2)
-    val res2depBPart2 = Partition.builder().build()
+    val res2depBPart2 = new Partition()
     res2depBPart2.setPartitionUnit(PartitionUnit.MINUTES)
     res2depBPart2.setPartitionSize(30)
     res2depBPart2.setPartitionTs(time2Xtra)
@@ -216,7 +212,7 @@ class DependencyHelperTest extends AnyFlatSpec {
     res3depA.setDependency(depA)
     res3depA.setPartitionTs(time3)
     res3depA.setSucceeded(Array(time3))
-    val res3depAPart1 = Partition.builder().build()
+    val res3depAPart1 = new Partition()
     res3depAPart1.setPartitionUnit(PartitionUnit.HOURS)
     res3depAPart1.setPartitionSize(1)
     res3depAPart1.setPartitionTs(time3)
@@ -228,11 +224,11 @@ class DependencyHelperTest extends AnyFlatSpec {
     res3depB.setPartitionTs(time3)
     val time3Xtra = LocalDateTime.of(2010, 4, 5, 12, 30)
     res3depB.setSucceeded(Array(time3, time3Xtra))
-    val res3depBPart1 = Partition.builder().build()
+    val res3depBPart1 = new Partition()
     res3depBPart1.setPartitionUnit(PartitionUnit.MINUTES)
     res3depBPart1.setPartitionSize(30)
     res3depBPart1.setPartitionTs(time3)
-    val res3depBPart2 = Partition.builder().build()
+    val res3depBPart2 = new Partition()
     res3depBPart2.setPartitionUnit(PartitionUnit.MINUTES)
     res3depBPart2.setPartitionSize(30)
     res3depBPart2.setPartitionTs(time3Xtra)

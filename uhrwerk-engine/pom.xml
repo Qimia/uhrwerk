@@ -1,68 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>uhrwerk-parent</artifactId>
-        <groupId>io.qimia</groupId>
-        <version>0.2.0-SNAPSHOT</version>
-    </parent>
-    <modelVersion>4.0.0</modelVersion>
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>uhrwerk-parent</artifactId>
+    <groupId>io.qimia</groupId>
+    <version>0.2.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>uhrwerk-engine</artifactId>
-    <dependencies>
-        <!-- Internal dependencies-->
-        <dependency>
-            <groupId>io.qimia</groupId>
-            <artifactId>uhrwerk-config</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+  <artifactId>uhrwerk-engine</artifactId>
+  <dependencies>
+    <!-- Internal dependencies-->
+    <dependency>
+      <groupId>io.qimia</groupId>
+      <artifactId>uhrwerk-config</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-        <dependency>
-            <groupId>io.qimia</groupId>
-            <artifactId>uhrwerk-common</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+    <dependency>
+      <groupId>io.qimia</groupId>
+      <artifactId>uhrwerk-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-        <!-- TODO: Should only use these using interfaces defined in uhrwerk-common -->
-        <dependency>
-            <groupId>io.qimia</groupId>
-            <artifactId>uhrwerk-backend-mysql</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+    <!-- TODO: Should only use these using interfaces defined in uhrwerk-common -->
+    <dependency>
+      <groupId>io.qimia</groupId>
+      <artifactId>uhrwerk-backend-mysql</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-        <dependency>
-            <groupId>io.qimia</groupId>
-            <artifactId>uhrwerk-frame-manager</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+    <dependency>
+      <groupId>io.qimia</groupId>
+      <artifactId>uhrwerk-frame-manager</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_${scala.compat.version}</artifactId>
-            <version>${spark.version}</version>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-sql_${scala.compat.version}</artifactId>
+      <version>${spark.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven.surefire.plugin.version}</version>
-                <configuration>
-                    <!-- Tests will be run with scalatest-maven-plugin instead -->
-                    <skipTests>true</skipTests>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.scalatest</groupId>
-                <artifactId>scalatest-maven-plugin</artifactId>
-                <configuration>
-                    <argLine>-Duser.timezone=GMT</argLine>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven.surefire.plugin.version}</version>
+        <configuration>
+          <!-- Tests will be run with scalatest-maven-plugin instead -->
+          <skipTests>true</skipTests>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.scalatest</groupId>
+        <artifactId>scalatest-maven-plugin</artifactId>
+        <configuration>
+          <argLine>-Duser.timezone=GMT</argLine>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

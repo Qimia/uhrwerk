@@ -2,11 +2,11 @@ package io.qimia.uhrwerk.dao
 
 import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
-import io.qimia.uhrwerk.TestHelper
+import TestUtils
 import io.qimia.uhrwerk.common.metastore.config.PartitionService
-import io.qimia.uhrwerk.common.model.ConnectionModel
-import io.qimia.uhrwerk.common.model.PartitionUnit
-import io.qimia.uhrwerk.common.model.TableModel
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
+import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.common.model.TargetModel
 import io.qimia.uhrwerk.repo.*
 import org.junit.jupiter.api.*
@@ -31,23 +31,23 @@ internal class PartitionDAOTest {
 
     @AfterEach
     fun cleanUp() {
-        TestHelper.cleanData("PARTITION_", LOGGER)
-        TestHelper.cleanData("TARGET", LOGGER)
-        TestHelper.cleanData("TABLE_", LOGGER)
-        TestHelper.cleanData("CONNECTION", LOGGER)
+        TestUtils.cleanData("PARTITION_", LOGGER)
+        TestUtils.cleanData("TARGET", LOGGER)
+        TestUtils.cleanData("TABLE_", LOGGER)
+        TestUtils.cleanData("CONNECTION", LOGGER)
     }
 
     @BeforeEach
     fun saveData() {
         connection = ConnectionRepo().save(TestData.connection("Connection-PartitionDAOTest"))
         table = TableRepo().save(TestData.table("Table-PartitionTest"))
-        target = TargetRepo().save(TestData.target(connection!!.id, table!!.id))
+        target = TargetRepo().save(TestData.target(connection!!.id!!, table!!.id!!))
     }
 
     @Test
     @Order(1)
     fun save() {
-        val partition = TestData.partition(target!!.id)
+        val partition = TestData.partition(target!!.id!!)
         val result = service.save(partition, false)
 
         Truth.assertThat(result.isSuccess).isTrue()
@@ -63,14 +63,14 @@ internal class PartitionDAOTest {
         val partitionTs = LocalDateTime.now().truncatedTo(ChronoUnit.HOURS)
 
         val partition = TestData.partition(
-            targetId = target!!.id,
+            targetId = target!!.id!!,
             partitionTs = partitionTs
         )
 
         val result = service.save(partition, false)
 
         val partition1 = TestData.partition(
-            targetId = target!!.id,
+            targetId = target!!.id!!,
             partitionTs = partitionTs
         )
         partition1.partitionUnit = PartitionUnit.MINUTES
@@ -95,14 +95,14 @@ internal class PartitionDAOTest {
         val partitionTs = LocalDateTime.now().truncatedTo(ChronoUnit.HOURS)
 
         val partition = TestData.partition(
-            targetId = target!!.id,
+            targetId = target!!.id!!,
             partitionTs = partitionTs
         )
 
         val result = service.save(partition, false)
 
         val partition1 = TestData.partition(
-            targetId = target!!.id,
+            targetId = target!!.id!!,
             partitionTs = partitionTs
         )
         partition1.partitionUnit = PartitionUnit.MINUTES
@@ -127,14 +127,14 @@ internal class PartitionDAOTest {
         val partitionTs = LocalDateTime.now().truncatedTo(ChronoUnit.HOURS)
 
         val partition = TestData.partition(
-            targetId = target!!.id,
+            targetId = target!!.id!!,
             partitionTs = partitionTs
         )
 
         val result = service.save(partition, false)
 
         val partition1 = TestData.partition(
-            targetId = target!!.id,
+            targetId = target!!.id!!,
             partitionTs = partitionTs
         )
 
@@ -156,7 +156,7 @@ internal class PartitionDAOTest {
         private val LOGGER = LoggerFactory.getLogger(PartitionDAOTest::class.java)
 
         @Container
-        var MY_SQL_DB: MySQLContainer<*> = TestHelper.mysqlContainer()
+        var MY_SQL_DB: MySQLContainer<*> = TestUtils.mysqlContainer()
 
         @BeforeAll
         @JvmStatic

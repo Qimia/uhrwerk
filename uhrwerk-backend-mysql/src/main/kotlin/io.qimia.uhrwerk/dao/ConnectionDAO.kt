@@ -2,20 +2,16 @@ package io.qimia.uhrwerk.dao
 
 import io.qimia.uhrwerk.common.metastore.config.ConnectionResult
 import io.qimia.uhrwerk.common.metastore.config.ConnectionService
-import io.qimia.uhrwerk.common.model.ConnectionModel
-import io.qimia.uhrwerk.common.model.HashKeyUtils
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
 import io.qimia.uhrwerk.repo.ConnectionRepo
 import java.sql.SQLException
 
 class ConnectionDAO : ConnectionService {
     private val repo = ConnectionRepo()
 
-    override fun getByHashKey(hashKey: Long): ConnectionModel? {
-        val conns = repo.getByHashKey(hashKey)
-        if (conns.isNotEmpty())
-            return conns.first()
-        return null
-    }
+    override fun getByHashKey(hashKey: Long): ConnectionModel? =
+        repo.getByHashKey(hashKey)
 
     override fun getById(id: Long): ConnectionModel? {
         return repo.getById(id)
@@ -38,7 +34,7 @@ class ConnectionDAO : ConnectionService {
                 return result
             }
             if (result.oldConnection != null)
-                repo.deactivateById(result.oldConnection.id)
+                repo.deactivateById(result.oldConnection.id!!)
 
             result.newConnection = repo.save(connection)
             result.isSuccess = true

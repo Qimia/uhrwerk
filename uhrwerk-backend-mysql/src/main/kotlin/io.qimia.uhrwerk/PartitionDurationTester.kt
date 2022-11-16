@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk
 
-import io.qimia.uhrwerk.common.model.PartitionTransformType
-import io.qimia.uhrwerk.common.model.PartitionUnit
+import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import org.slf4j.LoggerFactory
 import java.time.Duration
 
@@ -87,11 +87,11 @@ object PartitionDurationTester {
         result.success = true
         result.badTableNames = mutableListOf()
         val badTables = mutableListOf<String>()
+
         val tableDuration = convertToDuration(tablePartitionUnit, tablePartitionSize)
 
         for (testDependency in dependencies) {
-            var checkRes: Boolean
-            checkRes = if (testDependency.transformType == PartitionTransformType.NONE) {
+            var checkRes: Boolean = if (testDependency.transformType == PartitionTransformType.NONE) {
                 checkUnpartitionedDependency(testDependency)
             } else {
                 checkPartitionedDependency(tableDuration, testDependency)

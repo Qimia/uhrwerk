@@ -1,8 +1,8 @@
 package io.qimia.uhrwerk.dao
 
-import io.qimia.uhrwerk.TestHelper
-import io.qimia.uhrwerk.common.model.ConnectionModel
-import io.qimia.uhrwerk.config.ConnectionBuilder
+import TestUtils
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.config.builders.ConnectionBuilder
 import io.qimia.uhrwerk.repo.HikariCPDataSource
 import io.qimia.uhrwerk.TestData
 import org.junit.jupiter.api.*
@@ -19,7 +19,7 @@ internal class ConnectionDAOTest {
 
     @AfterEach
     fun cleanUp() {
-        TestHelper.cleanData("CONNECTION", LOGGER)
+        TestUtils.cleanData("CONNECTION", LOGGER)
     }
 
     @BeforeEach
@@ -83,7 +83,7 @@ internal class ConnectionDAOTest {
         private val LOGGER = LoggerFactory.getLogger(ConnectionDAOTest::class.java)
 
         @Container
-        var MY_SQL_DB: MySQLContainer<*> = TestHelper.mysqlContainer()
+        var MY_SQL_DB: MySQLContainer<*> = TestUtils.mysqlContainer()
 
         @BeforeAll
         @JvmStatic

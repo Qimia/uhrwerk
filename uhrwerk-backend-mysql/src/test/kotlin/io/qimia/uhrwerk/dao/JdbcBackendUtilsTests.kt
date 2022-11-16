@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.dao
 
-import io.qimia.uhrwerk.common.model.PartitionTransformType
-import io.qimia.uhrwerk.common.model.PartitionUnit
+import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType
+import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import io.qimia.uhrwerk.dao.JdbcBackendUtils.dependencyPartitions
 import io.qimia.uhrwerk.dao.JdbcBackendUtils.getPartitionTs
 import org.junit.jupiter.api.Assertions

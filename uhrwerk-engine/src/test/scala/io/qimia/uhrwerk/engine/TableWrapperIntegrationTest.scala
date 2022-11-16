@@ -1,10 +1,9 @@
 package io.qimia.uhrwerk.engine
 
+import io.qimia.uhrwerk.common.metastore.model.{Partition, PartitionUnit, TableModel, MetastoreModel => MetastoreConnInfo}
 import java.sql.DriverManager
 import java.time.LocalDateTime
-
-import io.qimia.uhrwerk.common.model.{Partition, PartitionUnit, TableModel, MetastoreModel => MetastoreConnInfo}
-import io.qimia.uhrwerk.config.{ConnectionBuilder, TableBuilder}
+import io.qimia.uhrwerk.config.builders.{ConnectionBuilder, TableBuilder}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -109,13 +108,12 @@ class TableWrapperIntegrationTest extends AnyFlatSpec with BeforeAndAfterEach {
       LocalDateTime.of(2020, 4, 10, 16, 40),
     )
     requestedTimes.foreach(dt => {
-      val part = Partition.builder().build()
+      val part = new Partition()
       part.setPartitioned(true)
       part.setPartitionSize(20)
       part.setPartitionUnit(PartitionUnit.MINUTES)
       part.setPartitionTs(dt)
       part.setTargetId(table.getTargets.head.getId)
-      part.setKey()
       val savePartA = metaStore.partitionService.save(part, false)
       assert(savePartA.isSuccess)
     })

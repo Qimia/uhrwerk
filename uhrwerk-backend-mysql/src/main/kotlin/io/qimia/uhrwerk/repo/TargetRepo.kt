@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.repo
 
-import io.qimia.uhrwerk.common.model.HashKeyUtils
+import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
 import io.qimia.uhrwerk.common.model.TargetModel
 import java.sql.PreparedStatement
 import java.sql.ResultSet
@@ -14,8 +14,8 @@ class TargetRepo : BaseRepo<TargetModel>() {
     fun save(targets: List<TargetModel>): List<TargetModel>? =
         targets.map { save(it)!! }
 
-    fun getByHashKey(hashKey: Long): List<TargetModel> =
-        super.findAll(SELECT_BY_HASH_KEY, {
+    fun getByHashKey(hashKey: Long): TargetModel? =
+        super.getByHashKey(SELECT_BY_HASH_KEY, {
             it.setLong(1, hashKey)
         }, this::map)
 
@@ -42,23 +42,21 @@ class TargetRepo : BaseRepo<TargetModel>() {
         }
 
     private fun insertParams(entity: TargetModel, insert: PreparedStatement): PreparedStatement {
-        insert.setLong(1, entity.tableId)
-        insert.setLong(2, entity.connectionId)
+        insert.setLong(1, entity.tableId!!)
+        insert.setLong(2, entity.connectionId!!)
         insert.setString(3, entity.format)
         insert.setLong(4, HashKeyUtils.targetKey(entity))
         return insert
     }
 
     private fun map(res: ResultSet): TargetModel {
-        val builder = TargetModel.builder()
-            .id(res.getLong(1))
-            .tableId(res.getLong(2))
-            .connectionId(res.getLong(3))
-            .format(res.getString(4))
-        val deactivated = res.getTimestamp(5)
-        if (deactivated != null)
-            builder.deactivatedTs(deactivated.toLocalDateTime())
-        return builder.build()
+        val target = TargetModel()
+        target.id = res.getLong(1)
+        target.tableId = res.getLong(2)
+        target.connectionId = res.getLong(3)
+        target.format = res.getString(4)
+        target.deactivatedTs = res.getTimestamp(5)?.toLocalDateTime()
+        return target
     }
 
 

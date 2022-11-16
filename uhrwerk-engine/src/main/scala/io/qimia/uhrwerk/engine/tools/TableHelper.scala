@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.engine.tools
 
-import io.qimia.uhrwerk.common.model.TableModel
+import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent, TableIdent}
 
 object TableHelper {

@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.common.tools
 
-import io.qimia.uhrwerk.common.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
 import java.sql.{DriverManager, ResultSet}
 import java.time.LocalDateTime
 import java.{lang, sql}

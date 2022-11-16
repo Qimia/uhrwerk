@@ -3,10 +3,10 @@ package io.qimia.uhrwerk.dao
 import io.qimia.uhrwerk.common.metastore.config.ConnectionService
 import io.qimia.uhrwerk.common.metastore.config.SourceResult
 import io.qimia.uhrwerk.common.metastore.config.SourceService
-import io.qimia.uhrwerk.common.model.ConnectionModel
-import io.qimia.uhrwerk.common.model.HashKeyUtils
-import io.qimia.uhrwerk.common.model.SourceModel
-import io.qimia.uhrwerk.common.model.TableModel
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
+import io.qimia.uhrwerk.common.metastore.model.SourceModel
+import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.repo.SourceRepo
 import java.sql.SQLException
 
@@ -19,7 +19,7 @@ class SourceDAO : SourceService {
         val result = SourceResult()
         result.newResult = source
 
-        if (!table.isPartitioned && source.isPartitioned) {
+        if (!table.partitioned && source.partitioned) {
             result.isSuccess = false
             result.message =
                 "An unpartitioned Table cannot have a partitioned Source. (The other way around it is possible)"
@@ -32,8 +32,8 @@ class SourceDAO : SourceService {
                 )
             }
             var conn: ConnectionModel? = null
-            if (source.connection.name != null) {
-                conn = connService.getByHashKey(HashKeyUtils.connectionKey(source.connection))
+            if (source.connection!!.name != null) {
+                conn = connService.getByHashKey(HashKeyUtils.connectionKey(source.connection!!))
             }
             if (conn == null) {
                 throw NullPointerException(
@@ -60,7 +60,7 @@ class SourceDAO : SourceService {
                 }
             } else {
                 if (oldSource != null)
-                    repo.deactivateById(oldSource.id)
+                    repo.deactivateById(oldSource.id!!)
             }
             result.newResult = repo.save(source)
             result.isSuccess = true
@@ -76,12 +76,8 @@ class SourceDAO : SourceService {
         return result
     }
 
-    private fun getByHashKey(source: SourceModel): SourceModel? {
-        val sources = repo.getByHashKey(HashKeyUtils.sourceKey(source));
-        if (sources.isNotEmpty())
-            return sources.first()
-        return null
-    }
+    private fun getByHashKey(source: SourceModel): SourceModel? =
+        repo.getByHashKey(HashKeyUtils.sourceKey(source))
 
     override fun save(
         sources: List<SourceModel>,

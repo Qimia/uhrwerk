@@ -1,9 +1,9 @@
 package io.qimia.uhrwerk.framemanager.utils
 
+import io.qimia.uhrwerk.common.metastore.model.{ConnectionModel, ConnectionType, DependencyModel, PartitionUnit, TableModel}
 import java.nio.file.Paths
 import java.sql.Timestamp
 import java.time.{LocalDateTime, ZoneId, ZoneOffset}
-import io.qimia.uhrwerk.common.model.{ConnectionModel, ConnectionType, DependencyModel, PartitionUnit, TableModel}
 import io.qimia.uhrwerk.common.tools.TimeTools
 import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._

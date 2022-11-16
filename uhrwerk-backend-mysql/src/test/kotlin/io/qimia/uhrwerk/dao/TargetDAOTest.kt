@@ -2,9 +2,12 @@ package io.qimia.uhrwerk.dao
 
 import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
-import io.qimia.uhrwerk.TestHelper
+import TestUtils
+import io.qimia.uhrwerk.common.metastore.builders.ConnectionModelBuilder
+import io.qimia.uhrwerk.common.metastore.builders.TargetModelBuilder
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.common.model.*
-import io.qimia.uhrwerk.common.model.TargetModel
 import io.qimia.uhrwerk.dao.TargetDAO.Companion.compareTargets
 import io.qimia.uhrwerk.repo.ConnectionRepo
 import io.qimia.uhrwerk.repo.HikariCPDataSource
@@ -35,24 +38,24 @@ class TargetDAOTest {
     @AfterEach
     @Throws(SQLException::class)
     fun cleanUp() {
-        TestHelper.cleanData("TARGET", LOGGER)
-        TestHelper.cleanData("TABLE_", LOGGER)
-        TestHelper.cleanData("CONNECTION", LOGGER)
+        TestUtils.cleanData("TARGET", LOGGER)
+        TestUtils.cleanData("TABLE_", LOGGER)
+        TestUtils.cleanData("CONNECTION", LOGGER)
     }
 
     @Test
     fun compareTest() {
-        val connA = ConnectionModel.builder()
-            .name("connA").build()
+        val connA = ConnectionModel()
+        connA.name = "connA"
 
-        val tarA = TargetModel.builder()
+        val tarA = TargetModelBuilder()
             .format("jdbc")
             .tableId(123L)
             .connection(connA)
             .build()
 
 
-        val connAFull = ConnectionModel.builder()
+        val connAFull = ConnectionModelBuilder()
             .name("connA")
             .jdbcDriver("somedriver")
             .jdbcUrl("someurl")
@@ -60,14 +63,14 @@ class TargetDAOTest {
             .jdbcPass("somePass")
             .build()
 
-        val tarB = TargetModel.builder()
+        val tarB = TargetModelBuilder()
             .format("jdbc")
             .tableId(123L)
             .connection(connAFull)
             .build()
 
         Assertions.assertTrue(compareTargets(tarB, tarA))
-        val tarA1 = TargetModel.builder()
+        val tarA1 = TargetModelBuilder()
             .format("parquet")
             .tableId(123L)
             .connection(connA)
@@ -75,10 +78,10 @@ class TargetDAOTest {
 
         Assertions.assertFalse(compareTargets(tarB, tarA1))
 
-        val connA2 = ConnectionModel.builder()
+        val connA2 = ConnectionModelBuilder()
             .name("newname").build()
 
-        val tarA2 = TargetModel.builder()
+        val tarA2 = TargetModelBuilder()
             .format("jdbc")
             .tableId(123L)
             .connection(connA2)
@@ -89,25 +92,43 @@ class TargetDAOTest {
     @Test
     fun save() {
         val formats = listOf("lake", "csv")
-        val targets = formats.map { TestData.target(table!!.id, connName = "Connection-TargetTest", format = it) }
-        val result = service.save(targets, table!!.id, false)
+        val targets = formats.map {
+            TestData.target(
+                table!!.id!!,
+                connName = "Connection-TargetTest",
+                format = it
+            )
+        }
+        val result = service.save(targets, table!!.id!!, false)
         Truth.assertThat(result).isNotNull()
         Truth.assertThat(result!!.isSuccess).isTrue()
         Truth.assertThat(result!!.storedTargets).isNotEmpty()
-        Truth.assertThat(result!!.storedTargets.map { it.format }.sorted())
+        Truth.assertThat(result!!.storedTargets.mapNotNull { it.format }.sorted())
             .isEqualTo(formats.sorted())
     }
 
     @Test
     fun saveSameNotOverwrite() {
         val formats = listOf("lake", "csv")
-        val targets = formats.map { TestData.target(table!!.id, connName = "Connection-TargetTest", format = it) }
-        val result = service.save(targets, table!!.id, false)
+        val targets = formats.map {
+            TestData.target(
+                table!!.id!!,
+                connName = "Connection-TargetTest",
+                format = it
+            )
+        }
+        val result = service.save(targets, table!!.id!!, false)
         Truth.assertThat(result).isNotNull()
         Truth.assertThat(result!!.isSuccess).isTrue()
 
-        val sameTargets = formats.map { TestData.target(table!!.id, connName = "Connection-TargetTest", format = it) }
-        val result1 = service.save(sameTargets, table!!.id, false)
+        val sameTargets = formats.map {
+            TestData.target(
+                table!!.id!!,
+                connName = "Connection-TargetTest",
+                format = it
+            )
+        }
+        val result1 = service.save(sameTargets, table!!.id!!, false)
         Truth.assertThat(result1).isNotNull()
         Truth.assertThat(result1!!.isSuccess).isTrue()
 
@@ -119,16 +140,28 @@ class TargetDAOTest {
     @Test
     fun newTargetNotOverwrite() {
         val formats = listOf("lake", "csv")
-        val targets = formats.map { TestData.target(table!!.id, connName = "Connection-TargetTest", format = it) }
-        val result = service.save(targets, table!!.id, false)
+        val targets = formats.map {
+            TestData.target(
+                table!!.id!!,
+                connName = "Connection-TargetTest",
+                format = it
+            )
+        }
+        val result = service.save(targets, table!!.id!!, false)
 
         val formats1 = listOf("lake", "csv", "parquet")
-        val targets1 = formats1.map { TestData.target(table!!.id, connName = "Connection-TargetTest", format = it) }
-        val result1 = service.save(targets1, table!!.id, false)
+        val targets1 = formats1.map {
+            TestData.target(
+                table!!.id!!,
+                connName = "Connection-TargetTest",
+                format = it
+            )
+        }
+        val result1 = service.save(targets1, table!!.id!!, false)
         Truth.assertThat(result1).isNotNull()
         Truth.assertThat(result1!!.isSuccess).isFalse()
 
-        val targets2 = service.getTableTargets(table!!.id)
+        val targets2 = service.getTableTargets(table!!.id!!)
         for (target in targets2) {
             Truth.assertThat(result!!.storedTargets.toList()).contains(target)
         }
@@ -137,16 +170,28 @@ class TargetDAOTest {
     @Test
     fun newTargetOverwrite() {
         val formats = listOf("lake", "csv")
-        val targets = formats.map { TestData.target(table!!.id, connName = "Connection-TargetTest", format = it) }
-        service.save(targets, table!!.id, false)
+        val targets = formats.map {
+            TestData.target(
+                table!!.id!!,
+                connName = "Connection-TargetTest",
+                format = it
+            )
+        }
+        service.save(targets, table!!.id!!, false)
 
         val formats1 = listOf("lake", "csv", "parquet")
-        val targets1 = formats1.map { TestData.target(table!!.id, connName = "Connection-TargetTest", format = it) }
-        val result1 = service.save(targets1, table!!.id, true)
+        val targets1 = formats1.map {
+            TestData.target(
+                table!!.id!!,
+                connName = "Connection-TargetTest",
+                format = it
+            )
+        }
+        val result1 = service.save(targets1, table!!.id!!, true)
         Truth.assertThat(result1).isNotNull()
         Truth.assertThat(result1!!.isSuccess).isTrue()
 
-        val targets2 = service.getTableTargets(table!!.id)
+        val targets2 = service.getTableTargets(table!!.id!!)
         Truth.assertThat(targets2).isNotEmpty()
         Truth.assertThat(targets2).hasSize(formats1.size)
         for (target in targets2) {
@@ -158,7 +203,7 @@ class TargetDAOTest {
         private val LOGGER = LoggerFactory.getLogger(TargetDAOTest::class.java)
 
         @Container
-        var MY_SQL_DB: MySQLContainer<*> = TestHelper.mysqlContainer()
+        var MY_SQL_DB: MySQLContainer<*> = TestUtils.mysqlContainer()
 
         @BeforeAll
         @JvmStatic

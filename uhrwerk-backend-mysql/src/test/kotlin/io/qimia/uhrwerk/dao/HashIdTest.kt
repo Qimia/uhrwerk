@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.dao
 
-import io.qimia.uhrwerk.common.model.DependencyModel
+import io.qimia.uhrwerk.common.metastore.model.DependencyModel
 import net.openhft.hashing.LongHashFunction
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
@@ -9,7 +9,7 @@ class HashIdTest {
     private val logger = LoggerFactory.getLogger(this.javaClass)
     @Test
     fun test() {
-        val dep = DependencyModel.builder().build()
+        val dep = DependencyModel()
         dep.area = "test-area"
         dep.vertical = "test-vertical"
         dep.tableName = "test-table"

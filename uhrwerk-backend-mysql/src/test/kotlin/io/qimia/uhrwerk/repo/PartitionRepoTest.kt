@@ -2,10 +2,10 @@ package io.qimia.uhrwerk.repo
 
 import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
-import io.qimia.uhrwerk.TestHelper
-import io.qimia.uhrwerk.common.model.ConnectionModel
-import io.qimia.uhrwerk.common.model.Partition
-import io.qimia.uhrwerk.common.model.TableModel
+import TestUtils
+import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
+import io.qimia.uhrwerk.common.metastore.model.Partition
+import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.common.model.TargetModel
 import org.junit.jupiter.api.*
 import org.slf4j.LoggerFactory
@@ -30,23 +30,23 @@ internal class PartitionRepoTest {
 
     @AfterEach
     fun cleanUp() {
-        TestHelper.cleanData("PARTITION_", LOGGER)
-        TestHelper.cleanData("TARGET", LOGGER)
-        TestHelper.cleanData("TABLE_", LOGGER)
-        TestHelper.cleanData("CONNECTION", LOGGER)
+        TestUtils.cleanData("PARTITION_", LOGGER)
+        TestUtils.cleanData("TARGET", LOGGER)
+        TestUtils.cleanData("TABLE_", LOGGER)
+        TestUtils.cleanData("CONNECTION", LOGGER)
     }
 
     @BeforeEach
     fun addDeps() {
         connection = ConnectionRepo().save(TestData.connection("Connection-PartitionTest"))
         table = TableRepo().save(TestData.table("Table-PartitionTest"))
-        target = TargetRepo().save(TestData.target(connection!!.id, table!!.id))
+        target = TargetRepo().save(TestData.target(connection!!.id!!, table!!.id!!))
 
         partitionTs = LocalDateTime.of(2022, 7, 20, 12, 0)
 
         partition = repo.save(
             TestData.partition(
-                targetId = target!!.id,
+                targetId = target!!.id!!,
                 partitionTs = partitionTs!!
             )
         )
@@ -62,14 +62,14 @@ internal class PartitionRepoTest {
 
     @Test
     fun getById() {
-        val partition1 = repo.getById(partition!!.id)
+        val partition1 = repo.getById(partition!!.id!!)
         Truth.assertThat(partition1).isNotNull()
         Truth.assertThat(partition1).isEqualTo(partition)
     }
 
     @Test
     fun getUniqueColumns() {
-        val partition1 = repo.getUniqueColumns(target!!.id, partitionTs!!)
+        val partition1 = repo.getUniqueColumns(target!!.id!!, partitionTs!!)
         Truth.assertThat(partition1).isNotNull()
         Truth.assertThat(partition1).isEqualTo(partition)
     }
@@ -79,7 +79,7 @@ internal class PartitionRepoTest {
         val timestamps = TestData.timestamps(15)
         val partitions = timestamps.map {
             TestData.partition(
-                targetId = target!!.id,
+                targetId = target!!.id!!,
                 partitionTs = it
             )
         }
@@ -87,7 +87,7 @@ internal class PartitionRepoTest {
         val partitionIds = partitions.map { repo.save(it) }
         Truth.assertThat(partitionIds).hasSize(5)
 
-        val latestPartition = repo.getLatestByTargetId(target!!.id)
+        val latestPartition = repo.getLatestByTargetId(target!!.id!!)
         Truth.assertThat(latestPartition).isNotNull()
         Truth.assertThat(latestPartition!!.targetId).isEqualTo(target!!.id)
 
@@ -100,7 +100,7 @@ internal class PartitionRepoTest {
         val timestamps = TestData.timestamps(15)
         val partitions = timestamps.map {
             TestData.partition(
-                targetId = target!!.id,
+                targetId = target!!.id!!,
                 partitionTs = it
             )
         }
@@ -108,7 +108,7 @@ internal class PartitionRepoTest {
 
 
         Truth.assertThat(partitionIds).hasSize(5)
-        val partitions1 = repo.getAllByTargetTs(target!!.id, timestamps)
+        val partitions1 = repo.getAllByTargetTs(target!!.id!!, timestamps)
         Truth.assertThat(partitions1).isNotEmpty()
         Truth.assertThat(partitions1).hasSize(5)
 
@@ -121,7 +121,7 @@ internal class PartitionRepoTest {
 
     @Test
     fun deleteById() {
-        val effect = PartitionRepo().deleteById(partition!!.id)
+        val effect = PartitionRepo().deleteById(partition!!.id!!)
         Truth.assertThat(effect).isNotNull()
         Truth.assertThat(effect!!).isEqualTo(1)
     }
@@ -131,7 +131,7 @@ internal class PartitionRepoTest {
         private val LOGGER = LoggerFactory.getLogger(PartitionRepoTest::class.java)
 
         @Container
-        var MY_SQL_DB: MySQLContainer<*> = TestHelper.mysqlContainer()
+        var MY_SQL_DB: MySQLContainer<*> = TestUtils.mysqlContainer()
 
         @BeforeAll
         @JvmStatic
