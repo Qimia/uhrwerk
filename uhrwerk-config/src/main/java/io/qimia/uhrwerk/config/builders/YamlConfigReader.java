@@ -6,6 +6,7 @@ import io.qimia.uhrwerk.common.metastore.model.ConnectionModel;
 import io.qimia.uhrwerk.common.metastore.model.DagModel;
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel;
 import io.qimia.uhrwerk.common.metastore.model.MetastoreModel;
+import io.qimia.uhrwerk.common.metastore.model.SecretModel;
 import io.qimia.uhrwerk.common.metastore.model.SourceModel;
 import io.qimia.uhrwerk.common.metastore.model.TableModel;
 import io.qimia.uhrwerk.common.model.TargetModel;
@@ -14,11 +15,13 @@ import io.qimia.uhrwerk.config.representation.Dag;
 import io.qimia.uhrwerk.config.representation.Dependency;
 import io.qimia.uhrwerk.config.representation.Env;
 import io.qimia.uhrwerk.config.representation.Metastore;
+import io.qimia.uhrwerk.config.representation.Secret;
 import io.qimia.uhrwerk.config.representation.Source;
 import io.qimia.uhrwerk.config.representation.Table;
 import io.qimia.uhrwerk.config.representation.Target;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import static io.qimia.uhrwerk.config.representation.YamlUtils.objectMapper;
@@ -90,6 +93,12 @@ public class YamlConfigReader {
     }
   }
 
+  public SecretModel[] getModelSecrets(Secret[] secrets) {
+    if (secrets != null && secrets.length > 0)
+      return Arrays.stream(secrets).map(ModelMapper::toSecret).toArray(SecretModel[]::new);
+    return null;
+  }
+
   public MetastoreModel getModelMetastore(Metastore metastore) {
     metastore.validate("");
     MetastoreModel result = new MetastoreModel();
@@ -103,6 +112,7 @@ public class YamlConfigReader {
   public DagModel getModelDag(Dag dag) {
     dag.validate("");
     DagModel result = new DagModel();
+    result.setSecrets(getModelSecrets(dag.getSecrets()));
     result.setConnections(getModelConnections(dag.getConnections()));
     result.setTables(getModelTables(dag.getTables()));
     return result;
@@ -117,6 +127,17 @@ public class YamlConfigReader {
       throw new RuntimeException(e);
     }
     return getModelConnections(connections);
+  }
+
+  public SecretModel[] readSecrets(String file) {
+    InputStream stream = MapperUtils.getInputStream(file);
+    Secret[] secrets;
+    try {
+      secrets = objectMapper().readValue(stream, Secret[].class);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return getModelSecrets(secrets);
   }
 
   public DagModel readDag(String file) {

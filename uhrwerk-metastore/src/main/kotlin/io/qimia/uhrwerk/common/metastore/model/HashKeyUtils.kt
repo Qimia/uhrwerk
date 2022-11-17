@@ -75,6 +75,11 @@ object HashKeyUtils {
         return hashKey(StringBuilder().append(connection.name))
     }
 
+    fun secretKey(secret: SecretModel): Long {
+        assert(secret.name != null && !secret.name!!.isEmpty()) { "Secret.name can't be null or empty" }
+        return hashKey(StringBuilder().append(secret.name))
+    }
+
     private fun hashKey(strBuilder: StringBuilder): Long {
         return LongHashFunction.xx().hashChars(strBuilder)
     }

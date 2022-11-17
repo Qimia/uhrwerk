@@ -145,4 +145,13 @@ object TestData {
         .transformPartitionSize(trfPartSize)
         .build()
 
+    fun secret(name: String): SecretModel {
+        val scr = SecretModel()
+        scr.name = name
+        scr.type = SecretType.AWS
+        scr.awsSecretName = "uhrwerk/meta_store/db_user"
+        scr.awsRegion = "eu_west_1"
+        return scr
+    }
+
 }

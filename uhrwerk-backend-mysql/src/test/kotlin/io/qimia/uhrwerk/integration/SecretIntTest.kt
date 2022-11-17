@@ -4,7 +4,7 @@ import TestUtils
 import TestUtils.filePath
 import com.google.common.truth.Truth.assertThat
 import io.qimia.uhrwerk.config.builders.YamlConfigReader
-import io.qimia.uhrwerk.dao.ConnectionDAO
+import io.qimia.uhrwerk.dao.SecretDAO
 import io.qimia.uhrwerk.repo.HikariCPDataSource
 import org.junit.jupiter.api.*
 import org.slf4j.LoggerFactory
@@ -14,13 +14,13 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 @Testcontainers
-internal class ConnectionIntTest {
+internal class SecretIntTest {
 
-    private val service = ConnectionDAO()
+    private val service = SecretDAO()
 
     @AfterEach
     fun cleanUp() {
-        TestUtils.cleanData("CONNECTION", LOGGER)
+        TestUtils.cleanData("SECRET_", LOGGER)
     }
 
     @BeforeEach
@@ -29,32 +29,35 @@ internal class ConnectionIntTest {
 
     @Test
     fun read() {
-        val connections = YamlConfigReader().readConnections(YAML_FILE)
-        assertThat(connections).isNotNull()
-        assertThat(connections!!.toList()).hasSize(3)
+        val secrets = YamlConfigReader().readSecrets(YAML_FILE)
+        assertThat(secrets).isNotNull()
+        assertThat(secrets).isNotNull()
+        assertThat(secrets?.toList()).hasSize(2)
     }
 
 
     @Test
     fun insertFullConnection() {
-        val connections = YamlConfigReader().readConnections(YAML_FILE)
-        val results = connections.map { service.save(it,true) }
-        connections.forEach { assertThat(it!!.id).isNotNull() }
-        results.forEach {
+        val secrets = YamlConfigReader().readSecrets(YAML_FILE)
+        val results = secrets?.map { service.save(it, true)!! }
+        secrets?.forEach { assertThat(it!!.id).isNotNull() }
+        results?.forEach {
             assertThat(it).isNotNull()
             assertThat(it.isSuccess).isTrue()
-            assertThat(it.newConnection).isNotNull()
+            assertThat(it.isError).isFalse()
+            assertThat(it.newSecret).isNotNull()
+            assertThat(it.oldSecret).isNull()
         }
     }
 
     companion object {
 
-        private val LOGGER = LoggerFactory.getLogger(ConnectionIntTest::class.java)
+        private val LOGGER = LoggerFactory.getLogger(SecretIntTest::class.java)
 
         @Container
         var MY_SQL_DB: MySQLContainer<*> = TestUtils.mysqlContainer()
 
-        private const val CONNECTION_YAML = "config/connection-config-new.yml"
+        private const val CONNECTION_YAML = "config/secrets-config.yml"
         private val YAML_FILE = filePath(CONNECTION_YAML)!!
 
         @BeforeAll

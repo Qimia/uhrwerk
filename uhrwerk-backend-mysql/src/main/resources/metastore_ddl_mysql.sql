@@ -20,6 +20,23 @@ CREATE TABLE IF NOT EXISTS CONNECTION
     UNIQUE (name, deactivated_ts)
 );
 
+CREATE TABLE IF NOT EXISTS SECRET_
+(
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name            VARCHAR(128)                        NOT NULL,
+    type            enum ('AWS','AZURE','GCP')          NOT NULL,
+    aws_secret_name VARCHAR(512)                        NULL,
+    aws_region      VARCHAR(32)                         NULL,
+    deactivated_ts  TIMESTAMP                           NULL,
+    created_ts      TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
+    updated_ts      TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
+    description     VARCHAR(512)                        NULL,
+    hash_key        BIGINT                              NOT NULL,
+    INDEX (hash_key),
+    UNIQUE (name, deactivated_ts)
+);
+
+
 CREATE TABLE IF NOT EXISTS TABLE_
 (
     id             BIGINT AUTO_INCREMENT PRIMARY KEY,

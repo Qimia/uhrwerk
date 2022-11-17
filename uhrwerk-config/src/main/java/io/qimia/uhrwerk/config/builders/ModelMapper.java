@@ -10,14 +10,18 @@ import io.qimia.uhrwerk.common.metastore.model.ConnectionType;
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel;
 import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType;
 import io.qimia.uhrwerk.common.metastore.model.PartitionUnit;
+import io.qimia.uhrwerk.common.metastore.model.SecretModel;
+import io.qimia.uhrwerk.common.metastore.model.SecretType;
 import io.qimia.uhrwerk.common.metastore.model.SourceModel;
 import io.qimia.uhrwerk.common.metastore.model.TableModel;
 import io.qimia.uhrwerk.common.model.TargetModel;
+import io.qimia.uhrwerk.config.representation.AWSSecret;
 import io.qimia.uhrwerk.config.representation.Connection;
 import io.qimia.uhrwerk.config.representation.Dependency;
 import io.qimia.uhrwerk.config.representation.File;
 import io.qimia.uhrwerk.config.representation.JDBC;
 import io.qimia.uhrwerk.config.representation.S3;
+import io.qimia.uhrwerk.config.representation.Secret;
 import io.qimia.uhrwerk.config.representation.Source;
 import io.qimia.uhrwerk.config.representation.Table;
 import io.qimia.uhrwerk.config.representation.Target;
@@ -92,6 +96,19 @@ public class ModelMapper {
       builder.type(ConnectionType.FS).path(file.getPath());
     }
     return builder.build();
+  }
+
+  static SecretModel toSecret(Secret secret) {
+    SecretModel model = new SecretModel();
+    if (secret instanceof Secret) {
+      AWSSecret aws = (AWSSecret) secret;
+      model.setType(SecretType.AWS);
+      model.setName(aws.getName());
+      model.setAwsSecretName(aws.getAwsSecretName());
+      model.setAwsRegion(aws.getAwsRegion());
+      return model;
+    }
+    return null;
   }
 
   static ConnectionModel toConnection(String connectionName) {
