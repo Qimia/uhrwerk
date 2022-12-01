@@ -4,10 +4,7 @@ import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
 import TestUtils
 import io.qimia.uhrwerk.common.metastore.builders.SourceModelBuilder
-import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
-import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
-import io.qimia.uhrwerk.common.metastore.model.SourceModel
-import io.qimia.uhrwerk.common.metastore.model.TableModel
+import io.qimia.uhrwerk.common.metastore.model.*
 import org.junit.jupiter.api.*
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.MySQLContainer
@@ -16,11 +13,11 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 @Testcontainers
-internal class SourceRepoTest {
+internal class SourceRepo2Test {
 
     private var table: TableModel? = null
     private var connection: ConnectionModel? = null
-    private var source: SourceModel? = null
+    private var source: SourceModel2? = null
 
     @AfterEach
     fun cleanUp() {
@@ -33,8 +30,8 @@ internal class SourceRepoTest {
     fun addDeps() {
         connection = ConnectionRepo().save(TestData.connection("Connection-SourceTest"))
         table = TableRepo().save(TestData.table("Table-SourceTest"))
-        source = SourceRepo().save(
-            TestData.source(
+        source = SourceRepo2().save(
+            TestData.source2(
                 "Source-SourceRepoTest",
                 table!!.id!!,
                 connection!!.id!!
@@ -49,14 +46,14 @@ internal class SourceRepoTest {
 
     @Test
     fun getById() {
-        val source = SourceRepo().getById(source!!.id!!)
+        val source = SourceRepo2().getById(source!!.id!!)
         Truth.assertThat(source).isNotNull()
         Truth.assertThat(source!!.path).isEqualTo("Source-SourceRepoTest")
     }
 
     @Test
     fun getSourcesByTableId() {
-        val sources = SourceRepo().getSourcesByTableId(table!!.id!!)
+        val sources = SourceRepo2().getSourcesByTableId(table!!.id!!)
         Truth.assertThat(sources).isNotEmpty()
         Truth.assertThat(sources.size).isEqualTo(1)
         Truth.assertThat(sources[0]).isEqualTo(source)
@@ -72,7 +69,7 @@ internal class SourceRepoTest {
                     .path("Source-SourceRepoTest")
                     .format("jdbc").build()
             )
-        val source = SourceRepo().getByHashKey(hashKey)
+        val source = SourceRepo2().getByHashKey(hashKey)
         Truth.assertThat(source).isNotNull()
         Truth.assertThat(source).isEqualTo(source)
 
@@ -84,33 +81,19 @@ internal class SourceRepoTest {
                 .format("parquet")
                 .build())
 
-        val source1 = SourceRepo().getByHashKey(hashKey1)
+        val source1 = SourceRepo2().getByHashKey(hashKey1)
         Truth.assertThat(source1).isNull()
     }
 
     @Test
     fun deleteById() {
-        val effect = SourceRepo().deactivateById(source!!.id!!)
+        val effect = SourceRepo2().deactivateById(source!!.id!!)
         Truth.assertThat(effect).isNotNull()
         Truth.assertThat(effect!!).isEqualTo(1)
-    }
-
-    @Test
-    fun deleteByUniqueColumns() {
-        /*
-        val effect = SourceRepo().deleteByUniqueColumns(
-            tableId!!,
-            connectionId!!,
-            "Source-SourceRepoTest",
-            "jdbc"
-        )
-        Truth.assertThat(effect).isNotNull()
-        Truth.assertThat(effect!!).isEqualTo(1)
-         */
     }
 
     companion object {
-        private val LOGGER = LoggerFactory.getLogger(SourceRepoTest::class.java)
+        private val LOGGER = LoggerFactory.getLogger(SourceRepo2Test::class.java)
 
         @Container
         var MY_SQL_DB: MySQLContainer<*> = TestUtils.mysqlContainer()

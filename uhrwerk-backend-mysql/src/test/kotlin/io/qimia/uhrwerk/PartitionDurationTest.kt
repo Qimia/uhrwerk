@@ -32,7 +32,6 @@ class PartitionDurationTest {
         depCheck3.dependencyTableName = "check3"
         depCheck3.transformType = PartitionTransformType.IDENTITY
         depCheck3.dependencyTablePartitionSize = 3
-        depCheck3.dependencyTablePartitionUnit = PartitionUnit.WEEKS
         Assertions.assertTrue(checkPartitionedDependency(tableDur3, depCheck3))
     }
 

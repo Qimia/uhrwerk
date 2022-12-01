@@ -36,7 +36,6 @@ CREATE TABLE IF NOT EXISTS SECRET_
     UNIQUE (name, deactivated_ts)
 );
 
-
 CREATE TABLE IF NOT EXISTS TABLE_
 (
     id             BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -61,31 +60,33 @@ CREATE TABLE IF NOT EXISTS TABLE_
 
 CREATE TABLE IF NOT EXISTS SOURCE
 (
-    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    table_id            BIGINT                                     NOT NULL,
-    connection_id       BIGINT                                     NOT NULL,
-    path                VARCHAR(512)                               NOT NULL,
-    format              VARCHAR(64)                                NOT NULL,
-    partition_unit      enum ('WEEKS', 'DAYS', 'HOURS', 'MINUTES') NULL,
-    partition_size      int                                        NULL,
-    sql_select_query    VARCHAR(2048)                                       DEFAULT NULL,
-    sql_partition_query VARCHAR(2048)                                       DEFAULT NULL,
-    partition_column    VARCHAR(256)                                        DEFAULT NULL,
-    partition_num       INT                                        NOT NULL,
-    query_column        VARCHAR(256)                                        DEFAULT NULL,
-    partitioned         BOOLEAN                                    NOT NULL DEFAULT TRUE,
-    auto_load           BOOLEAN                                    NOT NULL,
-    deactivated_ts      TIMESTAMP                                  NULL,
-    created_ts          TIMESTAMP                                           DEFAULT CURRENT_TIMESTAMP,
-    updated_ts          TIMESTAMP                                           DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
-    description         VARCHAR(512),
-    hash_key            BIGINT                                     NOT NULL,
+    id                        BIGINT AUTO_INCREMENT PRIMARY KEY,
+    table_id                  BIGINT                           NOT NULL,
+    connection_id             BIGINT                           NOT NULL,
+    path                      VARCHAR(512)                     NOT NULL,
+    format                    VARCHAR(64)                      NOT NULL,
+    ingestion_mode            enum ('INTERVAL','DELTA', 'ALL') NOT NULL DEFAULT 'ALL',
+    interval_temp_unit        enum ('DAYS','HOURS','MINUTES')  NULL,
+    interval_temp_size        int                              NULL,
+    interval_column           VARCHAR(256)                              DEFAULT NULL,
+    delta_column              VARCHAR(256)                              DEFAULT NULL,
+    select_query              TEXT                                      DEFAULT NULL,
+    parallel_load             BOOLEAN                          NOT NULL DEFAULT FALSE,
+    parallel_partition_query  TEXT                                      DEFAULT NULL,
+    parallel_partition_column VARCHAR(256)                              DEFAULT NULL,
+    parallel_partition_num    INT                              NOT NULL,
+    auto_load                 BOOLEAN                          NOT NULL DEFAULT TRUE,
+    deactivated_ts            TIMESTAMP                        NULL,
+    created_ts                TIMESTAMP                                 DEFAULT CURRENT_TIMESTAMP,
+    updated_ts                TIMESTAMP                                 DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
+    description               VARCHAR(512),
+    hash_key                  BIGINT                           NOT NULL,
     INDEX (hash_key),
     UNIQUE (table_id, connection_id, path, format, deactivated_ts),
     FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE,
     FOREIGN KEY (connection_id) REFERENCES CONNECTION (id) ON DELETE CASCADE
-
 );
+
 
 CREATE TABLE IF NOT EXISTS TARGET
 (
@@ -104,18 +105,15 @@ CREATE TABLE IF NOT EXISTS TARGET
 );
 CREATE TABLE IF NOT EXISTS DEPENDENCY
 (
-    id                       BIGINT AUTO_INCREMENT PRIMARY KEY,
-    table_id                 BIGINT                                           NOT NULL,
-    dependency_target_id     BIGINT                                           NOT NULL,
-    dependency_table_id      BIGINT                                           NOT NULL,
-    transform_type           enum ('NONE', 'AGGREGATE', 'WINDOW', 'IDENTITY') NOT NULL,
-    transform_partition_unit enum ('WEEKS', 'DAYS', 'HOURS', 'MINUTES')       NULL,
-    transform_partition_size int       DEFAULT 1,
-    deactivated_ts           TIMESTAMP                                        NULL,
-    created_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP              NULL,
-    updated_ts               TIMESTAMP DEFAULT CURRENT_TIMESTAMP              NULL ON update CURRENT_TIMESTAMP,
-    description              VARCHAR(512)                                     NULL,
-    hash_key                 BIGINT                                           NOT NULL,
+    id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
+    table_id             BIGINT                              NOT NULL,
+    dependency_target_id BIGINT                              NOT NULL,
+    dependency_table_id  BIGINT                              NOT NULL,
+    deactivated_ts       TIMESTAMP                           NULL,
+    created_ts           TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
+    updated_ts           TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
+    description          VARCHAR(512)                        NULL,
+    hash_key             BIGINT                              NOT NULL,
     INDEX (hash_key),
     UNIQUE (table_id, dependency_target_id, dependency_table_id, deactivated_ts),
     FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE,

@@ -257,8 +257,8 @@ class TimeToolsTest extends AnyFlatSpec {
       LocalDateTime.of(2020, 9, 8, 0, 0),
       LocalDateTime.of(2020, 9, 15, 0, 0)
     )
-    val partitionUnit = PartitionUnit.WEEKS.toString
-    val partitionSize = 1
+    val partitionUnit = PartitionUnit.DAYS.toString
+    val partitionSize = 7
 
     Range(1, 8).foreach(day => {
       assert(
@@ -297,35 +297,119 @@ class TimeToolsTest extends AnyFlatSpec {
   "lowerBoundOfDate" should "get the lower bound based on a partition timestamp, a current timestamp, a partition unit and size" in {
     val partitionTs = LocalDateTime.of(2020, 8, 26, 14, 30)
     val now = LocalDateTime.of(2020, 9, 22, 16, 29)
-    val partitionUnitWeeks = PartitionUnit.WEEKS
+    val partitionUnitWeeks = PartitionUnit.DAYS
     val partitionSize1 = 1
 
-    assert(TimeTools.lowerBoundOfCurrentTimestamp(partitionTs, now, partitionUnitWeeks, partitionSize1) === LocalDateTime.of(2020, 9, 16, 14, 30))
+    assert(
+      TimeTools.lowerBoundOfCurrentTimestamp(
+        partitionTs,
+        now,
+        partitionUnitWeeks,
+        partitionSize1 * 7
+      ) === LocalDateTime.of(2020, 9, 16, 14, 30)
+    )
 
     val partitionSize2 = 2
 
-    assert(TimeTools.lowerBoundOfCurrentTimestamp(partitionTs, now, partitionUnitWeeks, partitionSize2) === LocalDateTime.of(2020, 9, 9, 14, 30))
+    assert(
+      TimeTools.lowerBoundOfCurrentTimestamp(
+        partitionTs,
+        now,
+        partitionUnitWeeks,
+        partitionSize2 * 7
+      ) === LocalDateTime.of(2020, 9, 9, 14, 30)
+    )
 
     val partitionSize4 = 4
 
-    assert(TimeTools.lowerBoundOfCurrentTimestamp(partitionTs, now, partitionUnitWeeks, partitionSize4) === LocalDateTime.of(2020, 8, 26, 14, 30))
+    assert(
+      TimeTools.lowerBoundOfCurrentTimestamp(
+        partitionTs,
+        now,
+        partitionUnitWeeks,
+        partitionSize4 * 7
+      ) === LocalDateTime.of(2020, 8, 26, 14, 30)
+    )
 
     val partitionUnitDays = PartitionUnit.DAYS
 
-    assert(TimeTools.lowerBoundOfCurrentTimestamp(partitionTs, now, partitionUnitDays, partitionSize1) === LocalDateTime.of(2020, 9, 22, 14, 30))
-    assert(TimeTools.lowerBoundOfCurrentTimestamp(partitionTs, now, partitionUnitDays, partitionSize2) === LocalDateTime.of(2020, 9, 21, 14, 30))
-    assert(TimeTools.lowerBoundOfCurrentTimestamp(partitionTs, now, partitionUnitDays, partitionSize4) === LocalDateTime.of(2020, 9, 19, 14, 30))
+    assert(
+      TimeTools.lowerBoundOfCurrentTimestamp(
+        partitionTs,
+        now,
+        partitionUnitDays,
+        partitionSize1
+      ) === LocalDateTime.of(2020, 9, 22, 14, 30)
+    )
+    assert(
+      TimeTools.lowerBoundOfCurrentTimestamp(
+        partitionTs,
+        now,
+        partitionUnitDays,
+        partitionSize2
+      ) === LocalDateTime.of(2020, 9, 21, 14, 30)
+    )
+    assert(
+      TimeTools.lowerBoundOfCurrentTimestamp(
+        partitionTs,
+        now,
+        partitionUnitDays,
+        partitionSize4
+      ) === LocalDateTime.of(2020, 9, 19, 14, 30)
+    )
 
     val partitionUnitHours = PartitionUnit.HOURS
 
-    assert(TimeTools.lowerBoundOfCurrentTimestamp(partitionTs, now, partitionUnitHours, partitionSize1) === LocalDateTime.of(2020, 9, 22, 15, 30))
-    assert(TimeTools.lowerBoundOfCurrentTimestamp(partitionTs, now, partitionUnitHours, partitionSize2) === LocalDateTime.of(2020, 9, 22, 14, 30))
-    assert(TimeTools.lowerBoundOfCurrentTimestamp(partitionTs, now, partitionUnitHours, partitionSize4) === LocalDateTime.of(2020, 9, 22, 14, 30))
+    assert(
+      TimeTools.lowerBoundOfCurrentTimestamp(
+        partitionTs,
+        now,
+        partitionUnitHours,
+        partitionSize1
+      ) === LocalDateTime.of(2020, 9, 22, 15, 30)
+    )
+    assert(
+      TimeTools.lowerBoundOfCurrentTimestamp(
+        partitionTs,
+        now,
+        partitionUnitHours,
+        partitionSize2
+      ) === LocalDateTime.of(2020, 9, 22, 14, 30)
+    )
+    assert(
+      TimeTools.lowerBoundOfCurrentTimestamp(
+        partitionTs,
+        now,
+        partitionUnitHours,
+        partitionSize4
+      ) === LocalDateTime.of(2020, 9, 22, 14, 30)
+    )
 
     val partitionUnitMinutes = PartitionUnit.MINUTES
 
-    assert(TimeTools.lowerBoundOfCurrentTimestamp(partitionTs, now, partitionUnitMinutes, partitionSize1) === LocalDateTime.of(2020, 9, 22, 16, 29))
-    assert(TimeTools.lowerBoundOfCurrentTimestamp(partitionTs, now, partitionUnitMinutes, partitionSize2) === LocalDateTime.of(2020, 9, 22, 16, 28))
-    assert(TimeTools.lowerBoundOfCurrentTimestamp(partitionTs, now, partitionUnitMinutes, partitionSize4) === LocalDateTime.of(2020, 9, 22, 16, 26))
+    assert(
+      TimeTools.lowerBoundOfCurrentTimestamp(
+        partitionTs,
+        now,
+        partitionUnitMinutes,
+        partitionSize1
+      ) === LocalDateTime.of(2020, 9, 22, 16, 29)
+    )
+    assert(
+      TimeTools.lowerBoundOfCurrentTimestamp(
+        partitionTs,
+        now,
+        partitionUnitMinutes,
+        partitionSize2
+      ) === LocalDateTime.of(2020, 9, 22, 16, 28)
+    )
+    assert(
+      TimeTools.lowerBoundOfCurrentTimestamp(
+        partitionTs,
+        now,
+        partitionUnitMinutes,
+        partitionSize4
+      ) === LocalDateTime.of(2020, 9, 22, 16, 26)
+    )
   }
 }

@@ -19,9 +19,6 @@ class DependencyModelBuilder : StateModelBuilder<DependencyModelBuilder>() {
     var tableName: String? = null
     var format: String? = null
     var version: String? = null
-    var transformType: PartitionTransformType? = null
-    var transformPartitionUnit: PartitionUnit? = null
-    var transformPartitionSize = 0
     fun id(id: Long?): DependencyModelBuilder {
         this.id = id
         return this
@@ -82,20 +79,6 @@ class DependencyModelBuilder : StateModelBuilder<DependencyModelBuilder>() {
         return this
     }
 
-    fun transformType(transformType: PartitionTransformType?): DependencyModelBuilder {
-        this.transformType = transformType
-        return this
-    }
-
-    fun transformPartitionUnit(transformPartitionUnit: PartitionUnit?): DependencyModelBuilder {
-        this.transformPartitionUnit = transformPartitionUnit
-        return this
-    }
-
-    fun transformPartitionSize(transformPartitionSize: Int): DependencyModelBuilder {
-        this.transformPartitionSize = transformPartitionSize
-        return this
-    }
 
     fun build(): DependencyModel {
         return DependencyModel(
@@ -110,10 +93,7 @@ class DependencyModelBuilder : StateModelBuilder<DependencyModelBuilder>() {
             vertical,
             tableName,
             format,
-            version,
-            transformType,
-            transformPartitionUnit,
-            transformPartitionSize
+            version
         )
     }
 

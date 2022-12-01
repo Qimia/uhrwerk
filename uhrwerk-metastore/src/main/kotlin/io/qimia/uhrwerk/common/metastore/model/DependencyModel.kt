@@ -17,9 +17,6 @@ data class DependencyModel(
     var tableName: String? = null,
     var format: String? = null,
     var version: String? = null,
-    var transformType: PartitionTransformType? = null,
-    var transformPartitionUnit: PartitionUnit? = null,
-    var transformPartitionSize: Int? = null,
     var deactivatedTs: LocalDateTime? = null,
     var createdTs: Timestamp? = null,
     var updatedTs: Timestamp? = null
@@ -43,9 +40,6 @@ data class DependencyModel(
         if (tableName != other.tableName) return false
         if (format != other.format) return false
         if (version != other.version) return false
-        if (transformType != other.transformType) return false
-        if (transformPartitionUnit != other.transformPartitionUnit) return false
-        if (transformPartitionSize != other.transformPartitionSize) return false
         if (deactivatedTs != other.deactivatedTs) return false
         if (createdTs != other.createdTs) return false
         if (updatedTs != other.updatedTs) return false
@@ -66,9 +60,6 @@ data class DependencyModel(
         result = 31 * result + (tableName?.hashCode() ?: 0)
         result = 31 * result + (format?.hashCode() ?: 0)
         result = 31 * result + (version?.hashCode() ?: 0)
-        result = 31 * result + (transformType?.hashCode() ?: 0)
-        result = 31 * result + (transformPartitionUnit?.hashCode() ?: 0)
-        result = 31 * result + (transformPartitionSize ?: 0)
         result = 31 * result + (deactivatedTs?.hashCode() ?: 0)
         result = 31 * result + (createdTs?.hashCode() ?: 0)
         result = 31 * result + (updatedTs?.hashCode() ?: 0)
@@ -76,6 +67,7 @@ data class DependencyModel(
     }
 
     override fun toString(): String {
-        return "DependencyModel(id=$id, tableId=$tableId, dependencyTargetId=$dependencyTargetId, dependencyTableId=$dependencyTableId, area=$area, vertical=$vertical, tableName=$tableName, format=$format, version=$version, transformType=$transformType, transformPartitionUnit=$transformPartitionUnit, transformPartitionSize=$transformPartitionSize, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
+        return "DependencyModel(id=$id, tableId=$tableId, dependencyTargetId=$dependencyTargetId, dependencyTableId=$dependencyTableId, area=$area, vertical=$vertical, tableName=$tableName, format=$format, version=$version, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
     }
+
 }

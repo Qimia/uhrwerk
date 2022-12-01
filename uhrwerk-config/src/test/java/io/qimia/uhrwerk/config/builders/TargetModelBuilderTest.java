@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TargetModelBuilderTest {
-  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
+  private final Logger logger = LoggerFactory.getLogger(TargetModelBuilderTest.class);
 
   @Test
   void builderTest() {

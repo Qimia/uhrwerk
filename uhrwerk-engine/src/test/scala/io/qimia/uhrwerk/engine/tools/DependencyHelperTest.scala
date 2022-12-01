@@ -126,12 +126,8 @@ class DependencyHelperTest extends AnyFlatSpec {
 
     val depA = new DependencyModel()
     depA.setTableName("sometable")
-    depA.setTransformType(PartitionTransformType.IDENTITY)
-    depA.setTransformPartitionSize(1)
     val depB = new DependencyModel()
     depB.setTableName("anothertable")
-    depB.setTransformType(PartitionTransformType.AGGREGATE)
-    depB.setTransformPartitionSize(2)
 
     val time1 = LocalDateTime.of(2010, 4, 5, 10, 0)
     val res1 = new TablePartitionResult()

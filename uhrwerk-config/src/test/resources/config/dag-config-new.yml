@@ -74,17 +74,9 @@ tables:
           table: tableOne  # On DB
           version: "1.0"
         format: "jdbc"
-        transform:
-          type: "identity"
-          partition:
-            size: 4
 
       - ref: "staging.sourcedb_1.tableOne:1.0"
         format: "jdbc"
-        transform:
-          type: "aggregate"
-          partition:
-            size: 4
 
       - ref:
           area: staging
@@ -92,18 +84,9 @@ tables:
           table: tableOne  # On DB
           version: "1.0"
         format: "jdbc"
-        transform:
-          type: "window"
-          partition:
-            size: 4
 
       - ref: "staging.sourcedb_1.tableOne:1.0"
         format: "jdbc"
-        transform:
-          type: "aggregate"
-          partition:
-            unit: "days"
-            size: 1
 
     targets:
       - connection_name: connection_name2

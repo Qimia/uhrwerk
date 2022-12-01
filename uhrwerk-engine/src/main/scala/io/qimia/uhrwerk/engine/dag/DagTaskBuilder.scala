@@ -60,15 +60,7 @@ class DagTaskBuilder(environment: Environment) {
         .map(d => {
           val ident    = TableIdent(d.getArea, d.getVertical, d.getTableName, d.getVersion)
           val depTable = environment.getTable(ident).get
-          val times = d.getTransformType match {
-            case PartitionTransformType.IDENTITY => partitionTimes
-            case PartitionTransformType.WINDOW =>
-              TimeTools.convertToWindowBatchList(partitionTimes, aTable.tableDuration, d.getTransformPartitionSize)
-            case PartitionTransformType.AGGREGATE =>
-              TimeTools.convertToSmallerBatchList(partitionTimes, aTable.tableDuration, d.getTransformPartitionSize)
-            case PartitionTransformType.NONE => callTime :: Nil
-            // None needs to function similarly as TableWrapper.runTasksAndWait
-          }
+          val times = partitionTimes
           (depTable, times)
         })
         .flatMap(tup => recursiveBuild(tup._1, tup._2, dept + 1))

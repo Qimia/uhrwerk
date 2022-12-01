@@ -13,7 +13,7 @@ class PartitionDependencyDAO : PartitionDependencyService {
     @Throws(SQLException::class)
     private fun storeAll(childPartitionId: Long, dependencies: Array<DependencyResult>) {
         val partitionDependencies = dependencies.toList().flatMap { dependency ->
-            dependency.partitions.map {
+            dependency.partitions!!.map {
                 PartitionDependencyBuilder()
                     .partitionId(childPartitionId)
                     .dependencyPartitionId(it.id)

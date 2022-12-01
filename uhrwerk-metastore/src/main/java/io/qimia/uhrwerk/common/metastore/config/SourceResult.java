@@ -1,31 +1,31 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
 import com.google.common.base.Objects;
-import io.qimia.uhrwerk.common.metastore.model.SourceModel;
+import io.qimia.uhrwerk.common.metastore.model.SourceModel2;
 import java.io.Serializable;
 
 public class SourceResult implements Serializable {
   private static final long serialVersionUID = 5997084266031599153L;
-  SourceModel newResult;
-  SourceModel oldResult;
+  SourceModel2 newResult;
+  SourceModel2 oldResult;
   boolean success;
   boolean error;
   String message;
   Exception exception;
 
-  public SourceModel getNewResult() {
+  public SourceModel2 getNewResult() {
     return newResult;
   }
 
-  public void setNewResult(SourceModel newResult) {
+  public void setNewResult(SourceModel2 newResult) {
     this.newResult = newResult;
   }
 
-  public SourceModel getOldResult() {
+  public SourceModel2 getOldResult() {
     return oldResult;
   }
 
-  public void setOldResult(SourceModel oldResult) {
+  public void setOldResult(SourceModel2 oldResult) {
     this.oldResult = oldResult;
   }
 

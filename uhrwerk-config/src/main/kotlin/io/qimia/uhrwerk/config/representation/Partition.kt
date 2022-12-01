@@ -4,7 +4,8 @@ import io.qimia.uhrwerk.config.builders.ConfigException
 
 data class Partition(
     var unit: PartitionUnit? = null,
-    var size: Int? = null
+    var size: Int? = null,
+    var column: String? = null
 ) {
     fun validate(path: String) {
         var path = path

@@ -13,7 +13,7 @@ import java.io.InputStream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MetastoreTest {
-  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
+  private final Logger logger = LoggerFactory.getLogger(MetastoreTest.class);
 
   @Test
   public void test() throws IOException {
@@ -24,6 +24,6 @@ public class MetastoreTest {
     Env env = YamlUtils.objectMapper().readValue(stream, Env.class);
     logger.info(env.toString());
 
-    assertEquals("Xq92vFqEKF7TB8H9", env.getMetastore().getPassword());
+    assertEquals("uhrwerk_db_passwd", env.getMetastore().getPassword());
   }
 }

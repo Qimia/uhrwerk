@@ -16,11 +16,6 @@ object MetaStore {
     */
   def build(connectionInfo: MetastoreConnInfo): MetaStore = {
     Class.forName(connectionInfo.getJdbc_driver)
-    val dbConn = DriverManager.getConnection(
-      connectionInfo.getJdbc_url,
-      connectionInfo.getUser,
-      connectionInfo.getPass
-    )
 
     HikariCPDataSource.initConfig(
       connectionInfo.getJdbc_url,

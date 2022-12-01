@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class S3BuilderTest {
-  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
+  private final Logger logger = LoggerFactory.getLogger(S3BuilderTest.class);
 
   @Test
   void builderCredsTest() {

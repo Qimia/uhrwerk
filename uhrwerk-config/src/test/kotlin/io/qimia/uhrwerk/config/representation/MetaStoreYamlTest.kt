@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.config.representation
 
 import TestUtils.fileToString
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.google.common.truth.Truth
+import com.google.common.truth.Truth.assertThat
 import io.qimia.uhrwerk.config.representation.YamlUtils.objectMapper
 import org.junit.jupiter.api.Test
 
@@ -11,19 +11,37 @@ class MetaStoreYamlTest {
 
 
     @Test
-    fun read() {
-        val env = MAPPER.readValue<Env>(YAML)
-        Truth.assertThat(env).isNotNull()
-        Truth.assertThat(env.metastore).isNotNull()
-        Truth.assertThat(env.metastore?.envName).isEqualTo("config_junit_env")
+    fun envRead() {
+        val yaml = fileToString("config/env-config-new.yml")!!
+        val env = MAPPER.readValue<Env>(yaml)
+        assertThat(env).isNotNull()
+        assertThat(env.metastore).isNotNull()
+        assertThat(env.metastore?.envName).isEqualTo("config_junit_env")
         println(env)
+    }
+
+    @Test
+    fun envWithSecretsRead() {
+        val yaml = fileToString("config/env-config-with-secrets.yml")!!
+        val env = MAPPER.readValue<Env>(yaml)
+        assertThat(env).isNotNull()
+
+        assertThat(env.secrets).isNotNull()
+        assertThat(env.secrets?.toList()).hasSize(2)
+
+        assertThat(env.secrets?.mapNotNull { it.name }).containsExactly(
+            "uhrwerk_db_usr",
+            "uhrwerk_db_passwd"
+        )
+        env.secrets?.forEach { println(it) }
+
+        assertThat(env.metastore).isNotNull()
+        assertThat(env.metastore?.envName).isEqualTo("config_junit_env")
+        println(env.metastore)
 
     }
 
     companion object {
-        private const val CONNECTION_YAML = "config/env-config-new.yml"
-        private val YAML = fileToString(CONNECTION_YAML)!!
         private val MAPPER = objectMapper()
-
     }
 }

@@ -76,7 +76,6 @@ object TimeHelper {
     */
   def convertToDuration(unit: PartitionUnit, size: Int): Duration = {
     unit match {
-      case PartitionUnit.WEEKS   => Duration.ofDays(size * 7)
       case PartitionUnit.DAYS    => Duration.ofDays(size)
       case PartitionUnit.HOURS   => Duration.ofHours(size)
       case PartitionUnit.MINUTES => Duration.ofMinutes(size)

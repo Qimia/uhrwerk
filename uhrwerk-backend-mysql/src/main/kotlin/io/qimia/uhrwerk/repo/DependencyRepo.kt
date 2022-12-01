@@ -3,11 +3,8 @@ package io.qimia.uhrwerk.repo
 import io.qimia.uhrwerk.common.metastore.builders.DependencyModelBuilder
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel
 import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
-import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType
-import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import java.sql.PreparedStatement
 import java.sql.ResultSet
-import java.sql.Types
 
 class DependencyRepo : BaseRepo<DependencyModel>() {
 
@@ -53,15 +50,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
         insert.setLong(1, dependency.tableId!!)
         insert.setLong(2, dependency.dependencyTargetId!!)
         insert.setLong(3, dependency.dependencyTableId!!)
-        insert.setString(4, dependency.transformType.toString())
-        val transformPartitionUnit = dependency.transformPartitionUnit
-        if (transformPartitionUnit != null) {
-            insert.setString(5, transformPartitionUnit.toString())
-        } else {
-            insert.setNull(5, Types.VARCHAR)
-        }
-        insert.setInt(6, dependency.transformPartitionSize!!)
-        insert.setLong(7, HashKeyUtils.dependencyKey(dependency))
+        insert.setLong(4, HashKeyUtils.dependencyKey(dependency))
         return insert
 
     }
@@ -77,22 +66,11 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
             .vertical(rs.getString("tab.vertical"))
             .version(rs.getString("tab.version"))
             .format(rs.getString("tar.format"))
-            .transformPartitionSize(rs.getInt("dep.transform_partition_size"))
 
         val deactivatedTs = rs.getTimestamp("dep.deactivated_ts")
         if (deactivatedTs != null)
             builder.deactivatedTs(deactivatedTs.toLocalDateTime())
 
-        val transformType = rs.getString("dep.transform_type")
-        if (transformType != null && transformType.isNotEmpty()) {
-            builder.transformType(
-                PartitionTransformType.valueOf(transformType.uppercase())
-            )
-        }
-        val transformPartitionUnit = rs.getString("dep.transform_partition_unit")
-        if (transformPartitionUnit != null && transformPartitionUnit.isNotEmpty()) {
-            builder.transformPartitionUnit(PartitionUnit.valueOf(transformPartitionUnit))
-        }
         return builder.build()
     }
 
@@ -101,11 +79,8 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
             INSERT INTO DEPENDENCY (table_id,
                                     dependency_target_id,
                                     dependency_table_id,
-                                    transform_type,
-                                    transform_partition_unit,
-                                    transform_partition_size,
                                     hash_key)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?)
         """.trimIndent()
 
         private val SELECT_BY_ID = """
@@ -118,9 +93,6 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tab.name,
                    tar.format,
                    tab.version,
-                   dep.transform_type,
-                   dep.transform_partition_unit,
-                   dep.transform_partition_size,
                    dep.deactivated_ts
             FROM DEPENDENCY dep
                      JOIN TABLE_ tab ON dep.dependency_table_id = tab.id
@@ -138,9 +110,6 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tab.name,
                    tar.format,
                    tab.version,
-                   dep.transform_type,
-                   dep.transform_partition_unit,
-                   dep.transform_partition_size,
                    dep.deactivated_ts
             FROM DEPENDENCY dep
                      JOIN TABLE_ tab ON dep.dependency_table_id = tab.id
@@ -163,9 +132,6 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tab.name,
                    tar.format,
                    tab.version,
-                   dep.transform_type,
-                   dep.transform_partition_unit,
-                   dep.transform_partition_size,
                    dep.deactivated_ts
             FROM DEPENDENCY dep
                      JOIN TABLE_ tab ON dep.dependency_table_id = tab.id

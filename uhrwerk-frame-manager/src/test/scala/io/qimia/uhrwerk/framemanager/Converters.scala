@@ -15,9 +15,6 @@ object Converters {
     dependency.setVersion(table.getVersion)
     dependency.setVertical(table.getVertical)
     dependency.setTableName(table.getName)
-    dependency.setTransformPartitionSize(table.getPartitionSize)
-    dependency.setTransformPartitionUnit(table.getPartitionUnit)
-    dependency.setTransformType(PartitionTransformType.IDENTITY)
     dependency
   }
 

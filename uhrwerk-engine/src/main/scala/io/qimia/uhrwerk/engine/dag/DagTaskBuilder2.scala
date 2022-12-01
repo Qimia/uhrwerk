@@ -159,14 +159,7 @@ class DagTaskBuilder2(environment: Environment) {
           .map(d => {
             val ident       = TableIdent(d.getArea, d.getVertical, d.getTableName, d.getVersion)
             val targetTimes = targetTaskKey.partition :: Nil
-            val times = d.getTransformType match {
-              case PartitionTransformType.IDENTITY => targetTimes
-              case PartitionTransformType.WINDOW =>
-                TimeTools.convertToWindowBatchList(targetTimes, wrap.tableDuration, d.getTransformPartitionSize)
-              case PartitionTransformType.AGGREGATE =>
-                TimeTools.convertToSmallerBatchList(targetTimes, wrap.tableDuration, d.getTransformPartitionSize)
-              case PartitionTransformType.NONE => callTime :: Nil // None's can only run at current time
-            }
+            val times = targetTimes
             times.map(DagTask2Key(ident, _))
           })
           .foldLeft(new mutable.HashSet[DagTask2Key])((s, keys) => s ++ keys)

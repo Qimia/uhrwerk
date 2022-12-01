@@ -15,7 +15,9 @@ data class Source(
     var parallelLoad: ParallelLoad? = null,
     var select: Select? = null,
     @JsonProperty("auto_load")
-    var autoLoad: Boolean = true
+    var autoLoad: Boolean = false,
+    @JsonProperty("ingestion_mode")
+    var ingestionMode: IngestionMode = IngestionMode.ALL
 ) {
     fun validate(path: String) {
         var path = path

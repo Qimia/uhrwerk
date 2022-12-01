@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.common.framemanager
 
-import io.qimia.uhrwerk.common.metastore.model.{SourceModel, TableModel}
+import io.qimia.uhrwerk.common.metastore.model.{SourceModel2, TableModel}
 import java.time.LocalDateTime
 import org.apache.spark.sql.DataFrame
 
@@ -8,7 +8,7 @@ import org.apache.spark.sql.DataFrame
 trait FrameManager {
   // There could be a spark / iceberg / deltalake / hudi version depending on what the user wants to use
 
-  def loadSourceDataFrame(source: SourceModel,
+  def loadSourceDataFrame(source: SourceModel2,
                           startTS: Option[LocalDateTime] = Option.empty,
                           endTSExcl: Option[LocalDateTime] = Option.empty,
                           dataFrameReaderOptions: Option[Map[String, String]] = Option.empty): DataFrame

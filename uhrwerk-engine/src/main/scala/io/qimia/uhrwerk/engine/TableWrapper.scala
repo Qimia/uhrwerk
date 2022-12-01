@@ -8,7 +8,11 @@ import io.qimia.uhrwerk.common.metastore.dependency.{
   TablePartitionResult,
   TablePartitionResultSet
 }
-import io.qimia.uhrwerk.common.metastore.model.{Partition, PartitionUnit, TableModel}
+import io.qimia.uhrwerk.common.metastore.model.{
+  Partition,
+  PartitionUnit,
+  TableModel
+}
 import io.qimia.uhrwerk.common.model.TargetModel
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent}
 import io.qimia.uhrwerk.engine.TableWrapper.reportProcessingPartitions
@@ -102,7 +106,7 @@ class TableWrapper(
   }
   private val logger: Logger = Logger.getLogger(this.getClass)
 
-  /** Single invocation of usercode (possibly bulk-modus)
+  /** Single invocation of user source-code (possibly bulk-modus)
     * (Relies on the dependencyResults for getting the dependencies and on the startTS and endTSExcl to get the sources
     * and write the right partitions
     *
@@ -243,6 +247,7 @@ class TableWrapper(
         table,
         partitionsTs.asJava
       )
+
     reportProcessingPartitions(dependencyRes, logger)
 
     // If no tasks to be done => quit

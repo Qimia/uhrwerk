@@ -8,11 +8,13 @@ import io.qimia.uhrwerk.common.metastore.builders.TargetModelBuilder;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionType;
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel;
+import io.qimia.uhrwerk.common.metastore.model.IngestionMode;
 import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType;
 import io.qimia.uhrwerk.common.metastore.model.PartitionUnit;
 import io.qimia.uhrwerk.common.metastore.model.SecretModel;
 import io.qimia.uhrwerk.common.metastore.model.SecretType;
 import io.qimia.uhrwerk.common.metastore.model.SourceModel;
+import io.qimia.uhrwerk.common.metastore.model.SourceModel2;
 import io.qimia.uhrwerk.common.metastore.model.TableModel;
 import io.qimia.uhrwerk.common.model.TargetModel;
 import io.qimia.uhrwerk.config.representation.AWSSecret;
@@ -27,6 +29,7 @@ import io.qimia.uhrwerk.config.representation.Table;
 import io.qimia.uhrwerk.config.representation.Target;
 
 public class ModelMapper {
+
   static TableModel toTable(Table table) {
     TableModelBuilder builder =
         new TableModelBuilder()
@@ -115,34 +118,31 @@ public class ModelMapper {
     return new ConnectionModelBuilder().name(connectionName).build();
   }
 
-  static SourceModel toSource(Source source, TableModel table, ConnectionModel conn) {
-    SourceModelBuilder sourceBuilder =
-        new SourceModelBuilder()
-            .table(table)
-            .connection(conn)
-            .path(source.getPath())
-            .format(source.getFormat());
-
+  static SourceModel2 toSource(Source source, TableModel table, ConnectionModel conn) {
+    var model = new SourceModel2();
+    model.setTable(table);
+    model.setConnection(conn);
+    model.setPath(source.getPath());
+    model.setFormat(source.getFormat());
     if (source.getPartition() != null) {
-      sourceBuilder
-          .partitionUnit(ModelMapper.toModelPartitionUnit(source.getPartition().getUnit().name()))
-          .partitionSize(source.getPartition().getSize())
-          .partitioned(true)
-          .selectQuery(MapperUtils.readQueryOrFileLines(source.getSelect().getQuery()))
-          .selectColumn(source.getSelect().getColumn());
-    } else {
-      if (source.getSelect() != null) {
-        sourceBuilder.selectQuery(MapperUtils.readQueryOrFileLines(source.getSelect().getQuery()));
-      }
+      model.setIntervalTempUnit(
+          ModelMapper.toModelPartitionUnit(source.getPartition().getUnit().name()));
+      model.setIntervalTempSize(source.getPartition().getSize());
+      model.setIntervalColumn(source.getPartition().getColumn());
+    }
+    if (source.getSelect() != null) {
+      model.setSelectQuery(MapperUtils.readQueryOrFileLines(source.getSelect().getQuery()));
     }
     if (source.getParallelLoad() != null) {
-      sourceBuilder
-          .parallelLoadQuery(MapperUtils.readQueryOrFileLines(source.getParallelLoad().getQuery()))
-          .parallelLoadColumn(source.getParallelLoad().getColumn())
-          .parallelLoadNum(source.getParallelLoad().getNum());
+      model.setParallelPartitionQuery(
+          MapperUtils.readQueryOrFileLines(source.getParallelLoad().getQuery()));
+      model.setParallelPartitionColumn(source.getParallelLoad().getColumn());
+      model.setParallelPartitionNum(source.getParallelLoad().getNum());
     }
-    sourceBuilder.autoLoad(source.getAutoLoad());
-    return sourceBuilder.build();
+    model.setIngestionMode(IngestionMode.valueOf(source.getIngestionMode().name()));
+    model.setParallelLoad(source.getAutoLoad());
+
+    return model;
   }
 
   static TargetModel toTarget(Target target, TableModel table, ConnectionModel conn) {
@@ -172,34 +172,6 @@ public class ModelMapper {
             .version(dependency.getReference().getVersion())
             .dependencyTable(dependencyTable)
             .dependencyTarget(dependencyTarget);
-
-    if (dependency.getTransform() != null) {
-      switch (dependency.getTransform().getType()) {
-        case IDENTITY:
-          builder
-              .transformType(PartitionTransformType.IDENTITY)
-              .transformPartitionUnit(toModelPartitionUnit("hours"))
-              .transformPartitionSize(1);
-          break;
-        case AGGREGATE:
-          builder
-              .transformType(PartitionTransformType.AGGREGATE)
-              .transformPartitionUnit(toModelPartitionUnit("hours"))
-              .transformPartitionSize(dependency.getTransform().getPartition().getSize());
-          break;
-        case WINDOW:
-          builder
-              .transformType(PartitionTransformType.WINDOW)
-              .transformPartitionUnit(toModelPartitionUnit("hours"))
-              .transformPartitionSize(dependency.getTransform().getPartition().getSize());
-          break;
-        case NONE:
-          builder.transformType(PartitionTransformType.NONE);
-          break;
-      }
-    } else {
-      builder.transformType(PartitionTransformType.NONE);
-    }
     return builder.build();
   }
 
@@ -214,9 +186,6 @@ public class ModelMapper {
       case "day":
       case "days":
         return PartitionUnit.DAYS;
-      case "week":
-      case "weeks":
-        return PartitionUnit.WEEKS;
       default:
         return null;
     }

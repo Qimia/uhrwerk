@@ -19,7 +19,6 @@ object PartitionDurationTester {
     fun convertToDuration(u: PartitionUnit?, size: Int): Duration {
         var partitionSize = Duration.ZERO
         when (u) {
-            PartitionUnit.WEEKS -> partitionSize = Duration.ofDays((7 * size).toLong())
             PartitionUnit.DAYS -> partitionSize = Duration.ofDays(size.toLong())
             PartitionUnit.HOURS -> partitionSize = Duration.ofHours(size.toLong())
             PartitionUnit.MINUTES -> partitionSize = Duration.ofMinutes(size.toLong())

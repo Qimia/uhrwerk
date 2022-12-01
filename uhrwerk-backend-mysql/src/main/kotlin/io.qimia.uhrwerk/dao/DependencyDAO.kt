@@ -243,12 +243,6 @@ class DependencyDAO() : DependencyService {
             val tablePartitionLookup = tableSearchRes.foundTables!!.associateBy { it.tableId }
             for (checkDep in dependencies) {
                 val connectedTable = tablePartitionLookup[checkDep.dependencyTableId]
-                if (checkDep.transformType != PartitionTransformType.NONE
-                    || connectedTable!!.partitioned
-                ) {
-                    problem = true
-                    problemDependencies.add(checkDep.tableName!!)
-                }
             }
             if (problem) {
                 result.isSuccess = false
@@ -339,16 +333,6 @@ class DependencyDAO() : DependencyService {
                 problemString.append("dependency: ").append(newDepName)
                     .append("\thas a different version\n")
             }
-            if (trueDep.transformType != newDep.transformType) {
-                result.success = false
-                problemString.append("dependency: ").append(newDepName)
-                    .append("\thas a different type\n")
-            }
-            if (trueDep.transformPartitionSize != newDep.transformPartitionSize) {
-                result.success = false
-                problemString.append("dependency: ").append(newDepName)
-                    .append("\thas a different size\n")
-            }
             // All other ID's in Dependency are set based on these parameters (and should be the same if
             // these are the same)
             if (!result.success) {
@@ -382,8 +366,6 @@ class DependencyDAO() : DependencyService {
                 val dependency = depTableIdLookup[tableRes.tableId]
 
                 newTest.dependencyTableName = dependency!!.tableName
-                newTest.transformType = dependency.transformType
-                newTest.transformSize = dependency.transformPartitionSize!!
 
                 // TODO: Doesn't support transform-partition-unit (and transforms using that) for now
                 newTest.dependencyTablePartitionSize = tableRes.partitionSize

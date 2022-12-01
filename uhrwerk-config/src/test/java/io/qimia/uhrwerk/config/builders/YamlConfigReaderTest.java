@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import static org.junit.jupiter.api.Assertions.*;
 
 class YamlConfigReaderTest {
-  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
+  private final Logger logger = LoggerFactory.getLogger(YamlConfigReaderTest.class);
 
   @Test
   public void readConnectionsTest() {
@@ -56,15 +56,8 @@ class YamlConfigReaderTest {
     logger.info(dag.toString());
     assertTrue(dag.getTables()[0].getPartitioned());
     assertFalse(dag.getTables()[1].getPartitioned());
-    assertTrue(dag.getTables()[0].getSources()[0].getPartitioned());
-    assertFalse(dag.getTables()[0].getSources()[1].getPartitioned());
     assertEquals("load.class.name", dag.getTables()[0].getClassName());
     assertEquals("processing.sourcedb_1.load_a_table.1.0", dag.getTables()[1].getClassName());
-    assertEquals(
-        PartitionTransformType.NONE, dag.getTables()[1].getDependencies()[0].getTransformType());
-    assertEquals(
-        PartitionTransformType.IDENTITY,
-        dag.getTables()[1].getDependencies()[1].getTransformType());
   }
 
   @Test
@@ -93,8 +86,8 @@ class YamlConfigReaderTest {
     logger.info(metastore.toString());
     assertEquals(metastore.getJdbc_url(), "jdbc:mysql://localhost:53306/UHRWERK_METASTORE");
     assertEquals(metastore.getJdbc_driver(), "com.mysql.jdbc.Driver");
-    assertEquals(metastore.getUser(), "UHRWERK_USER");
-    assertEquals(metastore.getPass(), "Xq92vFqEKF7TB8H9");
+    assertEquals(metastore.getUser().toUpperCase(), "UHRWERK_DB_USR");
+    assertEquals(metastore.getPass(), "uhrwerk_db_passwd");
   }
 
   @Test

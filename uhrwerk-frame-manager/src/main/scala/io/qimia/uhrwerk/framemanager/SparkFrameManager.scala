@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.framemanager
 
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
-import io.qimia.uhrwerk.common.metastore.model.{ConnectionType, PartitionTransformType, SourceModel, TableModel}
+import io.qimia.uhrwerk.common.metastore.model.{ConnectionType, IngestionMode, SourceModel2, TableModel}
 import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.common.tools.{JDBCTools, TimeTools}
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils
@@ -26,15 +26,15 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     * @throws IllegalArgumentException In case one or both timestamps are specified but the source select column is empty
     */
   override def loadSourceDataFrame(
-                                    source: SourceModel,
+                                    source: SourceModel2,
                                     startTS: Option[LocalDateTime] = Option.empty,
                                     endTSExcl: Option[LocalDateTime] = Option.empty,
                                     dataFrameReaderOptions: Option[Map[String, String]] = Option.empty
   ): DataFrame = {
     if (
-      (startTS.isDefined || endTSExcl.isDefined) && source.getPartitioned && isStringEmpty(
-        source.getSelectColumn
-      )
+      (startTS.isDefined || endTSExcl.isDefined) &&
+        source.getIngestionMode == IngestionMode.INTERVAL &&
+        isStringEmpty(source.getIntervalColumn)
     ) {
       throw new IllegalArgumentException(
         "When one or both of the timestamps are specified, " +
@@ -63,7 +63,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     * @return Loaded DataFrame.
     */
   private def loadDataFrameFromFileSystem(
-                                           source: SourceModel,
+                                           source: SourceModel2,
                                            startTS: Option[LocalDateTime],
                                            endTSExcl: Option[LocalDateTime],
                                            dataFrameReaderOptions: Option[Map[String, String]]
@@ -82,22 +82,22 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
     val filteredDf: DataFrame = if (startTS.isDefined && endTSExcl.isDefined) {
       df.filter(
-        col(source.getSelectColumn) >= TimeTools
+        col(source.getIntervalColumn) >= TimeTools
           .convertTSToString(startTS.get)
       ).filter(
-        col(source.getSelectColumn) < TimeTools
+        col(source.getIntervalColumn) < TimeTools
           .convertTSToString(endTSExcl.get)
       )
     } else if (startTS.isDefined) {
       val res = df.filter(
-        col(source.getSelectColumn) >= TimeTools
+        col(source.getIntervalColumn) >= TimeTools
           .convertTSToString(startTS.get)
       )
       res.show(10)
       res
     } else if (endTSExcl.isDefined) {
       df.filter(
-        col(source.getSelectColumn) < TimeTools
+        col(source.getIntervalColumn) < TimeTools
           .convertTSToString(endTSExcl.get)
       )
     } else {
@@ -105,12 +105,12 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     }
 
     if (
-      !isStringEmpty(source.getSelectColumn) && !containsTimeColumns(
+      !isStringEmpty(source.getIntervalColumn) && !containsTimeColumns(
         filteredDf,
-        source.getPartitionUnit
+        source.getIntervalTempUnit
       )
     ) {
-      addTimeColumnsToDFFromTimestampColumn(filteredDf, source.getSelectColumn)
+      addTimeColumnsToDFFromTimestampColumn(filteredDf, source.getIntervalColumn)
     } else {
       filteredDf
     }
@@ -126,9 +126,12 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       dependencyResult: BulkDependencyResult,
       dataFrameReaderOptions: Option[Map[String, String]] = Option.empty
   ): DataFrame = {
+
     assert(dependencyResult.succeeded.nonEmpty)
+
     val isJDBC = dependencyResult.connection.getType.equals(ConnectionType.JDBC)
-    if (dependencyResult.connection.getType == ConnectionType.S3) {
+
+    if (dependencyResult.connection.getType.equals(ConnectionType.S3)) {
       SparkFrameManagerUtils.setS3Config(
         sparkSession,
         dependencyResult.connection
@@ -220,10 +223,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     }
     val filtered = convertedColumns.filter(filter)
 
+    val always = true
     if (
-      dependencyResult.dependency.getTransformType.equals(
-        PartitionTransformType.NONE
-      )
+      always
     ) {
       // unpartitioned data, remove all time columns
       filtered
@@ -253,7 +255,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     * @return DataFrame
     */
   private def loadSourceFromJDBC(
-                                  source: SourceModel,
+                                  source: SourceModel2,
                                   startTS: Option[LocalDateTime],
                                   endTSExcl: Option[LocalDateTime],
                                   dataFrameReaderOptions: Option[Map[String, String]]
@@ -284,15 +286,15 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           .option("dbtable", query)
           .option(
             "numPartitions",
-            source.getParallelLoadNum.toString
+            source.getParallelPartitionNum.toString
           )
 
-        if (!isStringEmpty(source.getParallelLoadQuery)) {
+        if (!isStringEmpty(source.getParallelPartitionQuery)) {
           val (minId, maxId) = JDBCTools.minMaxQueryIds(
             sparkSession,
             source.getConnection,
-            source.getParallelLoadColumn,
-            source.getParallelLoadQuery,
+            source.getParallelPartitionColumn,
+            source.getParallelPartitionQuery,
             startTS,
             endTSExcl,
             Option(
@@ -301,7 +303,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           )
 
           dfReaderWithQuery
-            .option("partitionColumn", source.getParallelLoadColumn)
+            .option("partitionColumn", source.getParallelPartitionColumn)
             .option("lowerBound", minId)
             .option("upperBound", maxId)
         } else {
@@ -318,12 +320,12 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       .load()
 
     if (
-      !isStringEmpty(source.getSelectColumn) && !containsTimeColumns(
+      !isStringEmpty(source.getIntervalColumn) && !containsTimeColumns(
         df,
-        source.getPartitionUnit
+        source.getIntervalTempUnit
       )
     ) {
-      addTimeColumnsToDFFromTimestampColumn(df, source.getSelectColumn)
+      addTimeColumnsToDFFromTimestampColumn(df, source.getIntervalColumn)
     } else {
       df
     }

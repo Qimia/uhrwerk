@@ -102,5 +102,18 @@ abstract class BaseRepo<E : BaseModel> {
 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(BaseRepo::class.java)
+
+        fun columnsToString(tableCols: List<String>): String =
+            tableCols.joinToString(separator = ",\n")
+
+        fun insertSql(tableName: String, tableCols: List<String>): String {
+            val cols = tableCols.subList(1, tableCols.size - 1)
+            val colsStr = columnsToString(cols)
+            val qMarks = List(cols.size) { "?" }.joinToString()
+
+            return "INSERT INTO $tableName($colsStr) \n" +
+                    "VALUES ($qMarks)"
+
+        }
     }
 }

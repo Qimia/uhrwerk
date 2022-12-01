@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TableBuilderTest {
-  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
+  private final Logger logger = LoggerFactory.getLogger(TableBuilderTest.class);
 
   @Test
   public void tableBuilderTest() {
@@ -78,22 +78,13 @@ class TableBuilderTest {
               .vertical("DepVertical1")
               .table("DepTableTable1")
               .format("jdbc")
-              .transform()
-                .type("identity")
               .done()
-            .done()
             .dependency()
               .area("DepArea2")
               .version("1.2")
               .vertical("DepVertical2")
               .table("DepTableTable2")
               .format("jdbc")
-              .transform()
-                .type("window")
-                .partition()
-                  .size(5)
-                .done()
-              .done()
             .done()
             .dependency()
               .area("DepArea3")
@@ -101,12 +92,6 @@ class TableBuilderTest {
               .vertical("DepVertical3")
               .table("DepTableTable3")
               .format("jdbc")
-              .transform()
-                .type("aggregate")
-                .partition()
-                  .size(2)
-            .done()
-            .done()
             .done()
             .dependency()
             .area("DepArea4")
@@ -114,18 +99,10 @@ class TableBuilderTest {
             .vertical("DepVertical4")
             .table("DepTableTable4")
             .format("jdbc")
-            .transform()
-            .type("aggregate")
-                .partition()
-                  .size(4)
-                  .unit("hours")
-                .done()
-              .done()
             .done()
             .build();
     logger.info(table.toString());
 
-    assertEquals(10, table.getSources()[0].getParallelLoadNum());
     assertEquals("TableArea", table.getArea());
     assertEquals("TableArea.TableVertical.TableTable.TableVersion", table.getClassName());
     assertEquals(PartitionUnit.HOURS, table.getPartitionUnit());
@@ -150,13 +127,6 @@ class TableBuilderTest {
                     .table("table")
                     .format("json")
                     .version("1.0")
-                    .transform()
-                    .type("aggregate")
-                    .partition()
-                    .unit("hours")
-                    .size(1)
-                    .done()
-                    .done()
                     .build();
 
     var target =
@@ -202,7 +172,6 @@ class TableBuilderTest {
             .build();
     logger.info(table.toString());
 
-    assertEquals(8, table.getSources()[0].getParallelLoadNum());
     assertEquals("TableArea", table.getArea());
     assertEquals("my.class.name", table.getClassName());
     assertEquals("connection", table.getSources()[0].getConnection().getName());

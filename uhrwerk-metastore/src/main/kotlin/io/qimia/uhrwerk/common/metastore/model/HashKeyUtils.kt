@@ -47,8 +47,8 @@ object HashKeyUtils {
     fun sourceKey(source: SourceModel): Long {
         assert(source.tableId != null) { "Source.tableId can't be null" }
         assert(source.connectionId != null) { "Source.connectionId can't be null" }
-        assert(source.path != null && !source.path!!.isEmpty()) { "Source.path can't be null or empty" }
-        assert(source.format != null && !source.format!!.isEmpty()) { "Source.format can't be null or empty" }
+        assert(source.path != null && source.path!!.isNotEmpty()) { "Source.path can't be null or empty" }
+        assert(source.format != null && source.format!!.isNotEmpty()) { "Source.format can't be null or empty" }
         return hashKey(
             StringBuilder()
                 .append(source.tableId)
@@ -58,6 +58,19 @@ object HashKeyUtils {
         )
     }
 
+    fun sourceKey(source: SourceModel2): Long {
+        assert(source.tableId != null) { "Source.tableId can't be null" }
+        assert(source.connectionId != null) { "Source.connectionId can't be null" }
+        assert(source.path != null && source.path!!.isNotEmpty()) { "Source.path can't be null or empty" }
+        assert(source.format != null && source.format!!.isNotEmpty()) { "Source.format can't be null or empty" }
+        return hashKey(
+            StringBuilder()
+                .append(source.tableId)
+                .append(source.connectionId)
+                .append(source.path)
+                .append(source.format)
+        )
+    }
     fun dependencyKey(dependency: DependencyModel): Long {
         assert(dependency.tableId != null) { "Dependency.tableId can't be null" }
         assert(dependency.dependencyTargetId != null) { "Dependency.dependencyTargetId can't be null" }
@@ -71,14 +84,20 @@ object HashKeyUtils {
     }
 
     fun connectionKey(connection: ConnectionModel): Long {
-        assert(connection.name != null && !connection.name!!.isEmpty()) { "Connection.name can't be null or empty" }
+        assert(connection.name != null && connection.name!!.isNotEmpty()) { "Connection.name can't be null or empty" }
         return hashKey(StringBuilder().append(connection.name))
     }
 
     fun secretKey(secret: SecretModel): Long {
-        assert(secret.name != null && !secret.name!!.isEmpty()) { "Secret.name can't be null or empty" }
+        assert(secret.name != null && secret.name!!.isNotEmpty()) { "Secret.name can't be null or empty" }
         return hashKey(StringBuilder().append(secret.name))
     }
+
+    fun secretKey(name: String): Long {
+        assert(name != null && name!!.isNotEmpty()) { "Secret.name can't be null or empty" }
+        return hashKey(StringBuilder().append(name))
+    }
+
 
     private fun hashKey(strBuilder: StringBuilder): Long {
         return LongHashFunction.xx().hashChars(strBuilder)

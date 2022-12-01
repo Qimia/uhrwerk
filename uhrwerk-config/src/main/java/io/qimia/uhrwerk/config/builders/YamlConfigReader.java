@@ -8,8 +8,11 @@ import io.qimia.uhrwerk.common.metastore.model.DependencyModel;
 import io.qimia.uhrwerk.common.metastore.model.MetastoreModel;
 import io.qimia.uhrwerk.common.metastore.model.SecretModel;
 import io.qimia.uhrwerk.common.metastore.model.SourceModel;
+import io.qimia.uhrwerk.common.metastore.model.SourceModel2;
 import io.qimia.uhrwerk.common.metastore.model.TableModel;
 import io.qimia.uhrwerk.common.model.TargetModel;
+import io.qimia.uhrwerk.config.AWSSecretProvider;
+import io.qimia.uhrwerk.config.representation.AWSSecret;
 import io.qimia.uhrwerk.config.representation.Connection;
 import io.qimia.uhrwerk.config.representation.Dag;
 import io.qimia.uhrwerk.config.representation.Dependency;
@@ -22,11 +25,15 @@ import io.qimia.uhrwerk.config.representation.Target;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import static io.qimia.uhrwerk.config.representation.YamlUtils.objectMapper;
 
 public class YamlConfigReader {
+
+  public static final String SECRET = "!secret:";
 
   public TableModel getModelTable(Table table) {
     if (table != null) {
@@ -35,7 +42,7 @@ public class YamlConfigReader {
 
       Source[] sources = table.getSources();
       if (sources != null) {
-        SourceModel[] sourceModels = new SourceModel[sources.length];
+        SourceModel2[] sourceModels = new SourceModel2[sources.length];
         for (int j = 0; j < sources.length; j++) {
           ConnectionModel conn = ModelMapper.toConnection(sources[j].getConnectionName());
           sourceModels[j] = ModelMapper.toSource(sources[j], tableModel, conn);
@@ -99,14 +106,40 @@ public class YamlConfigReader {
     return null;
   }
 
-  public MetastoreModel getModelMetastore(Metastore metastore) {
+  public MetastoreModel getModelMetastore(Metastore metastore, Secret[] secrets) {
     metastore.validate("");
     MetastoreModel result = new MetastoreModel();
     result.setJdbc_url(metastore.getJdbcUrl());
     result.setJdbc_driver(metastore.getJdbcDriver());
-    result.setUser(metastore.getUser());
-    result.setPass(metastore.getPassword());
+    String dbUser = metastore.getUser();
+    String dbPassword = metastore.getPassword();
+    if (secrets != null && secrets.length > 0) {
+      Map<String, Secret> secretMap =
+          Arrays.stream(secrets).collect(Collectors.toMap(s -> s.getName(), s -> s));
+      dbUser = getSecretValue(dbUser, secretMap);
+      dbPassword = getSecretValue(dbPassword, secretMap);
+    }
+    result.setUser(dbUser);
+    result.setPass(dbPassword);
     return result;
+  }
+
+  private static String getSecretValue(String dbUser, Map<String, Secret> secretMap) {
+    if (dbUser != null && !dbUser.isEmpty())
+      if (dbUser.startsWith(SECRET)) {
+        String scrName = dbUser.substring(SECRET.length());
+        Secret secret = secretMap.get(scrName);
+        if (secret == null)
+          throw new IllegalArgumentException(
+              String.format("The secret with name: %s is not specified in config.", scrName));
+        AWSSecret awsSecret = (AWSSecret) secret;
+        AWSSecretProvider provider = new AWSSecretProvider(awsSecret.getAwsRegion());
+        String scrValue = provider.secretValue(awsSecret.getAwsSecretName());
+        if (scrValue == null)
+          throw new IllegalArgumentException(String.format("Secret not found in AWS %s ", secret));
+        return scrValue;
+      }
+    return null;
   }
 
   public DagModel getModelDag(Dag dag) {
@@ -153,13 +186,13 @@ public class YamlConfigReader {
 
   public MetastoreModel readEnv(String file) {
     InputStream stream = MapperUtils.getInputStream(file);
-    Metastore metastore = null;
+    Env env;
     try {
-      metastore = objectMapper().readValue(stream, Env.class).getMetastore();
+      env = objectMapper().readValue(stream, Env.class);
+    return getModelMetastore(env.getMetastore(), env.getSecrets());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    return (getModelMetastore(metastore));
   }
 
   public TableModel readTable(String file) {

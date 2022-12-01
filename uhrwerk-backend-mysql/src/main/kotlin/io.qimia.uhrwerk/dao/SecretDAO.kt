@@ -12,6 +12,9 @@ class SecretDAO {
     fun getByHashKey(hashKey: Long): SecretModel? =
         repo.getByHashKey(hashKey)
 
+    fun getByName(name:String): SecretModel? =
+        repo.getByHashKey(HashKeyUtils.secretKey(name))
+
     fun getById(id: Long): SecretModel? {
         return repo.getById(id)
     }

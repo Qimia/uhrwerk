@@ -1,14 +1,14 @@
 package io.qimia.uhrwerk.config.representation
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.qimia.uhrwerk.config.builders.ConfigException
 import java.util.*
-
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class Dependency(
     @JsonProperty("ref")
     var reference: Reference? = null,
     var format: String? = null,
-    var transform: Transform? = null
 ) {
     fun validate(path: String) {
         var path = path
@@ -32,9 +32,6 @@ data class Dependency(
         }
         if (reference?.version == null) {
             throw ConfigException("Missing field: " + path + "version")
-        }
-        if (transform != null) {
-            transform!!.validate(path)
         }
     }
 }

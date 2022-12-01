@@ -53,6 +53,42 @@ object TestData {
         .partitioned(true)
         .autoLoad(false).build()
 
+    fun source2(
+        path: String,
+        tableId: Long,
+        connectionId: Long
+    ): SourceModel2 {
+        val src = SourceModel2()
+        src.tableId = tableId
+        src.connectionId = connectionId
+        src.path = path
+        src.format = "jdbc"
+        src.ingestionMode = IngestionMode.INTERVAL
+        src.intervalTempUnit = PartitionUnit.HOURS
+        src.intervalTempSize = 2
+        src.parallelPartitionNum = 40
+        src.autoLoad = false
+        return src
+    }
+
+    fun source2(
+        path: String,
+        tableId: Long,
+        connection: ConnectionModel
+    ): SourceModel2 {
+        val src = SourceModel2()
+        src.tableId = tableId
+        src.connection = connection
+        src.path = path
+        src.format = "jdbc"
+        src.ingestionMode = IngestionMode.INTERVAL
+        src.intervalTempUnit = PartitionUnit.HOURS
+        src.intervalTempSize = 2
+        src.parallelPartitionNum = 40
+        src.autoLoad = false
+        return src
+    }
+
     fun source(
         path: String,
         tableId: Long,
@@ -123,7 +159,6 @@ object TestData {
         .tableId(tableId)
         .dependencyTargetId(dependencyTargetId)
         .dependencyTableId(dependencyTableId)
-        .transformType(PartitionTransformType.IDENTITY)
         .build()
 
     fun dependency(
@@ -141,8 +176,6 @@ object TestData {
         .tableName(dependencyTable.name)
         .version(dependencyTable.version)
         .format(format)
-        .transformType(trfType)
-        .transformPartitionSize(trfPartSize)
         .build()
 
     fun secret(name: String): SecretModel {

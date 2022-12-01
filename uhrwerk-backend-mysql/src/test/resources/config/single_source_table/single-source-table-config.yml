@@ -16,10 +16,6 @@ sources:
     format: "jdbc"
     version: 1
 
-    partition:
-      unit: "hours"
-      size: 4
-
     parallel_load:
       query: "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'"
       column: "id"

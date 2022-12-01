@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import static org.junit.jupiter.api.Assertions.*;
 
 class DagBuilderTest {
-  private final Logger logger = LoggerFactory.getLogger(TransformBuilderTest.class);
+  private final Logger logger = LoggerFactory.getLogger(DagBuilderTest.class);
 
   @Test
   public void dagBuilderTest() {
@@ -103,9 +103,6 @@ class DagBuilderTest {
             .vertical("DepVertical1")
             .table("DepTableTable1")
             .format("json")
-            .transform()
-            .type("identity")
-            .done()
             .done()
             .dependency()
             .area("DepArea2")
@@ -113,12 +110,6 @@ class DagBuilderTest {
             .vertical("DepVertical2")
             .table("DepTableTable2")
             .format("text")
-            .transform()
-            .type("window")
-            .partition()
-            .size(5)
-            .done()
-            .done()
             .done()
             .dependency()
             .area("DepArea3")
@@ -126,12 +117,6 @@ class DagBuilderTest {
             .vertical("DepVertical3")
             .table("DepTableTable3")
             .format("libsvm")
-            .transform()
-            .type("aggregate")
-            .partition()
-            .size(2)
-            .done()
-            .done()
             .done()
             .dependency()
             .area("DepArea4")
@@ -139,13 +124,6 @@ class DagBuilderTest {
             .vertical("DepVertical4")
             .table("DepTableTable4")
             .format("parquet")
-            .transform()
-            .type("aggregate")
-            .partition()
-            .size(4)
-            .unit("days")
-            .done()
-            .done()
             .done()
             .done()
             .build();
@@ -225,9 +203,6 @@ class DagBuilderTest {
             .vertical("DepVertical1")
             .table("DepTableTable1")
             .format("jdbc")
-            .transform()
-            .type("identity")
-            .done()
             .done()
             .dependency()
             .area("DepArea2")
@@ -235,12 +210,6 @@ class DagBuilderTest {
             .vertical("DepVertical2")
             .table("DepTableTable2")
             .format("jdbc")
-            .transform()
-            .type("window")
-            .partition()
-            .size(5)
-            .done()
-            .done()
             .done()
             .dependency()
             .area("DepArea3")
@@ -248,12 +217,6 @@ class DagBuilderTest {
             .vertical("DepVertical3")
             .table("DepTableTable3")
             .format("jdbc")
-            .transform()
-            .type("aggregate")
-            .partition()
-            .size(2)
-            .done()
-            .done()
             .done()
             .dependency()
             .area("DepArea4")
@@ -261,13 +224,6 @@ class DagBuilderTest {
             .vertical("DepVertical4")
             .table("DepTableTable4")
             .format("jdbc")
-            .transform()
-            .type("aggregate")
-            .partition()
-            .size(4)
-            .unit("hours")
-            .done()
-            .done()
             .done()
             .buildRepresentationTable();
 
@@ -398,9 +354,6 @@ class DagBuilderTest {
             .vertical("DepVertical1")
             .table("DepTableTable1")
             .format("jdbc")
-            .transform()
-            .type("identity")
-            .done()
             .done()
             .dependency()
             .area("DepArea2")
@@ -408,12 +361,6 @@ class DagBuilderTest {
             .vertical("DepVertical2")
             .table("DepTableTable2")
             .format("jdbc")
-            .transform()
-            .type("window")
-            .partition()
-            .size(5)
-            .done()
-            .done()
             .done()
             .dependency()
             .area("DepArea3")
@@ -421,12 +368,6 @@ class DagBuilderTest {
             .vertical("DepVertical3")
             .table("DepTableTable3")
             .format("jdbc")
-            .transform()
-            .type("aggregate")
-            .partition()
-            .size(2)
-            .done()
-            .done()
             .done()
             .dependency()
             .area("DepArea4")
@@ -434,13 +375,6 @@ class DagBuilderTest {
             .vertical("DepVertical4")
             .table("DepTableTable4")
             .format("jdbc")
-            .transform()
-            .type("aggregate")
-            .partition()
-            .size(4)
-            .unit("hours")
-            .done()
-            .done()
             .done()
             .buildRepresentationTable();
 
@@ -497,10 +431,6 @@ class DagBuilderTest {
       logger.info(dag.toString());
       assertFalse(dag.getTables()[0].getPartitioned());
       assertTrue(dag.getTables()[1].getPartitioned());
-      assertTrue(dag.getTables()[0].getSources()[0].getPartitioned());
-      assertFalse(dag.getTables()[0].getSources()[1].getPartitioned());
-      assertEquals(PartitionTransformType.NONE, dag.getTables()[1].getDependencies()[0].getTransformType());
-      assertEquals(PartitionTransformType.IDENTITY, dag.getTables()[1].getDependencies()[1].getTransformType());
 
       assertEquals("TableTable", dag.getTables()[0].getName());
       assertEquals("TableArea", dag.getTables()[0].getArea());

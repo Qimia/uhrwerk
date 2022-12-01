@@ -1,9 +1,6 @@
 package io.qimia.uhrwerk.common.metastore.builders
 
-import io.qimia.uhrwerk.common.metastore.model.DependencyModel
-import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
-import io.qimia.uhrwerk.common.metastore.model.SourceModel
-import io.qimia.uhrwerk.common.metastore.model.TableModel
+import io.qimia.uhrwerk.common.metastore.model.*
 import io.qimia.uhrwerk.common.model.*
 
 class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
@@ -19,7 +16,7 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
     var partitionSize = 0
     var isPartitioned = false
     var dependencies: Array<DependencyModel>? = null
-    var sources: Array<SourceModel>? = null
+    var sources: Array<SourceModel2>? = null
     var targets: Array<TargetModel>? = null
     fun id(id: Long?): TableModelBuilder {
         this.id = id
@@ -81,7 +78,7 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
         return this
     }
 
-    fun sources(sources: Array<SourceModel>): TableModelBuilder {
+    fun sources(sources: Array<SourceModel2>): TableModelBuilder {
         this.sources = sources
         return this
     }

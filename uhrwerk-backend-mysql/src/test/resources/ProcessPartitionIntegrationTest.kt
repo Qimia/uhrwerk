@@ -1,5 +1,3 @@
-package io.qimia.uhrwerk.dao
-
 import io.qimia.uhrwerk.ConnectionHelper
 import io.qimia.uhrwerk.common.metastore.config.*
 import io.qimia.uhrwerk.common.metastore.dependency.DependencyResult

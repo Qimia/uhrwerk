@@ -3,7 +3,6 @@ package io.qimia.uhrwerk.config.convert
 import TestUtils.filePath
 import com.google.common.truth.Truth
 import io.qimia.uhrwerk.config.builders.YamlConfigReader
-import io.qimia.uhrwerk.config.representation.JDBC
 import org.junit.jupiter.api.Test
 
 class ConnectionMapTest {

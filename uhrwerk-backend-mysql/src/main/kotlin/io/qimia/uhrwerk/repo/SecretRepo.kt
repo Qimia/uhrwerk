@@ -51,43 +51,43 @@ class SecretRepo : BaseRepo<SecretModel>() {
 
     private fun map(res: ResultSet): SecretModel {
         val secret = SecretModel()
-        secret.id = res.getLong(1)
-        secret.name = res.getString(2)
-        val secretType = res.getString(3)
+        secret.id = res.getLong("id")
+        secret.name = res.getString("name")
+        val secretType = res.getString("type")
         if (secretType != null && secretType.isNotEmpty())
             secret.type = SecretType.valueOf(secretType.uppercase())
-        secret.awsSecretName = res.getString(4)
-        secret.awsRegion = res.getString(5)
-        secret.deactivatedTs = res.getTimestamp(6)?.toLocalDateTime()
+        secret.awsSecretName = res.getString("aws_secret_name")
+        secret.awsRegion = res.getString("aws_region")
+        secret.deactivatedTs = res.getTimestamp("deactivated_ts")?.toLocalDateTime()
         return secret
     }
 
 
     companion object {
-        private const val INSERT =
-            "INSERT INTO SECRET_ (name, type, aws_secret_name, aws_region,hash_key) VALUES(?,?,?,?,?)"
+        private val COLUMNS = listOf(
+            "id",
+            "name",
+            "type",
+            "aws_secret_name",
+            "aws_region",
+            "hash_key",
+            "deactivated_ts"
+        )
 
-        private val SELECT_BY_ID = """
-            SELECT id,
-                   name,
-                   type,
-                   aws_secret_name,
-                   aws_region,
-                   deactivated_ts
-            FROM SECRET_
-            WHERE id = ?
-        """.trimIndent()
+        private val COLUMNS_STR = columnsToString(COLUMNS)
 
-        private val SELECT_BY_HASH_KEY = """
-            SELECT id,
-                   name,
-                   type,
-                   aws_secret_name,
-                   aws_region,
-                   deactivated_ts
-            FROM SECRET_
-            WHERE hash_key = ? AND deactivated_ts IS NULL
-        """.trimIndent()
+        private val INSERT = insertSql("SECRET_", COLUMNS)
+
+
+        private val SELECT_BY_ID = "SELECT \n" +
+                "$COLUMNS_STR \n" +
+                "FROM SECRET_ \n" +
+                "WHERE id = ?"
+
+        private val SELECT_BY_HASH_KEY = "SELECT \n" +
+                "$COLUMNS_STR \n" +
+                "FROM SECRET_ \n" +
+                "WHERE hash_key = ? AND deactivated_ts IS NULL"
 
         private const val DEACTIVATE_BY_ID =
             "UPDATE SECRET_ SET deactivated_ts = CURRENT_TIMESTAMP() WHERE id = ?"

@@ -5,26 +5,20 @@ import io.qimia.uhrwerk.common.metastore.config.SourceResult
 import io.qimia.uhrwerk.common.metastore.config.SourceService
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
 import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
-import io.qimia.uhrwerk.common.metastore.model.SourceModel
+import io.qimia.uhrwerk.common.metastore.model.SourceModel2
 import io.qimia.uhrwerk.common.metastore.model.TableModel
-import io.qimia.uhrwerk.repo.SourceRepo
+import io.qimia.uhrwerk.repo.SourceRepo2
 import java.sql.SQLException
 
 class SourceDAO : SourceService {
     private val connService: ConnectionService = ConnectionDAO()
-    private val repo = SourceRepo()
+    private val repo = SourceRepo2()
 
 
-    override fun save(source: SourceModel, table: TableModel, overwrite: Boolean): SourceResult {
+    override fun save(source: SourceModel2, table: TableModel, overwrite: Boolean): SourceResult {
         val result = SourceResult()
         result.newResult = source
 
-        if (!table.partitioned && source.partitioned) {
-            result.isSuccess = false
-            result.message =
-                "An unpartitioned Table cannot have a partitioned Source. (The other way around it is possible)"
-            return result
-        }
         try {
             if (source.connection == null) {
                 throw NullPointerException(
@@ -45,7 +39,7 @@ class SourceDAO : SourceService {
                 source.connectionId = conn.id
             }
 
-            val oldSource: SourceModel? = getByHashKey(source)
+            val oldSource: SourceModel2? = getByHashKey(source)
             result.oldResult = oldSource
             if (!overwrite) {
                 if (oldSource != null) {
@@ -76,18 +70,18 @@ class SourceDAO : SourceService {
         return result
     }
 
-    private fun getByHashKey(source: SourceModel): SourceModel? =
+    private fun getByHashKey(source: SourceModel2): SourceModel2? =
         repo.getByHashKey(HashKeyUtils.sourceKey(source))
 
     override fun save(
-        sources: List<SourceModel>,
+        sources: List<SourceModel2>,
         table: TableModel,
         overwrite: Boolean
     ): List<SourceResult> {
         return sources.map { save(it, table, overwrite) }
     }
 
-    override fun getSourcesByTableId(tableId: Long): List<SourceModel> {
+    override fun getSourcesByTableId(tableId: Long): List<SourceModel2> {
         return repo.getSourcesByTableId(tableId)
     }
 }

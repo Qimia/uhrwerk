@@ -36,7 +36,6 @@ object TimeTools {
       case PartitionUnit.MINUTES => partitionTs.plusMinutes(partitionSize)
       case PartitionUnit.HOURS => partitionTs.plusHours(partitionSize)
       case PartitionUnit.DAYS => partitionTs.plusDays(partitionSize)
-      case PartitionUnit.WEEKS => partitionTs.plusDays(7 * partitionSize)
     }
   }
 
@@ -195,7 +194,6 @@ object TimeTools {
     val minutes = diff.toMinutes
 
     partitionUnit match {
-      case PartitionUnit.WEEKS => partitionTs.plusDays(days - (days % (7 * partitionSize)))
       case PartitionUnit.DAYS => partitionTs.plusDays(days - (days % partitionSize))
       case PartitionUnit.HOURS => partitionTs.plusHours(hours - (hours % partitionSize))
       case PartitionUnit.MINUTES => partitionTs.plusMinutes(minutes - (minutes % partitionSize))

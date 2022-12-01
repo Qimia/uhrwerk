@@ -17,7 +17,7 @@ data class TableModel(
     var partitionSize: Int? = null,
     var partitioned: Boolean = false,
     var dependencies: Array<DependencyModel>? = null,
-    var sources: Array<SourceModel>? = null,
+    var sources: Array<SourceModel2>? = null,
     var targets: Array<TargetModel>? = null,
     var description: String? = null,
     var deactivatedTs: LocalDateTime? = null,
