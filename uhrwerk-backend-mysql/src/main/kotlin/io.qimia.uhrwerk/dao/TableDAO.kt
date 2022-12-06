@@ -5,10 +5,7 @@ import io.qimia.uhrwerk.common.metastore.dependency.DependencyResult
 import io.qimia.uhrwerk.common.metastore.dependency.TableDependencyService
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResult
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResultSet
-import io.qimia.uhrwerk.common.metastore.model.DependencyModel
-import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
-import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType
-import io.qimia.uhrwerk.common.metastore.model.TableModel
+import io.qimia.uhrwerk.common.metastore.model.*
 import io.qimia.uhrwerk.common.model.*
 import io.qimia.uhrwerk.repo.TablePartition
 import io.qimia.uhrwerk.repo.TablePartitionRepo
@@ -38,8 +35,15 @@ class TableDAO : TableDependencyService, TableService {
         tableResult.newResult = table
         val oldTable = tableRepo.getByHashKey(HashKeyUtils.tableKey(table))
         try {
-            if (!overwrite) {
-                saveTablesArrays(table, tableResult, false)
+            if (!overwrite && oldTable != null) {
+
+                oldTable.sources =
+                    saveTableSources(oldTable.id!!, table.sources, tableResult, false)
+                oldTable.targets =
+                    saveTableTargets(oldTable.id!!, table.targets, tableResult, false)
+                oldTable.dependencies =
+                    saveTableDependencies(oldTable.id!!, table.dependencies, tableResult, false)
+
                 if (oldTable != null) {
                     tableResult.oldResult = oldTable
                     if (oldTable != table) {
@@ -60,6 +64,11 @@ class TableDAO : TableDependencyService, TableService {
                         tableResult.message = message
                         tableResult.isSuccess = false
                     }
+
+                    table.sources = oldTable.sources
+                    table.targets = oldTable.targets
+                    table.dependencies = oldTable.dependencies
+
                     return tableResult
                 }
                 tableResult.newResult = tableRepo.save(table)
@@ -67,7 +76,11 @@ class TableDAO : TableDependencyService, TableService {
                 if (oldTable != null)
                     tableRepo.deactivateById(oldTable.id!!)
                 tableResult.newResult = tableRepo.save(table)
-                saveTablesArrays(table, tableResult, true)
+
+                table.sources = saveTableSources(table.id!!, table.sources, tableResult, true)
+                table.targets = saveTableTargets(table.id!!, table.targets, tableResult, true)
+                table.dependencies =
+                    saveTableDependencies(table.id!!, table.dependencies, tableResult, true)
             }
         } catch (e: SQLException) {
             tableResult.isError = true
@@ -83,42 +96,54 @@ class TableDAO : TableDependencyService, TableService {
         return tableResult
     }
 
-    private fun saveTablesArrays(table: TableModel, tableResult: TableResult, overwrite: Boolean) {
-        if (table.targets != null && table.targets!!.isNotEmpty()) {
-            table.targets?.forEach { it.tableId = table.id }
-            val targetResult = targetService.save(table.targets!!.toList(), table.id, overwrite)
+    private fun saveTableTargets(
+        tableId: Long,
+        targets: Array<TargetModel>?,
+        tableResult: TableResult,
+        overwrite: Boolean
+    ): Array<TargetModel>? {
+        if (!targets.isNullOrEmpty()) {
+            targets.forEach { it.tableId = tableId }
+            val targetResult = targetService.save(targets.toList(), tableId, overwrite)
             tableResult.targetResult = targetResult
             if (targetResult.isSuccess) {
-                table.targets = targetResult.storedTargets
-            } else {
-                tableResult.isSuccess = false
-                return
+                return targetResult.storedTargets
             }
         }
-        if (table.dependencies != null && table.dependencies!!.isNotEmpty()) {
-            table.dependencies?.forEach { it.tableId = table.id }
-            val dependencyResult = dependencyDAO.save(table, overwrite)
+        return null
+    }
+
+    private fun saveTableDependencies(
+        tableId: Long,
+        dependencies: Array<DependencyModel>?,
+        tableResult: TableResult,
+        overwrite: Boolean
+    ): Array<DependencyModel>? {
+        if (!dependencies.isNullOrEmpty()) {
+            dependencies.forEach { it.tableId = tableId }
+            val dependencyResult = dependencyDAO.save(tableId, dependencies, overwrite)
             tableResult.dependencyResult = dependencyResult
             if (dependencyResult.isSuccess) {
-                table.dependencies = dependencyResult.dependenciesSaved
-            } else {
-                tableResult.isSuccess = false
-                return
+                return dependencyResult.dependenciesSaved
             }
         }
-        if (table.sources != null && table.sources!!.isNotEmpty()) {
-            table.sources?.forEach { it.tableId = table.id }
-            val sourceResults = sourceService.save(table.sources!!.toList(), table, overwrite)
+        return null
+    }
+
+
+    private fun saveTableSources(
+        tableId: Long,
+        sources: Array<SourceModel2>?,
+        tableResult: TableResult,
+        overwrite: Boolean
+    ): Array<SourceModel2>? {
+        if (!sources.isNullOrEmpty()) {
+            sources.forEach { it.tableId = tableId }
+            val sourceResults = sourceService.save(sources.toList(), overwrite)
             tableResult.sourceResults = sourceResults.toTypedArray()
-            for (i in sourceResults.indices) {
-                if (sourceResults[i].isSuccess) {
-                    table.sources!![i] = sourceResults[i].newResult
-                } else {
-                    tableResult.isSuccess = false
-                    return
-                }
-            }
+            return sourceResults.filter { it.isSuccess }.map { it.newResult }.toTypedArray()
         }
+        return null
     }
 
     /**
@@ -338,13 +363,15 @@ class TableDAO : TableDependencyService, TableService {
                     // Is the found dependency-partition's startTS equal or after the endpoint of that partition
                     val depPartitionSnapshotTime = depPartition.partitionTs
                     val tableChronoUnit = ChronoUnit.valueOf(table.partitionUnit!!.name)
-                    val tableDuration = Duration.of(table.partitionSize!!.toLong(), tableChronoUnit)
+                    val tableDuration =
+                        Duration.of(table.partitionSize!!.toLong(), tableChronoUnit)
                     for (i in requestedPartitionTs!!.indices) {
                         val dependencyResult =
                             DependencyResult()
                         dependencyResult.connection = connectionsMap[spec.connectionId]
                         dependencyResult.dependency = dependenciesMap[spec.dependencyId]
-                        val requestedPartitionEndTs = requestedPartitionTs!![i].plus(tableDuration)
+                        val requestedPartitionEndTs =
+                            requestedPartitionTs!![i].plus(tableDuration)
                         if (depPartitionSnapshotTime!!.isEqual(requestedPartitionEndTs) || depPartitionSnapshotTime.isAfter(
                                 requestedPartitionEndTs
                             )
@@ -451,7 +478,8 @@ class TableDAO : TableDependencyService, TableService {
                     tablePartitionResult.isResolved = true
                     tablePartitionResult.resolvedDependencies = results.toTypedArray()
                 } else {
-                    tablePartitionResult.resolvedDependencies = resolvedDependencies.toTypedArray()
+                    tablePartitionResult.resolvedDependencies =
+                        resolvedDependencies.toTypedArray()
                     tablePartitionResult.failedDependencies = failedDependencies.toTypedArray()
                 }
                 if (processedTs.contains(partitionTs)) {

@@ -1,13 +1,13 @@
 package io.qimia.uhrwerk.config.builders;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.exc.StreamReadException;
-import com.fasterxml.jackson.databind.DatabindException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel;
 import io.qimia.uhrwerk.common.metastore.model.DagModel;
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel;
 import io.qimia.uhrwerk.common.metastore.model.MetastoreModel;
 import io.qimia.uhrwerk.common.metastore.model.SecretModel;
-import io.qimia.uhrwerk.common.metastore.model.SourceModel;
 import io.qimia.uhrwerk.common.metastore.model.SourceModel2;
 import io.qimia.uhrwerk.common.metastore.model.TableModel;
 import io.qimia.uhrwerk.common.model.TargetModel;
@@ -101,8 +101,9 @@ public class YamlConfigReader {
   }
 
   public SecretModel[] getModelSecrets(Secret[] secrets) {
-    if (secrets != null && secrets.length > 0)
+    if (secrets != null && secrets.length > 0) {
       return Arrays.stream(secrets).map(ModelMapper::toSecret).toArray(SecretModel[]::new);
+    }
     return null;
   }
 
@@ -125,20 +126,23 @@ public class YamlConfigReader {
   }
 
   private static String getSecretValue(String dbUser, Map<String, Secret> secretMap) {
-    if (dbUser != null && !dbUser.isEmpty())
+    if (dbUser != null && !dbUser.isEmpty()) {
       if (dbUser.startsWith(SECRET)) {
         String scrName = dbUser.substring(SECRET.length());
         Secret secret = secretMap.get(scrName);
-        if (secret == null)
+        if (secret == null) {
           throw new IllegalArgumentException(
               String.format("The secret with name: %s is not specified in config.", scrName));
+        }
         AWSSecret awsSecret = (AWSSecret) secret;
         AWSSecretProvider provider = new AWSSecretProvider(awsSecret.getAwsRegion());
         String scrValue = provider.secretValue(awsSecret.getAwsSecretName());
-        if (scrValue == null)
+        if (scrValue == null) {
           throw new IllegalArgumentException(String.format("Secret not found in AWS %s ", secret));
+        }
         return scrValue;
       }
+    }
     return null;
   }
 
@@ -189,7 +193,7 @@ public class YamlConfigReader {
     Env env;
     try {
       env = objectMapper().readValue(stream, Env.class);
-    return getModelMetastore(env.getMetastore(), env.getSecrets());
+      return getModelMetastore(env.getMetastore(), env.getSecrets());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -205,9 +209,11 @@ public class YamlConfigReader {
           "Something went wrong with reading the config file. "
               + "Either it doesn't exist or the structure is wrong?",
           e);
-    } catch (StreamReadException e) {
+    } catch (JsonMappingException e) {
       throw new RuntimeException(e);
-    } catch (DatabindException e) {
+    } catch (JsonParseException e) {
+      throw new RuntimeException(e);
+    } catch (StreamReadException e) {
       throw new RuntimeException(e);
     } catch (IOException e) {
       throw new RuntimeException(e);

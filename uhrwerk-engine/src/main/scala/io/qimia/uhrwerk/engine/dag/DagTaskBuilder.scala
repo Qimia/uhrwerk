@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.engine.dag
 import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType
 import java.time.LocalDateTime
 import io.qimia.uhrwerk.common.tools.TimeTools
-import io.qimia.uhrwerk.engine.Environment.{TableIdent, tableCleaner}
+import io.qimia.uhrwerk.engine.Environment.{TableIdent}
 import io.qimia.uhrwerk.engine.tools.TimeHelper
 import io.qimia.uhrwerk.engine.{Environment, TableWrapper}
 
@@ -56,7 +56,7 @@ class DagTaskBuilder(environment: Environment) {
     val callTime = LocalDateTime.now()
 
     def recursiveBuild(aTable: TableWrapper, partitionTimes: List[LocalDateTime], dept: Int = 0): List[DagTask] = {
-      val dependencyTables = tableCleaner(aTable.wrappedTable).getDependencies
+      val dependencyTables = aTable.wrappedTable.getDependencies
         .map(d => {
           val ident    = TableIdent(d.getArea, d.getVertical, d.getTableName, d.getVersion)
           val depTable = environment.getTable(ident).get

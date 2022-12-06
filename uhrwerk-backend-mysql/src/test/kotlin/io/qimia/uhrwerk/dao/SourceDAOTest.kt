@@ -50,7 +50,7 @@ class SourceDAOTest {
             TestData.connection("Connection-SourceDAOTest")
         )
 
-        val result = service.save(source, table, true)
+        val result = service.save(source, true)
 
         LOGGER.info(result.toString())
 
@@ -80,7 +80,7 @@ class SourceDAOTest {
         )
         src1.connection = connection
 
-        val resultSame = service.save(src1, table, false)
+        val resultSame = service.save(src1, false)
         Assertions.assertTrue(resultSame.isSuccess)
         Assertions.assertFalse(resultSame.isError)
         Assertions.assertNotNull(resultSame.newResult)
@@ -99,7 +99,7 @@ class SourceDAOTest {
         src2.connection = connection
         src2.parallelPartitionColumn = "radom_column"
 
-        val resultDifferent = service.save(src2, table, false)
+        val resultDifferent = service.save(src2, false)
         LOGGER.info(resultDifferent.toString())
         Assertions.assertFalse(resultDifferent.isError)
         Assertions.assertFalse(resultDifferent.isSuccess)
@@ -116,7 +116,7 @@ class SourceDAOTest {
             connection!!
         )
 
-        val result = service.save(source, table, true)
+        val result = service.save(source, true)
 
         Assertions.assertTrue(result.isSuccess)
         Assertions.assertFalse(result.isError)
@@ -130,7 +130,7 @@ class SourceDAOTest {
 
         source1.autoLoad = true
 
-        val resultChanged = service.save(source1, table, true)
+        val resultChanged = service.save(source1, true)
 
         Assertions.assertTrue(resultChanged.isSuccess)
         Assertions.assertFalse(resultChanged.isError)
@@ -157,7 +157,7 @@ class SourceDAOTest {
             table!!.id!!,
             -100
         )
-        val result = service.save(source, table, true)
+        val result = service.save(source, true)
 
         Assertions.assertFalse(result.isSuccess)
         Assertions.assertTrue(result.isError)
@@ -178,7 +178,7 @@ class SourceDAOTest {
             -100
         )
         source.connection = connection1
-        val result = service.save(source, table, true)
+        val result = service.save(source, true)
 
         Assertions.assertFalse(result.isSuccess)
         Assertions.assertTrue(result.isError)
@@ -197,7 +197,7 @@ class SourceDAOTest {
             -100
         )
         source.connection = connection1
-        val result = service.save(source, table, true)
+        val result = service.save(source, true)
 
         Assertions.assertTrue(result.isSuccess)
         Assertions.assertFalse(result.isError)
@@ -217,7 +217,7 @@ class SourceDAOTest {
         Truth.assertThat(source.connectionId).isNotEqualTo(connection!!.id)
         //connection instead of connectionId
         source.connection = connection
-        val result = service.save(source, table, true)
+        val result = service.save(source, true)
 
         Assertions.assertFalse(result.isError)
         Assertions.assertTrue(result.isSuccess)

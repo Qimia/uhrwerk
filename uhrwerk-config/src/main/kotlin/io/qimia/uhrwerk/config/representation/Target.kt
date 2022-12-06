@@ -1,9 +1,11 @@
 package io.qimia.uhrwerk.config.representation
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.qimia.uhrwerk.config.builders.ConfigException
 import java.util.*
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 class Target(
     @JsonProperty("connection_name")
     var connectionName: String? = null,

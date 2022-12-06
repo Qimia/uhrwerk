@@ -83,4 +83,8 @@ data class TableModel(
         result = 31 * result + (updatedTs?.hashCode() ?: 0)
         return result
     }
+
+    override fun toString(): String {
+        return "TableModel(id=$id, area=$area, vertical=$vertical, name=$name, version=$version, className=$className, parallelism=$parallelism, maxBulkSize=$maxBulkSize, partitionUnit=$partitionUnit, partitionSize=$partitionSize, partitioned=$partitioned, dependencies=${dependencies?.contentToString()}, sources=${sources?.contentToString()}, targets=${targets?.contentToString()}, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
+    }
 }

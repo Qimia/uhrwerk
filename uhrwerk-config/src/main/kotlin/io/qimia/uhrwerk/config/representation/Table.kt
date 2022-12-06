@@ -1,8 +1,10 @@
 package io.qimia.uhrwerk.config.representation
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.qimia.uhrwerk.config.builders.ConfigException
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class Table(
     var area: String? = null,
     var vertical: String? = null,

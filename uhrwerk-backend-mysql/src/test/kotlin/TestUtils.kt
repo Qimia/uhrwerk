@@ -6,12 +6,12 @@ import org.testcontainers.containers.MySQLContainer
 object TestUtils {
     fun mysqlContainer(): MySQLContainer<*> = MySQLContainer("mysql:8.0.31")
         .withClasspathResourceMapping(
-            "create_metastore_db_mysql.sql",
+            "metastore_ddl/create_metastore_db_mysql.sql",
             "/docker-entrypoint-initdb.d/create_metastore_db_mysql.sql",
             BindMode.READ_ONLY
         )
         .withClasspathResourceMapping(
-            "metastore_ddl_mysql.sql",
+            "metastore_ddl/metastore_ddl_mysql.sql",
             "/docker-entrypoint-initdb.d/metastore_ddl_mysql.sql",
             BindMode.READ_ONLY
         )

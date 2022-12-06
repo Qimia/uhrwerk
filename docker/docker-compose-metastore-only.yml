@@ -17,7 +17,8 @@ services:
     ports:
       - 53306:3306
     volumes:
-      - ./mysql_datadir:/var/lib/mysql
+      - ${PWD}/../uhrwerk-backend-mysql/src/main/resources/metastore_ddl:/docker-entrypoint-initdb.d/
+      - ${PWD}/mysql_datadir:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: "61ePGqq20u9TZjbNhf0"
       MYSQL_DATABASE: "UHRWERK_METASTORE"

@@ -67,8 +67,8 @@ class PartitionRepo : BaseRepo<Partition>() {
     ): PreparedStatement {
         insert.setLong(1, entity.targetId!!)
         insert.setTimestamp(2, Timestamp.valueOf(entity.partitionTs))
-        insert.setBoolean(3, entity.partitioned!!)
-        insert.setBoolean(4, entity.bookmarked!!)
+        insert.setBoolean(3, entity.partitioned)
+        insert.setBoolean(4, entity.bookmarked)
         insert.setString(5, entity.maxBookmark)
         return insert
     }

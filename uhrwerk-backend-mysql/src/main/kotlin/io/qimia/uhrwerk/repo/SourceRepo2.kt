@@ -56,15 +56,15 @@ class SourceRepo2 : BaseRepo<SourceModel2>() {
         } else {
             insert.setNull(6, Types.VARCHAR)
         }
-        insert.setInt(7, source.intervalTempSize!!)
+        insert.setInt(7, source.intervalTempSize)
         insert.setString(8, source.intervalColumn)
         insert.setString(9, source.deltaColumn)
         insert.setString(10, source.selectQuery)
-        insert.setBoolean(11, source.parallelLoad!!)
+        insert.setBoolean(11, source.parallelLoad)
         insert.setString(12, source.parallelPartitionQuery)
         insert.setString(13, source.parallelPartitionColumn)
         insert.setInt(14, source.parallelPartitionNum!!)
-        insert.setBoolean(15, source.autoLoad!!)
+        insert.setBoolean(15, source.autoLoad)
         insert.setLong(16, HashKeyUtils.sourceKey(source))
         return insert
     }

@@ -12,10 +12,18 @@ import scala.io.Source
 object JDBCTools {
   private val logger: Logger = Logger.getLogger(this.getClass)
 
-  def addIndexToTable(connection: ConnectionModel, tableSchema: String, tableName: String, timeColumnJDBC: String): Unit = {
+  def addIndexToTable(
+      connection: ConnectionModel,
+      tableSchema: String,
+      tableName: String,
+      timeColumnJDBC: String
+  ): Unit = {
     try {
       val jdbcConnection = getJDBCConnection(connection)
-      val statement = jdbcConnection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)
+      val statement = jdbcConnection.createStatement(
+        ResultSet.TYPE_SCROLL_INSENSITIVE,
+        ResultSet.CONCUR_READ_ONLY
+      )
       val indexName = s"index_${tableSchema}_${tableName}_$timeColumnJDBC"
 
       // todo add support for dbs other than mysql
@@ -32,7 +40,9 @@ object JDBCTools {
         false
       }
       if (!isIndexThere) {
-        statement.execute(s"CREATE INDEX $indexName ON `$tableSchema`.`$tableName`($timeColumnJDBC)")
+        statement.execute(
+          s"CREATE INDEX $indexName ON `$tableSchema`.`$tableName`($timeColumnJDBC)"
+        )
       }
       jdbcConnection.close()
     } catch {
@@ -56,13 +66,15 @@ object JDBCTools {
     jdbcConnection.close()
   }
 
-  /**
-   * Creates a new database using the specified connection and database name.
-   *
-   * @param connection   JDBC Connection
-   * @param databaseName Database name
-   */
-  def createJDBCDatabase(connection: ConnectionModel, databaseName: String): Unit = {
+  /** Creates a new database using the specified connection and database name.
+    *
+    * @param connection   JDBC Connection
+    * @param databaseName Database name
+    */
+  def createJDBCDatabase(
+      connection: ConnectionModel,
+      databaseName: String
+  ): Unit = {
     try {
       val jdbcConnection = getJDBCConnection(connection)
       val statement = jdbcConnection.createStatement
@@ -73,12 +85,11 @@ object JDBCTools {
     }
   }
 
-  /**
-   * Creates a JDBC connection.
-   *
-   * @param connection Connection information
-   * @return The created SQL connection
-   */
+  /** Creates a JDBC connection.
+    *
+    * @param connection Connection information
+    * @return The created SQL connection
+    */
   def getJDBCConnection(connection: ConnectionModel): sql.Connection = {
     val url = connection.getJdbcUrl
     val username = connection.getJdbcUser
@@ -86,13 +97,15 @@ object JDBCTools {
     DriverManager.getConnection(url, username, password)
   }
 
-  /**
-   * Removes a database using the specified connection and database name.
-   *
-   * @param connection   Connection information
-   * @param databaseName Database name
-   */
-  def dropJDBCDatabase(connection: ConnectionModel, databaseName: String): Unit = {
+  /** Removes a database using the specified connection and database name.
+    *
+    * @param connection   Connection information
+    * @param databaseName Database name
+    */
+  def dropJDBCDatabase(
+      connection: ConnectionModel,
+      databaseName: String
+  ): Unit = {
     try {
       val jdbcConnection = getJDBCConnection(connection)
       val statement = jdbcConnection.createStatement
@@ -103,21 +116,20 @@ object JDBCTools {
     }
   }
 
-  /**
-   * Fills in query's parameters if defined.
-   *
-   * @param queryTemplate Query Template.
-   * @param lowerBound    Optional lower bound.
-   * @param upperBound    Optional upper bound.
-   * @param path          Optional path.
-   * @return The enriched query.
-   */
+  /** Fills in query's parameters if defined.
+    *
+    * @param queryTemplate Query Template.
+    * @param lowerBound    Optional lower bound.
+    * @param upperBound    Optional upper bound.
+    * @param path          Optional path.
+    * @return The enriched query.
+    */
   def fillInQueryParameters(
-                             queryTemplate: String,
-                             lowerBound: Option[LocalDateTime] = Option.empty,
-                             upperBound: Option[LocalDateTime] = Option.empty,
-                             path: Option[String] = Option.empty
-                           ): String = {
+      queryTemplate: String,
+      lowerBound: Option[LocalDateTime] = Option.empty,
+      upperBound: Option[LocalDateTime] = Option.empty,
+      path: Option[String] = Option.empty
+  ): String = {
     var query = queryTemplate
     if (lowerBound.isDefined) {
       query = query.replace(
@@ -137,19 +149,18 @@ object JDBCTools {
     query.replace(";", "")
   }
 
-  /**
-   * Fills in query's parameters if defined.
-   *
-   * @param queryTemplate   Query Template.
-   * @param lastMaxBookmark Optional Last (delta ingestion) Max Bookmark Value.
-   * @param path            Optional path.
-   * @return The enriched query.
-   */
+  /** Fills in query's parameters if defined.
+    *
+    * @param queryTemplate   Query Template.
+    * @param lastMaxBookmark Optional Last (delta ingestion) Max Bookmark Value.
+    * @param path            Optional path.
+    * @return The enriched query.
+    */
   def fillInQueryBookmarkParameters(
-                                     queryTemplate: String,
-                                     lastMaxBookmark: Option[String] = Option.empty,
-                                     path: Option[String] = Option.empty
-                                   ): String = {
+      queryTemplate: String,
+      lastMaxBookmark: Option[String] = Option.empty,
+      path: Option[String] = Option.empty
+  ): String = {
     var query = queryTemplate
     if (lastMaxBookmark.isDefined) {
       query = query.replace(
@@ -163,23 +174,22 @@ object JDBCTools {
     query.replace(";", "")
   }
 
-  /**
-   * Creates a query to obtain the min and max value of the specified partition column.
-   *
-   * @param lowerBound             Optional lower bound
-   * @param upperBound             Optional upper bound
-   * @param partitionColumn        Partition column, e.g. id
-   * @param partitionQueryTemplate The partition query template
-   * @param path                   Optional path with format schema.table
-   * @return
-   */
+  /** Creates a query to obtain the min and max value of the specified partition column.
+    *
+    * @param lowerBound             Optional lower bound
+    * @param upperBound             Optional upper bound
+    * @param partitionColumn        Partition column, e.g. id
+    * @param partitionQueryTemplate The partition query template
+    * @param path                   Optional path with format schema.table
+    * @return
+    */
   def minMaxQuery(
-                   lowerBound: Option[LocalDateTime],
-                   upperBound: Option[LocalDateTime],
-                   partitionColumn: String,
-                   partitionQueryTemplate: String,
-                   path: Option[String] = Option.empty
-                 ): String = {
+      lowerBound: Option[LocalDateTime],
+      upperBound: Option[LocalDateTime],
+      partitionColumn: String,
+      partitionQueryTemplate: String,
+      path: Option[String] = Option.empty
+  ): String = {
     val query =
       fillInQueryParameters(
         partitionQueryTemplate,
@@ -191,23 +201,22 @@ object JDBCTools {
       s"FROM ($query) AS partition_query_table) AS tmp_table"
   }
 
-  /**
-   * Creates a query to obtain the min and max value of the specified partition column.
-   *
-   * @param lowerBound             Optional lower bound
-   * @param upperBound             Optional upper bound
-   * @param partitionColumn        Partition column, e.g. id
-   * @param partitionQueryTemplate The partition query template
-   * @param path                   Optional path with format schema.table
-   * @return
-   */
+  /** Creates a query to obtain the min and max value of the specified partition column.
+    *
+    * @param lowerBound             Optional lower bound
+    * @param upperBound             Optional upper bound
+    * @param partitionColumn        Partition column, e.g. id
+    * @param partitionQueryTemplate The partition query template
+    * @param path                   Optional path with format schema.table
+    * @return
+    */
   def minMaxBookmarkQuery(
-                           lastMaxBookmark: Option[String],
-                           bookmarkColumn: String,
-                           partitionColumn: String,
-                           partitionQueryTemplate: String,
-                           path: Option[String] = Option.empty
-                         ): String = {
+      lastMaxBookmark: Option[String],
+      bookmarkColumn: String,
+      partitionColumn: String,
+      partitionQueryTemplate: String,
+      path: Option[String] = Option.empty
+  ): String = {
     val query =
       fillInQueryBookmarkParameters(
         partitionQueryTemplate,
@@ -223,27 +232,26 @@ object JDBCTools {
       s"AS tmp_table"
   }
 
-  /**
-   * Returns the min max values of the partition column using the partition query.
-   *
-   * @param sparkSessession Spark Session
-   * @param connection      Connection information
-   * @param partitionColumn Partition column
-   * @param partitionQuery  Partition query
-   * @param lowerBound      Optional lower bound
-   * @param upperBound      Optional upper bound
-   * @param path            Optional path
-   * @return Min max values as Long
-   */
+  /** Returns the min max values of the partition column using the partition query.
+    *
+    * @param sparkSessession Spark Session
+    * @param connection      Connection information
+    * @param partitionColumn Partition column
+    * @param partitionQuery  Partition query
+    * @param lowerBound      Optional lower bound
+    * @param upperBound      Optional upper bound
+    * @param path            Optional path
+    * @return Min max values as Long
+    */
   def minMaxQueryIds(
-                      sparkSessession: SparkSession,
-                      connection: ConnectionModel,
-                      partitionColumn: String,
-                      partitionQuery: String,
-                      lowerBound: Option[LocalDateTime] = Option.empty,
-                      upperBound: Option[LocalDateTime] = Option.empty,
-                      path: Option[String] = Option.empty
-                    ): (Long, Long) = {
+      sparkSessession: SparkSession,
+      connection: ConnectionModel,
+      partitionColumn: String,
+      partitionQuery: String,
+      lowerBound: Option[LocalDateTime] = Option.empty,
+      upperBound: Option[LocalDateTime] = Option.empty,
+      path: Option[String] = Option.empty
+  ): (Any, Any) = {
     val partitionQueryFilled =
       minMaxQuery(lowerBound, upperBound, partitionColumn, partitionQuery, path)
     val dbConfig: DataFrameReader = getDbConfig(sparkSessession, connection)
@@ -253,6 +261,8 @@ object JDBCTools {
     try {
       val row = dbConfig.load().collect()(0)
       row.get(0) match {
+        case _: java.sql.Timestamp =>
+          (row.getTimestamp(0), row.getTimestamp(1))
         case _: lang.Long =>
           (row.getLong(0), row.getLong(1))
         case _: String =>
@@ -271,40 +281,37 @@ object JDBCTools {
     }
   }
 
-  /**
-   * Creates a DataFrameReader from the given jdbc connection
-   *
-   * @param sparkSession Spark session
-   * @param connection   Connection information
-   * @return DataFrameReader
-   */
+  /** Creates a DataFrameReader from the given jdbc connection
+    *
+    * @param sparkSession Spark session
+    * @param connection   Connection information
+    * @return DataFrameReader
+    */
   def getDbConfig(
-                   sparkSession: SparkSession,
-                   connection: ConnectionModel
-                 ): DataFrameReader = {
+      sparkSession: SparkSession,
+      connection: ConnectionModel
+  ): DataFrameReader = {
     sparkSession.read
       .format("jdbc")
       .option("url", connection.getJdbcUrl)
       .option("driver", connection.getJdbcDriver)
       .option("user", connection.getJdbcUser)
       .option("password", connection.getJdbcPass)
-    //connection.getJdbcPass.startsWith("aws_secret:")
   }
 
-  /**
-   * Creates a query from the template and optional lower and upper bounds.
-   *
-   * @param queryTemplate Query template
-   * @param lowerBound    Optional lower bound
-   * @param upperBound    Optional upper bound
-   * @return The final query
-   */
+  /** Creates a query from the template and optional lower and upper bounds.
+    *
+    * @param queryTemplate Query template
+    * @param lowerBound    Optional lower bound
+    * @param upperBound    Optional upper bound
+    * @return The final query
+    */
   def createSelectQuery(
-                         queryTemplate: String,
-                         lowerBound: Option[LocalDateTime] = Option.empty,
-                         upperBound: Option[LocalDateTime] = Option.empty,
-                         path: Option[String] = Option.empty
-                       ): String = {
+      queryTemplate: String,
+      lowerBound: Option[LocalDateTime] = Option.empty,
+      upperBound: Option[LocalDateTime] = Option.empty,
+      path: Option[String] = Option.empty
+  ): String = {
     val query =
       fillInQueryParameters(queryTemplate, lowerBound, upperBound, path)
     s"($query) AS tmp_table"

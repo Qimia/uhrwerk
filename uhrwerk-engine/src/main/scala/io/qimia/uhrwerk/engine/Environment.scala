@@ -67,20 +67,6 @@ object Environment {
     new Environment(MetaStore.build(metaInfo), frameManager: FrameManager)
   }
 
-  /** Utility cleaner class that makes sure the sources/dependencies are initialized
-    * @param table table to clean
-    * @return cleaned table
-    */
-  def tableCleaner(table: TableModel): TableModel = {
-    if (table.getDependencies == null) {
-      table.setDependencies(new Array[DependencyModel](0))
-    }
-    if (table.getSources == null) {
-      table.setSources(new Array[SourceModel2](0))
-    }
-    table
-  }
-
   def getTableIdent(table: TableModel): TableIdent =
     TableIdent(
       table.getArea,
@@ -233,8 +219,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
       userFunc: TaskInput => TaskOutput,
       overwrite: Boolean = false
   ): Option[TableWrapper] = {
-    val cleanedTable = Environment.tableCleaner(tableConfig)
-    val storeRes = store.tableService.save(cleanedTable, overwrite)
+    val storeRes = store.tableService.save(tableConfig, overwrite)
     if (!storeRes.isSuccess) {
       // TODO: Expand the handling of store failures
       reportProblems(storeRes)

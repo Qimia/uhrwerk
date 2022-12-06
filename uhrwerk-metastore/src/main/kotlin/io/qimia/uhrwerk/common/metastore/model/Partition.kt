@@ -8,9 +8,9 @@ data class Partition(
     var targetId: Long? = null,
     var partitionTs: LocalDateTime? = null,
     var partitionUnit: PartitionUnit? = null,
-    var partitionSize: Int? = null,
-    var partitioned: Boolean? = null,
-    var bookmarked: Boolean? = null,
+    var partitionSize: Int = 0,
+    var partitioned: Boolean = false,
+    var bookmarked: Boolean = false,
     var maxBookmark: String? = null,
     var createdTs: Timestamp? = null,
     var updatedTs: Timestamp? = null

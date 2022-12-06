@@ -1,0 +1,21 @@
+- name: "yelp_mysql"
+  type: jdbc
+  jdbc_url: 'jdbc:mysql://127.0.0.1:53306/yelp_db'
+  jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+  user: root
+  password: 61ePGqq20u9TZjbNhf0
+
+- name: "local_fs_lake"
+  type: file
+  path: 'uhrwerk-example/example_datalake'
+
+- name: "local_fs_source"
+  type: file
+  path: 'uhrwerk-example/example_dataset'
+
+- name: "yelp_dwh"
+  type: jdbc
+  jdbc_url: 'jdbc:mysql://127.0.0.1:53306'
+  jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+  user: root
+  password: 61ePGqq20u9TZjbNhf0

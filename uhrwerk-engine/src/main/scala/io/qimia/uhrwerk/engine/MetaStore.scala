@@ -2,7 +2,9 @@ package io.qimia.uhrwerk.engine
 
 import io.qimia.uhrwerk.common.metastore.config._
 import io.qimia.uhrwerk.common.metastore.dependency.TableDependencyService
-import io.qimia.uhrwerk.common.metastore.model.{MetastoreModel => MetastoreConnInfo}
+import io.qimia.uhrwerk.common.metastore.model.{
+  MetastoreModel => MetastoreConnInfo
+}
 import io.qimia.uhrwerk.dao._
 import io.qimia.uhrwerk.repo.HikariCPDataSource
 
@@ -15,14 +17,11 @@ object MetaStore {
     * @return engine metastore
     */
   def build(connectionInfo: MetastoreConnInfo): MetaStore = {
-    Class.forName(connectionInfo.getJdbc_driver)
-
     HikariCPDataSource.initConfig(
       connectionInfo.getJdbc_url,
       connectionInfo.getUser,
       connectionInfo.getPass
     )
-
     val tableDao = new TableDAO()
     MetaStore(
       new ConnectionDAO(),

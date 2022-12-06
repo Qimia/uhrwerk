@@ -20,16 +20,12 @@ tables:
     class_name: "load.class.name"
     parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
     max_bulk_size: 12
-
-    partition:
-      unit: "hours"
-      size: 4
-
     sources:
       - connection_name: jdbc_mysql_conn_1
         path: source_table_a  # On DB
         format: "jdbc"
         version: 1
+        ingestion_mode: "all"
 
         parallel_load:
           query: "SELECT id FROM <path> WHERE created_at >= '<lower_bound>' and created_at \\< '<upper_bound>'"
@@ -39,21 +35,19 @@ tables:
         select:
           query: "config/single_source_table/table_test_2_select_query.sql"
           column: "created_at"
+        auto_load: true
 
     targets:
       - connection_name: s3_dummy_conn_01
+        partition_column: 'market'
         format: "parquet"
 
   - area: processing
-    vertical: some_biz_domain
+    vertical: rrcm
     table: source_table_a
     version: "1.0"
     parallelism: 10   # Batches at the same time / 0 & 1 means single run at a time
     max_bulk_size: 12
-
-    partition:
-      unit: "hours"
-      size: 4
 
     dependencies:
       - ref: "staging.some_biz_domain.source_table_a:1.0"
@@ -62,6 +56,8 @@ tables:
           type: "identity"
           partition:
             size: 4
+    transformation:
+      sql: transformation.sql
 
     targets:
       - connection_name: s3_dummy_conn_01

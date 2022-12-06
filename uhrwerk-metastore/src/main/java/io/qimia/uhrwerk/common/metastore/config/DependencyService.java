@@ -9,12 +9,14 @@ public interface DependencyService {
   /**
    * Save all dependencies for a given table
    *
-   * @param table the table
+   * @param tableId    the table ID
    * @param overwrite overwrite the previously stored dependencies or not
    * @return DependencyStoreResult object with stored objects, info about success, exceptions and
-   *     other results
+   * other results
    */
-  DependencyStoreResult save(TableModel table, boolean overwrite);
+  DependencyStoreResult save(Long tableId,
+      DependencyModel[] dependencies,
+      boolean overwrite);
 
   /**
    * Retrieve all stored dependencies for a given table

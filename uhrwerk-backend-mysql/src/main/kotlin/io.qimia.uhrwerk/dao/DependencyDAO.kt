@@ -164,12 +164,16 @@ class DependencyDAO() : DependencyService {
      * @return DependencyStoreResult object with stored objects, info about success, exceptions and
      * other results
      */
-    override fun save(table: TableModel, overwrite: Boolean): DependencyStoreResult {
+    override fun save(
+        tableId: Long,
+        dependencies: Array<DependencyModel>?,
+        overwrite: Boolean
+    ): DependencyStoreResult {
         // Assumes that new version means new tableId and thus any dependencies for the old version
         // won't be found
         val result = DependencyStoreResult()
 
-        val depTableTargets = table.dependencies!!.flatMap { dep ->
+        val depTableTargets = dependencies!!.flatMap { dep ->
             val tab = tableRepo.getByHashKey(HashKeyUtils.tableKey(dep))
             targetRepo.getByTableIdFormat(tab!!.id!!, dep.format!!)
                 .map { tar -> Triple(dep, tab, tar) }
@@ -186,7 +190,7 @@ class DependencyDAO() : DependencyService {
 
         if (!overwrite) {
             // check if there are stored dependencies and if they are correct
-            val checkDeps = checkExistingDependencies(table.id!!, dependencies)
+            val checkDeps = checkExistingDependencies(tableId, dependencies)
             if (checkDeps.found && !checkDeps.correct) {
                 result.isSuccess = false
                 result.isError = false
@@ -218,48 +222,48 @@ class DependencyDAO() : DependencyService {
                 "Missing tables: " + tableSearchRes.missingNames.toString() + " (based on id)"
             return result
         }
-        if (table.partitioned) {
-            // Check dependency sizes (abort if size does not match)
-            val sizeTestResult = checkPartitionSizes(
-                dependencies,
-                table.partitionUnit,
-                table.partitionSize!!,
-                tableSearchRes.foundTables
-            )
-            if (!sizeTestResult.success) {
-                result.isSuccess = false
-                result.isError = false
-                result.message = String.format(
-                    "Tables %s have the wrong partition duration",
-                    sizeTestResult.badTableNames.joinToString()
-                )
-                return result
-            }
-        } else {
-            // Check if there are any dependencies which have a transformation (and/or are themselves
-            // partitioned)
-            var problem = false
-            val problemDependencies = ArrayList<String>()
-            val tablePartitionLookup = tableSearchRes.foundTables!!.associateBy { it.tableId }
-            for (checkDep in dependencies) {
-                val connectedTable = tablePartitionLookup[checkDep.dependencyTableId]
-            }
-            if (problem) {
-                result.isSuccess = false
-                result.isError = false
-                result.message = "Tables " + java.lang.String.join(
-                    ", ",
-                    problemDependencies
-                ) + " have a partitioning problem"
-                return result
-            }
+        //if (table.partitioned) {
+        // Check dependency sizes (abort if size does not match)
+//            val sizeTestResult = checkPartitionSizes(
+//                dependencies,
+//                table.partitionUnit,
+//                table.partitionSize!!,
+//                tableSearchRes.foundTables
+//            )
+//            if (!sizeTestResult.success) {
+//                result.isSuccess = false
+//                result.isError = false
+//                result.message = String.format(
+//                    "Tables %s have the wrong partition duration",
+//                    sizeTestResult.badTableNames.joinToString()
+//                )
+//                return result
+//            }
+//        } else {
+        // Check if there are any dependencies which have a transformation (and/or are themselves
+        // partitioned)
+        var problem = false
+        val problemDependencies = ArrayList<String>()
+        val tablePartitionLookup = tableSearchRes.foundTables!!.associateBy { it.tableId }
+        for (checkDep in dependencies) {
+            val connectedTable = tablePartitionLookup[checkDep.dependencyTableId]
         }
+        if (problem) {
+            result.isSuccess = false
+            result.isError = false
+            result.message = "Tables " + java.lang.String.join(
+                ", ",
+                problemDependencies
+            ) + " have a partitioning problem"
+            return result
+        }
+        //}
         // If it is a table without partitioning, the fact that they exist should be enough
 
         // Delete all old dependencies (in case of overwrite) and insert new list
         try {
             if (overwrite) {
-                deactivateByTableId(table.id!!)
+                deactivateByTableId(tableId!!)
             }
             result.dependenciesSaved = dependencyRepo.save(dependencies.toList())?.toTypedArray()
             result.isSuccess = true

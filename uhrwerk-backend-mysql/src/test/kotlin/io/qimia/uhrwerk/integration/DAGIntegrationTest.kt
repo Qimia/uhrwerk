@@ -58,6 +58,7 @@ internal class DAGIntegrationTest {
         assertThat(dag.tables!![1].dependencies?.toList()).hasSize(1)
 
         val tableResults = dag.tables?.map { tableService.save(it, true) }
+        tableResults?.forEach { LOGGER.info(it.toString()) }
         tableResults?.forEach { assertThat(it.isSuccess).isTrue() }
     }
 

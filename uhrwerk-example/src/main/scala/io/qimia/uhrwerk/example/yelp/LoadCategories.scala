@@ -1,14 +1,14 @@
 package io.qimia.uhrwerk.example.yelp
 
-import java.time.LocalDateTime
 import io.qimia.uhrwerk.engine.{Environment, TaskInput, TaskOutput}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 
 import java.nio.file.Files
+import java.time.LocalDateTime
 
-object LoaderA extends App {
+object LoadCategories extends App {
   private val logger: Logger = Logger.getLogger(this.getClass)
 
   val tmpDir = Files.createTempDirectory("spark-events")
@@ -18,7 +18,7 @@ object LoaderA extends App {
     .builder()
     .appName("LoaderA")
     .master("local[*]")
-    .config("driver-memory", "2g")
+    .config("driver-memory", "4g")
     .config("spark.eventLog.enabled", "true")
     .config("spark.eventLog.dir", tmpDir.toAbsolutePath.toString)
     .getOrCreate()
@@ -37,7 +37,7 @@ object LoaderA extends App {
     false
   )
   val wrapper = uhrwerkEnvironment.addTableFile(
-    "yelp_test/staging/yelp_db/table_a/table_a_1.0.yml",
+    "yelp_test/staging/yelp_db/table_category/table_category_1.0.yml",
     userFunc = loaderAFunc,
     overwrite = false
   )

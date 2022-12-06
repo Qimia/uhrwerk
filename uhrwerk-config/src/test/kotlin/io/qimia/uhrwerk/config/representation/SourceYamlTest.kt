@@ -15,6 +15,9 @@ class SourceYamlTest {
         val sources = MAPPER.readValue<Array<Source>>(YAML).toList()
         Truth.assertThat(sources).isNotNull()
         Truth.assertThat(sources).hasSize(2)
+        sources.forEach{
+            Truth.assertThat(it.connectionName)
+        }
         if (sources.isNotEmpty())
             sources.forEach { println(it) }
 

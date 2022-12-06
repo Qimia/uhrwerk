@@ -3,7 +3,7 @@ connections:
     type: jdbc
     jdbc_url: 'jdbc:mysql://localhost:3306'
     jdbc_driver: 'com.mysql.jdbc.Driver'
-    user: root
+    user: '!secret:<secret_name>'
     password: mysql
 
   - name: "s3_test"

@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.engine.dag
 import io.qimia.uhrwerk.common.metastore.model.{PartitionTransformType, TableModel}
 import io.qimia.uhrwerk.common.tools.TimeTools
 import io.qimia.uhrwerk.engine.{Environment, TableWrapper}
-import io.qimia.uhrwerk.engine.Environment.{TableIdent, getTableIdent, tableCleaner}
+import io.qimia.uhrwerk.engine.Environment.{TableIdent, getTableIdent}
 import io.qimia.uhrwerk.engine.tools.TimeHelper
 
 import java.time.LocalDateTime
@@ -155,7 +155,7 @@ class DagTaskBuilder2(environment: Environment) {
           upstreamDependants.add(upstreamTask.get)
         }
         // TODO Figure out what dependencies this target table needs
-        val missingDeps: mutable.Set[DagTask2Key] = tableCleaner(wrap.wrappedTable).getDependencies
+        val missingDeps: mutable.Set[DagTask2Key] = wrap.wrappedTable.getDependencies
           .map(d => {
             val ident       = TableIdent(d.getArea, d.getVertical, d.getTableName, d.getVersion)
             val targetTimes = targetTaskKey.partition :: Nil

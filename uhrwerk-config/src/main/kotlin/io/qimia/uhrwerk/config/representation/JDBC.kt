@@ -19,9 +19,6 @@ data class JDBC(
         if (jdbcUrl == null) {
             throw ConfigException("Missing field: " + path + "jdbc_url")
         }
-        if (jdbcDriver == null) {
-            throw ConfigException("Missing field: " + path + "jdbc_driver")
-        }
         if (user == null) {
             throw ConfigException("Missing field: " + path + "user")
         }

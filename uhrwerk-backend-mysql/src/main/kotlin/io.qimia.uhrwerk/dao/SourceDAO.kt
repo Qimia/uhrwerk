@@ -15,7 +15,7 @@ class SourceDAO : SourceService {
     private val repo = SourceRepo2()
 
 
-    override fun save(source: SourceModel2, table: TableModel, overwrite: Boolean): SourceResult {
+    override fun save(source: SourceModel2, overwrite: Boolean): SourceResult {
         val result = SourceResult()
         result.newResult = source
 
@@ -75,11 +75,8 @@ class SourceDAO : SourceService {
 
     override fun save(
         sources: List<SourceModel2>,
-        table: TableModel,
         overwrite: Boolean
-    ): List<SourceResult> {
-        return sources.map { save(it, table, overwrite) }
-    }
+    ) = sources.map { save(it, overwrite) }
 
     override fun getSourcesByTableId(tableId: Long): List<SourceModel2> {
         return repo.getSourcesByTableId(tableId)
