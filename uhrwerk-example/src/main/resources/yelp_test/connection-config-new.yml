@@ -19,3 +19,7 @@
   jdbc_driver: 'com.mysql.cj.jdbc.Driver'
   user: root
   password: 61ePGqq20u9TZjbNhf0
+
+- name: "uhrwerk_test_s3"
+  type: s3
+  path: 's3a://qimiaio-uhrwerk-dev-test01/uhrwerk-example/example_datalake'

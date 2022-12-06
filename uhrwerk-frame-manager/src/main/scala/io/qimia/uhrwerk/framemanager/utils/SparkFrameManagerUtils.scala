@@ -1,6 +1,12 @@
 package io.qimia.uhrwerk.framemanager.utils
 
-import io.qimia.uhrwerk.common.metastore.model.{ConnectionModel, ConnectionType, DependencyModel, PartitionUnit, TableModel}
+import io.qimia.uhrwerk.common.metastore.model.{
+  ConnectionModel,
+  ConnectionType,
+  DependencyModel,
+  PartitionUnit,
+  TableModel
+}
 import java.nio.file.Paths
 import java.sql.Timestamp
 import java.time.{LocalDateTime, ZoneId, ZoneOffset}
@@ -18,19 +24,21 @@ object SparkFrameManagerUtils {
     List("yyyy", "yyyy-MM", "yyyy-MM-dd", "yyyy-MM-dd-HH", "yyyy-MM-dd-HH-mm")
   private[framemanager] val timeColumnJDBC: String = "uhrwerk_timestamp"
 
-  /**
-    * Converts all time columns (based on the partition unit) into strings.
+  /** Converts all time columns (based on the partition unit) into strings.
     *
     * @param df DataFrame.
     * @return Converted DataFrame.
     */
-  private[framemanager] def convertTimeColumnsToStrings(df: DataFrame): DataFrame = {
+  private[framemanager] def convertTimeColumnsToStrings(
+      df: DataFrame
+  ): DataFrame = {
     timeColumns
-      .foldLeft(df)((tmp, timeColumn) => tmp.withColumn(timeColumn, col(timeColumn).cast(StringType)))
+      .foldLeft(df)((tmp, timeColumn) =>
+        tmp.withColumn(timeColumn, col(timeColumn).cast(StringType))
+      )
   }
 
-  /**
-    * Concatenates paths into a single string. Handles properly all trailing slashes
+  /** Concatenates paths into a single string. Handles properly all trailing slashes
     *
     * @param first First path
     * @param more  One or more paths
@@ -42,13 +50,14 @@ object SparkFrameManagerUtils {
   ): String = {
     if (first.contains("//")) {
       val split = first.split("//")
-      return split.head ++ "//" ++ Paths.get(split.tail.mkString("//"), more: _*).toString
+      return split.head ++ "//" ++ Paths
+        .get(split.tail.mkString("//"), more: _*)
+        .toString
     }
     Paths.get(first, more: _*).toString
   }
 
-  /**
-    * Returns a full location based on the parameters.
+  /** Returns a full location based on the parameters.
     *
     * @param connectionPath Connection path.
     * @param tablePath      Table path.
@@ -102,13 +111,21 @@ object SparkFrameManagerUtils {
 
   private[framemanager] def createDatePath(startTS: LocalDateTime): String = {
     val (year, month, day, hour, minute) = getTimeValues(startTS)
-    val listOfTimeColumns                = List(s"year=$year", s"month=$month", s"day=$day", s"hour=$hour", s"minute=$minute")
+    val listOfTimeColumns = List(
+      s"year=$year",
+      s"month=$month",
+      s"day=$day",
+      s"hour=$hour",
+      s"minute=$minute"
+    )
 
-    concatenatePaths(listOfTimeColumns.head, listOfTimeColumns.slice(1, listOfTimeColumns.length): _*)
+    concatenatePaths(
+      listOfTimeColumns.head,
+      listOfTimeColumns.slice(1, listOfTimeColumns.length): _*
+    )
   }
 
-  /**
-    * Concatenates area, vertical, table, version, and format into a path.
+  /** Concatenates area, vertical, table, version, and format into a path.
     * Either with slashes for a file system or with dashes and a dot for jdbc.
     *
     * @param table      Table.
@@ -117,9 +134,9 @@ object SparkFrameManagerUtils {
     * @return The concatenated path.
     */
   private[framemanager] def getTablePath(
-                                          table: TableModel,
-                                          fileSystem: Boolean,
-                                          format: String
+      table: TableModel,
+      fileSystem: Boolean,
+      format: String
   ): String = {
     if (fileSystem) {
       Paths
@@ -137,12 +154,16 @@ object SparkFrameManagerUtils {
     }
   }
 
-  private[framemanager] def getJDBCTableSchemaAndName(table: TableModel): (String, String) = {
-    (table.getArea + "_" + table.getVertical, table.getName + "_" + table.getVersion.replace(".", "_"))
+  private[framemanager] def getJDBCTableSchemaAndName(
+      table: TableModel
+  ): (String, String) = {
+    (
+      table.getArea + "_" + table.getVertical,
+      table.getName + "_" + table.getVersion.replace(".", "_")
+    )
   }
 
-  /**
-    * Concatenates area, vertical, table, version, and format into a path.
+  /** Concatenates area, vertical, table, version, and format into a path.
     * Either with slashes for a file system or with dashes and a dot for jdbc.
     *
     * @param dependency Dependency.
@@ -150,8 +171,8 @@ object SparkFrameManagerUtils {
     * @return The concatenated path.
     */
   private[framemanager] def getDependencyPath(
-                                               dependency: DependencyModel,
-                                               fileSystem: Boolean
+      dependency: DependencyModel,
+      fileSystem: Boolean
   ): String = {
     if (fileSystem) {
       Paths
@@ -169,8 +190,7 @@ object SparkFrameManagerUtils {
     }
   }
 
-  /**
-    * Checks whether a string is empty (or null because of Java classes).
+  /** Checks whether a string is empty (or null because of Java classes).
     *
     * @param s String to check.
     * @return True if null or empty.
@@ -179,8 +199,7 @@ object SparkFrameManagerUtils {
     s == null || s.isEmpty
   }
 
-  /**
-    * Checks whether a DataFrame contains all time columns.
+  /** Checks whether a DataFrame contains all time columns.
     *
     * @param df            DataFrame.
     * @param partitionUnit Partition Unit.
@@ -196,13 +215,17 @@ object SparkFrameManagerUtils {
     df.cache()
 
     try {
-      if (timeColumns
-            .zip(timeColumnsFormats)
-            .forall(p => {
-              df.withColumn(p._1 + "_transformed", to_date(col(p._1).cast(StringType), p._2))
-                .filter(col(p._1 + "_transformed").isNull)
-                .count == 0
-            })) {
+      if (
+        timeColumns
+          .zip(timeColumnsFormats)
+          .forall(p => {
+            df.withColumn(
+              p._1 + "_transformed",
+              to_date(col(p._1).cast(StringType), p._2)
+            ).filter(col(p._1 + "_transformed").isNull)
+              .count == 0
+          })
+      ) {
         return true
       }
     } catch {
@@ -211,8 +234,7 @@ object SparkFrameManagerUtils {
     false
   }
 
-  /**
-    * Adds a jdbc time column (timestamp) to a DataFrame from a specified timestamp.
+  /** Adds a jdbc time column (timestamp) to a DataFrame from a specified timestamp.
     *
     * @param frame DataFrame to add columns to.
     * @param ts    TimeStamp.
@@ -225,8 +247,7 @@ object SparkFrameManagerUtils {
     frame.withColumn(timeColumnJDBC, lit(Timestamp.valueOf(ts)))
   }
 
-  /**
-    * Adds a jdbc time column (timestamp) to a DataFrame from its time columns.
+  /** Adds a jdbc time column (timestamp) to a DataFrame from its time columns.
     *
     * @param frame          DataFrame to add columns to.
     * @return DataFrame with the time columns.
@@ -240,8 +261,7 @@ object SparkFrameManagerUtils {
     )
   }
 
-  /**
-    * Expands a source's selectColumn (timestamp) into our time columns.
+  /** Expands a source's selectColumn (timestamp) into our time columns.
     *
     * @param df           Source DataFrame.
     * @param selectColumn Timestamp column.
@@ -252,24 +272,42 @@ object SparkFrameManagerUtils {
       selectColumn: String
   ): DataFrame = {
     df.withColumn("year", year(col(selectColumn)))
-      .withColumn("month", concat(col("year"), lit("-"), leftPad(month(col(selectColumn)))))
-      .withColumn("day", concat(col("month"), lit("-"), leftPad(dayofmonth(col(selectColumn)))))
-      .withColumn("hour", concat(col("day"), lit("-"), leftPad(hour(col(selectColumn)))))
-      .withColumn("minute", concat(col("hour"), lit("-"), leftPad(minute(col(selectColumn)))))
+      .withColumn(
+        "month",
+        concat(col("year"), lit("-"), leftPad(month(col(selectColumn))))
+      )
+      .withColumn(
+        "day",
+        concat(col("month"), lit("-"), leftPad(dayofmonth(col(selectColumn))))
+      )
+      .withColumn(
+        "hour",
+        concat(col("day"), lit("-"), leftPad(hour(col(selectColumn))))
+      )
+      .withColumn(
+        "minute",
+        concat(col("hour"), lit("-"), leftPad(minute(col(selectColumn))))
+      )
   }
 
   private[framemanager] def leftPad(c: Column): Column = {
     when(length(c) === 1, concat(lit("0"), c)).otherwise(c)
   }
 
-  private[framemanager] def setS3Config(sparkSession: SparkSession, connection: ConnectionModel): Unit = {
+  private[framemanager] def setS3Config(
+      sparkSession: SparkSession,
+      connection: ConnectionModel
+  ): Unit = {
     assert(connection.getType == ConnectionType.S3)
     val config = sparkSession.conf
-    if(connection.getPath.contains("s3a")) {
+    if (connection.getPath.contains("s3a")) {
       // s3a
-//      config.set("spark.hadoop.fs.s3a.aws.credentials.provider", "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider")
-      config.set("fs.s3a.access.key", connection.getAwsAccessKeyID)
-      config.set("fs.s3a.secret.key", connection.getAwsSecretAccessKey)
+      config.set(
+        "fs.s3a.aws.credentials.provider",
+        "com.amazonaws.auth.DefaultAWSCredentialsProviderChain"
+      )
+      //config.set("fs.s3a.access.key", connection.getAwsAccessKeyID)
+      ///config.set("fs.s3a.secret.key", connection.getAwsSecretAccessKey)
     } else {
       // s3
       //System.setProperty("aws.accessKeyId", connection.getAwsAccessKeyID)

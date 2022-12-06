@@ -2,6 +2,7 @@ area: "staging"
 vertical: "yelp_db"
 table: "table_a"
 version: "1.0"
+class_name: "io.qimia.uhrwerk.example.yelp.ClassLoaderAParq"
 parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
 max_bulk_size: 1
 sources:
@@ -17,7 +18,7 @@ sources:
       query: "SELECT * FROM review WHERE date between '2007-01-01' and '2010-12-31'"
 
 targets:
-  - connection_name: "local_fs_lake"
+#  - connection_name: "local_fs_lake"
+#    format: "parquet"
+  - connection_name: "uhrwerk_test_s3"
     format: "parquet"
-  # - connection_name: "yelp_dwh"
-  #  format: "jdbc"
