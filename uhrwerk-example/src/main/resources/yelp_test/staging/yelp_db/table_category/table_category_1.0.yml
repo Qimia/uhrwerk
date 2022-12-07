@@ -10,11 +10,7 @@ sources:
     path: category  # On DB
     format: jdbc
     version: "1.0"
-    # select:
-    #  query: "SELECT * FROM <path>"
 
 targets:
-#  - connection_name: "local_fs_lake"
-#    format: "parquet"
   - connection_name: "uhrwerk_test_s3"
     format: "parquet"

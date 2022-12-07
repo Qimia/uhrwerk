@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel;
+import io.qimia.uhrwerk.common.metastore.model.ConnectionsModel;
 import io.qimia.uhrwerk.common.metastore.model.DagModel;
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel;
 import io.qimia.uhrwerk.common.metastore.model.MetastoreModel;
@@ -14,6 +15,7 @@ import io.qimia.uhrwerk.common.model.TargetModel;
 import io.qimia.uhrwerk.config.AWSSecretProvider;
 import io.qimia.uhrwerk.config.representation.AWSSecret;
 import io.qimia.uhrwerk.config.representation.Connection;
+import io.qimia.uhrwerk.config.representation.Connections;
 import io.qimia.uhrwerk.config.representation.Dag;
 import io.qimia.uhrwerk.config.representation.Dependency;
 import io.qimia.uhrwerk.config.representation.Env;
@@ -164,6 +166,19 @@ public class YamlConfigReader {
       throw new RuntimeException(e);
     }
     return getModelConnections(connections);
+  }
+
+  public ConnectionsModel readConnectionsSecrets(String file) {
+    InputStream stream = MapperUtils.getInputStream(file);
+    Connections connections;
+    try {
+      connections = objectMapper().readValue(stream, Connections.class);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return new ConnectionsModel(getModelSecrets(
+        connections.getSecrets()),
+        getModelConnections(connections.getConnections()));
   }
 
   public SecretModel[] readSecrets(String file) {
