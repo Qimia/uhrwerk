@@ -31,9 +31,9 @@ object LoadCategories extends App {
   val frameManager = new SparkFrameManager(sparkSess)
 
   val uhrwerkEnvironment =
-    Environment.build("yelp_test/env-config-new.yml", frameManager)
+    Environment.build("yelp_test/env-secrets-config.yml", frameManager)
   uhrwerkEnvironment.addConnectionFile(
-    "yelp_test/connection-config-new.yml",
+    "yelp_test/connection-secrets-config.yml",
     false
   )
   val wrapper = uhrwerkEnvironment.addTableFile(

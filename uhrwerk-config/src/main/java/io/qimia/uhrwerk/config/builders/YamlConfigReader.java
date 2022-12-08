@@ -145,7 +145,7 @@ public class YamlConfigReader {
         return scrValue;
       }
     }
-    return null;
+    return dbUser;
   }
 
   public DagModel getModelDag(Dag dag) {
