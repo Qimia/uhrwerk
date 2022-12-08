@@ -1,25 +1,26 @@
-- name: "yelp_mysql"
-  type: jdbc
-  jdbc_url: 'jdbc:mysql://127.0.0.1:53306/yelp_db'
-  jdbc_driver: 'com.mysql.cj.jdbc.Driver'
-  user: root
-  password: 61ePGqq20u9TZjbNhf0
+connections:
+  - name: "yelp_mysql"
+    type: jdbc
+    jdbc_url: 'jdbc:mysql://127.0.0.1:53306/yelp_db'
+    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    user: root
+    password: 61ePGqq20u9TZjbNhf0
 
-- name: "local_fs_lake"
-  type: file
-  path: 'uhrwerk-example/example_datalake'
+  - name: "local_fs_lake"
+    type: file
+    path: 'uhrwerk-example/example_datalake'
 
-- name: "local_fs_source"
-  type: file
-  path: 'uhrwerk-example/example_dataset'
+  - name: "local_fs_source"
+    type: file
+    path: 'uhrwerk-example/example_dataset'
 
-- name: "yelp_dwh"
-  type: jdbc
-  jdbc_url: 'jdbc:mysql://127.0.0.1:53306'
-  jdbc_driver: 'com.mysql.cj.jdbc.Driver'
-  user: root
-  password: 61ePGqq20u9TZjbNhf0
+  - name: "yelp_dwh"
+    type: jdbc
+    jdbc_url: 'jdbc:mysql://127.0.0.1:53306'
+    jdbc_driver: 'com.mysql.cj.jdbc.Driver'
+    user: root
+    password: 61ePGqq20u9TZjbNhf0
 
-- name: "uhrwerk_test_s3"
-  type: s3
-  path: 's3a://qimiaio-uhrwerk-dev-test01/uhrwerk-example/example_datalake'
+  - name: "uhrwerk_test_s3"
+    type: s3
+    path: 's3a://qimiaio-uhrwerk-dev-test01/uhrwerk-example/example_datalake'

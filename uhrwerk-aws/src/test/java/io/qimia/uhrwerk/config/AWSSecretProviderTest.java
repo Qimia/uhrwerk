@@ -28,7 +28,8 @@ class AWSSecretProviderTest {
   @Disabled
   void secretValue() {
     AWSSecretProvider provider = new AWSSecretProvider("eu-west-1");
-    String value = provider.secretValue("/prod/qhr/ymlSecrets");
+    String value = provider.secretValue("uhrwerk/yelp_test/yelp_db_passwd");
     assertThat(value).isNotNull();
+    System.out.println(value);
   }
 }

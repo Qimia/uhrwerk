@@ -7,6 +7,7 @@ import io.qimia.uhrwerk.common.metastore.model.{
   ConnectionType,
   DagModel,
   DependencyModel,
+  SecretModel,
   SecretType,
   SourceModel2,
   TableModel
@@ -16,7 +17,6 @@ import io.qimia.uhrwerk.config.AWSSecretProvider
 import io.qimia.uhrwerk.config.builders.YamlConfigReader
 import io.qimia.uhrwerk.dao.SecretDAO
 import io.qimia.uhrwerk.engine.Environment._
-import io.qimia.uhrwerk.repo.SecretRepo
 import org.apache.log4j.Logger
 
 import scala.collection.mutable
@@ -132,8 +132,10 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
       connConfigLoc: String,
       overwrite: Boolean = false
   ): Unit = {
-    val connections = configReader.readConnections(connConfigLoc)
-    addConnections(connections, overwrite)
+    val connections = configReader.readConnectionsSecrets(connConfigLoc)
+    if (connections.getSecrets != null && !connections.getSecrets.isEmpty)
+      addSecrets(connections.getSecrets)
+    addConnections(connections.getConnections, overwrite)
   }
 
   /** Add and load connections to uhrwerk
@@ -160,17 +162,28 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     results
   }
 
-  private def getSecretValue(orig:String):String ={
+  private def getSecretValue(orig: String): String = {
     if (orig.startsWith("!secret:")) {
       val scrName = orig.substring("!secret:".length)
       val secret = new SecretDAO().getByName(scrName)
       if (secret != null)
         if (secret.getType.equals(SecretType.AWS)) {
           val provider = new AWSSecretProvider(secret.getAwsRegion)
-          return provider.secretValue(secret.getAwsSecretName)
+          val scrValue = provider.secretValue(secret.getAwsSecretName)
+          return scrValue
         }
     }
     orig
+  }
+
+  private def addSecrets(
+      secrets: Seq[SecretModel],
+      overwrite: Boolean = false
+  ): Unit = {
+    secrets.foreach(secret => {
+      new SecretDAO().save(secret, overwrite)
+    })
+
   }
 
   /** Add a new table to the uhrwerk dag
@@ -226,6 +239,17 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
       return Option.empty
     }
     val storedTable = storeRes.getNewResult
+    if (storedTable.getSources != null && !storedTable.getSources.isEmpty) {
+      storedTable.getSources.foreach(source => {
+        val conn = source.getConnection
+        if (conn.getType.equals(ConnectionType.JDBC)) {
+          val jdbcUser = getSecretValue(conn.getJdbcUser)
+          conn.setJdbcUser(jdbcUser)
+          val jdbcPass = getSecretValue(conn.getJdbcPass)
+          conn.setJdbcPass(jdbcPass)
+        }
+      })
+    }
     val ident = getTableIdent(storedTable)
     val wrapper = new TableWrapper(store, storedTable, userFunc, frameManager)
     tables(ident) = wrapper
