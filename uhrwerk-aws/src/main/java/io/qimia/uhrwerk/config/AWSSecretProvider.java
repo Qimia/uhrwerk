@@ -19,7 +19,7 @@ public class AWSSecretProvider {
     this.secretsClient =
         SecretsManagerClient.builder()
             .region(this.region)
-            .credentialsProvider(ProfileCredentialsProvider.create())
+            //.credentialsProvider(ProfileCredentialsProvider.create())
             .build();
   }
 
