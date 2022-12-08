@@ -254,6 +254,7 @@ object JDBCTools {
   ): (Any, Any) = {
     val partitionQueryFilled =
       minMaxQuery(lowerBound, upperBound, partitionColumn, partitionQuery, path)
+    logger.info("Parallel-load minMaxQuery: " + partitionQueryFilled)
     val dbConfig: DataFrameReader = getDbConfig(sparkSessession, connection)
       .option("dbtable", partitionQueryFilled)
       .option("numPartitions", 1)
