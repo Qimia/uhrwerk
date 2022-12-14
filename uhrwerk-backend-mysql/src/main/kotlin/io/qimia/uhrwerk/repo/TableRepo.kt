@@ -49,7 +49,11 @@ class TableRepo() : BaseRepo<TableModel>() {
         insert.setInt(8, table.maxBulkSize!!)
         insert.setBoolean(9, table.partitioned)
         insert.setString(10, table.className)
-        insert.setLong(11, HashKeyUtils.tableKey(table))
+        if (table.transformSqlQuery.isNullOrEmpty())
+            insert.setNull(11, Types.VARCHAR)
+        else
+            insert.setString(11, table.transformSqlQuery)
+        insert.setLong(12, HashKeyUtils.tableKey(table))
         return insert
     }
 
@@ -96,8 +100,9 @@ class TableRepo() : BaseRepo<TableModel>() {
                                max_bulk_size,
                                partitioned,
                                class_name,
+                               transform_sql_query,
                                hash_key)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent()
 
         private val SELECT_BY_ID = """
@@ -112,6 +117,7 @@ class TableRepo() : BaseRepo<TableModel>() {
                    tab.version,
                    tab.partitioned,
                    tab.class_name,
+                   tab.transform_sql_query,
                    tab.deactivated_ts
             FROM TABLE_ tab
             WHERE id = ?
@@ -129,6 +135,7 @@ class TableRepo() : BaseRepo<TableModel>() {
                    tab.version,
                    tab.partitioned,
                    tab.class_name,
+                   tab.transform_sql_query,
                    tab.deactivated_ts
             FROM TABLE_ tab
             WHERE tab.hash_key = ? AND tab.deactivated_ts IS NULL
@@ -147,6 +154,7 @@ class TableRepo() : BaseRepo<TableModel>() {
                    tab.version,
                    tab.partitioned,
                    tab.class_name,
+                   tab.transform_sql_query,
                    tab.deactivated_ts
             FROM TARGET tar
                      JOIN TABLE_ tab

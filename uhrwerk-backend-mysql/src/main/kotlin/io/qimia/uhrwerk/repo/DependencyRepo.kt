@@ -5,6 +5,7 @@ import io.qimia.uhrwerk.common.metastore.model.DependencyModel
 import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
 import java.sql.PreparedStatement
 import java.sql.ResultSet
+import java.sql.Types
 
 class DependencyRepo : BaseRepo<DependencyModel>() {
 
@@ -50,7 +51,13 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
         insert.setLong(1, dependency.tableId!!)
         insert.setLong(2, dependency.dependencyTargetId!!)
         insert.setLong(3, dependency.dependencyTableId!!)
-        insert.setLong(4, HashKeyUtils.dependencyKey(dependency))
+
+        if (!dependency.viewName.isNullOrEmpty())
+            insert.setString(4, dependency.viewName)
+        else
+            insert.setNull(4, Types.VARCHAR)
+
+        insert.setLong(5, HashKeyUtils.dependencyKey(dependency))
         return insert
 
     }
@@ -62,6 +69,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
             .dependencyTargetId(rs.getLong("dep.dependency_target_id"))
             .dependencyTableId(rs.getLong("dep.dependency_table_id"))
             .tableName(rs.getString("tab.name"))
+            .viewName(rs.getString("dep.view_name"))
             .area(rs.getString("tab.area"))
             .vertical(rs.getString("tab.vertical"))
             .version(rs.getString("tab.version"))
@@ -79,8 +87,9 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
             INSERT INTO DEPENDENCY (table_id,
                                     dependency_target_id,
                                     dependency_table_id,
+                                    view_name,
                                     hash_key)
-            VALUES (?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?)
         """.trimIndent()
 
         private val SELECT_BY_ID = """
@@ -91,6 +100,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tab.area,
                    tab.vertical,
                    tab.name,
+                   dep.view_name,
                    tar.format,
                    tab.version,
                    dep.deactivated_ts
@@ -108,6 +118,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tab.area,
                    tab.vertical,
                    tab.name,
+                   dep.view_name,
                    tar.format,
                    tab.version,
                    dep.deactivated_ts
@@ -130,6 +141,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tab.area,
                    tab.vertical,
                    tab.name,
+                   dep.view_name,
                    tar.format,
                    tab.version,
                    dep.deactivated_ts

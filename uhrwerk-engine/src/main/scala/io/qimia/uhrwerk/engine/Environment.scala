@@ -2,17 +2,7 @@ package io.qimia.uhrwerk.engine
 
 import io.qimia.uhrwerk.common.framemanager.FrameManager
 import io.qimia.uhrwerk.common.metastore.config.TableResult
-import io.qimia.uhrwerk.common.metastore.model.{
-  ConnectionModel,
-  ConnectionType,
-  DagModel,
-  DependencyModel,
-  SecretModel,
-  SecretType,
-  SourceModel2,
-  TableModel
-}
-import io.qimia.uhrwerk.common.model._
+import io.qimia.uhrwerk.common.metastore.model._
 import io.qimia.uhrwerk.config.AWSSecretProvider
 import io.qimia.uhrwerk.config.builders.YamlConfigReader
 import io.qimia.uhrwerk.dao.SecretDAO

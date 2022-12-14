@@ -1,0 +1,18 @@
+area: "processing"
+vertical: "yelp_db"
+table: "table_category"
+version: "1.0"
+class_name: "io.qimia.uhrwerk.example.yelp.ClassLoaderAParq"
+parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+max_bulk_size: 1
+
+transform_sql_query: "SELECT business_id, category FROM yelp_category_vw"
+dependencies:
+  - ref: "staging.yelp_db.table_category:1.0"
+    format: "parquet"
+    view: "yelp_category_vw"
+
+
+targets:
+  - connection_name: "uhrwerk_test_s3"
+    format: "parquet"

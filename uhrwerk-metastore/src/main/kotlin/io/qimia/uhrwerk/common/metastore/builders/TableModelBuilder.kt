@@ -10,6 +10,7 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
     var name: String? = null
     var version: String? = null
     var className: String? = null
+    var transformSqlQuery: String? = null
     var parallelism = 0
     var maxBulkSize = 0
     var partitionUnit: PartitionUnit? = null
@@ -45,6 +46,11 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
 
     fun className(className: String?): TableModelBuilder {
         this.className = className
+        return this
+    }
+
+    fun transformSqlQuery(transformSqlQuery: String?): TableModelBuilder {
+        this.transformSqlQuery = transformSqlQuery
         return this
     }
 
@@ -96,6 +102,7 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
             name,
             version,
             className,
+            transformSqlQuery,
             parallelism,
             maxBulkSize,
             partitionUnit,

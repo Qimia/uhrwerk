@@ -8,6 +8,7 @@ import java.util.*
 data class Dependency(
     @JsonProperty("ref")
     var reference: Reference? = null,
+    var view: String? = null,
     var format: String? = null,
 ) {
     fun validate(path: String) {

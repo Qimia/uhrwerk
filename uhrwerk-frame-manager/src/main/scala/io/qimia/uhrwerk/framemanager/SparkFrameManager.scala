@@ -21,6 +21,8 @@ import java.time.LocalDateTime
 class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   private val logger: Logger = Logger.getLogger(this.getClass)
 
+  def getSpark = this.sparkSession
+
   /** Loads a source dataframe. Either one batch or the full path.
     *
     * @param source                 Source
@@ -146,33 +148,6 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       )
     }
 
-    val filter: Column = dependencyResult.succeeded
-      .map(p =>
-        if (isJDBC) {
-          col(timeColumnJDBC) === TimeTools.convertTSToString(
-            p.getPartitionTs
-          )
-        } else {
-          val minuteLowerBound = getTimeValues(p.getPartitionTs)._5
-          if (p.getPartitioned) {
-            val minuteUpperBound =
-              getTimeValues(
-                TimeTools.addPartitionSizeToTimestamp(
-                  p.getPartitionTs,
-                  p.getPartitionSize,
-                  p.getPartitionUnit
-                )
-              )._5
-            col("minute") >= minuteLowerBound && col(
-              "minute"
-            ) < minuteUpperBound
-          } else {
-            col("minute") === minuteLowerBound
-          }
-        }
-      )
-      .reduce((a, b) => a || b)
-
     val dfReader = sparkSession.read
       .format(dependencyResult.dependency.getFormat)
 
@@ -224,12 +199,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       }
     }
 
-    val convertedColumns = if (isJDBC) {
-      df
-    } else {
-      convertTimeColumnsToStrings(df)
-    }
-    val filtered = convertedColumns.filter(filter)
+    val filtered = df
 
     val always = true
     if (always) {

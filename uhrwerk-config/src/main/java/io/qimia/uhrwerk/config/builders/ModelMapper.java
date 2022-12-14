@@ -2,18 +2,15 @@ package io.qimia.uhrwerk.config.builders;
 
 import io.qimia.uhrwerk.common.metastore.builders.ConnectionModelBuilder;
 import io.qimia.uhrwerk.common.metastore.builders.DependencyModelBuilder;
-import io.qimia.uhrwerk.common.metastore.builders.SourceModelBuilder;
 import io.qimia.uhrwerk.common.metastore.builders.TableModelBuilder;
 import io.qimia.uhrwerk.common.metastore.builders.TargetModelBuilder;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionType;
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel;
 import io.qimia.uhrwerk.common.metastore.model.IngestionMode;
-import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType;
 import io.qimia.uhrwerk.common.metastore.model.PartitionUnit;
 import io.qimia.uhrwerk.common.metastore.model.SecretModel;
 import io.qimia.uhrwerk.common.metastore.model.SecretType;
-import io.qimia.uhrwerk.common.metastore.model.SourceModel;
 import io.qimia.uhrwerk.common.metastore.model.SourceModel2;
 import io.qimia.uhrwerk.common.metastore.model.TableModel;
 import io.qimia.uhrwerk.common.model.TargetModel;
@@ -42,6 +39,10 @@ public class ModelMapper {
       builder.className(table.getClassName());
     } else {
       builder.className(getTableClassName(table));
+    }
+
+    if (table.getTransformSqlQuery() != null && !table.getTransformSqlQuery().isEmpty()) {
+      builder.transformSqlQuery(MapperUtils.readQueryOrFileLines(table.getTransformSqlQuery()));
     }
 
     builder.parallelism(table.getParallelism()).maxBulkSize(table.getMaxBulkSize());
@@ -168,6 +169,7 @@ public class ModelMapper {
             .area(dependency.getReference().getArea())
             .vertical(dependency.getReference().getVertical())
             .tableName(dependency.getReference().getTable())
+            .viewName(dependency.getView())
             .format(dependency.getFormat())
             .version(dependency.getReference().getVersion())
             .dependencyTable(dependencyTable)

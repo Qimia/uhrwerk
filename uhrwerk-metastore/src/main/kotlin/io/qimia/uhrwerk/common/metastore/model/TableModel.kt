@@ -11,6 +11,7 @@ data class TableModel(
     var name: String? = null,
     var version: String? = null,
     var className: String? = null,
+    var transformSqlQuery: String? = null,
     var parallelism: Int? = null,
     var maxBulkSize: Int? = null,
     var partitionUnit: PartitionUnit? = null,
@@ -37,6 +38,7 @@ data class TableModel(
         if (name != other.name) return false
         if (version != other.version) return false
         if (className != other.className) return false
+        if (transformSqlQuery != other.transformSqlQuery) return false
         if (parallelism != other.parallelism) return false
         if (maxBulkSize != other.maxBulkSize) return false
         if (partitionUnit != other.partitionUnit) return false
@@ -69,6 +71,7 @@ data class TableModel(
         result = 31 * result + (name?.hashCode() ?: 0)
         result = 31 * result + (version?.hashCode() ?: 0)
         result = 31 * result + (className?.hashCode() ?: 0)
+        result = 31 * result + (transformSqlQuery?.hashCode() ?: 0)
         result = 31 * result + (parallelism ?: 0)
         result = 31 * result + (maxBulkSize ?: 0)
         result = 31 * result + (partitionUnit?.hashCode() ?: 0)
@@ -85,6 +88,7 @@ data class TableModel(
     }
 
     override fun toString(): String {
-        return "TableModel(id=$id, area=$area, vertical=$vertical, name=$name, version=$version, className=$className, parallelism=$parallelism, maxBulkSize=$maxBulkSize, partitionUnit=$partitionUnit, partitionSize=$partitionSize, partitioned=$partitioned, dependencies=${dependencies?.contentToString()}, sources=${sources?.contentToString()}, targets=${targets?.contentToString()}, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
+        return "TableModel(id=$id, area=$area, vertical=$vertical, name=$name, version=$version, className=$className, transformSqlQuery=$transformSqlQuery, parallelism=$parallelism, maxBulkSize=$maxBulkSize, partitionUnit=$partitionUnit, partitionSize=$partitionSize, partitioned=$partitioned, dependencies=${dependencies?.contentToString()}, sources=${sources?.contentToString()}, targets=${targets?.contentToString()}, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
     }
+
 }

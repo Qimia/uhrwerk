@@ -2,31 +2,19 @@ package io.qimia.uhrwerk.engine
 
 import java.time.{Duration, LocalDateTime}
 import java.util.concurrent.Executors
-
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
-import io.qimia.uhrwerk.common.metastore.dependency.{
-  TablePartitionResult,
-  TablePartitionResultSet
-}
-import io.qimia.uhrwerk.common.metastore.model.{
-  Partition,
-  PartitionUnit,
-  TableModel
-}
+import io.qimia.uhrwerk.common.metastore.dependency.{TablePartitionResult, TablePartitionResultSet}
+import io.qimia.uhrwerk.common.metastore.model.{Partition, PartitionUnit, TableModel}
 import io.qimia.uhrwerk.common.model.TargetModel
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent}
 import io.qimia.uhrwerk.engine.TableWrapper.reportProcessingPartitions
-import io.qimia.uhrwerk.engine.tools.{
-  DependencyHelper,
-  SourceHelper,
-  TimeHelper
-}
+import io.qimia.uhrwerk.engine.tools.{DependencyHelper, SourceHelper, TimeHelper}
+import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.Logger
 import org.apache.spark.sql.DataFrame
 
 import scala.collection.immutable
 import scala.concurrent._
-
 import scala.collection.JavaConverters._
 
 object TableWrapper {
@@ -133,6 +121,13 @@ class TableWrapper(
           .map(bd => {
             val id = DependencyHelper.extractTableIdentity(bd)
             val df = frameManager.loadDependencyDataFrame(bd)
+
+            if (
+              bd.dependency.getViewName != null
+              && !bd.dependency.getViewName.isEmpty
+            )
+              df.createOrReplaceTempView(bd.dependency.getViewName)
+
             if (df.isEmpty) {
               logger.warn(
                 s"${table.getName}: - $id doesn't have any data in DataFrame"
@@ -187,8 +182,19 @@ class TableWrapper(
 
     val success =
       try {
-        val taskOutput = userFunc(taskInput)
-        val frame = taskOutput.frame
+
+        var frame:DataFrame = null
+        var taskOutput:TaskOutput = null
+
+        if (table.getTransformSqlQuery != null
+          && !table.getTransformSqlQuery.isEmpty) {
+          frame = frameManager.asInstanceOf[SparkFrameManager].getSpark.sql(table.getTransformSqlQuery)
+          taskOutput = TaskOutput(frame)
+        } else {
+          taskOutput = userFunc(taskInput)
+          frame = taskOutput.frame
+        }
+
         // TODO error checking: if target should be on datalake but no frame is given
         // Note: We are responsible for all standard writing of DataFrames
         if (!frame.isEmpty) {

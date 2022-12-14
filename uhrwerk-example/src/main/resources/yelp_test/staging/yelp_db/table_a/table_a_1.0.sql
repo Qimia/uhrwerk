@@ -1,0 +1,1 @@
+SELECT date FROM review WHERE date between '2007-01-01' and '2010-12-31'

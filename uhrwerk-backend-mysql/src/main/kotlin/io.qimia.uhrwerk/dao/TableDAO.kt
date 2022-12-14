@@ -397,8 +397,8 @@ class TableDAO : TableDependencyService, TableService {
                     table.partitionSize!!,
                     spec.partitionUnit,
                     spec.partitionSize,
-                    spec.transformType,
-                    spec.transformSize
+                    PartitionTransformType.IDENTITY,
+                    1
                 )
 
                 for (partTs: List<LocalDateTime> in partitionTs) {

@@ -15,6 +15,7 @@ data class DependencyModel(
     var area: String? = null,
     var vertical: String? = null,
     var tableName: String? = null,
+    var viewName: String? = null,
     var format: String? = null,
     var version: String? = null,
     var deactivatedTs: LocalDateTime? = null,
@@ -38,6 +39,7 @@ data class DependencyModel(
         if (area != other.area) return false
         if (vertical != other.vertical) return false
         if (tableName != other.tableName) return false
+        if (viewName != other.viewName) return false
         if (format != other.format) return false
         if (version != other.version) return false
         if (deactivatedTs != other.deactivatedTs) return false
@@ -52,12 +54,13 @@ data class DependencyModel(
         result = 31 * result + (tableId?.hashCode() ?: 0)
         result = 31 * result + (dependencyTargetId?.hashCode() ?: 0)
         result = 31 * result + (dependencyTableId?.hashCode() ?: 0)
-        result = 31 * result + (table?.id?.hashCode() ?: 0)
-        result = 31 * result + (dependencyTable?.id?.hashCode() ?: 0)
-        result = 31 * result + (dependencyTarget?.id?.hashCode() ?: 0)
+        result = 31 * result + (table?.hashCode() ?: 0)
+        result = 31 * result + (dependencyTable?.hashCode() ?: 0)
+        result = 31 * result + (dependencyTarget?.hashCode() ?: 0)
         result = 31 * result + (area?.hashCode() ?: 0)
         result = 31 * result + (vertical?.hashCode() ?: 0)
         result = 31 * result + (tableName?.hashCode() ?: 0)
+        result = 31 * result + (viewName?.hashCode() ?: 0)
         result = 31 * result + (format?.hashCode() ?: 0)
         result = 31 * result + (version?.hashCode() ?: 0)
         result = 31 * result + (deactivatedTs?.hashCode() ?: 0)
@@ -67,7 +70,7 @@ data class DependencyModel(
     }
 
     override fun toString(): String {
-        return "DependencyModel(id=$id, tableId=$tableId, dependencyTargetId=$dependencyTargetId, dependencyTableId=$dependencyTableId, area=$area, vertical=$vertical, tableName=$tableName, format=$format, version=$version, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
+        return "DependencyModel(id=$id, tableId=$tableId, dependencyTargetId=$dependencyTargetId, dependencyTableId=$dependencyTableId, area=$area, vertical=$vertical, tableName=$tableName, viewName=$viewName, format=$format, version=$version, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
     }
 
 }

@@ -23,23 +23,19 @@ class TablePartitionRepo() {
 
 
     private fun map(res: ResultSet): TablePartition {
-        val dependencyId = res.getLong(1)
-        val targetId = res.getLong(2)
-        val tableId = res.getLong(3)
-        val specTablePartitionUnit = res.getString(4)
+        val dependencyId = res.getLong("dep.id")
+        val targetId = res.getLong("trg.id")
+        val tableId = res.getLong("tab.id")
+
+        val specTablePartitionUnit = res.getString("tab.partition_unit")
         var partitionUnit: PartitionUnit? = null
         if (specTablePartitionUnit != null) {
             partitionUnit = PartitionUnit.valueOf(specTablePartitionUnit)
         }
-        val partitionSize = res.getInt(5)
-        val transformType = PartitionTransformType.valueOf(res.getString(6))
-        val transformUnitStr = res.getString(7)
-        var transformUnit: PartitionUnit? = null
-        if (transformUnitStr != null && transformUnitStr != "") {
-            transformUnit = PartitionUnit.valueOf(transformUnitStr)
-        }
-        val transformSize = res.getInt(8)
-        val connectionId = res.getLong(9)
+
+        val partitionSize = res.getInt("tab.partition_size")
+
+        val connectionId = res.getLong("trg.connection_id")
 
         return TablePartition(
             dependencyId,
@@ -47,9 +43,9 @@ class TablePartitionRepo() {
             tableId,
             partitionUnit,
             partitionSize,
-            transformType,
-            transformUnit,
-            transformSize,
+            null,
+            null,
+            null,
             connectionId
         )
     }
@@ -77,27 +73,22 @@ class TablePartitionRepo() {
 
     companion object {
         private val SELECT_TABLE_PARTITIONS = """
-            SELECT D.id,
-                   TR.id,
-                   T.id,
-                   T.partition_unit,
-                   T.partition_size,
-                   D.transform_type,
-                   D.transform_partition_unit,
-                   D.transform_partition_size,
-                   TR.connection_id
-            FROM TABLE_ T
+            SELECT dep.id,
+                   trg.id,
+                   tab.id,
+                   tab.partition_unit,
+                   tab.partition_size,
+                   trg.connection_id
+            FROM TABLE_ tab
                      JOIN (SELECT d.id,
                                   d.dependency_table_id,
-                                  d.dependency_target_id,
-                                  transform_type,
-                                  transform_partition_unit,
-                                  transform_partition_size
+                                  d.dependency_target_id
                            FROM TABLE_ t
-                                    JOIN DEPENDENCY d on t.id = d.table_id
-                           WHERE t.id = ?) AS D ON D.dependency_table_id = T.id
-                     JOIN TARGET TR on TR.id = D.dependency_target_id
-            ORDER BY D.id
+                                    JOIN DEPENDENCY d ON t.id = d.table_id
+                           WHERE t.id = ?) AS dep
+                          ON dep.dependency_table_id = tab.id
+                     JOIN TARGET trg ON trg.id = dep.dependency_target_id
+            ORDER BY dep.id
         """.trimIndent()
     }
 }
@@ -108,8 +99,8 @@ data class TablePartition(
     val tableId: Long,
     val partitionUnit: PartitionUnit?,
     val partitionSize: Int,
-    val transformType: PartitionTransformType,
+    val transformType: PartitionTransformType?,
     val transformUnit: PartitionUnit?,
-    val transformSize: Int,
+    val transformSize: Int?,
     val connectionId: Long
 )

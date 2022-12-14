@@ -17,6 +17,7 @@ class DependencyModelBuilder : StateModelBuilder<DependencyModelBuilder>() {
     var area: String? = null
     var vertical: String? = null
     var tableName: String? = null
+    var viewName: String? = null
     var format: String? = null
     var version: String? = null
     fun id(id: Long?): DependencyModelBuilder {
@@ -69,6 +70,11 @@ class DependencyModelBuilder : StateModelBuilder<DependencyModelBuilder>() {
         return this
     }
 
+    fun viewName(viewName: String?): DependencyModelBuilder {
+        this.viewName = viewName
+        return this
+    }
+
     fun format(format: String?): DependencyModelBuilder {
         this.format = format
         return this
@@ -92,6 +98,7 @@ class DependencyModelBuilder : StateModelBuilder<DependencyModelBuilder>() {
             area,
             vertical,
             tableName,
+            viewName,
             format,
             version
         )

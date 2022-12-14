@@ -12,6 +12,8 @@ data class Table(
     var version: String? = null,
     @JsonProperty("class_name")
     var className: String? = null,
+    @JsonProperty("transform_sql_query")
+    var transformSqlQuery: String? = null,
     var parallelism: Int? = 1,
     @JsonProperty("max_bulk_size")
     var maxBulkSize: Int? = 1,
@@ -76,6 +78,7 @@ data class Table(
         if (table != other.table) return false
         if (version != other.version) return false
         if (className != other.className) return false
+        if (transformSqlQuery != other.transformSqlQuery) return false
         if (parallelism != other.parallelism) return false
         if (maxBulkSize != other.maxBulkSize) return false
         if (partition != other.partition) return false
@@ -101,6 +104,7 @@ data class Table(
         result = 31 * result + (table?.hashCode() ?: 0)
         result = 31 * result + (version?.hashCode() ?: 0)
         result = 31 * result + (className?.hashCode() ?: 0)
+        result = 31 * result + (transformSqlQuery?.hashCode() ?: 0)
         result = 31 * result + (parallelism ?: 0)
         result = 31 * result + (maxBulkSize ?: 0)
         result = 31 * result + (partition?.hashCode() ?: 0)
@@ -111,6 +115,7 @@ data class Table(
     }
 
     override fun toString(): String {
-        return "Table(area=$area, vertical=$vertical, table=$table, version=$version, className=$className, parallelism=$parallelism, maxBulkSize=$maxBulkSize, partition=$partition, sources=${sources?.contentToString()}, targets=${targets?.contentToString()}, dependencies=${dependencies?.contentToString()})"
+        return "Table(area=$area, vertical=$vertical, table=$table, version=$version, className=$className, transformSqlQuery=$transformSqlQuery, parallelism=$parallelism, maxBulkSize=$maxBulkSize, partition=$partition, sources=${sources?.contentToString()}, targets=${targets?.contentToString()}, dependencies=${dependencies?.contentToString()})"
     }
+
 }
