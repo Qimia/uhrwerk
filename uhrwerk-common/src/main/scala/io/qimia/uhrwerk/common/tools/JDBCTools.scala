@@ -197,8 +197,8 @@ object JDBCTools {
         upperBound,
         path
       )
-    s"(SELECT MIN(partition_query_table.$partitionColumn) AS min_id, MAX(partition_query_table.$partitionColumn) AS max_id " +
-      s"FROM ($query) AS partition_query_table) AS tmp_table"
+    s"SELECT MIN(partition_query_table.$partitionColumn) AS min_id, MAX(partition_query_table.$partitionColumn) AS max_id " +
+      s"FROM ($query) partition_query_table"
   }
 
   /** Creates a query to obtain the min and max value of the specified partition column.
@@ -223,13 +223,12 @@ object JDBCTools {
         lastMaxBookmark,
         path
       )
-    s"(SELECT " +
+    s"SELECT " +
       s"MIN(partition_query_table.$partitionColumn) AS min_id, " +
       s"MAX(partition_query_table.$partitionColumn) AS max_id, " +
       s"MAX(partition_query_table.$bookmarkColumn) AS max_bookmark " +
       s"FROM($query) AS partition_query_table " +
-      s"WHERE partition_query_table.$bookmarkColumn > $lastMaxBookmark) " +
-      s"AS tmp_table"
+      s"WHERE partition_query_table.$bookmarkColumn > $lastMaxBookmark"
   }
 
   /** Returns the min max values of the partition column using the partition query.
@@ -256,9 +255,7 @@ object JDBCTools {
       minMaxQuery(lowerBound, upperBound, partitionColumn, partitionQuery, path)
     logger.info("Parallel-load minMaxQuery: " + partitionQueryFilled)
     val dbConfig: DataFrameReader = getDbConfig(sparkSessession, connection)
-      .option("dbtable", partitionQueryFilled)
-      .option("numPartitions", 1)
-      .option("fetchsize", 1)
+      .option("query", partitionQueryFilled)
     try {
       val row = dbConfig.load().collect()(0)
       row.get(0) match {
@@ -315,6 +312,6 @@ object JDBCTools {
   ): String = {
     val query =
       fillInQueryParameters(queryTemplate, lowerBound, upperBound, path)
-    s"($query) AS tmp_table"
+    s"($query) tmp_table"
   }
 }

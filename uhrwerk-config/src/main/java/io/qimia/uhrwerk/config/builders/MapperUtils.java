@@ -1,10 +1,13 @@
 package io.qimia.uhrwerk.config.builders;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 public class MapperUtils {
@@ -12,9 +15,7 @@ public class MapperUtils {
     if (queryOrFile.endsWith(".sql")) {
       try {
         InputStream inputStream = MapperUtils.getInputStream(queryOrFile);
-        return new BufferedReader(new InputStreamReader(inputStream))
-            .lines()
-            .collect(Collectors.joining(" "));
+        return IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
       } catch (Exception e) {
         throw new IllegalArgumentException(
             "Something went wrong with reading the sql query file: " + queryOrFile, e);

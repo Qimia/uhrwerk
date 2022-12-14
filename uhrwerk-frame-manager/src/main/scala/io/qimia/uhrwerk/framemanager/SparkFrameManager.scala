@@ -276,6 +276,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       dfReader
     }
 
+    dfReaderWithUserOptions.option("fetchsize",1000)
+
     val dfReaderWithQuery: DataFrameReader =
       if (!isStringEmpty(source.getSelectQuery)) {
         val query: String =
