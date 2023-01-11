@@ -168,8 +168,6 @@ class CommandLineInterface extends Callable[Int] {
           connectionConf,
           tableConf,
           target,
-          start,
-          end,
           dagMode,
           parallelRun,
           overwrite

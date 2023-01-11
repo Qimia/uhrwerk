@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS CONNECTION
     created_ts            TIMESTAMP DEFAULT CURRENT_TIMESTAMP    NULL,
     updated_ts            TIMESTAMP DEFAULT CURRENT_TIMESTAMP    NULL ON update CURRENT_TIMESTAMP,
     description           VARCHAR(512)                           NULL,
-    hash_key              BIGINT                                 NOT NULL,
+    hash_key              BIGINT                                 NULL,
     INDEX (hash_key),
     UNIQUE (name, deactivated_ts)
 );
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS TABLE_
     created_ts          TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL,
     updated_ts          TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL ON update CURRENT_TIMESTAMP,
     description         VARCHAR(512)                               NULL,
-    hash_key            BIGINT                                     NOT NULL,
+    hash_key            BIGINT                                     NULL,
     INDEX (hash_key),
     UNIQUE (area, vertical, name, version, deactivated_ts)
 );

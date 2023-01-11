@@ -13,4 +13,6 @@ public interface TableService {
      * @return TableResult.
      */
     TableResult save(TableModel table, boolean overwrite);
+
+    TableModel get(String area, String vertical, String table, String version);
 }

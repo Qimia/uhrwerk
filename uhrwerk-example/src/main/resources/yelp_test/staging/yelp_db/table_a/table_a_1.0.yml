@@ -11,11 +11,11 @@ sources:
     format: jdbc
     version: "1.0"
     parallel_load:
-      query: "SELECT date FROM review WHERE date between '2007-01-01' and '2010-12-31'"
+      query: "SELECT date FROM review WHERE date between '2010-01-01' and '2010-12-31'"
       column: "date"
       num: 8
     select:
-      query: "SELECT * FROM review WHERE date between '2007-01-01' and '2010-12-31'"
+      query: "SELECT * FROM review WHERE date between '2010-01-01' and '2010-12-31'"
 
 targets:
   - connection_name: "uhrwerk_test_s3"

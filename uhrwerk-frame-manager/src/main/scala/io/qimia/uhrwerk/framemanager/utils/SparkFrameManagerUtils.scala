@@ -302,9 +302,9 @@ object SparkFrameManagerUtils {
     val config = sparkSession.conf
     if (connection.getPath.contains("s3a")) {
       // s3a
-      //config.set(
-      //  "fs.s3a.aws.credentials.provider",
-      //  "com.amazonaws.auth.DefaultAWSCredentialsProviderChain")
+      config.set(
+      "fs.s3a.aws.credentials.provider",
+      "com.amazonaws.auth.DefaultAWSCredentialsProviderChain")
       //config.set("fs.s3a.access.key", connection.getAwsAccessKeyID)
       ///config.set("fs.s3a.secret.key", connection.getAwsSecretAccessKey)
     } else {

@@ -10,6 +10,7 @@ import io.qimia.uhrwerk.common.model.*
 import io.qimia.uhrwerk.repo.TablePartition
 import io.qimia.uhrwerk.repo.TablePartitionRepo
 import io.qimia.uhrwerk.repo.TableRepo
+import org.javers.core.JaversBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.sql.*
@@ -18,15 +19,17 @@ import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.*
 
+
 class TableDAO : TableDependencyService, TableService {
     private val partService: PartitionService = PartitionDAO()
     private val connService: ConnectionService = ConnectionDAO()
     private val targetService: TargetService = TargetDAO()
-    private val dependencyDAO: DependencyService = DependencyDAO()
+    private val dependencyService: DependencyService = DependencyDAO()
     private val sourceService: SourceService = SourceDAO()
     private val tableRepo = TableRepo()
     private val tablePartRepo = TablePartitionRepo()
     private val logger: Logger
+
 
     override fun save(table: TableModel, overwrite: Boolean): TableResult {
         val tableResult = TableResult()
@@ -44,11 +47,18 @@ class TableDAO : TableDependencyService, TableService {
                 oldTable.dependencies =
                     saveTableDependencies(oldTable.id!!, table.dependencies, tableResult, false)
 
-                if (oldTable != null) {
-                    tableResult.oldResult = oldTable
-                    if (oldTable != table) {
-                        val message = String.format(
-                            """
+                tableResult.oldResult = oldTable
+
+                if (oldTable != table) {
+
+                    val javers = JaversBuilder.javers().build()
+
+                    val diff = javers.compare(oldTable, table)
+
+                    println(diff)
+
+                    val message = String.format(
+                        """
                                      A Table with id=%d and different values already exists in the Metastore.
                                      
                                      Passed Table:
@@ -57,20 +67,19 @@ class TableDAO : TableDependencyService, TableService {
                                      Table in the Metastore:
                                      %s
                                      """.trimIndent(),
-                            oldTable.id,
-                            table.toString(),
-                            oldTable.toString()
-                        ) // todo improve finding differences
-                        tableResult.message = message
-                        tableResult.isSuccess = false
-                    }
-
-                    table.sources = oldTable.sources
-                    table.targets = oldTable.targets
-                    table.dependencies = oldTable.dependencies
-
-                    return tableResult
+                        oldTable.id,
+                        table.toString(),
+                        oldTable.toString()
+                    ) // todo improve finding differences
+                    tableResult.message = message
+                    tableResult.isSuccess = false
                 }
+
+                table.sources = oldTable.sources
+                table.targets = oldTable.targets
+                table.dependencies = oldTable.dependencies
+
+                return tableResult
                 tableResult.newResult = tableRepo.save(table)
             } else {
                 if (oldTable != null)
@@ -94,6 +103,26 @@ class TableDAO : TableDependencyService, TableService {
             tableResult.message = e.message
         }
         return tableResult
+    }
+
+    override fun get(
+        area: String?,
+        vertical: String?,
+        table: String?,
+        version: String?
+    ): TableModel? {
+        val table = tableRepo.getByHashKey(HashKeyUtils.tableKey(area, vertical, table, version))
+        if (table != null) {
+            val sources = sourceService.getSourcesByTableId(table.id)
+            table.sources = sources.toTypedArray()
+
+            val targets = targetService.getTableTargets(table.id)
+            table.targets = targets.toTypedArray()
+
+            val dependencies = dependencyService.getByTableId(table.id)
+            table.dependencies = dependencies.toTypedArray()
+        }
+        return table
     }
 
     private fun saveTableTargets(
@@ -121,7 +150,7 @@ class TableDAO : TableDependencyService, TableService {
     ): Array<DependencyModel>? {
         if (!dependencies.isNullOrEmpty()) {
             dependencies.forEach { it.tableId = tableId }
-            val dependencyResult = dependencyDAO.save(tableId, dependencies, overwrite)
+            val dependencyResult = dependencyService.save(tableId, dependencies, overwrite)
             tableResult.dependencyResult = dependencyResult
             if (dependencyResult.isSuccess) {
                 return dependencyResult.dependenciesSaved

@@ -250,7 +250,23 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     * @param id a unique table identifier case class
     * @return option with tablewrapper if found
     */
-  def getTable(id: Ident): Option[TableWrapper] = tables.get(id)
+  def getTable(id: Ident): Option[TableWrapper] = {
+    val res = tables.get(id)
+    if (res.isEmpty) {
+      val ident = id.asInstanceOf[TableIdent]
+      val table = store.tableService.get(
+        ident.area,
+        ident.vertical,
+        ident.name,
+        ident.version
+      )
+      val userFunc = getTableFunctionDynamic(table)
+      val wrapper = new TableWrapper(store, table, userFunc, frameManager)
+      tables(ident) = wrapper
+      return Option(wrapper)
+    }
+    res
+  }
 
   /** Setup a full dag based on a configuration file and userCode class config or convention
     * @param dagConfigLoc location of the full dag configuration file

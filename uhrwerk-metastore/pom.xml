@@ -20,6 +20,12 @@
     </dependency>
 
     <dependency>
+      <groupId>org.javers</groupId>
+      <artifactId>javers-core</artifactId>
+      <version>6.8.1</version>
+    </dependency>
+
+    <dependency>
       <groupId>net.openhft</groupId>
       <artifactId>zero-allocation-hashing</artifactId>
       <version>${zero-allocation-hashing.version}</version>

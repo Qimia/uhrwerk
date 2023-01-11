@@ -6,7 +6,6 @@ import io.qimia.uhrwerk.common.metastore.config.SourceService
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
 import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
 import io.qimia.uhrwerk.common.metastore.model.SourceModel2
-import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.repo.SourceRepo2
 import java.sql.SQLException
 
@@ -79,6 +78,17 @@ class SourceDAO : SourceService {
     ) = sources.map { save(it, overwrite) }
 
     override fun getSourcesByTableId(tableId: Long): List<SourceModel2> {
-        return repo.getSourcesByTableId(tableId)
+
+        val sources = repo.getSourcesByTableId(tableId)
+        if (!sources.isNullOrEmpty()) {
+            sources.forEach {
+                val conn = connService.getById(it.connectionId)
+                if (conn != null)
+                    println(conn.toString())
+                it.connection = conn
+            }
+        }
+        sources.forEach { println(it.toString()) }
+        return sources
     }
 }

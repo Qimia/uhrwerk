@@ -44,6 +44,20 @@ object HashKeyUtils {
         )
     }
 
+    fun tableKey(area: String?, vertical: String?, tableName: String?, version: String?): Long {
+        assert(!area.isNullOrEmpty()) { "area can't be null or empty" }
+        assert(!vertical.isNullOrEmpty()) { "vertical can't be null or empty" }
+        assert(!tableName.isNullOrEmpty()) { "tableName can't be null or empty" }
+        assert(!version.isNullOrEmpty()) { "version can't be null or empty" }
+        return hashKey(
+            StringBuilder()
+                .append(area)
+                .append(vertical)
+                .append(tableName)
+                .append(version)
+        )
+    }
+
     fun sourceKey(source: SourceModel): Long {
         assert(source.tableId != null) { "Source.tableId can't be null" }
         assert(source.connectionId != null) { "Source.connectionId can't be null" }
@@ -71,6 +85,7 @@ object HashKeyUtils {
                 .append(source.format)
         )
     }
+
     fun dependencyKey(dependency: DependencyModel): Long {
         assert(dependency.tableId != null) { "Dependency.tableId can't be null" }
         assert(dependency.dependencyTargetId != null) { "Dependency.dependencyTargetId can't be null" }
