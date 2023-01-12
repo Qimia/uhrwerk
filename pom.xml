@@ -36,6 +36,7 @@
 
   <!-- sub modules -->
   <modules>
+    <module>uhrwerk-shaded-guava</module>
     <module>uhrwerk-metastore</module>
     <module>uhrwerk-common</module>
     <module>uhrwerk-config</module>
@@ -59,13 +60,6 @@
       <artifactId>scala-reflect</artifactId>
       <version>${scala.version}</version>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>31.1-jre</version>
-    </dependency>
-    -->
     <dependency>
       <groupId>org.scalatest</groupId>
       <artifactId>scalatest_${scala.compat.version}</artifactId>

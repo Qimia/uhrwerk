@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.engine.dag
 
-import org.apache.hadoop.shaded.com.google.common.graph.{GraphBuilder, MutableGraph}
+//import org.apache.hadoop.shaded.com.google.common.graph.{GraphBuilder, MutableGraph}
+import io.uhrwerk.thridparty.com.google.common.graph.{GraphBuilder, MutableGraph}
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters._
