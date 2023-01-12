@@ -2,7 +2,11 @@ package io.qimia.uhrwerk.engine.dag
 
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.{Environment, TableWrapper}
-import org.apache.hadoop.thirdparty.com.google.common.graph.{GraphBuilder, MutableGraph}
+//import org.apache.hadoop.thirdparty.com.google.common.graph.{GraphBuilder, MutableGraph}
+import org.apache.hadoop.shaded.com.google.common.graph.{
+  GraphBuilder,
+  MutableGraph
+}
 
 import java.time.LocalDateTime
 import scala.collection.mutable
