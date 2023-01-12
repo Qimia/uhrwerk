@@ -2,7 +2,7 @@ package io.qimia.uhrwerk.engine.dag
 
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.{Environment, TableWrapper}
-import io.uhrwerk.thridparty.com.google.common.graph.{GraphBuilder, MutableGraph}
+import org.jgrapht.graph.{DefaultDirectedGraph, DefaultEdge}
 
 import java.time.LocalDateTime
 import scala.collection.mutable
@@ -50,15 +50,15 @@ class DagTaskBuilder(environment: Environment) {
   def buildTaskListFromTable(outTable: TableWrapper): List[DagTask] = {
     val callTime = LocalDateTime.now()
 
-    val dag: MutableGraph[(TableIdent, Boolean)] =
-      GraphBuilder
-        .directed()
-        .build()
+    val dag = new DefaultDirectedGraph[(TableIdent, Boolean), DefaultEdge](
+      classOf[DefaultEdge]
+    )
 
     def buildGraph(
         tPair: (TableIdent, Boolean),
-        dag: MutableGraph[(TableIdent, Boolean)]
+        dag: DefaultDirectedGraph[(TableIdent, Boolean), DefaultEdge]
     ) {
+      dag.addVertex(tPair)
       val tIdent = tPair._1
       val aTable = environment.getTable(tIdent).get
       val dependencyTables =
@@ -79,8 +79,8 @@ class DagTaskBuilder(environment: Environment) {
               val partition = environment.metaStore.partitionService
                 .getLatestPartition(depTable.wrappedTable.getTargets()(0).getId)
               val depPair = (depIdent, partition != null)
-              dag.putEdge(depPair, tPair)
               buildGraph(depPair, dag)
+              dag.addEdge(depPair, tPair)
             })
     }
 
@@ -96,50 +96,40 @@ class DagTaskBuilder(environment: Environment) {
 
     def pTraverse(
         node: (TableIdent, Boolean),
-        dag: MutableGraph[(TableIdent, Boolean)],
-        nDag: MutableGraph[(TableIdent, Boolean)]
+        dag: DefaultDirectedGraph[(TableIdent, Boolean), DefaultEdge],
+        nDag: DefaultDirectedGraph[(TableIdent, Boolean), DefaultEdge]
     ): (TableIdent, Boolean) = {
-      val preNodes = dag.predecessors(node).asScala
+      val preNodes = dag.incomingEdgesOf(node).asScala.map(dag.getEdgeSource)
       if (preNodes.isEmpty) {
+        nDag.addVertex(node)
         node
       } else {
         val tpNodes = preNodes.map(pTraverse(_, dag, nDag))
         val process = node._2 && tpNodes.map(_._2).reduce((l, r) => l && r)
         val nwNode = (node._1, process)
-        tpNodes.foreach(nDag.putEdge(_, nwNode))
+        nDag.addVertex(nwNode)
+        tpNodes.foreach(nDag.addEdge(_, nwNode))
         nwNode
       }
     }
 
-    val nDag: MutableGraph[(TableIdent, Boolean)] =
-      GraphBuilder
-        .directed()
-        .build()
+    val nDag = new DefaultDirectedGraph[(TableIdent, Boolean), DefaultEdge](
+      classOf[DefaultEdge]
+    )
 
     pTraverse((outIdent, false), dag, nDag)
 
-    def topSortGraph(
-        node: (TableIdent, Boolean),
-        dag: MutableGraph[(TableIdent, Boolean)]
-    ): List[(TableIdent, Boolean)] = {
-      val preNodes = dag.predecessors(node).asScala
-      if (preNodes.isEmpty) {
-        List(node)
-      } else {
-        preNodes
-          .map(topSortGraph(_, dag))
-          .reduce((l, r) => l ::: r) ::: List(node)
-      }
-    }
-    val sorted = topSortGraph((outIdent, false), nDag)
+    val sorted = nDag.vertexSet().asScala
     val filtered = sorted.filter(!_._2)
-    filtered.map(node =>
-      DagTask(
-        environment.getTable(node._1).get,
-        List(callTime),
-        nDag.degree(node)
+    filtered
+      .map(node =>
+        DagTask(
+          environment.getTable(node._1).get,
+          List(callTime),
+          nDag.degreeOf(node)
+        )
       )
-    )
+      .toList
   }
 
 }

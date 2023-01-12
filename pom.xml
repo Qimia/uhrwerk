@@ -16,6 +16,7 @@
     <scala.version>2.12.15</scala.version>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
+    <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotlin.version>1.7.20</kotlin.version>
     <spark.version>3.2.1</spark.version>
     <delta.version>2.0.1</delta.version>
@@ -36,7 +37,6 @@
 
   <!-- sub modules -->
   <modules>
-    <module>uhrwerk-shaded-guava</module>
     <module>uhrwerk-metastore</module>
     <module>uhrwerk-common</module>
     <module>uhrwerk-config</module>

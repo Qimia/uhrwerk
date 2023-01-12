@@ -278,7 +278,17 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
         ident.name,
         ident.version
       )
+
       val userFunc = getTableFunctionDynamic(table)
+
+      if (table.getSources != null && !table.getSources.isEmpty) {
+        this.addConnections(table.getSources.map(_.getConnection))
+      }
+
+      if (table.getTargets != null && !table.getTargets.isEmpty) {
+        this.addConnections(table.getTargets.map(_.getConnection))
+      }
+
       val wrapper = new TableWrapper(store, table, userFunc, frameManager)
       tables(ident) = wrapper
       return Option(wrapper)
