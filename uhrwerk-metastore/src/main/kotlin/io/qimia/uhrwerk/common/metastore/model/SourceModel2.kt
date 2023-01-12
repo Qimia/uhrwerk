@@ -66,7 +66,6 @@ data class SourceModel2(
         result = 31 * result + (path?.hashCode() ?: 0)
         result = 31 * result + (format?.hashCode() ?: 0)
         result = 31 * result + (connection?.hashCode() ?: 0)
-        result = 31 * result + (table?.hashCode() ?: 0)
         result = 31 * result + (ingestionMode?.hashCode() ?: 0)
         result = 31 * result + (intervalTempUnit?.hashCode() ?: 0)
         result = 31 * result + (intervalTempSize ?: 0)

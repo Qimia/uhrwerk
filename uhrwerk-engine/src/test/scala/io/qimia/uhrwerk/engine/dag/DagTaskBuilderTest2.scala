@@ -56,21 +56,21 @@ class DagTaskBuilderTest2 extends AnyFlatSpec with BeforeAndAfterEach {
     env.addConnectionFile("EnvTableConn1.yml")
     List("EnvTableTest1.yml", "EnvTableTest2.yml", "EnvTableTest3.yml", "EnvTableTest4.yml").foreach(
       env.addTableFile(_, identityUserFunc))
-    val wrap3   = env.getTable(TableIdent("test", "test_db", "tab3", "1.0")).get
+    val wrap3   = env.getTable(new TableIdent("test", "test_db", "tab3", "1.0")).get
     val startTs = LocalDateTime.of(2018, 6, 20, 10, 0)
     val endTs   = LocalDateTime.of(2018, 6, 20, 16, 0)
 
     val builder = new DagTaskBuilder2(env)
     val taskmap = builder.buildTaskListFromTable(wrap3, startTs, endTs)
     assert(taskmap.size == 3 * 6)
-    val endTaskKey = DagTask2Key(TableIdent("test", "test_db", "tab3", "1.0"), LocalDateTime.of(2018, 6, 20, 13, 0))
+    val endTaskKey = DagTask2Key(new TableIdent("test", "test_db", "tab3", "1.0"), LocalDateTime.of(2018, 6, 20, 13, 0))
     val someEndTask =
       taskmap(endTaskKey)
     assert(someEndTask.upstreamDependencies.isEmpty)
     assert(someEndTask.partitions.length == 1)
     val depKeys = Set(
-      DagTask2Key(TableIdent("test", "test_db", "tab1", "1.0"), LocalDateTime.of(2018, 6, 20, 13, 0)),
-      DagTask2Key(TableIdent("test", "test_db", "tab2", "1.0"), LocalDateTime.of(2018, 6, 20, 13, 0))
+      DagTask2Key(new TableIdent("test", "test_db", "tab1", "1.0"), LocalDateTime.of(2018, 6, 20, 13, 0)),
+      DagTask2Key(new TableIdent("test", "test_db", "tab2", "1.0"), LocalDateTime.of(2018, 6, 20, 13, 0))
     )
     assert(someEndTask.missingDependencies == depKeys)
     depKeys.foreach(k => {
@@ -80,13 +80,13 @@ class DagTaskBuilderTest2 extends AnyFlatSpec with BeforeAndAfterEach {
       assert(task.partitions.length == 1)
     })
 
-    val wrap4           = env.getTable(TableIdent("test", "test_db", "tab4", "1.0")).get
+    val wrap4           = env.getTable(new TableIdent("test", "test_db", "tab4", "1.0")).get
     val endTs2          = LocalDateTime.of(2018, 6, 20, 12, 0)
     val windowedTaskmap = builder.buildTaskListFromTable(wrap4, startTs, endTs2)
     assert(windowedTaskmap.size == ((2 * 1) + (2 * 3) + 2))
     assert(!windowedTaskmap.contains(endTaskKey))
 
-    val endTableIdent = TableIdent("test", "test_db", "tab4", "1.0")
+    val endTableIdent = new TableIdent("test", "test_db", "tab4", "1.0")
     val endTaskKeys = DagTask2Key(endTableIdent, LocalDateTime.of(2018, 6, 20, 10, 0)) :: DagTask2Key(
       endTableIdent,
       LocalDateTime.of(2018, 6, 20, 11, 0)) :: Nil
@@ -97,10 +97,10 @@ class DagTaskBuilderTest2 extends AnyFlatSpec with BeforeAndAfterEach {
       assert(task.missingDependencies.size == 6)
     })
     val doubleUpstreamKeys = Set(
-      DagTask2Key(TableIdent("test", "test_db", "tab1", "1.0"), LocalDateTime.of(2018, 6, 20, 9, 0)),
-      DagTask2Key(TableIdent("test", "test_db", "tab1", "1.0"), LocalDateTime.of(2018, 6, 20, 10, 0)),
-      DagTask2Key(TableIdent("test", "test_db", "tab2", "1.0"), LocalDateTime.of(2018, 6, 20, 9, 0)),
-      DagTask2Key(TableIdent("test", "test_db", "tab2", "1.0"), LocalDateTime.of(2018, 6, 20, 10, 0))
+      DagTask2Key(new TableIdent("test", "test_db", "tab1", "1.0"), LocalDateTime.of(2018, 6, 20, 9, 0)),
+      DagTask2Key(new TableIdent("test", "test_db", "tab1", "1.0"), LocalDateTime.of(2018, 6, 20, 10, 0)),
+      DagTask2Key(new TableIdent("test", "test_db", "tab2", "1.0"), LocalDateTime.of(2018, 6, 20, 9, 0)),
+      DagTask2Key(new TableIdent("test", "test_db", "tab2", "1.0"), LocalDateTime.of(2018, 6, 20, 10, 0))
     )
     doubleUpstreamKeys.foreach(k => {
       val task = windowedTaskmap(k)
@@ -108,7 +108,7 @@ class DagTaskBuilderTest2 extends AnyFlatSpec with BeforeAndAfterEach {
       assert(task.partitions.length == 1)
       assert(task.missingDependencies.isEmpty)
     })
-    val singleUpstreamKey = DagTask2Key(TableIdent("test", "test_db", "tab1", "1.0"), LocalDateTime.of(2018, 6, 20, 8, 0))
+    val singleUpstreamKey = DagTask2Key(new TableIdent("test", "test_db", "tab1", "1.0"), LocalDateTime.of(2018, 6, 20, 8, 0))
     val singleUpTask      = windowedTaskmap(singleUpstreamKey)
     assert(singleUpTask.upstreamDependencies.size == 1)
     assert(singleUpTask.partitions.length == 1)
@@ -192,7 +192,7 @@ class DagTaskBuilderTest2 extends AnyFlatSpec with BeforeAndAfterEach {
     env.addConnectionFile("EnvTableConn1.yml")
     List("EnvTableTest1.yml", "EnvTableTest2.yml", "EnvTableTest3.yml", "EnvTableTest4.yml").foreach(
       env.addTableFile(_, identityUserFunc))
-    val wrap3   = env.getTable(TableIdent("test", "test_db", "tab3", "1.0")).get
+    val wrap3   = env.getTable(new TableIdent("test", "test_db", "tab3", "1.0")).get
     val startTs = LocalDateTime.of(2018, 6, 20, 10, 0)
     val endTs   = LocalDateTime.of(2018, 6, 20, 16, 0)
 
@@ -208,7 +208,7 @@ class DagTaskBuilderTest2 extends AnyFlatSpec with BeforeAndAfterEach {
     env.addConnectionFile("EnvTableConn1.yml")
     List(1, 8, 9).map(n => s"EnvTableTest${n.toString}.yml").foreach(env.addTableFile(_, identityUserFunc))
 
-    val targetIdent = TableIdent("test", "test_db", "tab9", "1.0")
+    val targetIdent = new TableIdent("test", "test_db", "tab9", "1.0")
     val startTs     = LocalDateTime.of(2010, 4, 10, 6, 0)
     val midpointTs  = LocalDateTime.of(2010, 4, 10, 9, 0)
     val endTs       = LocalDateTime.of(2010, 4, 10, 12, 0)
@@ -239,7 +239,7 @@ class DagTaskBuilderTest2 extends AnyFlatSpec with BeforeAndAfterEach {
       .sliding(2)
       .foreach(check2Key)
 
-    val aggregateDepIdent = TableIdent("test", "test_db", "tab8", "1.0")
+    val aggregateDepIdent = new TableIdent("test", "test_db", "tab8", "1.0")
     val aggregateDepWrap  = env.getTable(aggregateDepIdent).get
     val quarterTimes = TimeTools
       .convertRangeToBatch(startTs, endTs, aggregateDepWrap.tableDuration)

@@ -157,7 +157,7 @@ class DagTaskBuilder2(environment: Environment) {
         // TODO Figure out what dependencies this target table needs
         val missingDeps: mutable.Set[DagTask2Key] = wrap.wrappedTable.getDependencies
           .map(d => {
-            val ident       = TableIdent(d.getArea, d.getVertical, d.getTableName, d.getVersion)
+            val ident       =  new TableIdent(d.getArea, d.getVertical, d.getTableName, d.getVersion)
             val targetTimes = targetTaskKey.partition :: Nil
             val times = targetTimes
             times.map(DagTask2Key(ident, _))

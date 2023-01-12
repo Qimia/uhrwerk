@@ -19,9 +19,6 @@ class HashLoad extends TableTransformation {
   }
 
   def getTableName(i: Ident): String = {
-    i match {
-      case SourceIdent(connection, path, format) => path.split("\\.").last
-      case TableIdent(area, vertical, name, version) => name
-    }
+    null
   }
 }

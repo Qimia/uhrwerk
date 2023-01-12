@@ -385,4 +385,20 @@ class TableWrapper(
       Option(earliestLatestPartition.getPartitionTs)
     }
   }
+
+  override def toString = s"TableWrapper($wrappedTable)"
+
+  def canEqual(other: Any): Boolean = other.isInstanceOf[TableWrapper]
+
+  override def equals(other: Any): Boolean = other match {
+    case that: TableWrapper =>
+      (that canEqual this) &&
+        wrappedTable == that.wrappedTable
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(wrappedTable)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
 }

@@ -125,22 +125,22 @@ class DagTaskDispatcher2Test extends AnyFlatSpec with BeforeAndAfterEach {
     val env          = new Environment(metaStore, frameManager)
     //env.addConnectionFile("EnvTableConn1.yml")
     var mappedIdentityUserFunc = collection.mutable.Map[TableIdent, TaskInput => TaskOutput]()
-    mappedIdentityUserFunc += (TableIdent("loading", "dtd", "table_s", "1.0") -> identityUserFunc("table_s", waitMillis=waitMillis))
+    mappedIdentityUserFunc += (new TableIdent("loading", "dtd", "table_s", "1.0") -> identityUserFunc("table_s", waitMillis=waitMillis))
 
     val level1_tables = ('a' until 'i').toList.map(x => {
-      (TableIdent("loading", "dtd", f"table_1$x", "1.0") -> identityUserFunc(f"table_1$x", waitMillis=waitMillis))
+      (new TableIdent("loading", "dtd", f"table_1$x", "1.0") -> identityUserFunc(f"table_1$x", waitMillis=waitMillis))
     })
 
     val identityFuncsWithIndentifier =
-      (TableIdent("loading", "dtd", "table_3a", "1.0")   -> identityUserFunc("table_3a", waitMillis=waitMillis)) ::
-        (TableIdent("loading", "dtd", "table_3b", "1.0") -> identityUserFunc("table_3b", waitMillis=waitMillis)) ::
-        (TableIdent("loading", "dtd", "table_2a", "1.0") -> identityUserFunc("table_2a", waitMillis=waitMillis)) ::
-        (TableIdent("loading", "dtd", "table_2b", "1.0") -> identityUserFunc("table_2b", waitMillis=waitMillis)) ::
-        (TableIdent("loading", "dtd", "table_2c", "1.0") -> identityUserFunc("table_2c", waitMillis=waitMillis)) ::
-        (TableIdent("loading", "dtd", "table_4a", "1.0") -> identityUserFunc("table_4a", waitMillis=waitMillis)) ::
-        (TableIdent("loading", "dtd", "table_s2", "1.0") -> identityUserFunc("table_s2", waitMillis=waitMillis)) ::
-        (TableIdent("loading", "dtd", "table_2d", "1.0") -> identityUserFunc("table_2d", waitMillis=waitMillis)) ::
-        (TableIdent("loading", "dtd", "table_1i", "1.0") -> identityUserFuncWithFailure("table_1i", waitMillis=waitMillis)) ::
+      (new TableIdent("loading", "dtd", "table_3a", "1.0")   -> identityUserFunc("table_3a", waitMillis=waitMillis)) ::
+        (new TableIdent("loading", "dtd", "table_3b", "1.0") -> identityUserFunc("table_3b", waitMillis=waitMillis)) ::
+        (new TableIdent("loading", "dtd", "table_2a", "1.0") -> identityUserFunc("table_2a", waitMillis=waitMillis)) ::
+        (new TableIdent("loading", "dtd", "table_2b", "1.0") -> identityUserFunc("table_2b", waitMillis=waitMillis)) ::
+        (new TableIdent("loading", "dtd", "table_2c", "1.0") -> identityUserFunc("table_2c", waitMillis=waitMillis)) ::
+        (new TableIdent("loading", "dtd", "table_4a", "1.0") -> identityUserFunc("table_4a", waitMillis=waitMillis)) ::
+        (new TableIdent("loading", "dtd", "table_s2", "1.0") -> identityUserFunc("table_s2", waitMillis=waitMillis)) ::
+        (new TableIdent("loading", "dtd", "table_2d", "1.0") -> identityUserFunc("table_2d", waitMillis=waitMillis)) ::
+        (new TableIdent("loading", "dtd", "table_1i", "1.0") -> identityUserFuncWithFailure("table_1i", waitMillis=waitMillis)) ::
         level1_tables
 
     mappedIdentityUserFunc = mappedIdentityUserFunc ++ identityFuncsWithIndentifier
@@ -151,7 +151,7 @@ class DagTaskDispatcher2Test extends AnyFlatSpec with BeforeAndAfterEach {
 
   "Building a dag from a dag file" should "result in only those dependencies needed by the target table_4a" in {
     val env = getEnv(0)
-    val wrap1   = env.getTable(TableIdent("loading", "dtd", "table_4a", "1.0")).get
+    val wrap1   = env.getTable(new TableIdent("loading", "dtd", "table_4a", "1.0")).get
     val startTs = LocalDateTime.of(2018, 6, 20, 0, 0)
     val endTs   = LocalDateTime.of(2018, 6, 21, 0, 0)
     val builder = new DagTaskBuilder2(env)
@@ -176,7 +176,7 @@ class DagTaskDispatcher2Test extends AnyFlatSpec with BeforeAndAfterEach {
 
   "Building a dag from a dag file for table_2d" should "result in table_s, table_1h succeeding; table_1i, and table_2d failing" in {
     val env = getEnv(0)
-    val wrap1   = env.getTable(TableIdent("loading", "dtd", "table_2d", "1.0")).get
+    val wrap1   = env.getTable(new TableIdent("loading", "dtd", "table_2d", "1.0")).get
     val startTs = LocalDateTime.of(2018, 6, 20, 0, 0)
     val endTs   = LocalDateTime.of(2018, 6, 21, 0, 0)
     val builder = new DagTaskBuilder2(env)
@@ -199,7 +199,7 @@ class DagTaskDispatcher2Test extends AnyFlatSpec with BeforeAndAfterEach {
      * The latest task start should be after the earliest task start.
      */
     val env = getEnv(20000)
-    val wrap1 = env.getTable(TableIdent("loading", "dtd", "table_2c", "1.0")).get
+    val wrap1 = env.getTable(new TableIdent("loading", "dtd", "table_2c", "1.0")).get
     val startTs = LocalDateTime.of(2012, 6, 20, 0, 0)
     val endTs = LocalDateTime.of(2012, 6, 21, 0, 0)
     val builder = new DagTaskBuilder2(env)

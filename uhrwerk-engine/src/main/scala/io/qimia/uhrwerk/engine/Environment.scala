@@ -15,13 +15,31 @@ object Environment {
 
   sealed abstract class Ident
 
-  case class TableIdent(
-      area: String,
-      vertical: String,
-      name: String,
-      version: String
-  ) extends Ident {
+  class TableIdent(
+      val area: String,
+      val vertical: String,
+      val name: String,
+      val version: String
+  ) extends Ident
+      with Serializable {
     def asPath = f"$area.$vertical.$name.$version"
+
+    def canEqual(other: Any): Boolean = other.isInstanceOf[TableIdent]
+
+    override def equals(other: Any): Boolean = other match {
+      case that: TableIdent =>
+        (that canEqual this) &&
+          area == that.area &&
+          vertical == that.vertical &&
+          name == that.name &&
+          version == that.version
+      case _ => false
+    }
+
+    override def hashCode(): Int = {
+      val state = Seq(area, vertical, name, version)
+      state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+    }
   }
 
   case class SourceIdent(connection: String, path: String, format: String)
@@ -58,7 +76,7 @@ object Environment {
   }
 
   def getTableIdent(table: TableModel): TableIdent =
-    TableIdent(
+    new TableIdent(
       table.getArea,
       table.getVertical,
       table.getName,

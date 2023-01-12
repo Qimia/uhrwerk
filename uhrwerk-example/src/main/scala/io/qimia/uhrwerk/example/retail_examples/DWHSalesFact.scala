@@ -13,19 +13,19 @@ class DWHSalesFact extends TableTransformation {
    * @return TaskOutput which is a dataframe and info about writing the dataframe
    */
   override def process(in: TaskInput): TaskOutput = {
-    val facts = in.loadedInputFrames.get(TableIdent("staging", "retail", "salesFacts", "1.0")) match {
+    val facts = in.loadedInputFrames.get(new TableIdent("staging", "retail", "salesFacts", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception(s"Table salesFact not found!")
     }
-    val employeeDim = in.loadedInputFrames.get(TableIdent("staging", "retail", "employeeDim", "1.0")) match {
+    val employeeDim = in.loadedInputFrames.get(new TableIdent("staging", "retail", "employeeDim", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception(s"Table employeeDim not found!")
     }
-    val storeDim = in.loadedInputFrames.get(TableIdent("staging", "retail", "storeDim", "1.0")) match {
+    val storeDim = in.loadedInputFrames.get(new TableIdent("staging", "retail", "storeDim", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception(s"Table storeDim not found!")
     }
-    val productDim = in.loadedInputFrames.get(TableIdent("staging", "retail", "productDim", "1.0")) match {
+    val productDim = in.loadedInputFrames.get(new TableIdent("staging", "retail", "productDim", "1.0")) match {
       case Some(x) => x
       case None => throw new Exception(s"Table productDim not found!")
     }

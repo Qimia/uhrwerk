@@ -1,8 +1,8 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
-import com.google.common.base.Objects;
 import io.qimia.uhrwerk.common.metastore.model.SourceModel2;
 import java.io.Serializable;
+import java.util.Objects;
 
 public class SourceResult implements Serializable {
   private static final long serialVersionUID = 5997084266031599153L;
@@ -62,29 +62,6 @@ public class SourceResult implements Serializable {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof SourceResult)) {
-      return false;
-    }
-    SourceResult that = (SourceResult) o;
-    return isSuccess() == that.isSuccess()
-        && isError() == that.isError()
-        && Objects.equal(getNewResult(), that.getNewResult())
-        && Objects.equal(getOldResult(), that.getOldResult())
-        && Objects.equal(getMessage(), that.getMessage())
-        && Objects.equal(getException(), that.getException());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(
-        getNewResult(), getOldResult(), isSuccess(), isError(), getMessage(), getException());
-  }
-
-  @Override
   public String toString() {
     return "SourceResult{"
         + "success="
@@ -97,5 +74,26 @@ public class SourceResult implements Serializable {
         + ", exception="
         + exception
         + '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof SourceResult)) {
+      return false;
+    }
+    SourceResult that = (SourceResult) o;
+    return isSuccess() == that.isSuccess() && isError() == that.isError() && Objects.equals(
+        getNewResult(), that.getNewResult()) && Objects.equals(getOldResult(),
+        that.getOldResult()) && Objects.equals(getMessage(), that.getMessage())
+        && Objects.equals(getException(), that.getException());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getNewResult(), getOldResult(), isSuccess(), isError(), getMessage(),
+        getException());
   }
 }

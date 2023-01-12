@@ -45,7 +45,6 @@ data class TargetModel(
         result = 31 * result + (tableId?.hashCode() ?: 0)
         result = 31 * result + (connectionId?.hashCode() ?: 0)
         result = 31 * result + (connection?.hashCode() ?: 0)
-        result = 31 * result + (table?.hashCode() ?: 0)
         result = 31 * result + (description?.hashCode() ?: 0)
         result = 31 * result + (deactivatedTs?.hashCode() ?: 0)
         result = 31 * result + (createdTs?.hashCode() ?: 0)

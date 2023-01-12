@@ -19,7 +19,7 @@ object DependencyHelper {
     * @return a table identifier
     */
   def extractTableIdentity(bulkDependency: BulkDependencyResult): TableIdent =
-    TableIdent(bulkDependency.dependency.getArea,
+    new TableIdent(bulkDependency.dependency.getArea,
                bulkDependency.dependency.getVertical,
                bulkDependency.dependency.getTableName,
                bulkDependency.dependency.getVersion)

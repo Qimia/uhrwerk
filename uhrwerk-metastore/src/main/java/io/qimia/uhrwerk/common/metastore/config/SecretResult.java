@@ -1,8 +1,8 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
-import com.google.common.base.Objects;
 import io.qimia.uhrwerk.common.metastore.model.SecretModel;
 import java.io.Serializable;
+import java.util.Objects;
 
 public class SecretResult implements Serializable {
   SecretModel newSecret;
@@ -61,28 +61,6 @@ public class SecretResult implements Serializable {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof SecretResult)) {
-      return false;
-    }
-    SecretResult that = (SecretResult) o;
-    return isSuccess() == that.isSuccess() && isError() == that.isError()
-        && Objects.equal(getNewSecret(), that.getNewSecret())
-        && Objects.equal(getOldSecret(), that.getOldSecret())
-        && Objects.equal(getMessage(), that.getMessage())
-        && Objects.equal(getException(), that.getException());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(getNewSecret(), getOldSecret(), isSuccess(), isError(), getMessage(),
-        getException());
-  }
-
-  @Override
   public String toString() {
     return "SecretResult{" +
         "newSecret=" + newSecret +
@@ -92,5 +70,26 @@ public class SecretResult implements Serializable {
         ", message='" + message + '\'' +
         ", exception=" + exception +
         '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof SecretResult)) {
+      return false;
+    }
+    SecretResult that = (SecretResult) o;
+    return isSuccess() == that.isSuccess() && isError() == that.isError() && Objects.equals(
+        getNewSecret(), that.getNewSecret()) && Objects.equals(getOldSecret(),
+        that.getOldSecret()) && Objects.equals(getMessage(), that.getMessage())
+        && Objects.equals(getException(), that.getException());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getNewSecret(), getOldSecret(), isSuccess(), isError(), getMessage(),
+        getException());
   }
 }

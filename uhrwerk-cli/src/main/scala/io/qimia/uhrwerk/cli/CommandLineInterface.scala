@@ -139,7 +139,7 @@ class CommandLineInterface extends Callable[Int] {
         rest = rest.tail
         val tableName = rest.head
         val version = rest.tail.mkString(sep.toString)
-        TableIdent(area, vertical, tableName, version)
+        new TableIdent(area, vertical, tableName, version)
       } catch {
         case _: Exception =>
           throw new Exception(
