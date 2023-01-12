@@ -159,12 +159,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     results.map(res => {
       if (res.isSuccess) {
         val conn = res.getNewConnection
-        if (conn.getType.equals(ConnectionType.JDBC)) {
-          val jdbcUser = getSecretValue(conn.getJdbcUser)
-          conn.setJdbcUser(jdbcUser)
-          val jdbcPass = getSecretValue(conn.getJdbcPass)
-          conn.setJdbcPass(jdbcPass)
-        }
+        replaceSecrets(conn)
       }
     })
     results
@@ -250,12 +245,7 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     if (storedTable.getSources != null && !storedTable.getSources.isEmpty) {
       storedTable.getSources.foreach(source => {
         val conn = source.getConnection
-        if (conn.getType.equals(ConnectionType.JDBC)) {
-          val jdbcUser = getSecretValue(conn.getJdbcUser)
-          conn.setJdbcUser(jdbcUser)
-          val jdbcPass = getSecretValue(conn.getJdbcPass)
-          conn.setJdbcPass(jdbcPass)
-        }
+        replaceSecrets(conn)
       })
     }
     val ident = getTableIdent(storedTable)
@@ -264,7 +254,17 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     Option(wrapper)
   }
 
+  private def replaceSecrets(conn: ConnectionModel): Unit = {
+    if (conn.getType.equals(ConnectionType.JDBC)) {
+      val jdbcUser = getSecretValue(conn.getJdbcUser)
+      conn.setJdbcUser(jdbcUser)
+      val jdbcPass = getSecretValue(conn.getJdbcPass)
+      conn.setJdbcPass(jdbcPass)
+    }
+  }
+
   /** Retrieve previously loaded TableWrapper object
+    *
     * @param id a unique table identifier case class
     * @return option with tablewrapper if found
     */
@@ -282,11 +282,11 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
       val userFunc = getTableFunctionDynamic(table)
 
       if (table.getSources != null && !table.getSources.isEmpty) {
-        this.addConnections(table.getSources.map(_.getConnection))
+        table.getSources.map(_.getConnection).foreach(this.replaceSecrets)
       }
 
       if (table.getTargets != null && !table.getTargets.isEmpty) {
-        this.addConnections(table.getTargets.map(_.getConnection))
+        table.getSources.map(_.getConnection).foreach(this.replaceSecrets)
       }
 
       val wrapper = new TableWrapper(store, table, userFunc, frameManager)
