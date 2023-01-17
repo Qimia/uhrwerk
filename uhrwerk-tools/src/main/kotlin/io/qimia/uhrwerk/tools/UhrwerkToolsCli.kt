@@ -48,12 +48,14 @@ class UhrwerkToolsCli : Callable<Int> {
         println()
         println("######### DAG Tables Top Down ###########")
         val dag = UhrwerkDagBuilder.dag(tblRef)
-        dag.forEach { println(it) }
+        dag.forEach {
+            println(it.toStringWithIndent())
+        }
 
         println()
         println("######### DAG Tables in Processing Order ###########")
         val process = UhrwerkDagBuilder.process(tblRef)
-        process.forEach { println(it) }
+        process.forEach { println(it.toStringWithIndent()) }
 
         return 0
     }
@@ -87,6 +89,7 @@ class UhrwerkToolsCli : Callable<Int> {
             }
             return Reference(area, vertical, table, version)
         }
+
     }
 }
 

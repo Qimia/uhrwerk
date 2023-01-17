@@ -21,7 +21,6 @@ object UhrwerkDagBuilder {
         val revDag =
             DefaultDirectedGraph<TableInfo, DefaultEdge>(DefaultEdge::class.java)
         traverse(target, dag, revDag)
-        target.process = true
         return revDag.vertexSet().toList()
     }
 
@@ -42,15 +41,17 @@ object UhrwerkDagBuilder {
             val partition: Partition? = if (!table.targets.isNullOrEmpty()) {
                 partitions.getLatestPartition(table.targets!![0].id!!)
             } else null
-            res.process = partition == null
+            res.processed = partition != null
         }
         return res
     }
 
     fun buildGraph(
         info: TableInfo,
-        dag: DefaultDirectedGraph<TableInfo, DefaultEdge>
+        dag: DefaultDirectedGraph<TableInfo, DefaultEdge>,
+        depth: Int = 0
     ) {
+        info.depth = depth
         dag.addVertex(info)
         val ref = info.ref
         if (info.exists) {
@@ -62,7 +63,7 @@ object UhrwerkDagBuilder {
                         val depInfo = table(depRef)
                         buildGraph(
                             depInfo,
-                            dag
+                            dag, depth + 1
                         )
                         dag.addEdge(depInfo, info)
                     }
@@ -76,16 +77,18 @@ object UhrwerkDagBuilder {
         dag: DefaultDirectedGraph<TableInfo, DefaultEdge>,
         revDag: DefaultDirectedGraph<TableInfo, DefaultEdge>
     ): TableInfo {
-        if (!node.exists)
-            return node
+        if (!node.exists) {
+            return node.copy()
+        }
         val prevNodes = dag.incomingEdgesOf(node).map { dag.getEdgeSource(it) }
         return if (prevNodes.isNullOrEmpty()) {
-            revDag.addVertex(node)
-            node
+            val cp = node.copy()
+            revDag.addVertex(cp)
+            cp
         } else {
             val tpNodes = prevNodes.map { traverse(it, dag, revDag) }
-            val process = node.process && tpNodes.map { it.process }.reduce { l, r -> l && r }
-            val nwNode = TableInfo(node.ref, process = process, exists = node.exists)
+            val process = node.processed && tpNodes.map { it.processed }.reduce { l, r -> l && r }
+            val nwNode = node.copy(processed = process)
             revDag.addVertex(nwNode)
             tpNodes.forEach { revDag.addEdge(it, nwNode) }
             nwNode
