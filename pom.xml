@@ -12,13 +12,13 @@
   <version>0.2.0-SNAPSHOT</version>
 
   <properties>
-    <scala.compat.version>2.12</scala.compat.version>
-    <scala.version>2.12.15</scala.version>
-    <maven.compiler.source>11</maven.compiler.source>
+  	<maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
     <kotlin.version>1.8.0</kotlin.version>
     <spark.version>3.2.1</spark.version>
+    <scala.compat.version>2.12</scala.compat.version>
+    <scala.version>2.12.15</scala.version>
     <delta.version>2.0.1</delta.version>
     <spark_redshift.version>5.1.0</spark_redshift.version>
     <mysql.version>8.0.29</mysql.version>
@@ -47,6 +47,7 @@
     <module>uhrwerk-cli</module>
     <module>uhrwerk-aws</module>
     <module>uhrwerk-azure</module>
+    <module>uhrwerk-tools</module>
   </modules>
 
   <dependencies>
