@@ -73,6 +73,7 @@ class TableRepo() : BaseRepo<TableModel>() {
             .maxBulkSize(res.getInt("tab.max_bulk_size"))
             .version(res.getString("tab.version"))
             .partitioned(res.getBoolean("tab.partitioned"))
+            .transformSqlQuery(res.getString("tab.transform_sql_query"))
             .className(res.getString("tab.class_name"))
 
         val deactivatedTs = res.getTimestamp("tab.deactivated_ts")
