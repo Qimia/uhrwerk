@@ -255,7 +255,11 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
   }
 
   private def replaceSecrets(conn: ConnectionModel): Unit = {
-    if (conn.getType.equals(ConnectionType.JDBC)) {
+    if (
+      conn.getType.equals(ConnectionType.JDBC) || conn.getType.equals(
+        ConnectionType.REDSHIFT
+      )
+    ) {
       val jdbcUser = getSecretValue(conn.getJdbcUser)
       conn.setJdbcUser(jdbcUser)
       val jdbcPass = getSecretValue(conn.getJdbcPass)
