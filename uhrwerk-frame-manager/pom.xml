@@ -69,14 +69,6 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/io.github.spark-redshift-community/spark-redshift -->
-    <dependency>
-      <groupId>io.github.spark-redshift-community</groupId>
-      <artifactId>spark-redshift_2.12</artifactId>
-      <version>5.1.0</version>
-    </dependency>
-
-
   </dependencies>
 
   <build>
