@@ -358,6 +358,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         )
       }
       val isJDBC = targetConnection.getType.equals(ConnectionType.JDBC)
+
       if (targetConnection.getType == ConnectionType.S3) {
         SparkFrameManagerUtils.setS3Config(sparkSession, targetConnection)
       }
@@ -485,7 +486,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
       logger.info(s"Saving DF to $fullPath")
       if (isJDBC) {
-        val dbtable =
+        val dbTableName =
           if (
             target.getTableName != null
             && !target.getTableName.trim.isEmpty
@@ -499,7 +500,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           .option("driver", targetConnection.getJdbcDriver)
           .option("user", targetConnection.getJdbcUser)
           .option("password", targetConnection.getJdbcPass)
-          .option("dbtable", s"$dbtable")
+          .option("dbtable", s"$dbTableName")
         try {
           jdbcWriter
             .save()

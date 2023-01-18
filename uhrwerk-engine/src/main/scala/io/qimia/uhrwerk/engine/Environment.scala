@@ -129,7 +129,7 @@ object Environment {
 
 class Environment(store: MetaStore, frameManager: FrameManager) {
   val configReader = new YamlConfigReader()
-  val tables: mutable.Map[Ident, TableWrapper] = mutable.HashMap()
+  val tables: mutable.Map[TableIdent, TableWrapper] = mutable.HashMap()
   val metaStore: MetaStore = store
 
   /** Add and load connections to uhrwerk
@@ -268,15 +268,14 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
     * @param id a unique table identifier case class
     * @return option with tablewrapper if found
     */
-  def getTable(id: Ident): Option[TableWrapper] = {
+  def getTable(id: TableIdent): Option[TableWrapper] = {
     val res = tables.get(id)
     if (res.isEmpty) {
-      val ident = id.asInstanceOf[TableIdent]
       val table = store.tableService.get(
-        ident.area,
-        ident.vertical,
-        ident.name,
-        ident.version
+        id.area,
+        id.vertical,
+        id.name,
+        id.version
       )
 
       val userFunc = getTableFunctionDynamic(table)
@@ -286,11 +285,11 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
       }
 
       if (table.getTargets != null && !table.getTargets.isEmpty) {
-        table.getSources.map(_.getConnection).foreach(this.replaceSecrets)
+        table.getTargets.map(_.getConnection).foreach(this.replaceSecrets)
       }
 
       val wrapper = new TableWrapper(store, table, userFunc, frameManager)
-      tables(ident) = wrapper
+      tables(id) = wrapper
       return Option(wrapper)
     }
     res

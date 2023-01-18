@@ -1,7 +1,6 @@
 package io.qimia.uhrwerk.common.metastore.config;
 
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel;
-import io.qimia.uhrwerk.common.metastore.model.TableModel;
 import java.util.List;
 
 public interface DependencyService {
