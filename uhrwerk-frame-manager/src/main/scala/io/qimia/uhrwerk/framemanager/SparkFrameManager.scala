@@ -476,7 +476,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         }
 
       val writerWithPartitioning =
-        if (!isJDBC && dfContainsTimeColumns) {
+        if (!isJDBC && !isRedshift && dfContainsTimeColumns) {
           writerWithOptions
             .partitionBy(timeColumns ++ partitionBy: _*)
         } else {
