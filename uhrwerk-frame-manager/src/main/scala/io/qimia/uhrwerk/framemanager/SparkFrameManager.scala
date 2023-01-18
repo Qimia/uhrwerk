@@ -366,7 +366,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       val isRedshift = targetConnection.getType.equals(ConnectionType.REDSHIFT)
 
       val tablePath = getTablePath(table, !isJDBC, target.getFormat)
-      val path = if (isJDBC) {
+      val path = if (isJDBC || isRedshift) {
         tablePath
       } else {
         getFullLocation(targetConnection.getPath, tablePath)
@@ -382,7 +382,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           // if time columns are missing, saving just one partition defined in the partitionTS array
 
           // for jdbc add a timestamp column and remove all other time columns (year/month/day/hour/minute) just in case
-          if (isJDBC) {
+          if (isJDBC || isRedshift) {
             val jdbcDF =
               addJDBCTimeColumn(frame, partitionTS.head).drop(timeColumns: _*)
 
@@ -415,7 +415,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
                   }.apply(col(timeColumnJDBC))
                 )
 
-            if (isJDBC) {
+            if (isJDBC || isRedshift) {
               (path, dfWithNewTimeColumnsTmp)
             } else {
               (
@@ -429,7 +429,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           } else {
             // if jdbc and saving several partitions (the df contains the time columns) - add the timestamp column
             // and remove the time columns
-            if (isJDBC) {
+            if (isJDBC || isRedshift) {
               (
                 path,
                 addJDBCTimeColumnFromTimeColumns(frame).drop(timeColumns: _*)
