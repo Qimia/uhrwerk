@@ -39,7 +39,7 @@ internal class IntegrationTest {
         val connections = YamlConfigReader().readConnections(connsFile)
 
         assertThat(connections).isNotNull()
-        assertThat(connections.toList()).hasSize(4)
+        assertThat(connections.toList()).hasSize(5)
 
         val connResults = connections?.map { connService.save(it, false) }
         connResults?.forEach {
@@ -74,7 +74,7 @@ internal class IntegrationTest {
 
 
         assertThat(table.targets).isNotNull()
-        assertThat(table.targets!!.toList()).hasSize(1)
+        assertThat(table.targets!!.toList()).hasSize(2)
 
         table.targets!!.forEach {
             assertThat(it.connection).isNotNull()

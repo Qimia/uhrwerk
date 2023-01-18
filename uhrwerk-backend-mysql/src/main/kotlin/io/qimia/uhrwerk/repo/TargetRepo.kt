@@ -45,7 +45,8 @@ class TargetRepo : BaseRepo<TargetModel>() {
         insert.setLong(1, entity.tableId!!)
         insert.setLong(2, entity.connectionId!!)
         insert.setString(3, entity.format)
-        insert.setLong(4, HashKeyUtils.targetKey(entity))
+        insert.setString(4, entity.tableName)
+        insert.setLong(5, HashKeyUtils.targetKey(entity))
         return insert
     }
 
@@ -55,30 +56,32 @@ class TargetRepo : BaseRepo<TargetModel>() {
         target.tableId = res.getLong(2)
         target.connectionId = res.getLong(3)
         target.format = res.getString(4)
-        target.deactivatedTs = res.getTimestamp(5)?.toLocalDateTime()
+        target.tableName = res.getString(5)
+        target.deactivatedTs = res.getTimestamp(6)?.toLocalDateTime()
         return target
     }
 
 
     companion object {
         private const val INSERT =
-            "INSERT INTO TARGET (table_id, connection_id, format, hash_key) VALUES (?, ?, ?, ?)"
+            "INSERT INTO TARGET (table_id, connection_id, format, table_name, hash_key) VALUES (?, ?, ?, ?, ?)"
 
         private const val SELECT_BY_ID =
-            "SELECT id, table_id, connection_id, format, deactivated_ts FROM TARGET WHERE id = ?"
+            "SELECT id, table_id, connection_id, format, table_name, deactivated_ts FROM TARGET WHERE id = ?"
 
         private const val SELECT_BY_HASH_KEY =
-            "SELECT id, table_id, connection_id, format, deactivated_ts FROM TARGET WHERE hash_key = ?"
+            "SELECT id, table_id, connection_id, format, table_name, deactivated_ts FROM TARGET WHERE hash_key = ?"
 
 
         private const val SELECT_BY_TABLE_ID =
-            "SELECT id, table_id, connection_id, format, deactivated_ts FROM TARGET WHERE table_id = ? AND deactivated_ts IS NULL"
+            "SELECT id, table_id, connection_id, format, table_name, deactivated_ts FROM TARGET WHERE table_id = ? AND deactivated_ts IS NULL"
 
         private val SELECT_BY_TABLE_ID_FORMAT = """
             SELECT tar.id,
                tar.table_id,
                tar.connection_id,
                tar.format,
+               tar.table_name
                tar.deactivated_ts
             FROM TARGET tar
                 JOIN TABLE_ tab ON tab.id = tar.table_id

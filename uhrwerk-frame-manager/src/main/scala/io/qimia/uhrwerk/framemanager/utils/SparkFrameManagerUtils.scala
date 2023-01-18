@@ -305,12 +305,7 @@ object SparkFrameManagerUtils {
       config.set(
       "fs.s3a.aws.credentials.provider",
       "com.amazonaws.auth.DefaultAWSCredentialsProviderChain")
-      //config.set("fs.s3a.access.key", connection.getAwsAccessKeyID)
-      ///config.set("fs.s3a.secret.key", connection.getAwsSecretAccessKey)
     } else {
-      // s3
-      //System.setProperty("aws.accessKeyId", connection.getAwsAccessKeyID)
-      //System.setProperty("aws.secretKey", connection.getAwsSecretAccessKey)
     }
   }
 }

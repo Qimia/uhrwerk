@@ -12,7 +12,7 @@ class ConnectionMapTest {
         val connections = YamlConfigReader().readConnections(YAML_FILE)
 
         Truth.assertThat(connections).isNotNull()
-        Truth.assertThat(connections!!.toList()).hasSize(3)
+        Truth.assertThat(connections!!.toList()).hasSize(4)
 
         connections?.forEach { println(it) }
     }

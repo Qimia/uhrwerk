@@ -9,7 +9,9 @@ import java.util.*
 class Target(
     @JsonProperty("connection_name")
     var connectionName: String? = null,
-    var format: String? = null
+    var format: String? = null,
+    @JsonProperty("table_name")
+    var tableName: String? = null,
 ) {
     fun validate(path: String) {
         var path = path
@@ -20,7 +22,7 @@ class Target(
         if (format == null) {
             throw ConfigException("Missing field: " + path + "format")
         }
-        if (!Arrays.asList("json", "parquet", "jdbc", "orc", "libsvm", "csv", "text", "avro")
+        if (!Arrays.asList("json", "parquet", "jdbc", "orc", "libsvm", "csv", "text", "avro", "redshift")
                 .contains(format)
         ) {
             throw ConfigException("Wrong format! '" + format + "' is not allowed in " + path + "format")

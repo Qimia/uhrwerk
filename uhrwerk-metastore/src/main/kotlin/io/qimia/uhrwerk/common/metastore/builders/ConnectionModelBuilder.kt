@@ -14,6 +14,9 @@ class ConnectionModelBuilder : StateModelBuilder<ConnectionModelBuilder>() {
     var jdbcPass: String? = null
     var awsAccessKeyID: String? = null
     var awsSecretAccessKey: String? = null
+    var redshiftFormat: String? = null
+    var redshiftAwsIamRole: String? = null
+    var redshiftTempDir: String? = null
 
     fun id(id: Long?): ConnectionModelBuilder {
         this.id = id
@@ -65,17 +68,38 @@ class ConnectionModelBuilder : StateModelBuilder<ConnectionModelBuilder>() {
         return this
     }
 
+    fun redshiftFormat(redshiftFormat: String?): ConnectionModelBuilder {
+        this.redshiftFormat = redshiftFormat
+        return this
+    }
+
+    fun redshiftAwsIamRole(redshiftAwsIamRole: String?): ConnectionModelBuilder {
+        this.redshiftAwsIamRole = redshiftAwsIamRole
+        return this
+    }
+
+    fun redshiftTempDir(redshiftTempDir: String?): ConnectionModelBuilder {
+        this.redshiftTempDir = redshiftTempDir
+        return this
+    }
+
+
     fun build(): ConnectionModel {
-        return ConnectionModel(id,
-        name,
-        type,
-        path,
-        jdbcUrl,
-        jdbcDriver,
-        jdbcUser,
-        jdbcPass,
-        awsAccessKeyID,
-        awsSecretAccessKey)
+        return ConnectionModel(
+            id,
+            name,
+            type,
+            path,
+            jdbcUrl,
+            jdbcDriver,
+            jdbcUser,
+            jdbcPass,
+            awsAccessKeyID,
+            awsSecretAccessKey,
+            redshiftFormat,
+            redshiftAwsIamRole,
+            redshiftTempDir
+        )
     }
 
     override fun getThis() = this

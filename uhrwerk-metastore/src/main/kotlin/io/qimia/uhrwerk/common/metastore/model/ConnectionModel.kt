@@ -14,6 +14,9 @@ data class ConnectionModel(
     var jdbcPass: String? = null,
     var awsAccessKeyID: String? = null,
     var awsSecretAccessKey: String? = null,
+    var redshiftFormat: String? = null,
+    var redshiftAwsIamRole: String? = null,
+    var redshiftTempDir: String? = null,
     var description: String? = null,
     var deactivatedTs: LocalDateTime? = null,
     var createdTs: Timestamp? = null,
@@ -36,6 +39,9 @@ data class ConnectionModel(
         if (jdbcPass != other.jdbcPass) return false
         if (awsAccessKeyID != other.awsAccessKeyID) return false
         if (awsSecretAccessKey != other.awsSecretAccessKey) return false
+        if (redshiftFormat != other.redshiftFormat) return false
+        if (redshiftAwsIamRole != other.redshiftAwsIamRole) return false
+        if (redshiftTempDir != other.redshiftTempDir) return false
         if (description != other.description) return false
         if (deactivatedTs != other.deactivatedTs) return false
         if (createdTs != other.createdTs) return false
@@ -55,6 +61,9 @@ data class ConnectionModel(
         result = 31 * result + (jdbcPass?.hashCode() ?: 0)
         result = 31 * result + (awsAccessKeyID?.hashCode() ?: 0)
         result = 31 * result + (awsSecretAccessKey?.hashCode() ?: 0)
+        result = 31 * result + (redshiftFormat?.hashCode() ?: 0)
+        result = 31 * result + (redshiftAwsIamRole?.hashCode() ?: 0)
+        result = 31 * result + (redshiftTempDir?.hashCode() ?: 0)
         result = 31 * result + (description?.hashCode() ?: 0)
         result = 31 * result + (deactivatedTs?.hashCode() ?: 0)
         result = 31 * result + (createdTs?.hashCode() ?: 0)

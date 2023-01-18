@@ -15,5 +15,7 @@ sources:
 targets:
   - connection_name: "local_fs_lake"
     format: "parquet"
-  # - connection_name: "yelp_dwh"
-  #  format: "jdbc"
+
+  - connection_name: "redshift1"
+    format: "redshift"
+    table_name: "myschema.dummy_table"

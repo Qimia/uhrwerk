@@ -11,6 +11,7 @@ class TargetModelBuilder : StateModelBuilder<TargetModelBuilder>() {
     var connection: ConnectionModel? = null
     var table: TableModel? = null
     var format: String? = null
+    var tableName: String? = null
     fun id(id: Long?): TargetModelBuilder {
         this.id = id
         return this
@@ -41,12 +42,18 @@ class TargetModelBuilder : StateModelBuilder<TargetModelBuilder>() {
         return this
     }
 
+    fun tableName(tableName: String?): TargetModelBuilder {
+        this.tableName = tableName
+        return this
+    }
+
     fun build(): TargetModel {
         return TargetModel(
             id,
             format,
             tableId,
             connectionId,
+            tableName,
             connection,
             table
         )

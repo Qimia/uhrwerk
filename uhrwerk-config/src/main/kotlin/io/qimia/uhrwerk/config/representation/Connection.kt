@@ -13,7 +13,8 @@ import io.qimia.uhrwerk.config.builders.ConfigException
 @JsonSubTypes(
     Type(value = JDBC::class, name = "jdbc"),
     Type(value = S3::class, name = "s3"),
-    Type(value = File::class, name = "file")
+    Type(value = File::class, name = "file"),
+    Type(value = Redshift::class, name = "redshift")
 )
 open class Connection(
     open var name: String? = null

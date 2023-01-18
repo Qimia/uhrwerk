@@ -11,6 +11,7 @@ import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.common.tools.{JDBCTools, TimeTools}
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils._
+import org.apache.commons.lang.RandomStringUtils
 import org.apache.log4j.Logger
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions.{col, udf}
@@ -246,7 +247,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       dfReader
     }
 
-    dfReaderWithUserOptions.option("fetchsize",1000)
+    dfReaderWithUserOptions.option("fetchsize", 1000)
 
     val dfReaderWithQuery: DataFrameReader =
       if (!isStringEmpty(source.getSelectQuery)) {
@@ -360,6 +361,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       if (targetConnection.getType == ConnectionType.S3) {
         SparkFrameManagerUtils.setS3Config(sparkSession, targetConnection)
       }
+
+      val isRedshift = targetConnection.getType.equals(ConnectionType.REDSHIFT)
 
       val tablePath = getTablePath(table, !isJDBC, target.getFormat)
       val path = if (isJDBC) {
@@ -512,6 +515,33 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             timeColumnJDBC
           )
         }
+      } else if (isRedshift) {
+        val url =
+          s"${targetConnection.getJdbcUrl}&user=${targetConnection.getJdbcUser}&password=${targetConnection.getJdbcPass}"
+
+        var tmpDir = targetConnection.getRedshiftTempDir
+        tmpDir =
+          if (tmpDir.endsWith("/"))
+            tmpDir.substring(0, targetConnection.getRedshiftTempDir.size - 1)
+          else tmpDir
+
+        val rndm = RandomStringUtils.random(8, true, true)
+
+        var tblPath = target.getTableName
+        tblPath =
+          if (tblPath.contains("."))
+            tblPath.replace(".", "__")
+          else tblPath
+        tblPath = tblPath + "__" + rndm
+
+        writerWithPartitioning
+          .format(targetConnection.getRedshiftFormat)
+          .option("url", url)
+          .option("dbtable", target.getTableName)
+          .option("aws_iam_role", targetConnection.getRedshiftAwsIamRole)
+          .option("tempdir", tmpDir + "/" + tblPath)
+          .mode("append")
+          .save()
       } else {
         writerWithPartitioning
           .save(fullPath)

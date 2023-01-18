@@ -31,7 +31,7 @@ internal class ConnectionIntTest {
     fun read() {
         val connections = YamlConfigReader().readConnections(YAML_FILE)
         assertThat(connections).isNotNull()
-        assertThat(connections!!.toList()).hasSize(3)
+        assertThat(connections!!.toList()).hasSize(4)
     }
 
 

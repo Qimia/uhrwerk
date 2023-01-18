@@ -10,5 +10,8 @@ enum class ConnectionType {
     S3,
 
     @JsonProperty("file")
-    FILE
+    FILE,
+
+    @JsonProperty("redshift")
+    REDSHIFT
 }

@@ -56,7 +56,10 @@ class ConnectionRepo : BaseRepo<ConnectionModel>() {
         // aws columns values
         insert.setString(8, entity.awsAccessKeyID)
         insert.setString(9, entity.awsSecretAccessKey)
-        insert.setLong(10, HashKeyUtils.connectionKey(entity))
+        insert.setString(10, entity.redshiftFormat)
+        insert.setString(11, entity.redshiftAwsIamRole)
+        insert.setString(12, entity.redshiftTempDir)
+        insert.setLong(13, HashKeyUtils.connectionKey(entity))
         return insert
     }
 
@@ -72,7 +75,10 @@ class ConnectionRepo : BaseRepo<ConnectionModel>() {
         conn.jdbcPass = res.getString(8)
         conn.awsAccessKeyID = res.getString(9)
         conn.awsSecretAccessKey = res.getString(10)
-        conn.deactivatedTs = res.getTimestamp(11)?.toLocalDateTime()
+        conn.redshiftFormat = res.getString(11)
+        conn.redshiftAwsIamRole = res.getString(12)
+        conn.redshiftTempDir = res.getString(13)
+        conn.deactivatedTs = res.getTimestamp(14)?.toLocalDateTime()
         return conn
     }
 
@@ -87,8 +93,11 @@ class ConnectionRepo : BaseRepo<ConnectionModel>() {
                                    jdbc_pass,
                                    aws_access_key_id,
                                    aws_secret_access_key,
+                                   redshift_format,
+                                   redshift_aws_iam_role,
+                                   redshift_temp_dir,
                                    hash_key)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
 
         private val SELECT_BY_ID = """
@@ -102,6 +111,9 @@ class ConnectionRepo : BaseRepo<ConnectionModel>() {
                    jdbc_pass,
                    aws_access_key_id,
                    aws_secret_access_key,
+                   redshift_format,
+                   redshift_aws_iam_role,
+                   redshift_temp_dir,
                    deactivated_ts
             FROM CONNECTION
             WHERE id = ?
@@ -118,6 +130,9 @@ class ConnectionRepo : BaseRepo<ConnectionModel>() {
                    jdbc_pass,
                    aws_access_key_id,
                    aws_secret_access_key,
+                   redshift_format,
+                   redshift_aws_iam_role,
+                   redshift_temp_dir,
                    deactivated_ts
             FROM CONNECTION
             WHERE deactivated_ts IS NULL 
@@ -136,6 +151,9 @@ class ConnectionRepo : BaseRepo<ConnectionModel>() {
                    C.jdbc_pass,
                    C.aws_access_key_id,
                    C.aws_secret_access_key,
+                   C.redshift_format,
+                   C.redshift_aws_iam_role,
+                   C.redshift_temp_dir,
                    C.deactivated_ts
             FROM CONNECTION C
                      JOIN TARGET T on C.id = T.connection_id

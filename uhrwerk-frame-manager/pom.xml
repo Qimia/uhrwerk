@@ -62,14 +62,13 @@
       <scope>provided</scope>
     </dependency>
 
-    <!--
     <dependency>
       <groupId>io.github.spark-redshift-community</groupId>
       <artifactId>spark-redshift_${scala.compat.version}</artifactId>
       <version>${spark_redshift.version}</version>
       <scope>provided</scope>
     </dependency>
-    -->
+
   </dependencies>
 
   <build>

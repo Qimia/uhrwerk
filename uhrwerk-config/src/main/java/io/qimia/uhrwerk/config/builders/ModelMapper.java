@@ -19,6 +19,7 @@ import io.qimia.uhrwerk.config.representation.Connection;
 import io.qimia.uhrwerk.config.representation.Dependency;
 import io.qimia.uhrwerk.config.representation.File;
 import io.qimia.uhrwerk.config.representation.JDBC;
+import io.qimia.uhrwerk.config.representation.Redshift;
 import io.qimia.uhrwerk.config.representation.S3;
 import io.qimia.uhrwerk.config.representation.Secret;
 import io.qimia.uhrwerk.config.representation.Source;
@@ -99,6 +100,16 @@ public class ModelMapper {
       var file = (File) connection;
       builder.type(ConnectionType.FS).path(file.getPath());
     }
+    if (connection instanceof Redshift) {
+      var redshift = (Redshift) connection;
+      builder.type(ConnectionType.REDSHIFT)
+          .jdbcUrl(redshift.getJdbcUrl())
+          .jdbcUser(redshift.getUser())
+          .jdbcPass(redshift.getPassword())
+          .redshiftFormat(redshift.getFormat())
+          .redshiftAwsIamRole(redshift.getAwsIamRole())
+          .redshiftTempDir(redshift.getTempDir());
+    }
     return builder.build();
   }
 
@@ -151,6 +162,7 @@ public class ModelMapper {
         .connection(conn)
         .table(table)
         .format(target.getFormat())
+        .tableName(target.getTableName())
         .build();
   }
 

@@ -15,3 +15,12 @@
 - name: "local_filesystem_test"
   type: file
   path: '/path/to/local/datalake'
+
+- name: "redshift1"
+  type: redshift
+  jdbc_url: "jdbc:redshift://redshift_host:5439/redshift_db1??ssl=true&tcpKeepAlive=true"
+  format: "io.github.spark_redshift_community.spark.redshift"
+  user: redshift_db1_user
+  password: "!secret:redshift_password"
+  aws_iam_role: "arn:aws:iam::account_id:role/redshift_s3_access_role"
+  temp_dir: "s3://some-redshifttemp-bucket/temp/"

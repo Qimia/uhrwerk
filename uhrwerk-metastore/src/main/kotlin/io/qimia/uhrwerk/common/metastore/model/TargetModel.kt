@@ -11,6 +11,7 @@ data class TargetModel(
     var format: String? = null,
     var tableId: Long? = null,
     var connectionId: Long? = null,
+    var tableName: String? = null,
     var connection: ConnectionModel? = null,
     var table: TableModel? = null,
     var description: String? = null,
@@ -27,6 +28,7 @@ data class TargetModel(
         if (other !is TargetModel) return false
         if (id != null && other.id != null) if (id != other.id) return false
         if (format != other.format) return false
+        if (tableName != other.tableName) return false
         if (tableId != other.tableId) return false
         if (connectionId != other.connectionId) return false
         if (connection?.id != other.connection?.id) return false
@@ -42,6 +44,7 @@ data class TargetModel(
     override fun hashCode(): Int {
         var result = id?.hashCode() ?: 0
         result = 31 * result + (format?.hashCode() ?: 0)
+        result = 31 * result + (tableName?.hashCode() ?: 0)
         result = 31 * result + (tableId?.hashCode() ?: 0)
         result = 31 * result + (connectionId?.hashCode() ?: 0)
         result = 31 * result + (connection?.hashCode() ?: 0)
@@ -53,6 +56,6 @@ data class TargetModel(
     }
 
     override fun toString(): String {
-        return "TargetModel(id=$id, format=$format, tableId=$tableId, connectionId=$connectionId, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
+        return "TargetModel(id=$id, format=$format, tableName=$tableName tableId=$tableId, connectionId=$connectionId, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
     }
 }

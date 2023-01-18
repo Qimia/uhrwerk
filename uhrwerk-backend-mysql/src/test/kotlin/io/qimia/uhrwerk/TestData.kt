@@ -112,6 +112,7 @@ object TestData {
         .tableId(tableId)
         .connectionId(connectionId)
         .format(format)
+        .tableName("dummy_table")
         .build()
 
     fun target(
