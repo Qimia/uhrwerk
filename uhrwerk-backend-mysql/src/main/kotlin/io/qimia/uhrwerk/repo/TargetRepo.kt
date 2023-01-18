@@ -81,7 +81,7 @@ class TargetRepo : BaseRepo<TargetModel>() {
                tar.table_id,
                tar.connection_id,
                tar.format,
-               tar.table_name
+               tar.table_name,
                tar.deactivated_ts
             FROM TARGET tar
                 JOIN TABLE_ tab ON tab.id = tar.table_id
