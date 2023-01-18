@@ -74,7 +74,7 @@ abstract class BaseRepo<E : BaseModel> {
     ): List<E> {
         val connection = HikariCPDataSource.connection
         connection.use {
-            LOGGER.info(query)
+            LOGGER.debug(query)
             val select = connection.prepareStatement(query)
             setParam(select)
             select.use {
