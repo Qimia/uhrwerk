@@ -485,12 +485,21 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
       logger.info(s"Saving DF to $fullPath")
       if (isJDBC) {
+        val dbtable =
+          if (
+            target.getTableName != null
+            && !target.getTableName.trim.isEmpty
+          )
+            target.getTableName.trim
+          else
+            fullPath
+
         val jdbcWriter = writerWithPartitioning
           .option("url", targetConnection.getJdbcUrl)
           .option("driver", targetConnection.getJdbcDriver)
           .option("user", targetConnection.getJdbcUser)
           .option("password", targetConnection.getJdbcPass)
-          .option("dbtable", s"$fullPath")
+          .option("dbtable", s"$dbtable")
         try {
           jdbcWriter
             .save()
