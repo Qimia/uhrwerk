@@ -248,6 +248,12 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
         replaceSecrets(conn)
       })
     }
+    if (storedTable.getTargets != null && !storedTable.getTargets.isEmpty) {
+      storedTable.getTargets.foreach(target => {
+        val conn = target.getConnection
+        replaceSecrets(conn)
+      })
+    }
     val ident = getTableIdent(storedTable)
     val wrapper = new TableWrapper(store, storedTable, userFunc, frameManager)
     tables(ident) = wrapper
