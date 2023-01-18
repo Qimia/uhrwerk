@@ -529,6 +529,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         val url =
           s"${targetConnection.getJdbcUrl}&user=${targetConnection.getJdbcUser}&password=${targetConnection.getJdbcPass}"
 
+        logger.info(url)
         var tmpDir = targetConnection.getRedshiftTempDir
         tmpDir =
           if (tmpDir.endsWith("/"))
