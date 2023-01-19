@@ -97,36 +97,30 @@ class DagTaskBuilder(environment: Environment) {
     def pTraverse(
         node: (TableIdent, Boolean),
         dag: DefaultDirectedGraph[(TableIdent, Boolean), DefaultEdge],
-        nDag: DefaultDirectedGraph[(TableIdent, Boolean), DefaultEdge]
+        nDag: mutable.LinkedHashSet[(TableIdent, Boolean)]
     ): (TableIdent, Boolean) = {
       val preNodes = dag.incomingEdgesOf(node).asScala.map(dag.getEdgeSource)
       if (preNodes.isEmpty) {
-        nDag.addVertex(node)
+        nDag.add(node)
         node
       } else {
         val tpNodes = preNodes.map(pTraverse(_, dag, nDag))
         val process = node._2 && tpNodes.map(_._2).reduce((l, r) => l && r)
         val nwNode = (node._1, process)
-        nDag.addVertex(nwNode)
-        tpNodes.foreach(nDag.addEdge(_, nwNode))
+        nDag.add(nwNode)
         nwNode
       }
     }
-
-    val nDag = new DefaultDirectedGraph[(TableIdent, Boolean), DefaultEdge](
-      classOf[DefaultEdge]
-    )
+    val nDag = mutable.LinkedHashSet[(TableIdent, Boolean)]()
 
     pTraverse((outIdent, false), dag, nDag)
 
-    val sorted = nDag.vertexSet().asScala
-    val filtered = sorted.filter(!_._2)
+    val filtered = nDag
     filtered
       .map(node =>
         DagTask(
           environment.getTable(node._1).get,
-          List(callTime),
-          nDag.degreeOf(node)
+          List(callTime)
         )
       )
       .toList

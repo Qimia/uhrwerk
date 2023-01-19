@@ -4,8 +4,21 @@ import org.jgrapht.graph.{DefaultDirectedGraph, DefaultEdge}
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 class DirectedJGraphtTest extends AnyFlatSpec {
+
+  it should "preserve the order" in {
+    val linkedSet = mutable.LinkedHashSet[(String,Boolean)]()
+
+    linkedSet.add("A" -> true)
+    linkedSet.add("B" -> false)
+    linkedSet.add("C" -> false)
+
+    linkedSet.foreach(println)
+    linkedSet.filter(!_._2).foreach(println)
+
+  }
 
   it should "work" in {
 
@@ -33,32 +46,32 @@ class DirectedJGraphtTest extends AnyFlatSpec {
         classOf[DefaultEdge]
       )
 
+    val list = mutable.LinkedHashSet[(String, Boolean)]()
+
     def pTraverse(
         node: (String, Boolean),
         dag: DefaultDirectedGraph[(String, Boolean), DefaultEdge],
-        nDag: DefaultDirectedGraph[(String, Boolean), DefaultEdge]
+        nDag: mutable.LinkedHashSet[(String, Boolean)]
     ): (String, Boolean) = {
       val preNodes = dag.incomingEdgesOf(node).asScala.map(dag.getEdgeSource)
       if (preNodes.isEmpty) {
-        nDag.addVertex(node)
+        nDag.add(node)
         node
       } else {
         val tpNodes = preNodes.map(pTraverse(_, dag, nDag))
         val process = node._2 && tpNodes.map(_._2).reduce((l, r) => l && r)
         val nwNode = (node._1, process)
-        nDag.addVertex(nwNode)
-        tpNodes.foreach(nDag.addEdge(_, nwNode))
+        nDag.add(nwNode)
         nwNode
       }
     }
 
-    pTraverse(("A", false), dag, nDag)
+    pTraverse(("A", false), dag, list)
     println("##### traversed dags")
-    val sorted = nDag.vertexSet().asScala
-    sorted.foreach(println)
+    list.foreach(println)
 
     println("Nodes to Process")
-    sorted.filter(!_._2).foreach(println)
+    list.filter(!_._2).foreach(println)
 
   }
 }
