@@ -150,6 +150,30 @@ object UhrwerkAppRunner {
       val taskList = dagTaskBuilder.buildTaskListFromTable(
         tableToRun
       )
+
+      def identToString(tbl: TableModel) =
+        s"${tbl.getArea}.${tbl.getVertical}.${tbl.getName}:${tbl.getVersion}"
+
+      logger.info(
+        s"##### RUNNING DAG WITH TARGET TABLE ${identToString(tableToRun.wrappedTable)} #####"
+      )
+
+      if (taskList.size > 1) {
+        logger.info(
+          s"##### PROCESSING ORDER BEGIN #####"
+        )
+
+        taskList.foreach(task => {
+          logger.info(
+            s"++ ${identToString(task.table.wrappedTable)} ++"
+          )
+        })
+
+        logger.info(
+          s"##### PROCESSING ORDER END  #####"
+        )
+      }
+
       if (parallelRun > 1) {
         DagTaskDispatcher.runTasksParallel(taskList, parallelRun)
       } else {
