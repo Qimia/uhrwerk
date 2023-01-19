@@ -115,15 +115,13 @@ class DagTaskBuilder(environment: Environment) {
 
     pTraverse((outIdent, false), dag, nDag)
 
-    val filtered = nDag
-    filtered
+    nDag.filter(!_._2)
       .map(node =>
         DagTask(
           environment.getTable(node._1).get,
           List(callTime)
         )
-      )
-      .toList
+      ).toList
   }
 
 }

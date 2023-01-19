@@ -71,7 +71,7 @@ class DirectedJGraphtTest extends AnyFlatSpec {
     list.foreach(println)
 
     println("Nodes to Process")
-    list.filter(!_._2).foreach(println)
+    list.filter(!_._2).toList.foreach(println)
 
   }
 }
