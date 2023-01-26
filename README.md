@@ -25,11 +25,14 @@ Uhrwerk needs two things to run:
   
     1.1 For a local Spark installation: Run `./start-docker.sh metastore-only` to start up docker-compose with only the metastore mysql container and an adminer. 
     
-    1.2 With no local Spark installation: 
+    1.2 With no local Spark installation:
+    * Install Docker (Docker Desktop recommended for ease of use)
     * Run `./build-spark-docker-images.sh` to build the necessary Spark docker images. This takes a while.
     * Run `./start-docker.sh all` to start up docker-compose with both the metastore and spark containers (by default one master and one worker).
 
-2. (Only necessary when running for the first time): Initialise the metastore with `./create-uhrwerk-metastore.sh` (for also running the unit tests, execute `./create-uhrwerk-metastore-unit-tests.sh` and `./uhrwerk-example/load-yelp-data.sh <path-to-yelp_db.sql>`)
+2. (Only necessary when running for the first time): 
+    * Install MySQL Client (mysql-client package)
+    * Initialise the metastore with `./create-uhrwerk-metastore.sh` (for also running the unit tests, execute `./create-uhrwerk-metastore-unit-tests.sh` and `./uhrwerk-example/load-yelp-data.sh <path-to-yelp_db.sql>`)
 
 3. Now there are two ways how to run jobs:
     * From IntelliJ with local Spark. Use `testing-Connection-config.yml`, and `testing-env-config.yml`.
