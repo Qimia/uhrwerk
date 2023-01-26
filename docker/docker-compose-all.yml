@@ -5,6 +5,9 @@ services:
     image: adminer
     restart: always
     container_name: adminer-uhrwerk-metastore
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql-uhrwerk-metastore
+      ADMINER_DEFAULT_DB_NAME: "UHRWERK_METASTORE"
     depends_on:
       - mysql-uhrwerk-metastore
     ports:
