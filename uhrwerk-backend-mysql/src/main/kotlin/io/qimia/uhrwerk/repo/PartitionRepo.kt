@@ -4,9 +4,12 @@ import io.qimia.uhrwerk.common.metastore.builders.PartitionBuilder
 import io.qimia.uhrwerk.common.metastore.model.Partition
 import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import io.qimia.uhrwerk.common.tools.TimeTools
+import io.qimia.uhrwerk.repo.RepoUtils.jsonToMap
+import io.qimia.uhrwerk.repo.RepoUtils.toJson
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Timestamp
+import java.sql.Types
 import java.time.LocalDateTime
 
 class PartitionRepo : BaseRepo<Partition>() {
@@ -70,6 +73,12 @@ class PartitionRepo : BaseRepo<Partition>() {
         insert.setBoolean(3, entity.partitioned)
         insert.setBoolean(4, entity.bookmarked)
         insert.setString(5, entity.maxBookmark)
+
+        if (entity.partitionValues.isNullOrEmpty()) {
+            insert.setNull(6, Types.VARCHAR)
+        } else {
+            insert.setString(6, toJson(entity.partitionValues!!))
+        }
         return insert
     }
 
@@ -81,17 +90,30 @@ class PartitionRepo : BaseRepo<Partition>() {
             .partitioned(res.getBoolean(4))
             .bookmarked(res.getBoolean(5))
             .maxBookmark(res.getString(6))
-        val partitionUnit = res.getString(7)
+
+        val partitionValues = res.getString(7)
+        if (!partitionValues.isNullOrEmpty()){
+            builder.partitionValues(jsonToMap(partitionValues))
+        }
+
+        val partitionUnit = res.getString(8)
         if (partitionUnit != null && partitionUnit.isNotEmpty())
             builder.partitionUnit(PartitionUnit.valueOf(partitionUnit))
-        builder.partitionSize(res.getInt(8))
+        builder.partitionSize(res.getInt(9))
         return builder.build()
     }
 
 
     companion object {
-        private const val INSERT =
-            "INSERT INTO PARTITION_ (target_id, partition_ts, partitioned, bookmarked, max_bookmark) VALUES(?,?,?,?,?)"
+        private val INSERT = """
+            INSERT INTO PARTITION_ (target_id,
+                                    partition_ts,
+                                    partitioned,
+                                    bookmarked,
+                                    max_bookmark,
+                                    partition_values)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """.trimIndent()
 
         private val SELECT_BY_ID = """
             SELECT pt.id,
@@ -100,6 +122,7 @@ class PartitionRepo : BaseRepo<Partition>() {
                    pt.partitioned,
                    pt.bookmarked,
                    pt.max_bookmark,
+                   pt.partition_values,
                    tb.partition_unit,
                    tb.partition_size
             FROM PARTITION_ pt
@@ -115,6 +138,7 @@ class PartitionRepo : BaseRepo<Partition>() {
                    pt.partitioned,
                    pt.bookmarked,
                    pt.max_bookmark,
+                   pt.partition_values,
                    tb.partition_unit,
                    tb.partition_size
             FROM PARTITION_ pt
@@ -131,6 +155,7 @@ class PartitionRepo : BaseRepo<Partition>() {
                    pt.partitioned,
                    pt.bookmarked,
                    pt.max_bookmark,
+                   pt.partition_values,
                    tb.partition_unit,
                    tb.partition_size
             FROM PARTITION_ pt
@@ -148,6 +173,7 @@ class PartitionRepo : BaseRepo<Partition>() {
                    pt.partitioned,
                    pt.bookmarked,
                    pt.max_bookmark,
+                   pt.partition_values,
                    tb.partition_unit,
                    tb.partition_size
             FROM PARTITION_ pt
@@ -166,6 +192,7 @@ class PartitionRepo : BaseRepo<Partition>() {
                    pt.partitioned,
                    pt.bookmarked,
                    pt.max_bookmark,
+                   pt.partition_values,
                    tb.partition_unit,
                    tb.partition_size
             FROM PARTITION_DEPENDENCY pd

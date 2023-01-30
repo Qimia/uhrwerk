@@ -12,6 +12,7 @@ data class Partition(
     var partitioned: Boolean = false,
     var bookmarked: Boolean = false,
     var maxBookmark: String? = null,
+    var partitionValues: Map<String, Any>? = null,
     var createdTs: Timestamp? = null,
     var updatedTs: Timestamp? = null
 ) : BaseModel {
@@ -30,6 +31,10 @@ data class Partition(
         if (partitioned != other.partitioned) return false
         if (bookmarked != other.bookmarked) return false
         if (maxBookmark != other.maxBookmark) return false
+        if (!partitionValues.isNullOrEmpty()) {
+            if (other.partitionValues.isNullOrEmpty()) return false
+            if (partitionValues!! != other.partitionValues) return false
+        }
         if (createdTs != other.createdTs) return false
         if (updatedTs != other.updatedTs) return false
 
@@ -45,6 +50,8 @@ data class Partition(
         result = 31 * result + (partitioned?.hashCode() ?: 0)
         result = 31 * result + (bookmarked?.hashCode() ?: 0)
         result = 31 * result + (maxBookmark?.hashCode() ?: 0)
+        result =
+            31 * result + (partitionValues?.toList()?.toTypedArray().contentDeepHashCode() ?: 0)
         result = 31 * result + (createdTs?.hashCode() ?: 0)
         result = 31 * result + (updatedTs?.hashCode() ?: 0)
         return result

@@ -4,6 +4,8 @@ import io.qimia.uhrwerk.common.metastore.builders.TableModelBuilder
 import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
 import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import io.qimia.uhrwerk.common.metastore.model.TableModel
+import io.qimia.uhrwerk.repo.RepoUtils.jsonToArray
+import io.qimia.uhrwerk.repo.RepoUtils.toJson
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Types
@@ -53,7 +55,18 @@ class TableRepo() : BaseRepo<TableModel>() {
             insert.setNull(11, Types.VARCHAR)
         else
             insert.setString(11, table.transformSqlQuery)
-        insert.setLong(12, HashKeyUtils.tableKey(table))
+
+        if (table.partitionColumns.isNullOrEmpty())
+            insert.setNull(12, Types.VARCHAR)
+        else
+            insert.setString(12, toJson(table.partitionColumns!!))
+
+        if (table.tableVariables.isNullOrEmpty())
+            insert.setNull(13, Types.VARCHAR)
+        else
+            insert.setString(13, toJson(table.tableVariables!!))
+
+        insert.setLong(14, HashKeyUtils.tableKey(table))
         return insert
     }
 
@@ -75,6 +88,16 @@ class TableRepo() : BaseRepo<TableModel>() {
             .partitioned(res.getBoolean("tab.partitioned"))
             .transformSqlQuery(res.getString("tab.transform_sql_query"))
             .className(res.getString("tab.class_name"))
+
+        val partitionColumns = res.getString("tab.partition_columns")
+        if (!partitionColumns.isNullOrEmpty()) {
+            builder.partitionColumns(jsonToArray(partitionColumns))
+        }
+
+        val tableVariables = res.getString("tab.table_variables")
+        if (!tableVariables.isNullOrEmpty()) {
+            builder.tableVariables(jsonToArray(tableVariables))
+        }
 
         val deactivatedTs = res.getTimestamp("tab.deactivated_ts")
         if (deactivatedTs != null)
@@ -102,8 +125,10 @@ class TableRepo() : BaseRepo<TableModel>() {
                                partitioned,
                                class_name,
                                transform_sql_query,
+                               partition_columns,
+                               table_variables,
                                hash_key)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent()
 
         private val SELECT_BY_ID = """
@@ -119,6 +144,8 @@ class TableRepo() : BaseRepo<TableModel>() {
                    tab.partitioned,
                    tab.class_name,
                    tab.transform_sql_query,
+                   tab.partition_columns,
+                   tab.table_variables,
                    tab.deactivated_ts
             FROM TABLE_ tab
             WHERE id = ?
@@ -137,6 +164,8 @@ class TableRepo() : BaseRepo<TableModel>() {
                    tab.partitioned,
                    tab.class_name,
                    tab.transform_sql_query,
+                   tab.partition_columns,
+                   tab.table_variables,
                    tab.deactivated_ts
             FROM TABLE_ tab
             WHERE tab.hash_key = ? AND tab.deactivated_ts IS NULL
@@ -156,6 +185,8 @@ class TableRepo() : BaseRepo<TableModel>() {
                    tab.partitioned,
                    tab.class_name,
                    tab.transform_sql_query,
+                   tab.partition_columns,
+                   tab.table_variables,
                    tab.deactivated_ts
             FROM TARGET tar
                      JOIN TABLE_ tab

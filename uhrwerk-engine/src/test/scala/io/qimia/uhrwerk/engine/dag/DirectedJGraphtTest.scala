@@ -66,6 +66,7 @@ class DirectedJGraphtTest extends AnyFlatSpec {
       }
     }
 
+
     pTraverse(("A", false), dag, list)
     println("##### traversed dags")
     list.foreach(println)

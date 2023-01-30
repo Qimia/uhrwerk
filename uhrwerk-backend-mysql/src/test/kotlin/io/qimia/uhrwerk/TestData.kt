@@ -28,6 +28,7 @@ object TestData {
         .partitionSize(1)
         .parallelism(8)
         .maxBulkSize(96)
+        .partitionColumns(arrayOf("col1", "col2"))
         .build()
 
     fun connection(name: String): ConnectionModel = ConnectionModelBuilder()
@@ -138,6 +139,7 @@ object TestData {
             .partitioned(partitioned)
             .partitionUnit(partitionUnit)
             .partitionSize(partitionSize)
+            .partitionValues(mapOf("col1" to "val1", "col2" to 20))
             .build()
 
     fun partitionDependencies(childPartId: Long, depPartIds: List<Long>) =

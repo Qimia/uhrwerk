@@ -11,6 +11,8 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
     var version: String? = null
     var className: String? = null
     var transformSqlQuery: String? = null
+    var partitionColumns: Array<String>? = null
+    var tableVariables: Array<String>? = null
     var parallelism = 0
     var maxBulkSize = 0
     var partitionUnit: PartitionUnit? = null
@@ -51,6 +53,16 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
 
     fun transformSqlQuery(transformSqlQuery: String?): TableModelBuilder {
         this.transformSqlQuery = transformSqlQuery
+        return this
+    }
+
+    fun partitionColumns(partitionColumns: Array<String>?): TableModelBuilder {
+        this.partitionColumns = partitionColumns
+        return this
+    }
+
+    fun tableVariables(tableVariables: Array<String>?): TableModelBuilder {
+        this.tableVariables = tableVariables
         return this
     }
 
@@ -103,6 +115,8 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
             version,
             className,
             transformSqlQuery,
+            partitionColumns,
+            tableVariables,
             parallelism,
             maxBulkSize,
             partitionUnit,

@@ -112,6 +112,7 @@ class SourceRepo2 : BaseRepo<SourceModel2>() {
             "interval_column",
             "delta_column",
             "select_query",
+            "source_variables",
             "parallel_load",
             "parallel_partition_query",
             "parallel_partition_column",

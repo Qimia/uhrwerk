@@ -46,6 +46,8 @@ public class ModelMapper {
       builder.transformSqlQuery(MapperUtils.readQueryOrFileLines(table.getTransformSqlQuery()));
     }
 
+    builder.setPartitionColumns(table.getPartitionColumns());
+
     builder.parallelism(table.getParallelism()).maxBulkSize(table.getMaxBulkSize());
 
     if (table.getPartition() != null) {

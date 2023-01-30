@@ -3,6 +3,7 @@ package io.qimia.uhrwerk.repo
 import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
 import TestUtils
+import com.google.common.truth.Truth.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
@@ -35,11 +36,14 @@ internal class TableRepoTest {
         val table = TestData.table("getByIdTestTable")
         val table1 = repo.save(table)
 
-        Truth.assertThat(table1).isNotNull()
+        assertThat(table1).isNotNull()
         val table2 = repo.getById(table1!!.id!!)
 
-        Truth.assertThat(table2).isNotNull()
-        Truth.assertThat(table2!!.name).isEqualTo("getByIdTestTable")
+        assertThat(table2).isNotNull()
+        assertThat(table2!!.name).isEqualTo("getByIdTestTable")
+
+        assertThat(table2.partitionColumns).isNotNull()
+        assertThat(table2.partitionColumns).isEqualTo(arrayOf("col1", "col2"))
 
     }
 
@@ -49,7 +53,7 @@ internal class TableRepoTest {
         val table = TestData.table("deleteByIdTestTable")
         val table1 = repo.save(table)
 
-        Truth.assertThat(table1).isNotNull()
+        assertThat(table1).isNotNull()
         val effect = repo.deactivateById(table1!!.id!!)
 
         Truth.assertThat(effect).isNotNull()

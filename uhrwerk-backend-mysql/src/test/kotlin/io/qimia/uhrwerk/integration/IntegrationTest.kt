@@ -65,6 +65,10 @@ internal class IntegrationTest {
         val tableFile = filePath("config/uhrwerk_examples/table_category_1.0.yml")
         val table = YamlConfigReader().readTable(tableFile)
 
+        assertThat(table.partitionColumns).isNotNull()
+        assertThat(table.partitionColumns).hasLength(2)
+        assertThat(table.partitionColumns).isEqualTo(arrayOf("column1", "column2"))
+
         assertThat(table.sources).isNotNull()
         assertThat(table.sources!!.toList()).isNotEmpty()
         table.sources!!.forEach {

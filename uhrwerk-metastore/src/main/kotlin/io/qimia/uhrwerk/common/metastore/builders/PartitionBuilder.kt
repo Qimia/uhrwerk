@@ -13,6 +13,7 @@ class PartitionBuilder {
     var isPartitioned = false
     var isBookmarked = false
     var maxBookmark: String? = null
+    var partitionValues: Map<String, Any>? = null
     fun id(id: Long?): PartitionBuilder {
         this.id = id
         return this
@@ -53,6 +54,12 @@ class PartitionBuilder {
         return this
     }
 
+    fun partitionValues(partitionValues: Map<String, Any>?): PartitionBuilder {
+        this.partitionValues = partitionValues
+        return this
+    }
+
+
     fun build(): Partition {
         return Partition(
             id,
@@ -62,7 +69,8 @@ class PartitionBuilder {
             partitionSize,
             isPartitioned,
             isBookmarked,
-            maxBookmark
+            maxBookmark,
+            partitionValues
         )
     }
 }

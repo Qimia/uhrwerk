@@ -12,6 +12,8 @@ data class TableModel(
     var version: String? = null,
     var className: String? = null,
     var transformSqlQuery: String? = null,
+    var partitionColumns: Array<String>? = null,
+    var tableVariables: Array<String>? = null,
     var parallelism: Int? = null,
     var maxBulkSize: Int? = null,
     var partitionUnit: PartitionUnit? = null,
@@ -39,23 +41,38 @@ data class TableModel(
         if (version != other.version) return false
         if (className != other.className) return false
         if (transformSqlQuery != other.transformSqlQuery) return false
+
+        if (!partitionColumns.isNullOrEmpty()) {
+            if (other.partitionColumns.isNullOrEmpty()) return false
+            if (!partitionColumns.contentEquals(other.partitionColumns)) return false
+        }
+
+        if (!tableVariables.isNullOrEmpty()) {
+            if (other.tableVariables.isNullOrEmpty()) return false
+            if (!tableVariables.contentEquals(other.tableVariables)) return false
+        }
+
         if (parallelism != other.parallelism) return false
         if (maxBulkSize != other.maxBulkSize) return false
         if (partitionUnit != other.partitionUnit) return false
         if (partitionSize != other.partitionSize) return false
         if (partitioned != other.partitioned) return false
+
         if (dependencies != null) {
             if (other.dependencies == null) return false
             if (!dependencies.contentEquals(other.dependencies)) return false
         } else if (other.dependencies != null) return false
+
         if (sources != null) {
             if (other.sources == null) return false
             if (!sources.contentEquals(other.sources)) return false
         } else if (other.sources != null) return false
+
         if (targets != null) {
             if (other.targets == null) return false
             if (!targets.contentEquals(other.targets)) return false
         } else if (other.targets != null) return false
+
         if (description != other.description) return false
         if (deactivatedTs != other.deactivatedTs) return false
         if (createdTs != other.createdTs) return false
@@ -72,6 +89,8 @@ data class TableModel(
         result = 31 * result + (version?.hashCode() ?: 0)
         result = 31 * result + (className?.hashCode() ?: 0)
         result = 31 * result + (transformSqlQuery?.hashCode() ?: 0)
+        result = 31 * result + (partitionColumns?.contentHashCode() ?: 0)
+        result = 31 * result + (tableVariables?.contentHashCode() ?: 0)
         result = 31 * result + (parallelism ?: 0)
         result = 31 * result + (maxBulkSize ?: 0)
         result = 31 * result + (partitionUnit?.hashCode() ?: 0)

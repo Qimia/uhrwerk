@@ -1,8 +1,8 @@
 package io.qimia.uhrwerk.repo
 
-import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
 import TestUtils
+import com.google.common.truth.Truth.assertThat
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
 import io.qimia.uhrwerk.common.metastore.model.Partition
 import io.qimia.uhrwerk.common.metastore.model.TableModel
@@ -55,23 +55,27 @@ internal class PartitionRepoTest {
 
     @Test
     fun save() {
-        Truth.assertThat(partition).isNotNull()
-        Truth.assertThat(partition!!.partitionTs).isNotNull()
+        assertThat(partition).isNotNull()
+        assertThat(partition!!.partitionTs).isNotNull()
 
     }
 
     @Test
     fun getById() {
         val partition1 = repo.getById(partition!!.id!!)
-        Truth.assertThat(partition1).isNotNull()
-        Truth.assertThat(partition1).isEqualTo(partition)
+        assertThat(partition1).isNotNull()
+        assertThat(partition1).isEqualTo(partition)
+        assertThat(partition1?.partitionValues).isNotNull()
+        assertThat(partition1?.partitionValues).isEqualTo(mapOf("col1" to "val1", "col2" to 20))
+
+
     }
 
     @Test
     fun getUniqueColumns() {
         val partition1 = repo.getUniqueColumns(target!!.id!!, partitionTs!!)
-        Truth.assertThat(partition1).isNotNull()
-        Truth.assertThat(partition1).isEqualTo(partition)
+        assertThat(partition1).isNotNull()
+        assertThat(partition1).isEqualTo(partition)
     }
 
     @Test
@@ -85,13 +89,13 @@ internal class PartitionRepoTest {
         }
 
         val partitionIds = partitions.map { repo.save(it) }
-        Truth.assertThat(partitionIds).hasSize(5)
+        assertThat(partitionIds).hasSize(5)
 
         val latestPartition = repo.getLatestByTargetId(target!!.id!!)
-        Truth.assertThat(latestPartition).isNotNull()
-        Truth.assertThat(latestPartition!!.targetId).isEqualTo(target!!.id)
+        assertThat(latestPartition).isNotNull()
+        assertThat(latestPartition!!.targetId).isEqualTo(target!!.id)
 
-        Truth.assertThat(latestPartition!!.partitionTs).isEqualTo(timestamps[4])
+        assertThat(latestPartition!!.partitionTs).isEqualTo(timestamps[4])
 
     }
 
@@ -107,14 +111,14 @@ internal class PartitionRepoTest {
         val partitionIds = partitions.map { repo.save(it) }
 
 
-        Truth.assertThat(partitionIds).hasSize(5)
+        assertThat(partitionIds).hasSize(5)
         val partitions1 = repo.getAllByTargetTs(target!!.id!!, timestamps)
-        Truth.assertThat(partitions1).isNotEmpty()
-        Truth.assertThat(partitions1).hasSize(5)
+        assertThat(partitions1).isNotEmpty()
+        assertThat(partitions1).hasSize(5)
 
         partitions1.zip(timestamps).forEach { (part, ts) ->
-            Truth.assertThat(part.targetId).isEqualTo(target!!.id)
-            Truth.assertThat(part.partitionTs).isEqualTo(ts)
+            assertThat(part.targetId).isEqualTo(target!!.id)
+            assertThat(part.partitionTs).isEqualTo(ts)
         }
 
     }
@@ -122,8 +126,8 @@ internal class PartitionRepoTest {
     @Test
     fun deleteById() {
         val effect = PartitionRepo().deleteById(partition!!.id!!)
-        Truth.assertThat(effect).isNotNull()
-        Truth.assertThat(effect!!).isEqualTo(1)
+        assertThat(effect).isNotNull()
+        assertThat(effect!!).isEqualTo(1)
     }
 
 
