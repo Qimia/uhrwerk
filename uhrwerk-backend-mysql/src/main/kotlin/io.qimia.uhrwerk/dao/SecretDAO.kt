@@ -32,7 +32,7 @@ class SecretDAO {
                 return result
             }
             if (result.oldSecret != null)
-                repo.deactivateById(result.oldSecret.id!!)
+                repo.deactivateById(result.oldSecret!!.id!!)
             result.newSecret = repo.save(secret)
             result.isSuccess = true
         } catch (e: SQLException) {

@@ -17,6 +17,7 @@ data class SourceModel2(
     var intervalColumn: String? = null,
     var deltaColumn: String? = null,
     var selectQuery: String? = null,
+    var sourceVariables: Array<String>? = null,
     var parallelLoad: Boolean = false,
     var parallelPartitionQuery: String? = null,
     var parallelPartitionColumn: String? = null,
@@ -46,6 +47,11 @@ data class SourceModel2(
         if (intervalColumn != other.intervalColumn) return false
         if (deltaColumn != other.deltaColumn) return false
         if (selectQuery != other.selectQuery) return false
+
+        if (!sourceVariables.isNullOrEmpty()) {
+            if (other.sourceVariables.isNullOrEmpty()) return false
+            if (!sourceVariables.contentEquals(other.sourceVariables)) return false
+        }
         if (parallelLoad != other.parallelLoad) return false
         if (parallelPartitionQuery != other.parallelPartitionQuery) return false
         if (parallelPartitionColumn != other.parallelPartitionColumn) return false
@@ -72,6 +78,7 @@ data class SourceModel2(
         result = 31 * result + (intervalColumn?.hashCode() ?: 0)
         result = 31 * result + (deltaColumn?.hashCode() ?: 0)
         result = 31 * result + (selectQuery?.hashCode() ?: 0)
+        result = 31 * result + (sourceVariables?.contentHashCode() ?: 0)
         result = 31 * result + parallelLoad.hashCode()
         result = 31 * result + (parallelPartitionQuery?.hashCode() ?: 0)
         result = 31 * result + (parallelPartitionColumn?.hashCode() ?: 0)
@@ -85,6 +92,7 @@ data class SourceModel2(
     }
 
     override fun toString(): String {
-        return "SourceModel2(id=$id, tableId=$tableId, connectionId=$connectionId, path=$path, format=$format, ingestionMode=$ingestionMode, intervalTempUnit=$intervalTempUnit, intervalTempSize=$intervalTempSize, intervalColumn=$intervalColumn, deltaColumn=$deltaColumn, selectQuery=$selectQuery, parallelLoad=$parallelLoad, parallelPartitionQuery=$parallelPartitionQuery, parallelPartitionColumn=$parallelPartitionColumn, parallelPartitionNum=$parallelPartitionNum, autoLoad=$autoLoad, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
+        return "SourceModel2(id=$id, tableId=$tableId, connectionId=$connectionId, path=$path, format=$format, ingestionMode=$ingestionMode, intervalTempUnit=$intervalTempUnit, intervalTempSize=$intervalTempSize, intervalColumn=$intervalColumn, deltaColumn=$deltaColumn, selectQuery=$selectQuery, sourceVariables=${sourceVariables?.contentToString()}, parallelLoad=$parallelLoad, parallelPartitionQuery=$parallelPartitionQuery, parallelPartitionColumn=$parallelPartitionColumn, parallelPartitionNum=$parallelPartitionNum, autoLoad=$autoLoad, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
     }
+
 }

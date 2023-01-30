@@ -3,6 +3,7 @@ package io.qimia.uhrwerk.repo
 import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
 import TestUtils
+import com.google.common.truth.Truth.assertThat
 import io.qimia.uhrwerk.common.metastore.builders.SourceModelBuilder
 import io.qimia.uhrwerk.common.metastore.model.*
 import org.junit.jupiter.api.*
@@ -41,22 +42,26 @@ internal class SourceRepo2Test {
 
     @Test
     fun save() {
-        Truth.assertThat(source).isNotNull()
+        assertThat(source).isNotNull()
     }
 
     @Test
     fun getById() {
         val source = SourceRepo2().getById(source!!.id!!)
-        Truth.assertThat(source).isNotNull()
-        Truth.assertThat(source!!.path).isEqualTo("Source-SourceRepoTest")
+        assertThat(source).isNotNull()
+        assertThat(source!!.path).isEqualTo("Source-SourceRepoTest")
+        assertThat(source.sourceVariables).isNotNull()
+        assertThat(source.sourceVariables!!.size).isEqualTo(2)
+        assertThat(source.sourceVariables!!).isEqualTo(arrayOf("var1", "var2"))
+
     }
 
     @Test
     fun getSourcesByTableId() {
         val sources = SourceRepo2().getSourcesByTableId(table!!.id!!)
-        Truth.assertThat(sources).isNotEmpty()
-        Truth.assertThat(sources.size).isEqualTo(1)
-        Truth.assertThat(sources[0]).isEqualTo(source)
+        assertThat(sources).isNotEmpty()
+        assertThat(sources.size).isEqualTo(1)
+        assertThat(sources[0]).isEqualTo(source)
     }
 
     @Test
@@ -70,26 +75,28 @@ internal class SourceRepo2Test {
                     .format("jdbc").build()
             )
         val source = SourceRepo2().getByHashKey(hashKey)
-        Truth.assertThat(source).isNotNull()
-        Truth.assertThat(source).isEqualTo(source)
+        assertThat(source).isNotNull()
+        assertThat(source).isEqualTo(source)
 
         val hashKey1 =
-            HashKeyUtils.sourceKey(SourceModelBuilder()
-                .tableId(table!!.id!!)
-                .connectionId(connection!!.id!!)
-                .path("Source-SourceRepoTest")
-                .format("parquet")
-                .build())
+            HashKeyUtils.sourceKey(
+                SourceModelBuilder()
+                    .tableId(table!!.id!!)
+                    .connectionId(connection!!.id!!)
+                    .path("Source-SourceRepoTest")
+                    .format("parquet")
+                    .build()
+            )
 
         val source1 = SourceRepo2().getByHashKey(hashKey1)
-        Truth.assertThat(source1).isNull()
+        assertThat(source1).isNull()
     }
 
     @Test
     fun deleteById() {
         val effect = SourceRepo2().deactivateById(source!!.id!!)
-        Truth.assertThat(effect).isNotNull()
-        Truth.assertThat(effect!!).isEqualTo(1)
+        assertThat(effect).isNotNull()
+        assertThat(effect!!).isEqualTo(1)
     }
 
     companion object {

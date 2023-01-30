@@ -3,6 +3,8 @@ package io.qimia.uhrwerk.repo
 import io.qimia.uhrwerk.common.metastore.builders.DependencyModelBuilder
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel
 import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
+import io.qimia.uhrwerk.repo.RepoUtils.jsonToMap
+import io.qimia.uhrwerk.repo.RepoUtils.toJson
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Types
@@ -14,8 +16,8 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
             insertParams(dependency, it)
         }
 
-    fun save(dependencies: List<DependencyModel>): List<DependencyModel?>? =
-        dependencies.map { save(it) }
+    fun save(dependencies: List<DependencyModel>): List<DependencyModel>? =
+        dependencies.mapNotNull { save(it) }
 
     fun getByHashKey(hashKey: Long): DependencyModel? =
         super.getByHashKey(
@@ -52,12 +54,17 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
         insert.setLong(2, dependency.dependencyTargetId!!)
         insert.setLong(3, dependency.dependencyTableId!!)
 
-        if (!dependency.viewName.isNullOrEmpty())
-            insert.setString(4, dependency.viewName)
-        else
+        if (dependency.viewName.isNullOrEmpty())
             insert.setNull(4, Types.VARCHAR)
+        else
+            insert.setString(4, dependency.viewName)
 
-        insert.setLong(5, HashKeyUtils.dependencyKey(dependency))
+        if (dependency.partitionMappings.isNullOrEmpty())
+            insert.setNull(5, Types.VARCHAR)
+        else
+            insert.setString(5, toJson(dependency.partitionMappings!!))
+
+        insert.setLong(6, HashKeyUtils.dependencyKey(dependency))
         return insert
 
     }
@@ -75,6 +82,10 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
             .version(rs.getString("tab.version"))
             .format(rs.getString("tar.format"))
 
+        val partitionMappings = rs.getString("dep.partition_mappings")
+        if (!partitionMappings.isNullOrEmpty())
+            builder.partitionMappings(jsonToMap(partitionMappings))
+
         val deactivatedTs = rs.getTimestamp("dep.deactivated_ts")
         if (deactivatedTs != null)
             builder.deactivatedTs(deactivatedTs.toLocalDateTime())
@@ -88,8 +99,9 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                                     dependency_target_id,
                                     dependency_table_id,
                                     view_name,
+                                    partition_mappings,
                                     hash_key)
-            VALUES (?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?)
         """.trimIndent()
 
         private val SELECT_BY_ID = """
@@ -101,6 +113,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tab.vertical,
                    tab.name,
                    dep.view_name,
+                   dep.partition_mappings,
                    tar.format,
                    tab.version,
                    dep.deactivated_ts
@@ -119,6 +132,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tab.vertical,
                    tab.name,
                    dep.view_name,
+                   dep.partition_mappings,
                    tar.format,
                    tab.version,
                    dep.deactivated_ts
@@ -142,6 +156,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tab.vertical,
                    tab.name,
                    dep.view_name,
+                   dep.partition_mappings,
                    tar.format,
                    tab.version,
                    dep.deactivated_ts

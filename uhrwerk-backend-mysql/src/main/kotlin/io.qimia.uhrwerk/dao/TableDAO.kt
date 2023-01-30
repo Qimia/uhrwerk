@@ -106,21 +106,27 @@ class TableDAO : TableDependencyService, TableService {
     }
 
     override fun get(
-        area: String?,
-        vertical: String?,
-        table: String?,
-        version: String?
+        area: String,
+        vertical: String,
+        table: String,
+        version: String
     ): TableModel? {
         val table = tableRepo.getByHashKey(HashKeyUtils.tableKey(area, vertical, table, version))
         if (table != null) {
-            val sources = sourceService.getSourcesByTableId(table.id)
-            table.sources = sources.toTypedArray()
+            val sources = sourceService.getSourcesByTableId(table.id!!)
+            if (sources != null) {
+                table.sources = sources.toTypedArray()
+            }
 
-            val targets = targetService.getTableTargets(table.id)
-            table.targets = targets.toTypedArray()
+            val targets = targetService.getTableTargets(table.id!!)
+            if (targets != null) {
+                table.targets = targets.toTypedArray()
+            }
 
-            val dependencies = dependencyService.getByTableId(table.id)
-            table.dependencies = dependencies.toTypedArray()
+            val dependencies = dependencyService.getByTableId(table.id!!)
+            if (dependencies != null) {
+                table.dependencies = dependencies.toTypedArray()
+            }
         }
         return table
     }
@@ -135,9 +141,11 @@ class TableDAO : TableDependencyService, TableService {
             targets.forEach { it.tableId = tableId }
             val targetResult = targetService.save(targets.toList(), tableId, overwrite)
             tableResult.targetResult = targetResult
-            if (targetResult.isSuccess) {
-                return targetResult.storedTargets
-            }
+            if (targetResult != null) {
+                if (targetResult.isSuccess) {
+                    return targetResult.storedTargets
+                }
+    }
         }
         return null
     }
@@ -152,9 +160,11 @@ class TableDAO : TableDependencyService, TableService {
             dependencies.forEach { it.tableId = tableId }
             val dependencyResult = dependencyService.save(tableId, dependencies, overwrite)
             tableResult.dependencyResult = dependencyResult
-            if (dependencyResult.isSuccess) {
-                return dependencyResult.dependenciesSaved
-            }
+            if (dependencyResult != null) {
+                if (dependencyResult.isSuccess) {
+                    return dependencyResult.dependenciesSaved
+                }
+    }
         }
         return null
     }
@@ -170,7 +180,7 @@ class TableDAO : TableDependencyService, TableService {
             sources.forEach { it.tableId = tableId }
             val sourceResults = sourceService.save(sources.toList(), overwrite)
             tableResult.sourceResults = sourceResults.toTypedArray()
-            return sourceResults.filter { it.isSuccess }.map { it.newResult }.toTypedArray()
+            return sourceResults.filter { it.isSuccess }.mapNotNull { it.newResult }.toTypedArray()
         }
         return null
     }
@@ -194,7 +204,7 @@ class TableDAO : TableDependencyService, TableService {
         val resultSet =
             TablePartitionResultSet()
         // FIXME checks only the first target of the table (see FIXME normal processingPartitions)
-        val processedPartition = partService.getLatestPartition(table.targets!![0].id)
+        val processedPartition = partService.getLatestPartition(table.targets!![0].id!!)
         if (processedPartition != null) {
             // If partition found -> check if it has been processed in the last 1 minute
             val requestDiff = Duration.between(processedPartition.partitionTs, requestTime)
@@ -223,7 +233,7 @@ class TableDAO : TableDependencyService, TableService {
 
         val depsPartSpecs = tablePartRepo.getTablePartitions(table.id!!)
 
-        val depsConnections = connService.getAllTableDeps(table.id)
+        val depsConnections = connService.getAllTableDeps(table.id!!)
 
         val connectionsMap = depsConnections!!.associateBy { it.id }
 
@@ -286,7 +296,7 @@ class TableDAO : TableDependencyService, TableService {
         table: TableModel, requestedPartitionTs: List<LocalDateTime>
     ): TablePartitionResultSet {
         val processedPartitions =
-            partService.getPartitions(table.targets!![0].id, requestedPartitionTs)
+            partService.getPartitions(table.targets!![0].id!!, requestedPartitionTs)
         val processedTs = TreeSet<LocalDateTime>()
         for (processedPartition in processedPartitions) {
             processedTs.add(processedPartition.partitionTs!!)
@@ -334,8 +344,8 @@ class TableDAO : TableDependencyService, TableService {
      */
     @Throws(SQLException::class)
     override fun processingPartitions(
-        table: TableModel?,
-        requestedPartitionTs: List<LocalDateTime>?
+        table: TableModel,
+        requestedPartitionTs: List<LocalDateTime>
     ): TablePartitionResultSet? {
         if (!table!!.partitioned) {
             return processNotPartitionedTable(table, requestedPartitionTs!![0])
@@ -348,7 +358,7 @@ class TableDAO : TableDependencyService, TableService {
         // FIXME which target for the table should be used for getting (already) processed partition of
         // the table
         val processedPartitions =
-            partService.getPartitions(table.targets!![0].id, requestedPartitionTs)
+            partService.getPartitions(table.targets!![0].id!!, requestedPartitionTs)
         val processedTs = TreeSet<LocalDateTime>()
         for (i in processedPartitions.indices) {
             processedTs.add(processedPartitions[i].partitionTs!!)
@@ -356,7 +366,7 @@ class TableDAO : TableDependencyService, TableService {
 
         // Get full spec-objects for each of the dependencies + store all connections
         val tablePartitionSpecs = tablePartRepo.getTablePartitions(table.id!!)
-        val connections = connService.getAllTableDeps(table.id)
+        val connections = connService.getAllTableDeps(table.id!!)
 
         val connectionsMap = connections!!.map { it.id to it }.toMap()
 

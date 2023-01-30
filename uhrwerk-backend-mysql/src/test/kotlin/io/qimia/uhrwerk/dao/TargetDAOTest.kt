@@ -3,6 +3,7 @@ package io.qimia.uhrwerk.dao
 import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
 import TestUtils
+import com.google.common.truth.Truth.assertThat
 import io.qimia.uhrwerk.common.metastore.builders.ConnectionModelBuilder
 import io.qimia.uhrwerk.common.metastore.builders.TargetModelBuilder
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
@@ -100,10 +101,11 @@ class TargetDAOTest {
             )
         }
         val result = service.save(targets, table!!.id!!, false)
-        Truth.assertThat(result).isNotNull()
-        Truth.assertThat(result!!.isSuccess).isTrue()
-        Truth.assertThat(result!!.storedTargets).isNotEmpty()
-        Truth.assertThat(result!!.storedTargets.mapNotNull { it.format }.sorted())
+        assertThat(result).isNotNull()
+        assertThat(result.isSuccess).isTrue()
+        assertThat(result.storedTargets).isNotNull()
+        assertThat(result.storedTargets).isNotEmpty()
+        assertThat(result.storedTargets!!.mapNotNull { it.format }.sorted())
             .isEqualTo(formats.sorted())
     }
 
@@ -118,8 +120,8 @@ class TargetDAOTest {
             )
         }
         val result = service.save(targets, table!!.id!!, false)
-        Truth.assertThat(result).isNotNull()
-        Truth.assertThat(result!!.isSuccess).isTrue()
+        assertThat(result).isNotNull()
+        assertThat(result!!.isSuccess).isTrue()
 
         val sameTargets = formats.map {
             TestData.target(
@@ -129,11 +131,17 @@ class TargetDAOTest {
             )
         }
         val result1 = service.save(sameTargets, table!!.id!!, false)
-        Truth.assertThat(result1).isNotNull()
-        Truth.assertThat(result1!!.isSuccess).isTrue()
+        assertThat(result1).isNotNull()
+        assertThat(result1.isSuccess).isTrue()
 
-        for (target in result1!!.storedTargets) {
-            Truth.assertThat(result!!.storedTargets.toList()).contains(target)
+        assertThat(result1.storedTargets).isNotNull()
+        assertThat(result1.storedTargets).isNotEmpty()
+
+        assertThat(result1.storedTargets!!.mapNotNull { it.format }.sorted())
+            .isEqualTo(formats.sorted())
+
+        for (target in result1.storedTargets!!) {
+            assertThat(result!!.storedTargets!!.toList()).contains(target)
         }
     }
 
@@ -158,12 +166,15 @@ class TargetDAOTest {
             )
         }
         val result1 = service.save(targets1, table!!.id!!, false)
-        Truth.assertThat(result1).isNotNull()
-        Truth.assertThat(result1!!.isSuccess).isFalse()
+        assertThat(result1).isNotNull()
+        assertThat(result1!!.isSuccess).isFalse()
 
         val targets2 = service.getTableTargets(table!!.id!!)
+        assertThat(targets2).isNotNull()
+        assertThat(targets2).isNotEmpty()
+
         for (target in targets2) {
-            Truth.assertThat(result!!.storedTargets.toList()).contains(target)
+            assertThat(result!!.storedTargets!!.toList()).contains(target)
         }
     }
 
@@ -188,14 +199,14 @@ class TargetDAOTest {
             )
         }
         val result1 = service.save(targets1, table!!.id!!, true)
-        Truth.assertThat(result1).isNotNull()
-        Truth.assertThat(result1!!.isSuccess).isTrue()
+        assertThat(result1).isNotNull()
+        assertThat(result1!!.isSuccess).isTrue()
 
         val targets2 = service.getTableTargets(table!!.id!!)
-        Truth.assertThat(targets2).isNotEmpty()
-        Truth.assertThat(targets2).hasSize(formats1.size)
+        assertThat(targets2).isNotEmpty()
+        assertThat(targets2).hasSize(formats1.size)
         for (target in targets2) {
-            Truth.assertThat(result1!!.storedTargets.toList()).contains(target)
+            assertThat(result1!!.storedTargets!!.toList()).contains(target)
         }
     }
 

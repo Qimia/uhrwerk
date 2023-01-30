@@ -4,12 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.qimia.uhrwerk.config.builders.ConfigException
 import java.util.*
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class Dependency(
     @JsonProperty("ref")
     var reference: Reference? = null,
     var view: String? = null,
     var format: String? = null,
+    @JsonProperty("partition")
+    var partitionMappings: Array<PartitionMapping>? = null
 ) {
     fun validate(path: String) {
         var path = path

@@ -1,6 +1,6 @@
-area: "staging"
+area: "processing"
 vertical: "yelp_db"
-table: "table_category"
+table: "table_category_prc"
 version: "1.0"
 partition_columns:
   - partition_column1
@@ -11,13 +11,15 @@ variables:
 
 parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
 max_bulk_size: 1
-sources:
-  - connection_name: "yelp_mysql"
-    path: category  # On DB
-    format: jdbc
-    version: "1.0"
-    # select:
-    #  query: "SELECT * FROM <path>"
+dependencies:
+  - ref: "staging.yelp_db.table_category:1.0"
+    format: "jdbc"
+    view: "category_view"
+    partition:
+      - column: "partition_column1"
+        value: "$table_variable1$"
+      - column: "partition_column2"
+        value: "$table_variable2$"
 
 targets:
   - connection_name: "local_fs_lake"

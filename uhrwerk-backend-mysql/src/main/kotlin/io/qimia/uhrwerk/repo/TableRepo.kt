@@ -51,6 +51,7 @@ class TableRepo() : BaseRepo<TableModel>() {
         insert.setInt(8, table.maxBulkSize!!)
         insert.setBoolean(9, table.partitioned)
         insert.setString(10, table.className)
+
         if (table.transformSqlQuery.isNullOrEmpty())
             insert.setNull(11, Types.VARCHAR)
         else

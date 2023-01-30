@@ -17,7 +17,7 @@ interface TableDependencyService {
      */
     @Throws(SQLException::class)
     fun processingPartitions(
-        table: TableModel?,
-        partitionTs: List<LocalDateTime>?
+        table: TableModel,
+        partitionTs: List<LocalDateTime>
     ): TablePartitionResultSet?
 }

@@ -26,7 +26,7 @@ class TargetDAO() : TargetService {
     @Throws(SQLException::class)
     private fun getTargetsByTable(tableId: Long): List<TargetModel> =
         repo.getByTableId(tableId).map {
-            val connection = connService.getById(it.connectionId)
+            val connection = connService.getById(it.connectionId!!)
             it.connection = connection
             it
         }
@@ -107,7 +107,7 @@ class TargetDAO() : TargetService {
         var out = Optional.empty<TargetModel>()
         val target = repo.getById(id)
         if (target != null) {
-            val conn = connService.getById(target!!.connectionId)
+            val conn = connService.getById(target!!.connectionId!!)
             // WARNING: What if connection can't be found (should not be possible)
             target.connection = conn
             out = Optional.of(target)

@@ -34,7 +34,7 @@ class ConnectionDAO : ConnectionService {
                 return result
             }
             if (result.oldConnection != null)
-                repo.deactivateById(result.oldConnection.id!!)
+                repo.deactivateById(result.oldConnection!!.id!!)
 
             result.newConnection = repo.save(connection)
             result.isSuccess = true

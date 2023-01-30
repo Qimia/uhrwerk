@@ -19,12 +19,14 @@ import io.qimia.uhrwerk.config.representation.Connection;
 import io.qimia.uhrwerk.config.representation.Dependency;
 import io.qimia.uhrwerk.config.representation.File;
 import io.qimia.uhrwerk.config.representation.JDBC;
+import io.qimia.uhrwerk.config.representation.PartitionMapping;
 import io.qimia.uhrwerk.config.representation.Redshift;
 import io.qimia.uhrwerk.config.representation.S3;
 import io.qimia.uhrwerk.config.representation.Secret;
 import io.qimia.uhrwerk.config.representation.Source;
 import io.qimia.uhrwerk.config.representation.Table;
 import io.qimia.uhrwerk.config.representation.Target;
+import java.util.HashMap;
 
 public class ModelMapper {
 
@@ -46,7 +48,8 @@ public class ModelMapper {
       builder.transformSqlQuery(MapperUtils.readQueryOrFileLines(table.getTransformSqlQuery()));
     }
 
-    builder.setPartitionColumns(table.getPartitionColumns());
+    builder.partitionColumns(table.getPartitionColumns());
+    builder.tableVariables(table.getTableVariables());
 
     builder.parallelism(table.getParallelism()).maxBulkSize(table.getMaxBulkSize());
 
@@ -177,6 +180,14 @@ public class ModelMapper {
     TableModel dependencyTable = toDependencyTable(dependency);
     TargetModel dependencyTarget = toDependencyTarget(dependency, dependencyTable);
 
+    HashMap<String, String> partitionMappings = new HashMap<>();
+    if (dependency.getPartitionMappings() != null && dependency.getPartitionMappings().length > 0) {
+      for (PartitionMapping mapping : dependency.getPartitionMappings()
+      ) {
+        partitionMappings.put(mapping.getColumn(), mapping.getValue());
+      }
+    }
+
     DependencyModelBuilder builder =
         new DependencyModelBuilder()
             .table(table)
@@ -188,6 +199,9 @@ public class ModelMapper {
             .version(dependency.getReference().getVersion())
             .dependencyTable(dependencyTable)
             .dependencyTarget(dependencyTarget);
+    if (!partitionMappings.isEmpty()) {
+      builder.partitionMappings(partitionMappings);
+    }
     return builder.build();
   }
 

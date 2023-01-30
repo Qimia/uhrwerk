@@ -3,6 +3,7 @@ package io.qimia.uhrwerk.repo
 import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
 import TestUtils
+import com.google.common.truth.Truth.assertThat
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel
 import io.qimia.uhrwerk.common.metastore.model.TableModel
@@ -43,7 +44,8 @@ internal class DependencyRepoTest {
 
         dependencyTable = TableRepo().save(TestData.table("Dependency-Table-DependencyRepoTest"))
 
-        dependencyTarget = TargetRepo().save(TestData.target(dependencyTable!!.id!!, connection!!.id!!))
+        dependencyTarget =
+            TargetRepo().save(TestData.target(dependencyTable!!.id!!, connection!!.id!!))
 
         dependency = DependencyRepo().save(
             TestData.dependency(
@@ -58,31 +60,31 @@ internal class DependencyRepoTest {
 
     @Test
     fun save() {
-        Truth.assertThat(dependency).isNotNull()
+        assertThat(dependency).isNotNull()
     }
 
     @Test
     fun getById() {
         val dependency = DependencyRepo().getById(dependency!!.id!!)
-        Truth.assertThat(dependency).isNotNull()
-        Truth.assertThat(dependency!!.tableId).isEqualTo(table!!.id)
-        Truth.assertThat(dependency!!.dependencyTargetId).isEqualTo(dependencyTarget!!.id)
+        assertThat(dependency).isNotNull()
+        assertThat(dependency!!.tableId).isEqualTo(table!!.id)
+        assertThat(dependency!!.dependencyTargetId).isEqualTo(dependencyTarget!!.id)
     }
 
     @Test
     fun getByTableId() {
         val dependency = DependencyRepo().getByTableId(table!!.id!!)
-        Truth.assertThat(dependency).isNotNull()
-        Truth.assertThat(dependency!!).isNotEmpty()
-        Truth.assertThat(dependency!![0].tableId).isEqualTo(table!!.id)
-        Truth.assertThat(dependency!![0].dependencyTargetId).isEqualTo(dependencyTarget!!.id)
+        assertThat(dependency).isNotNull()
+        assertThat(dependency!!).isNotEmpty()
+        assertThat(dependency!![0].tableId).isEqualTo(table!!.id)
+        assertThat(dependency!![0].dependencyTargetId).isEqualTo(dependencyTarget!!.id)
     }
 
     @Test
     fun deleteById() {
         val effect = DependencyRepo().deleteById(dependency!!.id!!)
-        Truth.assertThat(effect).isNotNull()
-        Truth.assertThat(effect!!).isEqualTo(1)
+        assertThat(effect).isNotNull()
+        assertThat(effect!!).isEqualTo(1)
     }
 
     companion object {

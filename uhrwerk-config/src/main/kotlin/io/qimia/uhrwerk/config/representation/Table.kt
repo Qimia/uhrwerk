@@ -16,6 +16,8 @@ data class Table(
     var transformSqlQuery: String? = null,
     @JsonProperty("partition_columns")
     var partitionColumns: Array<String>? = null,
+    @JsonProperty("variables")
+    var tableVariables: Array<String>? = null,
     var parallelism: Int? = 1,
     @JsonProperty("max_bulk_size")
     var maxBulkSize: Int? = 1,

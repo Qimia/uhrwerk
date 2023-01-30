@@ -82,7 +82,7 @@ class SourceDAO : SourceService {
         val sources = repo.getSourcesByTableId(tableId)
         if (!sources.isNullOrEmpty()) {
             sources.forEach {
-                val conn = connService.getById(it.connectionId)
+                val conn = connService.getById(it.connectionId!!)
                 it.connection = conn
             }
         }

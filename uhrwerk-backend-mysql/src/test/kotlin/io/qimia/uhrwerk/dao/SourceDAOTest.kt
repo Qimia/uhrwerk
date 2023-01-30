@@ -54,13 +54,17 @@ class SourceDAOTest {
 
         LOGGER.info(result.toString())
 
-        Truth.assertThat(result).isNotNull()
-        Truth.assertThat(result.isSuccess).isTrue()
-        Truth.assertThat(result.isError).isFalse()
-        Truth.assertThat(result.newResult).isNotNull()
-        Truth.assertThat(result.newResult.id).isNotNull()
-        Truth.assertThat(result.newResult).isEqualTo(source)
-        Truth.assertThat(result.newResult.connection).isEqualTo(connection)
+        assertThat(result).isNotNull()
+
+        if (result != null) {
+            assertThat(result.isSuccess).isTrue()
+            assertThat(result.isError).isFalse()
+            assertThat(result.newResult).isNotNull()
+            assertThat(result.newResult!!.id!!).isNotNull()
+            assertThat(result.newResult).isEqualTo(source)
+            assertThat(result.newResult!!.connection).isEqualTo(connection)
+        }
+
     }
 
     @Test
@@ -81,14 +85,14 @@ class SourceDAOTest {
         src1.connection = connection
 
         val resultSame = service.save(src1, false)
-        Assertions.assertTrue(resultSame.isSuccess)
-        Assertions.assertFalse(resultSame.isError)
-        Assertions.assertNotNull(resultSame.newResult)
-
-        Assertions.assertEquals(resultSame.oldResult, source)
-        Assertions.assertEquals(src1, resultSame.oldResult)
-        Assertions.assertEquals(src1, resultSame.newResult)
-
+        assertThat(resultSame).isNotNull()
+        if (resultSame != null) {
+            assertThat(resultSame.isSuccess).isTrue()
+            assertThat(resultSame.isError).isFalse()
+            assertThat(resultSame.newResult).isNotNull()
+            assertThat(resultSame.oldResult).isEqualTo(source)
+            assertThat(resultSame.newResult).isEqualTo(src1)
+        }
 
         val src2 = TestData.source2(
             "Source-SourceDAOTest",
@@ -100,11 +104,13 @@ class SourceDAOTest {
         src2.parallelPartitionColumn = "radom_column"
 
         val resultDifferent = service.save(src2, false)
-        LOGGER.info(resultDifferent.toString())
-        Assertions.assertFalse(resultDifferent.isError)
-        Assertions.assertFalse(resultDifferent.isSuccess)
-        Assertions.assertNotNull(resultDifferent.newResult)
-        Assertions.assertEquals(src2, resultDifferent.newResult)
+        assertThat(resultDifferent).isNotNull()
+        if (resultDifferent != null) {
+            assertThat(resultDifferent.isSuccess).isFalse()
+            assertThat(resultDifferent.isError).isFalse()
+            assertThat(resultDifferent.newResult).isNotNull()
+            assertThat(resultDifferent.newResult).isEqualTo(src2)
+        }
     }
 
     @Test
@@ -117,10 +123,15 @@ class SourceDAOTest {
         )
 
         val result = service.save(source, true)
+        assertThat(result).isNotNull()
+        if (result != null) {
+            assertThat(result.isSuccess).isTrue()
+            assertThat(result.isError).isFalse()
+            assertThat(result.newResult).isNotNull()
+            assertThat(result.newResult).isEqualTo(source)
+            assertThat(result.newResult!!.connection).isEqualTo(connection)
+        }
 
-        Assertions.assertTrue(result.isSuccess)
-        Assertions.assertFalse(result.isError)
-        Assertions.assertEquals(source, result.newResult)
 
         val source1 = TestData.source2(
             "Source-SourceDAOTest",
@@ -132,22 +143,19 @@ class SourceDAOTest {
 
         val resultChanged = service.save(source1, true)
 
-        Assertions.assertTrue(resultChanged.isSuccess)
-        Assertions.assertFalse(resultChanged.isError)
-        Assertions.assertNotNull(resultChanged.newResult.id)
-
-
-
-        assertThat(source).isEqualTo(resultChanged.oldResult)
-
-
-        println(source1)
-        println(resultChanged.newResult)
-
-        assertThat(source1).isEqualTo(resultChanged.newResult)
+        assertThat(resultChanged).isNotNull()
+        if (resultChanged != null) {
+            assertThat(resultChanged.isSuccess).isTrue()
+            assertThat(resultChanged.isError).isFalse()
+            assertThat(resultChanged.newResult).isNotNull()
+            assertThat(resultChanged.newResult!!.id).isNotNull()
+            assertThat(resultChanged.newResult).isEqualTo(source1)
+            assertThat(resultChanged.oldResult).isEqualTo(source)
+        }
 
         val source2 = SourceRepo2().getById(source.id!!)
-        Truth.assertThat(source2!!.deactivatedTs).isNotNull()
+        assertThat(source2).isNotNull()
+        assertThat(source2!!.deactivatedTs).isNotNull()
     }
 
     @Test
@@ -158,12 +166,14 @@ class SourceDAOTest {
             -100
         )
         val result = service.save(source, true)
-
-        Assertions.assertFalse(result.isSuccess)
-        Assertions.assertTrue(result.isError)
-        Assertions.assertNotNull(result.newResult)
-        Assertions.assertNull(result.newResult.id)
-        Assertions.assertEquals(source, result.newResult)
+        assertThat(result).isNotNull()
+        if (result != null) {
+            assertThat(result.isSuccess).isFalse()
+            assertThat(result.isError).isTrue()
+            assertThat(result.newResult).isNotNull()
+            assertThat(result.newResult!!.id).isNull()
+            assertThat(result.newResult).isEqualTo(source)
+        }
     }
 
     @Test
@@ -179,12 +189,14 @@ class SourceDAOTest {
         )
         source.connection = connection1
         val result = service.save(source, true)
-
-        Assertions.assertFalse(result.isSuccess)
-        Assertions.assertTrue(result.isError)
-        Assertions.assertNotNull(result.newResult)
-        Assertions.assertNull(result.newResult.id)
-        Assertions.assertEquals(source, result.newResult)
+        assertThat(result).isNotNull()
+        if (result != null) {
+            assertThat(result.isSuccess).isFalse()
+            assertThat(result.isError).isTrue()
+            assertThat(result.newResult).isNotNull()
+            assertThat(result.newResult!!.id).isNull()
+            assertThat(result.newResult).isEqualTo(source)
+        }
     }
 
     @Test
@@ -198,12 +210,14 @@ class SourceDAOTest {
         )
         source.connection = connection1
         val result = service.save(source, true)
-
-        Assertions.assertTrue(result.isSuccess)
-        Assertions.assertFalse(result.isError)
-        Assertions.assertNotNull(result.newResult)
-        Assertions.assertNotNull(result.newResult.id)
-        Truth.assertThat(result.newResult.connectionId).isEqualTo(connection!!.id)
+        assertThat(result).isNotNull()
+        if (result != null) {
+            assertThat(result.isSuccess).isTrue()
+            assertThat(result.isError).isFalse()
+            assertThat(result.newResult).isNotNull()
+            assertThat(result.newResult!!.id).isNotNull()
+            assertThat(result.newResult!!.connection).isEqualTo(connection1)
+        }
     }
 
     @Test
@@ -214,16 +228,19 @@ class SourceDAOTest {
             table!!.id!!,
             -100
         )
-        Truth.assertThat(source.connectionId).isNotEqualTo(connection!!.id)
+        assertThat(source.connectionId).isNotEqualTo(connection!!.id)
         //connection instead of connectionId
         source.connection = connection
         val result = service.save(source, true)
+        assertThat(result).isNotNull()
+        if (result != null) {
+            assertThat(result.isSuccess).isTrue()
+            assertThat(result.isError).isFalse()
+            assertThat(result.newResult).isNotNull()
+            assertThat(result.newResult!!.id).isNotNull()
+            assertThat(result.newResult!!.connection).isEqualTo(connection)
+        }
 
-        Assertions.assertFalse(result.isError)
-        Assertions.assertTrue(result.isSuccess)
-        Assertions.assertNotNull(result.newResult)
-        Assertions.assertNotNull(result.newResult.id)
-        Truth.assertThat(result.newResult.connectionId).isEqualTo(connection!!.id)
     }
 
 

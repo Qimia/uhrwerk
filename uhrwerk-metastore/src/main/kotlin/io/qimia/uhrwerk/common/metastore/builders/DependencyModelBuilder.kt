@@ -1,10 +1,8 @@
 package io.qimia.uhrwerk.common.metastore.builders
 
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel
-import io.qimia.uhrwerk.common.metastore.model.PartitionTransformType
-import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import io.qimia.uhrwerk.common.metastore.model.TableModel
-import io.qimia.uhrwerk.common.model.*
+import io.qimia.uhrwerk.common.model.TargetModel
 
 class DependencyModelBuilder : StateModelBuilder<DependencyModelBuilder>() {
     var id: Long? = null
@@ -18,6 +16,7 @@ class DependencyModelBuilder : StateModelBuilder<DependencyModelBuilder>() {
     var vertical: String? = null
     var tableName: String? = null
     var viewName: String? = null
+    var partitionMappings: Map<String, Any>? = null
     var format: String? = null
     var version: String? = null
     fun id(id: Long?): DependencyModelBuilder {
@@ -75,6 +74,11 @@ class DependencyModelBuilder : StateModelBuilder<DependencyModelBuilder>() {
         return this
     }
 
+    fun partitionMappings(partitionMappings: Map<String, Any>?): DependencyModelBuilder {
+        this.partitionMappings = partitionMappings
+        return this
+    }
+
     fun format(format: String?): DependencyModelBuilder {
         this.format = format
         return this
@@ -99,6 +103,7 @@ class DependencyModelBuilder : StateModelBuilder<DependencyModelBuilder>() {
             vertical,
             tableName,
             viewName,
+            partitionMappings,
             format,
             version
         )

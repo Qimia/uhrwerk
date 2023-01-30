@@ -31,7 +31,7 @@ internal class ConnectionDAOTest {
         val result = service.save(TestData.connection("Connection-Test"), true)
         Assertions.assertTrue(result.isSuccess)
         Assertions.assertNotNull(result.newConnection)
-        Assertions.assertNotNull(result.newConnection.id)
+        Assertions.assertNotNull(result.newConnection!!.id)
         LOGGER.info(result.newConnection!!.toString())
     }
 
@@ -71,7 +71,7 @@ internal class ConnectionDAOTest {
             val result = service.save(it, true)
             Assertions.assertTrue(result.isSuccess)
             Assertions.assertNotNull(result.newConnection)
-            Assertions.assertNotNull(result.newConnection.id)
+            Assertions.assertNotNull(result.newConnection!!.id)
             LOGGER.info(result.newConnection.toString())
         }
 

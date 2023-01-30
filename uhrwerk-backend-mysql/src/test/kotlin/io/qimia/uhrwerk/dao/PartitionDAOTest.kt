@@ -1,8 +1,8 @@
 package io.qimia.uhrwerk.dao
 
-import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
 import TestUtils
+import com.google.common.truth.Truth.assertThat
 import io.qimia.uhrwerk.common.metastore.config.PartitionService
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
 import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
@@ -49,12 +49,14 @@ internal class PartitionDAOTest {
     fun save() {
         val partition = TestData.partition(target!!.id!!)
         val result = service.save(partition, false)
-
-        Truth.assertThat(result.isSuccess).isTrue()
-        Truth.assertThat(result.isError).isFalse()
-        Truth.assertThat(result.newResult).isNotNull()
-        Truth.assertThat(result.newResult).isEqualTo(partition)
-        Truth.assertThat(result.oldResult).isNull()
+        assertThat(result).isNotNull()
+        if (result != null) {
+            assertThat(result.isSuccess).isTrue()
+            assertThat(result.isError).isFalse()
+            assertThat(result.newResult).isNotNull()
+            assertThat(result.newResult).isEqualTo(partition)
+            assertThat(result.oldResult).isNull()
+        }
     }
 
     @Test
@@ -67,7 +69,7 @@ internal class PartitionDAOTest {
             partitionTs = partitionTs
         )
 
-        val result = service.save(partition, false)
+        val result = service.save(partition, false)!!
 
         val partition1 = TestData.partition(
             targetId = target!!.id!!,
@@ -78,15 +80,19 @@ internal class PartitionDAOTest {
 
         val result1 = service.save(partition1, true)
 
-        Truth.assertThat(result1.isSuccess).isTrue()
-        Truth.assertThat(result1.isError).isFalse()
-        Truth.assertThat(result1.newResult).isNotNull()
-        Truth.assertThat(result1.oldResult).isNotNull()
-        Truth.assertThat(result1.oldResult).isEqualTo(result.newResult)
-        Truth.assertThat(result1.oldResult.id).isEqualTo(result.newResult.id)
+        assertThat(result1).isNotNull()
 
-        val partition2 = service.getById(result1.oldResult.id)
-        Truth.assertThat(partition2).isNull()
+        if (result1 != null) {
+            assertThat(result1.isSuccess).isTrue()
+            assertThat(result1.isError).isFalse()
+            assertThat(result1.newResult).isNotNull()
+            assertThat(result1.oldResult).isNotNull()
+            assertThat(result1.oldResult).isEqualTo(result.newResult!!)
+            assertThat(result1.oldResult!!.id).isEqualTo(result.newResult!!.id)
+            val partition2 = service.getById(result1.oldResult!!.id!!)
+            assertThat(partition2).isNull()
+        }
+
     }
 
     @Test
@@ -99,7 +105,7 @@ internal class PartitionDAOTest {
             partitionTs = partitionTs
         )
 
-        val result = service.save(partition, false)
+        val result = service.save(partition, false)!!
 
         val partition1 = TestData.partition(
             targetId = target!!.id!!,
@@ -110,15 +116,21 @@ internal class PartitionDAOTest {
 
         val result1 = service.save(partition1, false)
 
-        Truth.assertThat(result1.isSuccess).isFalse()
-        Truth.assertThat(result1.isError).isFalse()
-        Truth.assertThat(result1.newResult).isNull()
-        Truth.assertThat(result1.oldResult).isNotNull()
-        Truth.assertThat(result1.oldResult).isEqualTo(result.newResult)
-        Truth.assertThat(result1.oldResult.id).isEqualTo(result.newResult.id)
+        assertThat(result1).isNotNull()
 
-        val partition2 = service.getById(result1.oldResult.id)
-        Truth.assertThat(partition2).isNotNull()
+        if (result1 != null) {
+            assertThat(result1.isSuccess).isFalse()
+            assertThat(result1.isSuccess).isFalse()
+            assertThat(result1.isError).isFalse()
+            assertThat(result1.newResult).isNull()
+            assertThat(result1.oldResult).isNotNull()
+            assertThat(result1.oldResult).isEqualTo(result.newResult)
+            assertThat(result1.oldResult).isEqualTo(result.newResult)
+            assertThat(result1.oldResult!!.id).isEqualTo(result.newResult!!.id)
+            val partition2 = service.getById(result1.oldResult!!.id!!)
+            assertThat(partition2).isNotNull()
+        }
+
     }
 
     @Test
@@ -131,7 +143,7 @@ internal class PartitionDAOTest {
             partitionTs = partitionTs
         )
 
-        val result = service.save(partition, false)
+        val result = service.save(partition, false)!!
 
         val partition1 = TestData.partition(
             targetId = target!!.id!!,
@@ -140,15 +152,21 @@ internal class PartitionDAOTest {
 
         val result1 = service.save(partition1, false)
 
-        Truth.assertThat(result1.isSuccess).isTrue()
-        Truth.assertThat(result1.isError).isFalse()
-        Truth.assertThat(result1.newResult).isNotNull()
-        Truth.assertThat(result1.oldResult).isNotNull()
-        Truth.assertThat(result1.oldResult).isEqualTo(result.newResult)
-        Truth.assertThat(result1.oldResult).isEqualTo(result1.newResult)
+        assertThat(result1).isNotNull()
 
-        val partition2 = service.getById(result1.oldResult.id)
-        Truth.assertThat(partition2).isNotNull()
+        if (result1 != null) {
+            assertThat(result1.isSuccess).isTrue()
+            assertThat(result1.isError).isFalse()
+            assertThat(result1.newResult).isNotNull()
+            assertThat(result1.oldResult).isNotNull()
+            assertThat(result1.oldResult).isEqualTo(result.newResult)
+            assertThat(result1.oldResult).isEqualTo(result1.newResult)
+
+            val partition2 = service.getById(result1.oldResult!!.id!!)
+            assertThat(partition2).isNotNull()
+        }
+
+
     }
 
 

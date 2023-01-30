@@ -1,8 +1,8 @@
-package io.qimia.uhrwerk.common.metastore.config;
+package io.qimia.uhrwerk.common.metastore.config
 
-import io.qimia.uhrwerk.common.metastore.model.TableModel;
+import io.qimia.uhrwerk.common.metastore.model.TableModel
 
-public interface TableService {
+interface TableService {
     /**
      * Saves a Table into the Metastore.
      * If overwrite is set to false and the object already exists in the metastore and is not precisely equal
@@ -12,7 +12,11 @@ public interface TableService {
      * @param overwrite Whether to overwrite non-essential fields.
      * @return TableResult.
      */
-    TableResult save(TableModel table, boolean overwrite);
-
-    TableModel get(String area, String vertical, String table, String version);
+    fun save(table: TableModel, overwrite: Boolean): TableResult
+    operator fun get(
+        area: String,
+        vertical: String,
+        table: String,
+        version: String
+    ): TableModel?
 }

@@ -4,6 +4,8 @@ import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
 import io.qimia.uhrwerk.common.metastore.model.IngestionMode
 import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import io.qimia.uhrwerk.common.metastore.model.SourceModel2
+import io.qimia.uhrwerk.repo.RepoUtils.jsonToArray
+import io.qimia.uhrwerk.repo.RepoUtils.toJson
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Types
@@ -60,12 +62,18 @@ class SourceRepo2 : BaseRepo<SourceModel2>() {
         insert.setString(8, source.intervalColumn)
         insert.setString(9, source.deltaColumn)
         insert.setString(10, source.selectQuery)
-        insert.setBoolean(11, source.parallelLoad)
-        insert.setString(12, source.parallelPartitionQuery)
-        insert.setString(13, source.parallelPartitionColumn)
-        insert.setInt(14, source.parallelPartitionNum!!)
-        insert.setBoolean(15, source.autoLoad)
-        insert.setLong(16, HashKeyUtils.sourceKey(source))
+
+        if (source.sourceVariables.isNullOrEmpty())
+            insert.setNull(11, Types.VARCHAR)
+        else
+            insert.setString(11, toJson(source.sourceVariables!!))
+
+        insert.setBoolean(12, source.parallelLoad)
+        insert.setString(13, source.parallelPartitionQuery)
+        insert.setString(14, source.parallelPartitionColumn)
+        insert.setInt(15, source.parallelPartitionNum!!)
+        insert.setBoolean(16, source.autoLoad)
+        insert.setLong(17, HashKeyUtils.sourceKey(source))
         return insert
     }
 
@@ -88,6 +96,12 @@ class SourceRepo2 : BaseRepo<SourceModel2>() {
         source.intervalColumn = res.getString("interval_column")
         source.deltaColumn = res.getString("delta_column")
         source.selectQuery = res.getString("select_query")
+
+        val sourceVariables = res.getString("source_variables")
+        if (!sourceVariables.isNullOrEmpty()) {
+            source.sourceVariables = jsonToArray(sourceVariables)
+        }
+
         source.parallelPartitionQuery = res.getString("parallel_partition_query")
         source.parallelPartitionColumn = res.getString("parallel_partition_column")
         source.parallelPartitionNum = res.getInt("parallel_partition_num")

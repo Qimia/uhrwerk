@@ -44,7 +44,8 @@ internal class IntegrationTest {
         val connResults = connections?.map { connService.save(it, false) }
         connResults?.forEach {
             assertThat(it.isSuccess).isTrue()
-            assertThat(it.newConnection.id).isNotNull()
+            assertThat(it.newConnection).isNotNull()
+            assertThat(it.newConnection?.id).isNotNull()
         }
 
         val connections2 = YamlConfigReader().readConnections(connsFile)
@@ -54,6 +55,8 @@ internal class IntegrationTest {
             assertThat(it.oldConnection).isNotNull()
         }
     }
+
+
 
     @Test
     fun tableSave() {
@@ -86,8 +89,6 @@ internal class IntegrationTest {
         }
 
         assertThat(table).isNotNull()
-        assertThat(table.sources).isNotNull()
-        assertThat(table.targets).isNotNull()
 
         //Save Table
         val tableResult = tableService.save(table, false)
@@ -96,18 +97,18 @@ internal class IntegrationTest {
         assertThat(table.id).isNotNull()
 
         assertThat(tableResult.sourceResults).isNotNull()
-        assertThat(tableResult.sourceResults.toList()).hasSize(table.sources!!.size)
-        tableResult.sourceResults.forEach {
+        assertThat(tableResult.sourceResults!!.toList()).hasSize(table.sources!!.size)
+        tableResult.sourceResults!!.forEach {
             assertThat(it.isSuccess).isTrue()
-            assertThat(it.newResult.id).isNotNull()
-            assertThat(it.newResult.tableId).isEqualTo(table.id)
-            assertThat(it.newResult.connectionId).isNotNull()
+            assertThat(it.newResult!!.id).isNotNull()
+            assertThat(it.newResult!!.tableId).isEqualTo(table.id)
+            assertThat(it.newResult!!.connectionId).isNotNull()
         }
 
         assertThat(tableResult.targetResult).isNotNull()
-        assertThat(tableResult.targetResult.isSuccess).isTrue()
-        assertThat(tableResult.targetResult.storedTargets.toList()).hasSize(table.targets!!.size)
-        tableResult.targetResult.storedTargets.forEach {
+        assertThat(tableResult.targetResult!!.isSuccess).isTrue()
+        assertThat(tableResult.targetResult!!.storedTargets!!.toList()).hasSize(table.targets!!.size)
+        tableResult.targetResult!!.storedTargets!!.forEach {
             assertThat(it.id).isNotNull()
             assertThat(it.tableId).isEqualTo(table.id)
             assertThat(it.connectionId).isNotNull()

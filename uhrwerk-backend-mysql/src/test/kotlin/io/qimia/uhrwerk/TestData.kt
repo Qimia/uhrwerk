@@ -69,6 +69,7 @@ object TestData {
         src.intervalTempSize = 2
         src.parallelPartitionNum = 40
         src.autoLoad = false
+        src.sourceVariables = arrayOf("var1", "var2")
         return src
     }
 
@@ -162,6 +163,13 @@ object TestData {
         .tableId(tableId)
         .dependencyTargetId(dependencyTargetId)
         .dependencyTableId(dependencyTableId)
+        .viewName("dummy_view")
+        .partitionMappings(
+            mapOf(
+                "col1" to "col1",
+                "col2" to "col2"
+            )
+        )
         .build()
 
     fun dependency(
