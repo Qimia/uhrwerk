@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.tools
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.qimia.uhrwerk.config.representation.Reference
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.jgrapht.graph.DefaultEdge
@@ -44,6 +45,10 @@ class UhrwerkDagBuilderTest {
         dag.addEdge(dep1Dep2,dep1)
         dag.addEdge(dep2Dep1,dep2)
 
-        println(dag)
+        println(ObjectMapper().writeValueAsString(root))
+
+        println(root.ref.toString())
+
+        println(ObjectMapper().writeValueAsString(dag))
     }
 }

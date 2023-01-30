@@ -80,13 +80,15 @@ object UhrwerkDagBuilder {
         if (!node.exists) {
             return node.copy()
         }
-        val prevNodes = dag.incomingEdgesOf(node).map { dag.getEdgeSource(it) }
-        return if (prevNodes.isNullOrEmpty()) {
+
+        val children = dag.incomingEdgesOf(node).map { dag.getEdgeSource(it) }
+
+        return if (children.isNullOrEmpty()) {
             val cp = node.copy()
             revDag.addVertex(cp)
             cp
         } else {
-            val tpNodes = prevNodes.map { traverse(it, dag, revDag) }
+            val tpNodes = children.map { traverse(it, dag, revDag) }
             val process = node.processed && tpNodes.map { it.processed }.reduce { l, r -> l && r }
             val nwNode = node.copy(processed = process)
             revDag.addVertex(nwNode)
@@ -95,6 +97,5 @@ object UhrwerkDagBuilder {
         }
 
     }
-
 
 }
