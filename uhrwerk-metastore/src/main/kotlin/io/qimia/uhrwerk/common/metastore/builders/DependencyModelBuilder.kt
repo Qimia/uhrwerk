@@ -12,6 +12,7 @@ class DependencyModelBuilder : StateModelBuilder<DependencyModelBuilder>() {
     var table: TableModel? = null
     var dependencyTable: TableModel? = null
     var dependencyTarget: TargetModel? = null
+    var dependencyVariables: Array<String>? = null
     var area: String? = null
     var vertical: String? = null
     var tableName: String? = null
@@ -79,6 +80,11 @@ class DependencyModelBuilder : StateModelBuilder<DependencyModelBuilder>() {
         return this
     }
 
+    fun dependencyVariables(dependencyVariables: Array<String>?): DependencyModelBuilder {
+        this.dependencyVariables = dependencyVariables
+        return this
+    }
+
     fun format(format: String?): DependencyModelBuilder {
         this.format = format
         return this
@@ -104,6 +110,7 @@ class DependencyModelBuilder : StateModelBuilder<DependencyModelBuilder>() {
             tableName,
             viewName,
             partitionMappings,
+            dependencyVariables,
             format,
             version
         )

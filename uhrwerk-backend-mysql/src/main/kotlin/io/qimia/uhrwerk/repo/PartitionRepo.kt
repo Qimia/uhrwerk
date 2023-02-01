@@ -45,6 +45,15 @@ class PartitionRepo : BaseRepo<Partition>() {
             }, this::map
         )
 
+    fun getLatestByTargetIdPartitionValues(targetId: Long, partsJson: String): List<Partition> =
+        super.findAll(
+            SELECT_BY_TARGET_ID_PART_VALUES,
+            {
+                it.setLong(1, targetId)
+                it.setString(2, partsJson)
+            }, this::map
+        )
+
     fun getAllByTargetTs(targetId: Long, tsList: List<LocalDateTime>): List<Partition> {
         val tsStr: String = tsList.joinToString { "'${TimeTools.convertTSToUTCString(it)}'" }
         val sql = String.format(SELECT_BY_TARGET_ID_AND_TS, tsStr)
@@ -79,6 +88,11 @@ class PartitionRepo : BaseRepo<Partition>() {
         } else {
             insert.setString(6, toJson(entity.partitionValues!!))
         }
+        if (entity.partitionPath.isNullOrEmpty()) {
+            insert.setNull(7, Types.VARCHAR)
+        } else {
+            insert.setString(7, entity.partitionPath)
+        }
         return insert
     }
 
@@ -92,15 +106,19 @@ class PartitionRepo : BaseRepo<Partition>() {
             .maxBookmark(res.getString(6))
 
         val partitionValues = res.getString(7)
-        if (!partitionValues.isNullOrEmpty()){
+        if (!partitionValues.isNullOrEmpty()) {
             builder.partitionValues(jsonToMap(partitionValues))
         }
 
-        val partitionUnit = res.getString(8)
+        val partitionUnit = res.getString(9)
         if (partitionUnit != null && partitionUnit.isNotEmpty())
             builder.partitionUnit(PartitionUnit.valueOf(partitionUnit))
-        builder.partitionSize(res.getInt(9))
-        return builder.build()
+        builder.partitionSize(res.getInt(10))
+
+        val partition = builder.build()
+
+        partition.partitionPath = res.getString(8)
+        return partition
     }
 
 
@@ -111,8 +129,9 @@ class PartitionRepo : BaseRepo<Partition>() {
                                     partitioned,
                                     bookmarked,
                                     max_bookmark,
-                                    partition_values)
-            VALUES (?, ?, ?, ?, ?, ?)
+                                    partition_values,
+                                    partition_path)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
 
         private val SELECT_BY_ID = """
@@ -123,6 +142,7 @@ class PartitionRepo : BaseRepo<Partition>() {
                    pt.bookmarked,
                    pt.max_bookmark,
                    pt.partition_values,
+                   pt.partition_path,
                    tb.partition_unit,
                    tb.partition_size
             FROM PARTITION_ pt
@@ -139,6 +159,7 @@ class PartitionRepo : BaseRepo<Partition>() {
                    pt.bookmarked,
                    pt.max_bookmark,
                    pt.partition_values,
+                   pt.partition_path,
                    tb.partition_unit,
                    tb.partition_size
             FROM PARTITION_ pt
@@ -156,6 +177,7 @@ class PartitionRepo : BaseRepo<Partition>() {
                    pt.bookmarked,
                    pt.max_bookmark,
                    pt.partition_values,
+                   pt.partition_path,
                    tb.partition_unit,
                    tb.partition_size
             FROM PARTITION_ pt
@@ -166,6 +188,30 @@ class PartitionRepo : BaseRepo<Partition>() {
             LIMIT 1
         """.trimIndent()
 
+        private val SELECT_BY_TARGET_ID_PART_VALUES = """ 
+            SELECT pt.id,
+               pt.target_id,
+               pt.partition_ts,
+               pt.partitioned,
+               pt.bookmarked,
+               pt.max_bookmark,
+               pt.partition_values,
+               pt.partition_path,
+               tb.partition_unit,
+               tb.partition_size
+            FROM (SELECT partition_values,
+                         MAX(id)           as last_partition_id,
+                         MAX(partition_ts) as last_partition_ts
+                FROM PARTITION_
+                WHERE target_id = ?
+                    AND JSON_CONTAINS(partition_values, ?)
+                GROUP BY partition_values) tmp
+                     JOIN partition_ pt ON pt.id = last_partition_id
+                     JOIN TARGET t ON pt.target_id = t.id
+                     JOIN TABLE_ tb ON t.table_id = tb.id 
+         """.trimIndent()
+
+
         private val SELECT_BY_TARGET_ID_AND_TS = """
             SELECT pt.id,
                    pt.target_id,
@@ -174,6 +220,7 @@ class PartitionRepo : BaseRepo<Partition>() {
                    pt.bookmarked,
                    pt.max_bookmark,
                    pt.partition_values,
+                   pt.partition_path,
                    tb.partition_unit,
                    tb.partition_size
             FROM PARTITION_ pt
@@ -193,6 +240,7 @@ class PartitionRepo : BaseRepo<Partition>() {
                    pt.bookmarked,
                    pt.max_bookmark,
                    pt.partition_values,
+                   pt.partition_path,
                    tb.partition_unit,
                    tb.partition_size
             FROM PARTITION_DEPENDENCY pd

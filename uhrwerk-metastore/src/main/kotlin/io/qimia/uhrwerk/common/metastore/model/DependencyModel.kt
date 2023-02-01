@@ -17,6 +17,7 @@ data class DependencyModel(
     var tableName: String? = null,
     var viewName: String? = null,
     var partitionMappings: Map<String, Any>? = null,
+    var dependencyVariables: Array<String>? = null,
     var format: String? = null,
     var version: String? = null,
     var deactivatedTs: LocalDateTime? = null,
@@ -34,17 +35,21 @@ data class DependencyModel(
         if (tableId != other.tableId) return false
         if (dependencyTargetId != other.dependencyTargetId) return false
         if (dependencyTableId != other.dependencyTableId) return false
-        if (table?.id != other.table?.id) return false
-        if (dependencyTable?.id != other.dependencyTable?.id) return false
-        if (dependencyTarget?.id != other.dependencyTarget?.id) return false
         if (area != other.area) return false
         if (vertical != other.vertical) return false
         if (tableName != other.tableName) return false
         if (viewName != other.viewName) return false
+
         if (!partitionMappings.isNullOrEmpty()) {
             if (other.partitionMappings.isNullOrEmpty()) return false
             if (partitionMappings != other.partitionMappings) return false
         }
+
+        if (!dependencyVariables.isNullOrEmpty()) {
+            if (other.dependencyVariables.isNullOrEmpty()) return false
+            if (!dependencyVariables.contentEquals(other.dependencyVariables)) return false
+        }
+
         if (format != other.format) return false
         if (version != other.version) return false
         if (deactivatedTs != other.deactivatedTs) return false
@@ -64,6 +69,7 @@ data class DependencyModel(
         result = 31 * result + (tableName?.hashCode() ?: 0)
         result = 31 * result + (viewName?.hashCode() ?: 0)
         result = 31 * result + (partitionMappings?.hashCode() ?: 0)
+        result = 31 * result + (dependencyVariables?.contentDeepHashCode() ?: 0)
         result = 31 * result + (format?.hashCode() ?: 0)
         result = 31 * result + (version?.hashCode() ?: 0)
         result = 31 * result + (deactivatedTs?.hashCode() ?: 0)
@@ -73,7 +79,7 @@ data class DependencyModel(
     }
 
     override fun toString(): String {
-        return "DependencyModel(id=$id, tableId=$tableId, dependencyTargetId=$dependencyTargetId, dependencyTableId=$dependencyTableId, area=$area, vertical=$vertical, tableName=$tableName, viewName=$viewName, partitionMappings=$partitionMappings, format=$format, version=$version, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
+        return "DependencyModel(id=$id, tableId=$tableId, dependencyTargetId=$dependencyTargetId, dependencyTableId=$dependencyTableId, area=$area, vertical=$vertical, tableName=$tableName, viewName=$viewName, partitionMappings=$partitionMappings, dependencyVariables=${dependencyVariables?.contentToString()}, format=$format, version=$version, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
     }
 
 

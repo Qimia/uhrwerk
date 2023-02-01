@@ -68,8 +68,8 @@ data class TableModel(
             if (!sources.contentEquals(other.sources)) return false
         } else if (other.sources != null) return false
 
-        if (targets != null) {
-            if (other.targets == null) return false
+        if (!targets.isNullOrEmpty()) {
+            if (other.targets.isNullOrEmpty()) return false
             if (!targets.contentEquals(other.targets)) return false
         } else if (other.targets != null) return false
 

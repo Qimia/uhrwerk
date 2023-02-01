@@ -13,6 +13,7 @@ data class Partition(
     var bookmarked: Boolean = false,
     var maxBookmark: String? = null,
     var partitionValues: Map<String, Any>? = null,
+    var partitionPath: String? = null,
     var createdTs: Timestamp? = null,
     var updatedTs: Timestamp? = null
 ) : BaseModel {

@@ -3,16 +3,30 @@ package io.qimia.uhrwerk.engine
 import java.time.{Duration, LocalDateTime}
 import java.util.concurrent.Executors
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
-import io.qimia.uhrwerk.common.metastore.dependency.{TablePartitionResult, TablePartitionResultSet}
-import io.qimia.uhrwerk.common.metastore.model.{Partition, PartitionUnit, TableModel}
+import io.qimia.uhrwerk.common.metastore.dependency.{
+  TablePartitionResult,
+  TablePartitionResultSet
+}
+import io.qimia.uhrwerk.common.metastore.model.{
+  Partition,
+  PartitionUnit,
+  TableModel
+}
 import io.qimia.uhrwerk.common.model.TargetModel
+import io.qimia.uhrwerk.common.utils.TemplateUtils
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent}
 import io.qimia.uhrwerk.engine.TableWrapper.reportProcessingPartitions
-import io.qimia.uhrwerk.engine.tools.{DependencyHelper, SourceHelper, TimeHelper}
+import io.qimia.uhrwerk.engine.tools.{
+  DependencyHelper,
+  SourceHelper,
+  TimeHelper
+}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.Logger
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.{lit, trim}
 
+import java.util.Properties
 import scala.collection.immutable
 import scala.concurrent._
 import scala.collection.JavaConverters._
@@ -32,7 +46,9 @@ object TableWrapper {
       partitioned: Boolean,
       partitionUnit: PartitionUnit,
       partitionSize: Int,
-      targetId: Long
+      targetId: Long,
+      partitionValues: Map[String, Any] = Map.empty,
+      paritionPath: String = null
   ): Seq[Partition] = {
     partitions.map(t => {
       val newPart = new Partition()
@@ -84,7 +100,8 @@ class TableWrapper(
     metastore: MetaStore,
     table: TableModel,
     userFunc: TaskInput => TaskOutput,
-    frameManager: FrameManager
+    frameManager: FrameManager,
+    properties: Properties = null
 ) {
   val wrappedTable: TableModel = table
   val tableDuration: Duration = if (table.getPartitioned) {
@@ -104,7 +121,7 @@ class TableWrapper(
   private def singleRun(
       dependencyResults: List[BulkDependencyResult],
       partitionTS: Array[LocalDateTime]
-  ): Boolean = {
+  ) = {
     // TODO: Log start of single task for table here
     val startTs = partitionTS.head
     val endTs = {
@@ -135,7 +152,6 @@ class TableWrapper(
             }
             id -> df
           })
-        //val df: DataFrame = null
       } else {
         Nil
       }
@@ -149,7 +165,7 @@ class TableWrapper(
             val df = if (table.getPartitioned) {
               frameManager.loadSourceDataFrame(s, Option(startTs), endTs)
             } else {
-              frameManager.loadSourceDataFrame(s)
+              frameManager.loadSourceDataFrame(s, properties = this.properties)
             }
             val id = SourceHelper.extractSourceIdent(s)
             id -> df
@@ -183,36 +199,106 @@ class TableWrapper(
     val success =
       try {
 
-        var frame:DataFrame = null
-        var taskOutput:TaskOutput = null
+        var frame: DataFrame = null
+        var taskOutput: TaskOutput = null
 
-        if (table.getTransformSqlQuery != null
-          && !table.getTransformSqlQuery.isEmpty) {
-          frame = frameManager.asInstanceOf[SparkFrameManager].getSpark.sql(table.getTransformSqlQuery)
+        if (
+          table.getTransformSqlQuery != null
+          && !table.getTransformSqlQuery.isEmpty
+        ) {
+
+          val propValues = table.getTableVariables
+            .flatMap(vr => {
+              val propVal = this.properties.getProperty(vr)
+              if (propVal != null && propVal.nonEmpty) {
+                Some((vr, propVal))
+              } else
+                None
+            })
+            .toMap
+
+          val renderedQuery = TemplateUtils.renderTemplate(
+            table.getTransformSqlQuery,
+            propValues.asJava
+          )
+
+          frame = frameManager
+            .asInstanceOf[SparkFrameManager]
+            .getSpark
+            .sql(renderedQuery)
           taskOutput = TaskOutput(frame)
         } else {
           taskOutput = userFunc(taskInput)
           frame = taskOutput.frame
         }
 
+        if (
+          !frame.isEmpty &&
+          table.getPartitionColumns != null &&
+          table.getPartitionColumns.nonEmpty
+        ) {
+          val notInFramePartCols = table.getPartitionColumns.filter(partCol =>
+            frame.columns.find(_.equalsIgnoreCase(partCol.trim)).isEmpty
+          )
+          if (notInFramePartCols.nonEmpty)
+            for (partCol <- notInFramePartCols) {
+              val propVal = this.properties.getProperty(partCol.trim)
+              if (propVal != null && propVal.nonEmpty)
+                frame = frame.withColumn(partCol.trim, lit(propVal))
+              else
+                logger.error(
+                  s"Partition column $partCol is not in the frame and no property with the same name is given"
+                )
+            }
+          taskOutput = TaskOutput(
+            frame,
+            Some(
+              Array(
+                Map(
+                  "partitionBy" -> table.getPartitionColumns
+                    .map(_.trim)
+                    .mkString(",")
+                )
+              )
+            )
+          )
+
+        }
+
         // TODO error checking: if target should be on datalake but no frame is given
         // Note: We are responsible for all standard writing of DataFrames
-        if (!frame.isEmpty) {
+        val result: Option[List[Map[String, Any]]] = if (!frame.isEmpty) {
           frameManager.writeDataFrame(
             frame,
             table,
             partitionTS,
             taskOutput.dataFrameWriterOptions
           )
+          if (
+            table.getPartitionColumns != null &&
+            table.getPartitionColumns.nonEmpty
+          ) {
+            val partCols = table.getPartitionColumns.map(_.trim)
+            val partValues = frame
+              .select(partCols.head, partCols.tail: _*)
+              .distinct()
+              .collect()
+              .map(row => row.getValuesMap[Any](row.schema.fieldNames))
+              .toList
+            Some(partValues)
+          } else {
+            Some(List.empty)
+          }
         } else {
           logger.warn(s"No output for ${table.getName} (!!)")
+          None
         }
-        true
+        result
       } catch {
         case e: Throwable =>
           logger.error(s"${table.getName}: Task failed: " + startTs.toString)
           e.printStackTrace()
-          false
+          None
       }
     logger.info(s"${table.getName}: Single run done, success = $success")
     // TODO: Proper logging here
@@ -225,8 +311,11 @@ class TableWrapper(
     * @param ex           execution context onto which the futures are created
     * @return list of futures for the started tasks
     */
-  def runTasks(partitionsTs: List[LocalDateTime], overwrite: Boolean = false)(
-      implicit ex: ExecutionContext
+  def runTasks(
+      partitionsTs: List[LocalDateTime],
+      overwrite: Boolean = false
+  )(implicit
+      ex: ExecutionContext
   ): List[Future[Boolean]] = {
     val tasks = getTaskRunners(partitionsTs, overwrite).map(x => Future { x() })
 
@@ -277,41 +366,72 @@ class TableWrapper(
       val bulkInput: List[BulkDependencyResult] =
         DependencyHelper.extractBulkDependencyResult(partitionGroup)
       logger.info(s"Bulk input length: ${bulkInput.length}")
+
       val e = () => {
         val res = singleRun(bulkInput, localGroupTs)
-        if (res) {
-          table.getTargets.foreach((t: TargetModel) => {
-            val partitions =
-              TableWrapper.createPartitions(
-                localGroupTs,
-                table.getPartitioned,
-                table.getPartitionUnit,
-                table.getPartitionSize,
-                t.getId
-              )
-            val _ =
-              metastore.partitionService.save(partitions.asJava, overwrite)
-            partitions
-              .zip(partitionGroup)
-              .map(x =>
-                metastore.partitionDependencyService
-                  .saveAll(x._1.getId, x._2.getResolvedDependencies, overwrite)
-              )
-            // TODO: Need to handle failure to store
-          })
+        if (res.isDefined) {
+          var partitions: List[Partition] = Nil
+          if (res.get.isEmpty) {
+            partitions = table.getTargets
+              .flatMap((t: TargetModel) => {
+                TableWrapper.createPartitions(
+                  localGroupTs,
+                  table.getPartitioned,
+                  table.getPartitionUnit,
+                  table.getPartitionSize,
+                  t.getId
+                )
+              })
+              .toList
+          } else {
+            partitions = res.get.flatMap(partValues => {
+              val partPath = table.getPartitionColumns
+                .map(partCol => {
+                  val colValue = partValues.get(partCol).get
+                  s"$partCol=$colValue"
+                })
+                .mkString("/")
+              table.getTargets.flatMap((t: TargetModel) => {
+                TableWrapper.createPartitions(
+                  localGroupTs,
+                  table.getPartitioned,
+                  table.getPartitionUnit,
+                  table.getPartitionSize,
+                  t.getId,
+                  partValues,
+                  partPath
+                )
+              })
+            })
+          }
+          val _ =
+            metastore.partitionService.save(partitions.asJava, overwrite)
+
+          partitions
+            .zip(partitionGroup)
+            .map(x =>
+              metastore.partitionDependencyService
+                .saveAll(
+                  x._1.getId,
+                  x._2.getResolvedDependencies,
+                  overwrite
+                )
+            )
+          // TODO: Need to handle failure to store
         }
-        res
+
+        res.isDefined
       }
       e
     })
-
-    /** Idea: Give a complete report at the end after calling runTasks
-      * Showing partitions already there, partitions with missing dependencies
-      * and if anything failed or went wrong while producing certain partitions
-      * (this also means giving the user more info there)
-      */
     tasks
   }
+
+  /** Idea: Give a complete report at the end after calling runTasks
+    * Showing partitions already there, partitions with missing dependencies
+    * and if anything failed or went wrong while producing certain partitions
+    * (this also means giving the user more info there)
+    */
 
   /** Utility function to create an execution context and block until runTasks is done processing the batches.
     * See [[io.qimia.uhrwerk.engine.TableWrapper#runTasks]]

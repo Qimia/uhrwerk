@@ -39,21 +39,6 @@ object TestData {
         .awsSecretAccessKey("secret-access-key1")
         .build()
 
-    fun source(
-        path: String,
-        tableId: Long,
-        connectionId: Long
-    ): SourceModel = SourceModelBuilder()
-        .tableId(tableId)
-        .connectionId(connectionId)
-        .path(path)
-        .format("jdbc")
-        .partitionUnit(PartitionUnit.HOURS)
-        .partitionSize(1)
-        .parallelLoadNum(40)
-        .partitioned(true)
-        .autoLoad(false).build()
-
     fun source2(
         path: String,
         tableId: Long,
@@ -90,21 +75,6 @@ object TestData {
         src.autoLoad = false
         return src
     }
-
-    fun source(
-        path: String,
-        tableId: Long,
-        connection: ConnectionModel
-    ): SourceModel = SourceModelBuilder()
-        .tableId(tableId)
-        .connection(connection)
-        .path(path)
-        .format("jdbc")
-        .partitionUnit(PartitionUnit.HOURS)
-        .partitionSize(1)
-        .parallelLoadNum(40)
-        .partitioned(true)
-        .autoLoad(false).build()
 
     fun target(
         tableId: Long,

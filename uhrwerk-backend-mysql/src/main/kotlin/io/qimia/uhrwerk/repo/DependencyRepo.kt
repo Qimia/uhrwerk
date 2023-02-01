@@ -3,6 +3,7 @@ package io.qimia.uhrwerk.repo
 import io.qimia.uhrwerk.common.metastore.builders.DependencyModelBuilder
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel
 import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
+import io.qimia.uhrwerk.repo.RepoUtils.jsonToArray
 import io.qimia.uhrwerk.repo.RepoUtils.jsonToMap
 import io.qimia.uhrwerk.repo.RepoUtils.toJson
 import java.sql.PreparedStatement
@@ -64,7 +65,12 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
         else
             insert.setString(5, toJson(dependency.partitionMappings!!))
 
-        insert.setLong(6, HashKeyUtils.dependencyKey(dependency))
+        if (dependency.dependencyVariables.isNullOrEmpty())
+            insert.setNull(6, Types.VARCHAR)
+        else
+            insert.setString(6, toJson(dependency.dependencyVariables!!))
+
+        insert.setLong(7, HashKeyUtils.dependencyKey(dependency))
         return insert
 
     }
@@ -86,6 +92,11 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
         if (!partitionMappings.isNullOrEmpty())
             builder.partitionMappings(jsonToMap(partitionMappings))
 
+        val dependencyVariables = rs.getString("dep.dependency_variables")
+
+        if (!dependencyVariables.isNullOrEmpty())
+            builder.dependencyVariables(jsonToArray(dependencyVariables))
+
         val deactivatedTs = rs.getTimestamp("dep.deactivated_ts")
         if (deactivatedTs != null)
             builder.deactivatedTs(deactivatedTs.toLocalDateTime())
@@ -100,8 +111,9 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                                     dependency_table_id,
                                     view_name,
                                     partition_mappings,
+                                    dependency_variables,
                                     hash_key)
-            VALUES (?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
 
         private val SELECT_BY_ID = """
@@ -114,6 +126,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tab.name,
                    dep.view_name,
                    dep.partition_mappings,
+                   dep.dependency_variables,
                    tar.format,
                    tab.version,
                    dep.deactivated_ts
@@ -133,6 +146,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tab.name,
                    dep.view_name,
                    dep.partition_mappings,
+                   dep.dependency_variables,
                    tar.format,
                    tab.version,
                    dep.deactivated_ts
@@ -157,6 +171,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tab.name,
                    dep.view_name,
                    dep.partition_mappings,
+                    dep.dependency_variables,
                    tar.format,
                    tab.version,
                    dep.deactivated_ts

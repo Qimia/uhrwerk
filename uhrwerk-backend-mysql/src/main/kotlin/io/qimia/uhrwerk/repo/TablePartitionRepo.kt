@@ -37,6 +37,19 @@ class TablePartitionRepo() {
 
         val connectionId = res.getLong("trg.connection_id")
 
+        val partColumns = res.getString("tab.partition_columns")
+
+        var partitionColumns: Array<String>? = null
+        if (!partColumns.isNullOrEmpty())
+            partitionColumns = RepoUtils.jsonToArray(partColumns)
+
+
+        val partMappings = res.getString("dep.partition_mappings")
+        var partitionMappings: Map<String, Any>? = null
+        if (!partMappings.isNullOrEmpty())
+            partitionMappings = RepoUtils.jsonToMap(partMappings)
+
+
         return TablePartition(
             dependencyId,
             targetId,
@@ -46,7 +59,9 @@ class TablePartitionRepo() {
             null,
             null,
             null,
-            connectionId
+            connectionId,
+            partitionColumns,
+            partitionMappings
         )
     }
 
@@ -78,7 +93,9 @@ class TablePartitionRepo() {
                    tab.id,
                    tab.partition_unit,
                    tab.partition_size,
-                   trg.connection_id
+                   trg.connection_id,
+                   tab.partition_columns,
+                   dep.partition_mappings
             FROM TABLE_ tab
                      JOIN (SELECT d.id,
                                   d.dependency_table_id,
@@ -102,5 +119,7 @@ data class TablePartition(
     val transformType: PartitionTransformType?,
     val transformUnit: PartitionUnit?,
     val transformSize: Int?,
-    val connectionId: Long
+    val connectionId: Long,
+    val partitionColumns: Array<String>? = null,
+    val partitionMappings: Map<String, Any>? = null
 )

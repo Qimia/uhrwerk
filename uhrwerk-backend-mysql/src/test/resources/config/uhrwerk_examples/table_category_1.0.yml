@@ -8,6 +8,8 @@ partition_columns:
 variables:
   - table_variable1
   - table_variable2
+  - Source_Variable1
+  - Source_Variable2
 
 parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
 max_bulk_size: 1
@@ -16,8 +18,12 @@ sources:
     path: category  # On DB
     format: jdbc
     version: "1.0"
-    # select:
-    #  query: "SELECT * FROM <path>"
+    parallel_load:
+      query: "SELECT ID FROM category WHERE col1 = '$source_variable1$' AND col2 = '$source_variable2$'"
+      column: "ID"
+      num: 4
+    select:
+      query: "SELECT * FROM category WHERE col1 = '$source_variable1$' AND col2 = '$source_variable2$'"
 
 targets:
   - connection_name: "local_fs_lake"

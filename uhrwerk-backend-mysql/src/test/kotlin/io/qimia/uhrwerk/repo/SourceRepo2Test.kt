@@ -1,10 +1,8 @@
 package io.qimia.uhrwerk.repo
 
-import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
 import TestUtils
 import com.google.common.truth.Truth.assertThat
-import io.qimia.uhrwerk.common.metastore.builders.SourceModelBuilder
 import io.qimia.uhrwerk.common.metastore.model.*
 import org.junit.jupiter.api.*
 import org.slf4j.LoggerFactory
@@ -66,13 +64,15 @@ internal class SourceRepo2Test {
 
     @Test
     fun getByHashKey() {
+
         val hashKey =
             HashKeyUtils.sourceKey(
-                SourceModelBuilder()
-                    .tableId(table!!.id!!)
-                    .connectionId(connection!!.id!!)
-                    .path("Source-SourceRepoTest")
-                    .format("jdbc").build()
+                SourceModel2(
+                    tableId = table!!.id!!,
+                    connectionId = connection!!.id!!,
+                    path = "Source-SourceRepoTest",
+                    format = "jdbc"
+                )
             )
         val source = SourceRepo2().getByHashKey(hashKey)
         assertThat(source).isNotNull()
@@ -80,12 +80,12 @@ internal class SourceRepo2Test {
 
         val hashKey1 =
             HashKeyUtils.sourceKey(
-                SourceModelBuilder()
-                    .tableId(table!!.id!!)
-                    .connectionId(connection!!.id!!)
-                    .path("Source-SourceRepoTest")
-                    .format("parquet")
-                    .build()
+                SourceModel2(
+                    tableId = table!!.id!!,
+                    connectionId = connection!!.id!!,
+                    path = "Source-SourceRepoTest",
+                    format = "parquet"
+                )
             )
 
         val source1 = SourceRepo2().getByHashKey(hashKey1)

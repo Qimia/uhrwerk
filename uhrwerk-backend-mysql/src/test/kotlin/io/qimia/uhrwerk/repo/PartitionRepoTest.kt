@@ -7,6 +7,7 @@ import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
 import io.qimia.uhrwerk.common.metastore.model.Partition
 import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.common.model.TargetModel
+import io.qimia.uhrwerk.repo.RepoUtils.toJson
 import org.junit.jupiter.api.*
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.MySQLContainer
@@ -61,13 +62,50 @@ internal class PartitionRepoTest {
     }
 
     @Test
+    fun partitioned() {
+        partitionTs = LocalDateTime.now()
+        val partValues = mapOf("part_col1" to "part_val1", "part_col2" to "part_val2")
+
+        val partition = Partition(
+            targetId = target!!.id,
+            partitionTs = partitionTs,
+            partitionValues = partValues
+        )
+        repo.save(partition)
+        assertThat(partition.id).isNotNull()
+
+        repo.getById(partition.id!!)?.let {
+            assertThat(it.partitionValues).isEqualTo(partValues)
+        }
+
+        val partsJson = toJson(partValues)
+
+        repo.getLatestByTargetIdPartitionValues(target!!.id!!, partsJson)?.let {
+            assertThat(it[0].partitionValues).isEqualTo(partValues)
+        }
+
+        val partJson2 = toJson(mapOf("part_col1" to "part_val1"))
+
+        repo.getLatestByTargetIdPartitionValues(target!!.id!!, partJson2)?.let {
+            assertThat(it[0].partitionValues).isEqualTo(partValues)
+            println(it)
+        }
+
+        val partJson3 = toJson(mapOf("part_col3" to "part_val1"))
+        val noPartition =
+            repo.getLatestByTargetIdPartitionValues(target!!.id!!, partJson3)
+        assertThat(noPartition).isNotNull()
+        assertThat(noPartition).isEmpty()
+
+    }
+
+    @Test
     fun getById() {
         val partition1 = repo.getById(partition!!.id!!)
         assertThat(partition1).isNotNull()
         assertThat(partition1).isEqualTo(partition)
         assertThat(partition1?.partitionValues).isNotNull()
         assertThat(partition1?.partitionValues).isEqualTo(mapOf("col1" to "val1", "col2" to 20))
-
 
     }
 
@@ -95,7 +133,7 @@ internal class PartitionRepoTest {
         assertThat(latestPartition).isNotNull()
         assertThat(latestPartition!!.targetId).isEqualTo(target!!.id)
 
-        assertThat(latestPartition!!.partitionTs).isEqualTo(timestamps[4])
+        assertThat(latestPartition.partitionTs).isEqualTo(timestamps[4])
 
     }
 

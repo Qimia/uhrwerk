@@ -45,5 +45,6 @@ interface PartitionService {
      * are no partitions.
      */
     fun getLatestPartition(targetId: Long): Partition?
+    fun getLatestPartitions(targetId: Long, partitionValues: Map<String, Any>): List<Partition>?
     fun getById(id: Long): Partition?
 }

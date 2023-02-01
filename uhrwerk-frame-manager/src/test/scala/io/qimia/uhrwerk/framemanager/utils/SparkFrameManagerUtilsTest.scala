@@ -1,13 +1,13 @@
 package io.qimia.uhrwerk.framemanager.utils
 
 import io.qimia.uhrwerk.common.metastore.builders.DependencyModelBuilder
-import io.qimia.uhrwerk.common.metastore.model.{DependencyModel, PartitionUnit, TableModel}
-
-import java.time.LocalDateTime
+import io.qimia.uhrwerk.common.metastore.model.{PartitionUnit, TableModel}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.functions.lit
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.flatspec.AnyFlatSpec
+
+import java.time.LocalDateTime
 
 class SparkFrameManagerUtilsTest extends AnyFlatSpec {
   def getSparkSession: SparkSession = {

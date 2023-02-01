@@ -31,8 +31,6 @@ data class TargetModel(
         if (tableName != other.tableName) return false
         if (tableId != other.tableId) return false
         if (connectionId != other.connectionId) return false
-        if (connection?.id != other.connection?.id) return false
-        if (table?.id != other.table?.id) return false
         if (description != other.description) return false
         if (deactivatedTs != other.deactivatedTs) return false
         if (createdTs != other.createdTs) return false
@@ -56,6 +54,6 @@ data class TargetModel(
     }
 
     override fun toString(): String {
-        return "TargetModel(id=$id, format=$format, tableName=$tableName tableId=$tableId, connectionId=$connectionId, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
+        return "TargetModel(id=$id, format=$format, tableName=$tableName, tableId=$tableId, connectionId=$connectionId, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
     }
 }

@@ -31,6 +31,14 @@ class CommandLineInterface extends Callable[Int] {
   private var environmentConfig = ""
 
   @Option(
+    names = Array("-P", "--properties"),
+    paramLabel = "JOB_PROPS",
+    description = Array("Path to the Properties Configuration"),
+    required = false
+  )
+  private var jobProperties = ""
+
+  @Option(
     names = Array("-c", "--cons"),
     paramLabel = "CON_CONF",
     description = Array("Paths to the Connection Configuration(s)"),
@@ -170,7 +178,8 @@ class CommandLineInterface extends Callable[Int] {
           target,
           dagMode,
           parallelRun,
-          overwrite
+          overwrite,
+          jobProperties,
         )
         0
       } catch {

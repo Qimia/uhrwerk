@@ -7,6 +7,7 @@ import io.qimia.uhrwerk.common.metastore.model.{
   PartitionUnit,
   TableModel
 }
+
 import java.nio.file.Paths
 import java.sql.Timestamp
 import java.time.{LocalDateTime, ZoneId, ZoneOffset}
@@ -15,6 +16,8 @@ import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+
+import scala.collection.mutable
 
 object SparkFrameManagerUtils {
   private val logger: Logger = Logger.getLogger(this.getClass)
@@ -65,9 +68,16 @@ object SparkFrameManagerUtils {
     */
   private[framemanager] def getFullLocation(
       connectionPath: String,
-      tablePath: String
-  ): String = {
-    concatenatePaths(connectionPath, tablePath)
+      tablePath: String,
+      partPaths: List[String] = List()
+  ): List[String] = {
+    if (partPaths.nonEmpty) {
+      val paths = partPaths.to[mutable.SortedSet]
+      paths
+        .map(path => concatenatePaths(connectionPath, tablePath, path))
+        .toList
+    } else
+      List(concatenatePaths(connectionPath, tablePath))
   }
 
   private[framemanager] def getFullLocationJDBC(
@@ -303,9 +313,9 @@ object SparkFrameManagerUtils {
     if (connection.getPath.contains("s3a")) {
       // s3a
       config.set(
-      "fs.s3a.aws.credentials.provider",
-      "com.amazonaws.auth.DefaultAWSCredentialsProviderChain")
-    } else {
-    }
+        "fs.s3a.aws.credentials.provider",
+        "com.amazonaws.auth.DefaultAWSCredentialsProviderChain"
+      )
+    } else {}
   }
 }

@@ -1,10 +1,16 @@
 package io.qimia.uhrwerk.engine.dag
 
+import io.qimia.uhrwerk.common.metastore.model.{
+  DependencyModel,
+  Partition,
+  TableModel
+}
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.{Environment, TableWrapper}
 import org.jgrapht.graph.{DefaultDirectedGraph, DefaultEdge}
 
 import java.time.LocalDateTime
+import java.util.Properties
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
@@ -67,18 +73,21 @@ class DagTaskBuilder(environment: Environment) {
           && !aTable.wrappedTable.getDependencies.isEmpty
         )
           aTable.wrappedTable.getDependencies
-            .foreach(d => {
+            .foreach(dependency => {
               val depIdent =
                 new TableIdent(
-                  d.getArea,
-                  d.getVertical,
-                  d.getTableName,
-                  d.getVersion
+                  dependency.getArea,
+                  dependency.getVertical,
+                  dependency.getTableName,
+                  dependency.getVersion
                 )
               val depTable = environment.getTable(depIdent).get
-              val partition = environment.metaStore.partitionService
-                .getLatestPartition(depTable.wrappedTable.getTargets()(0).getId)
-              val depPair = (depIdent, partition != null)
+              val partitions = lastPartitions(
+                depTable.wrappedTable,
+                dependency,
+                environment.jobProperties
+              )
+              val depPair = (depIdent, !partitions.isEmpty)
               buildGraph(depPair, dag)
               dag.addEdge(depPair, tPair)
             })
@@ -115,13 +124,56 @@ class DagTaskBuilder(environment: Environment) {
 
     pTraverse((outIdent, false), dag, nDag)
 
-    nDag.filter(!_._2)
+    nDag
+      .filter(!_._2)
       .map(node =>
         DagTask(
           environment.getTable(node._1).get,
           List(callTime)
         )
-      ).toList
+      )
+      .toList
   }
 
+  private def lastPartitions(
+      depTable: TableModel,
+      dep: DependencyModel,
+      properties: Properties
+  ): List[Partition] = {
+    if (
+      depTable.getPartitionColumns != null && !depTable.getPartitionColumns.isEmpty
+    ) {
+      if (
+        dep.getPartitionMappings != null || !dep.getPartitionMappings.isEmpty
+      ) {
+        val mappings = dep.getPartitionMappings.asScala
+          .map(mapping => {
+            val k = mapping._1
+            val v = mapping._2
+            var propVal = v
+
+            if (v.isInstanceOf[String]) {
+              val str = v.asInstanceOf[String]
+              if (str.startsWith("$") && str.endsWith("$"))
+                propVal = properties.getProperty(
+                  str.substring(1, str.length - 1)
+                )
+              if (propVal == null)
+                throw new RuntimeException(
+                  s"Property ${str.substring(1, str.length - 1)} not found"
+                )
+            }
+            (k, propVal)
+          })
+          .toMap
+        return environment.metaStore.partitionService
+          .getLatestPartitions(depTable.getTargets()(0).getId, mappings.asJava)
+          .asScala
+          .toList
+      }
+    }
+    val partition = environment.metaStore.partitionService
+      .getLatestPartition(depTable.getTargets()(0).getId)
+    List(partition)
+  }
 }

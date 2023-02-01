@@ -1,5 +1,7 @@
 package io.qimia.uhrwerk.config.builders;
 
+import static io.qimia.uhrwerk.config.representation.YamlUtils.objectMapper;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -27,11 +29,14 @@ import io.qimia.uhrwerk.config.representation.Target;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import org.yaml.snakeyaml.error.YAMLException;
-
-import static io.qimia.uhrwerk.config.representation.YamlUtils.objectMapper;
 
 public class YamlConfigReader {
 
@@ -43,11 +48,16 @@ public class YamlConfigReader {
       TableModel tableModel = ModelMapper.toTable(table);
 
       Source[] sources = table.getSources();
+      SortedSet<String> tableChildVariables = new TreeSet<>();
       if (sources != null) {
         SourceModel2[] sourceModels = new SourceModel2[sources.length];
         for (int j = 0; j < sources.length; j++) {
           ConnectionModel conn = ModelMapper.toConnection(sources[j].getConnectionName());
-          sourceModels[j] = ModelMapper.toSource(sources[j], tableModel, conn);
+          SourceModel2 source = ModelMapper.toSource(sources[j], tableModel, conn);
+          sourceModels[j] = source;
+          if (source.getSourceVariables() != null && source.getSourceVariables().length > 0) {
+            tableChildVariables.addAll(Arrays.asList(source.getSourceVariables()));
+          }
         }
         tableModel.setSources(sourceModels);
       }
@@ -66,9 +76,31 @@ public class YamlConfigReader {
       if (dependencies != null) {
         DependencyModel[] resultDependency = new DependencyModel[dependencies.length];
         for (int j = 0; j < dependencies.length; j++) {
-          resultDependency[j] = ModelMapper.toDependency(dependencies[j], tableModel);
+          DependencyModel dependency = ModelMapper.toDependency(dependencies[j], tableModel);
+          resultDependency[j] = dependency;
+          if (dependency.getDependencyVariables() != null
+              && dependency.getDependencyVariables().length > 0) {
+            tableChildVariables.addAll(Arrays.asList(dependency.getDependencyVariables()));
+          }
         }
         tableModel.setDependencies(resultDependency);
+      }
+
+      Set<String> addVars = new HashSet<>();
+      if (tableModel.getTableVariables() != null
+          && table.getTableVariables().length > 0) {
+        for (String tableVariable : tableModel.getTableVariables()) {
+          boolean inArgs = tableChildVariables.stream()
+              .anyMatch(arg -> arg.equalsIgnoreCase(tableVariable));
+          if (!inArgs) {
+            addVars.add(tableVariable);
+          }
+        }
+      }
+      tableChildVariables.addAll(addVars);
+      if (!tableChildVariables.isEmpty()) {
+        tableModel.setTableVariables(
+            tableChildVariables.toArray(new String[tableChildVariables.size()]));
       }
       return tableModel;
     } else {
@@ -212,6 +244,26 @@ public class YamlConfigReader {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public Properties readProperties(String file) {
+    Properties props = new Properties();
+    if (file == null || file.isEmpty()) {
+      return props;
+    }
+
+    InputStream stream = MapperUtils.getInputStream(file);
+
+    if (stream == null) {
+      throw new RuntimeException("Job Properties File not found: " + file);
+    }
+
+    try {
+      props.load(stream);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return props;
   }
 
   public TableModel readTable(String file) {

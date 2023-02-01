@@ -1,9 +1,8 @@
 package io.qimia.uhrwerk.repo
 
-import com.google.common.truth.Truth
-import io.qimia.uhrwerk.TestData
 import TestUtils
 import com.google.common.truth.Truth.assertThat
+import io.qimia.uhrwerk.TestData
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel
 import io.qimia.uhrwerk.common.metastore.model.TableModel

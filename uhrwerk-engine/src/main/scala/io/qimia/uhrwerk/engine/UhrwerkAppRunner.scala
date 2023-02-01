@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.engine
 
+import com.amazonaws.services.translate.model.TextTranslationJobProperties
 import io.qimia.uhrwerk.common.metastore.model.{ConnectionModel, TableModel}
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.dag.{DagTaskBuilder, DagTaskDispatcher}
@@ -30,12 +31,14 @@ object UhrwerkAppRunner {
       runTable: TableIdent,
       dagMode: Boolean,
       parallelRun: Int,
-      overwrite: Boolean
+      overwrite: Boolean,
+      jobProperties: String = null
   ): Unit = {
     // TODO: Perhaps this needs a separate module (to remove the framemanager dependency)
     // It should also support other framemanagers once they're implemented
     val frameManager = new SparkFrameManager(sparkSession)
-    val uhrwerkEnvironment = Environment.build(environmentConfig, frameManager)
+    val uhrwerkEnvironment =
+      Environment.build(environmentConfig, frameManager, jobProperties)
     connectionConfigs.foreach(connPath =>
       uhrwerkEnvironment.addConnectionFile(connPath, overwrite)
     )
@@ -69,10 +72,12 @@ object UhrwerkAppRunner {
       endTime: Option[LocalDateTime],
       dagMode: Boolean,
       parallelRun: Int,
-      overwrite: Boolean
+      overwrite: Boolean,
+      jobProperties: String = null
   ): Unit = {
     val frameManager = new SparkFrameManager(sparkSession)
-    val uhrwerkEnvironment = Environment.build(environmentConfig, frameManager)
+    val uhrwerkEnvironment =
+      Environment.build(environmentConfig, frameManager, jobProperties)
     uhrwerkEnvironment.setupDagFileConvention(dagConfig, overwrite)
     runTables.foreach(tab =>
       runEnvironment(
@@ -108,10 +113,12 @@ object UhrwerkAppRunner {
       endTime: Option[LocalDateTime],
       dagMode: Boolean,
       parallelRun: Int,
-      overwrite: Boolean
-  ): Unit = {
+      overwrite: Boolean,
+      jobProperties: String = null
+         ): Unit = {
     val frameManager = new SparkFrameManager(sparkSession)
-    val uhrwerkEnvironment = Environment.build(environmentConfig, frameManager)
+    val uhrwerkEnvironment =
+      Environment.build(environmentConfig, frameManager, jobProperties)
     uhrwerkEnvironment.addConnections(connectionConfigs, overwrite)
     val _ = tableConfigs.foreach(tablePath =>
       uhrwerkEnvironment.addTableConvention(tablePath, overwrite)

@@ -145,7 +145,7 @@ class TableDAO : TableDependencyService, TableService {
                 if (targetResult.isSuccess) {
                     return targetResult.storedTargets
                 }
-    }
+            }
         }
         return null
     }
@@ -164,7 +164,7 @@ class TableDAO : TableDependencyService, TableService {
                 if (dependencyResult.isSuccess) {
                     return dependencyResult.dependenciesSaved
                 }
-    }
+            }
         }
         return null
     }
@@ -205,7 +205,7 @@ class TableDAO : TableDependencyService, TableService {
             TablePartitionResultSet()
         // FIXME checks only the first target of the table (see FIXME normal processingPartitions)
         val processedPartition = partService.getLatestPartition(table.targets!![0].id!!)
-        if (processedPartition != null) {
+        if (processedPartition != null && false) {
             // If partition found -> check if it has been processed in the last 1 minute
             val requestDiff = Duration.between(processedPartition.partitionTs, requestTime)
             if (requestDiff.toSeconds() < 60L) {
@@ -253,18 +253,29 @@ class TableDAO : TableDependencyService, TableService {
             dependencyResult.connection = connectionsMap[depPartSpec.connectionId]
             dependencyResult.dependency = dependenciesMap[depPartSpec.dependencyId]
 
-            val depLatestPart = partService.getLatestPartition(depPartSpec.targetId)
+            val depLatestPart = if (depPartSpec.partitionColumns.isNullOrEmpty()) {
+                val partition = partService.getLatestPartition(depPartSpec.targetId)
+                if (partition != null) {
+                    listOf(partition)
+                } else
+                    null
+            } else {
+                partService.getLatestPartitions(
+                    depPartSpec.targetId,
+                    depPartSpec.partitionMappings!!
+                )
+            }
 
-            if (depLatestPart == null) {
+            if (depLatestPart.isNullOrEmpty()) {
                 dependencyResult.isSuccess = false
                 dependencyResult.failed = arrayOf(requestTime)
                 failedDependencies.add(dependencyResult)
                 singleSuccess = false
             } else {
                 dependencyResult.isSuccess = true
-                dependencyResult.succeeded = arrayOf(depLatestPart.partitionTs!!)
-                dependencyResult.partitionTs = depLatestPart.partitionTs
-                dependencyResult.partitions = arrayOf(depLatestPart)
+                dependencyResult.succeeded = arrayOf(depLatestPart[0].partitionTs!!)
+                dependencyResult.partitionTs = depLatestPart[0].partitionTs
+                dependencyResult.partitions = depLatestPart.toTypedArray()
                 resolvedDependencies.add(dependencyResult)
             }
         }

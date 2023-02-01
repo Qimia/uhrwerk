@@ -58,20 +58,6 @@ object HashKeyUtils {
         )
     }
 
-    fun sourceKey(source: SourceModel): Long {
-        assert(source.tableId != null) { "Source.tableId can't be null" }
-        assert(source.connectionId != null) { "Source.connectionId can't be null" }
-        assert(source.path != null && source.path!!.isNotEmpty()) { "Source.path can't be null or empty" }
-        assert(source.format != null && source.format!!.isNotEmpty()) { "Source.format can't be null or empty" }
-        return hashKey(
-            StringBuilder()
-                .append(source.tableId)
-                .append(source.connectionId)
-                .append(source.path)
-                .append(source.format)
-        )
-    }
-
     fun sourceKey(source: SourceModel2): Long {
         assert(source.tableId != null) { "Source.tableId can't be null" }
         assert(source.connectionId != null) { "Source.connectionId can't be null" }

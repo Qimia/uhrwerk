@@ -119,6 +119,7 @@ CREATE TABLE IF NOT EXISTS DEPENDENCY
     dependency_table_id  BIGINT                              NOT NULL,
     view_name            VARCHAR(128)                        NULL,
     partition_mappings   JSON                                NULL,
+    dependency_variables  JSON                                NULL,
     deactivated_ts       TIMESTAMP                           NULL,
     created_ts           TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
     updated_ts           TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
@@ -140,11 +141,11 @@ CREATE TABLE IF NOT EXISTS PARTITION_
     bookmarked       BOOLEAN      NOT NULL DEFAULT FALSE,
     max_bookmark     VARCHAR(128) NULL,
     partition_values JSON         NULL,
+    partition_path   VARCHAR(1024) NULL,
     created_ts       TIMESTAMP             DEFAULT CURRENT_TIMESTAMP NULL,
     updated_ts       TIMESTAMP             DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
     INDEX (partition_ts),
     INDEX (max_bookmark),
-    UNIQUE (target_id, partition_ts),
     FOREIGN KEY (target_id) REFERENCES TARGET (id) ON DELETE CASCADE
 );
 

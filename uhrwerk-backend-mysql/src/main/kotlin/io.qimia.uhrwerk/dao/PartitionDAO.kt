@@ -4,6 +4,7 @@ import io.qimia.uhrwerk.common.metastore.config.PartitionResult
 import io.qimia.uhrwerk.common.metastore.config.PartitionService
 import io.qimia.uhrwerk.common.metastore.model.Partition
 import io.qimia.uhrwerk.repo.PartitionRepo
+import io.qimia.uhrwerk.repo.RepoUtils.toJson
 import java.sql.SQLException
 import java.time.LocalDateTime
 
@@ -70,4 +71,11 @@ class PartitionDAO : PartitionService {
 
     override fun getLatestPartition(targetId: Long): Partition? =
         repo.getLatestByTargetId(targetId)
+
+    override fun getLatestPartitions(
+        targetId: Long,
+        partitionValues: Map<String, Any>
+    ): List<Partition>? {
+        return repo.getLatestByTargetIdPartitionValues(targetId, toJson(partitionValues))
+    }
 }

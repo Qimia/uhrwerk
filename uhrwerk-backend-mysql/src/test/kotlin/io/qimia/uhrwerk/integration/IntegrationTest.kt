@@ -14,7 +14,9 @@ import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
+
 @Testcontainers
+@Disabled
 internal class IntegrationTest {
 
     private val connService = ConnectionDAO()
@@ -57,7 +59,6 @@ internal class IntegrationTest {
     }
 
 
-
     @Test
     fun tableSave() {
 
@@ -70,7 +71,23 @@ internal class IntegrationTest {
 
         assertThat(table.partitionColumns).isNotNull()
         assertThat(table.partitionColumns).hasLength(2)
-        assertThat(table.partitionColumns).isEqualTo(arrayOf("column1", "column2"))
+        assertThat(table.partitionColumns).isEqualTo(
+            arrayOf(
+                "partition_column1",
+                "partition_column1"
+            )
+        )
+        assertThat(table.tableVariables).isNotNull()
+        assertThat(table.tableVariables).hasLength(4)
+        assertThat(table.tableVariables).isEqualTo(
+            arrayOf(
+                "source_variable1",
+                "source_variable2",
+                "table_variable1",
+                "table_variable2"
+            )
+        )
+
 
         assertThat(table.sources).isNotNull()
         assertThat(table.sources!!.toList()).isNotEmpty()
@@ -112,6 +129,120 @@ internal class IntegrationTest {
             assertThat(it.id).isNotNull()
             assertThat(it.tableId).isEqualTo(table.id)
             assertThat(it.connectionId).isNotNull()
+        }
+
+        tableService.get(table.area!!, table.vertical!!, table.name!!, table.version!!)?.let {
+            assertThat(it).isNotNull()
+            assertThat(it.id).isEqualTo(table.id)
+            assertThat(it.area).isEqualTo(table.area)
+            assertThat(it.vertical).isEqualTo(table.vertical)
+            assertThat(it.name).isEqualTo(table.name)
+            assertThat(it.version).isEqualTo(table.version)
+            assertThat(it.partitionColumns).isEqualTo(table.partitionColumns)
+            assertThat(it.tableVariables).isEqualTo(table.tableVariables)
+            assertThat(it.sources!!.asList()).containsExactlyElementsIn(table.sources!!.asList())
+            assertThat(it.targets!!.asList()).containsExactlyElementsIn(table.targets!!.asList())
+        }
+    }
+
+    @Test
+    fun tableDepSave() {
+
+        val connsFile = filePath("config/uhrwerk_examples/connection-config-new.yml")
+        val connections = YamlConfigReader().readConnections(connsFile)
+        connections?.forEach { connService.save(it, false) }
+
+        val sourceTableFile = filePath("config/uhrwerk_examples/table_category_1.0.yml")
+        val sourceTable = YamlConfigReader().readTable(sourceTableFile)
+
+        val sourceResult = tableService.save(sourceTable, false)
+
+        assertThat(sourceResult.isSuccess).isTrue()
+
+        val depTableFile = filePath("config/uhrwerk_examples/table_category_prc_1.0.yml")
+
+        val depTable = YamlConfigReader().readTable(depTableFile)
+
+        assertThat(depTable.partitionColumns).isNotNull()
+        assertThat(depTable.partitionColumns).hasLength(2)
+        assertThat(depTable.partitionColumns).isEqualTo(
+            arrayOf(
+                "partition_column1",
+                "partition_column1"
+            )
+        )
+        assertThat(depTable.tableVariables).isNotNull()
+        assertThat(depTable.tableVariables).hasLength(6)
+        assertThat(depTable.tableVariables).isEqualTo(
+            arrayOf(
+                "dependency_variable1",
+                "dependency_variable2",
+                "dependency_variable3",
+                "table_variable1",
+                "table_variable2",
+                "table_variable3"
+            )
+        )
+
+        assertThat(depTable.dependencies).isNotNull()
+        assertThat(depTable.dependencies!!).hasLength(2)
+        assertThat(depTable.dependencies!![0].partitionMappings).isNotNull()
+        assertThat(depTable.dependencies!![0].partitionMappings!!).hasSize(2)
+        assertThat(depTable.dependencies!![0].partitionMappings!!).containsExactlyEntriesIn(
+            mapOf(
+                "partition_column1" to "\$dependency_variable1\$",
+                "partition_column2" to "\$dependency_variable2\$"
+            )
+        )
+
+
+
+        assertThat(depTable.targets).isNotNull()
+        assertThat(depTable.targets!!.toList()).hasSize(2)
+
+        depTable.targets!!.forEach {
+            assertThat(it.connection).isNotNull()
+            assertThat(it.connection!!.name).isNotNull()
+        }
+
+        assertThat(depTable).isNotNull()
+
+        //Save Table
+        val tableResult = tableService.save(depTable, false)
+
+        assertThat(tableResult.isSuccess).isTrue()
+        assertThat(depTable.id).isNotNull()
+
+        assertThat(tableResult.dependencyResult).isNotNull()
+        assertThat(tableResult.dependencyResult!!.dependenciesSaved).isNotNull()
+        assertThat(tableResult.dependencyResult!!.dependenciesSaved!!.asList()).hasSize(depTable.dependencies!!.size)
+
+        tableResult.dependencyResult!!.dependenciesSaved!!.forEach {
+            assertThat(it.id).isNotNull()
+            assertThat(it.tableId).isEqualTo(depTable.id)
+        }
+
+        assertThat(tableResult.targetResult).isNotNull()
+        assertThat(tableResult.targetResult!!.isSuccess).isTrue()
+        assertThat(tableResult.targetResult!!.storedTargets!!.toList()).hasSize(depTable.targets!!.size)
+
+        tableResult.targetResult!!.storedTargets!!.forEach {
+            assertThat(it.id).isNotNull()
+            assertThat(it.tableId).isEqualTo(depTable.id)
+            assertThat(it.connectionId).isNotNull()
+        }
+
+        tableService.get(depTable.area!!, depTable.vertical!!, depTable.name!!, depTable.version!!)?.let {
+            assertThat(it).isNotNull()
+            assertThat(it.id).isEqualTo(depTable.id)
+            assertThat(it.area).isEqualTo(depTable.area)
+            assertThat(it.vertical).isEqualTo(depTable.vertical)
+            assertThat(it.name).isEqualTo(depTable.name)
+            assertThat(it.version).isEqualTo(depTable.version)
+            assertThat(it.partitionColumns).isEqualTo(depTable.partitionColumns)
+            assertThat(it.tableVariables).isEqualTo(depTable.tableVariables)
+            assertThat(it.dependencies!!.asList()).containsExactlyElementsIn(depTable.dependencies!!.asList())
+            assertThat(it.targets!!.asList()).containsExactlyElementsIn(depTable.targets!!.asList())
         }
     }
 

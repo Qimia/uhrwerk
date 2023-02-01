@@ -9,6 +9,7 @@ import io.qimia.uhrwerk.common.metastore.model.{
 }
 import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.common.tools.{JDBCTools, TimeTools}
+import io.qimia.uhrwerk.common.utils.TemplateUtils
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils
 import io.qimia.uhrwerk.framemanager.utils.SparkFrameManagerUtils._
 import org.apache.commons.lang.RandomStringUtils
@@ -18,6 +19,8 @@ import org.apache.spark.sql.functions.{col, udf}
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
+import java.util.Properties
+import scala.collection.JavaConverters._
 
 class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   private val logger: Logger = Logger.getLogger(this.getClass)
@@ -37,7 +40,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       source: SourceModel2,
       startTS: Option[LocalDateTime] = Option.empty,
       endTSExcl: Option[LocalDateTime] = Option.empty,
-      dataFrameReaderOptions: Option[Map[String, String]] = Option.empty
+      dataFrameReaderOptions: Option[Map[String, String]] = Option.empty,
+      properties: Properties = new Properties()
   ): DataFrame = {
     if (
       (startTS.isDefined || endTSExcl.isDefined) &&
@@ -51,7 +55,13 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     }
 
     if (source.getConnection.getType.equals(ConnectionType.JDBC)) {
-      loadSourceFromJDBC(source, startTS, endTSExcl, dataFrameReaderOptions)
+      loadSourceFromJDBC(
+        source,
+        startTS,
+        endTSExcl,
+        dataFrameReaderOptions,
+        properties
+      )
     } else {
       loadDataFrameFromFileSystem(
         source,
@@ -86,7 +96,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       sparkSession.read
     }
 
-    val df = reader.format(source.getFormat).load(fullLocation)
+    val df = reader.format(source.getFormat).load(fullLocation.head)
 
     val filteredDf: DataFrame = if (startTS.isDefined && endTSExcl.isDefined) {
       df.filter(
@@ -176,13 +186,33 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             )
             .load()
         } else {
-          dfReaderWithUserOptions
+
+          val partPaths: List[String] = dependencyResult.succeeded
+            .map(_.getPartitionPath)
+            .filter(path => path != null && path.nonEmpty)
+            .toList
+
+          val tmpDf = dfReaderWithUserOptions
             .load(
               getFullLocation(
                 dependencyResult.connection.getPath,
                 dependencyPath
-              )
+              ).head
             )
+          val partFilters = dependencyResult.succeeded
+            .filter(_.getPartitionValues != null)
+            .map(_.getPartitionValues.asScala)
+            .flatten
+            .groupBy(_._1)
+            .mapValues(_.map(_._2))
+          if (partFilters.nonEmpty)
+            tmpDf.filter(
+              partFilters
+                .map { case (k, v) => col(k).isin(v: _*) }
+                .reduce(_ && _)
+            )
+          else
+            tmpDf
         }
       } catch {
         case exception: Exception =>
@@ -235,7 +265,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       source: SourceModel2,
       startTS: Option[LocalDateTime],
       endTSExcl: Option[LocalDateTime],
-      dataFrameReaderOptions: Option[Map[String, String]]
+      dataFrameReaderOptions: Option[Map[String, String]],
+      properties: Properties = new Properties()
   ): DataFrame = {
 
     val dfReader: DataFrameReader =
@@ -251,6 +282,26 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
     val dfReaderWithQuery: DataFrameReader =
       if (!isStringEmpty(source.getSelectQuery)) {
+
+        var selectQuery = source.getSelectQuery
+
+        if (
+          source.getSourceVariables != null && source.getSourceVariables.nonEmpty
+        ) {
+          val propValues = source.getSourceVariables
+            .flatMap(vr => {
+              val propVal = properties.getProperty(vr)
+              if (propVal != null && propVal.nonEmpty) {
+                Some((vr, propVal))
+              } else
+                None
+            })
+            .toMap
+          selectQuery = TemplateUtils.renderTemplate(
+            selectQuery,
+            propValues.asJava
+          )
+        }
         val query: String =
           JDBCTools.createSelectQuery(
             source.getSelectQuery,
@@ -269,11 +320,30 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           )
 
         if (!isStringEmpty(source.getParallelPartitionQuery)) {
+          var parallelPartitionQuery = source.getParallelPartitionQuery
+          if (
+            source.getSourceVariables != null && source.getSourceVariables.nonEmpty
+          ) {
+            val propValues = source.getSourceVariables
+              .flatMap(vr => {
+                val propVal = properties.getProperty(vr)
+                if (propVal != null && propVal.nonEmpty) {
+                  Some((vr, propVal))
+                } else
+                  None
+              })
+              .toMap
+            parallelPartitionQuery = TemplateUtils.renderTemplate(
+              parallelPartitionQuery,
+              propValues.asJava
+            )
+          }
+
           val (minId, maxId) = JDBCTools.minMaxQueryIds(
             sparkSession,
             source.getConnection,
             source.getParallelPartitionColumn,
-            source.getParallelPartitionQuery,
+            parallelPartitionQuery,
             startTS,
             endTSExcl,
             Option(
@@ -369,7 +439,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       val path = if (isJDBC || isRedshift) {
         tablePath
       } else {
-        getFullLocation(targetConnection.getPath, tablePath)
+        getFullLocation(targetConnection.getPath, tablePath).head
       }
 
       val dfContainsTimeColumns =
@@ -377,7 +447,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
       val (fullPath, df) =
         if (
-          !dfContainsTimeColumns && !partitionTS.isEmpty && table.getPartitioned
+          !dfContainsTimeColumns && partitionTS.nonEmpty && table.getPartitioned
         ) {
           // if time columns are missing, saving just one partition defined in the partitionTS array
 

@@ -26,7 +26,12 @@ import io.qimia.uhrwerk.config.representation.Secret;
 import io.qimia.uhrwerk.config.representation.Source;
 import io.qimia.uhrwerk.config.representation.Table;
 import io.qimia.uhrwerk.config.representation.Target;
+import io.qimia.uhrwerk.common.utils.TemplateUtils;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class ModelMapper {
 
@@ -44,14 +49,34 @@ public class ModelMapper {
       builder.className(getTableClassName(table));
     }
 
+    SortedSet<String> templateArgs = new TreeSet<>();
     if (table.getTransformSqlQuery() != null && !table.getTransformSqlQuery().isEmpty()) {
-      builder.transformSqlQuery(MapperUtils.readQueryOrFileLines(table.getTransformSqlQuery()));
+      String transformSqlQuery = MapperUtils.readQueryOrFileLines(table.getTransformSqlQuery());
+      builder.transformSqlQuery(transformSqlQuery);
+      templateArgs.addAll(TemplateUtils.templateArgs(transformSqlQuery));
     }
 
     builder.partitionColumns(table.getPartitionColumns());
-    builder.tableVariables(table.getTableVariables());
 
-    builder.parallelism(table.getParallelism()).maxBulkSize(table.getMaxBulkSize());
+    SortedSet<String> addVars = new TreeSet<>();
+    if (table.getTableVariables() != null
+        && table.getTableVariables().length > 0) {
+      for (String tableVariable : table.getTableVariables()) {
+        boolean inArgs = templateArgs.stream()
+            .anyMatch(arg -> arg.equalsIgnoreCase(tableVariable));
+        if (!inArgs) {
+          addVars.add(tableVariable);
+        }
+      }
+    }
+    templateArgs.addAll(addVars);
+
+    if (!templateArgs.isEmpty()) {
+      builder.tableVariables(templateArgs.toArray(new String[templateArgs.size()]));
+    }
+
+    builder.parallelism(table.getParallelism())
+        .maxBulkSize(table.getMaxBulkSize());
 
     if (table.getPartition() != null) {
       builder
@@ -147,15 +172,25 @@ public class ModelMapper {
       model.setIntervalTempSize(source.getPartition().getSize());
       model.setIntervalColumn(source.getPartition().getColumn());
     }
+    SortedSet<String> templateArgs = new TreeSet<>();
     if (source.getSelect() != null) {
-      model.setSelectQuery(MapperUtils.readQueryOrFileLines(source.getSelect().getQuery()));
+      var selectQuery = MapperUtils.readQueryOrFileLines(source.getSelect().getQuery());
+      model.setSelectQuery(selectQuery);
+      templateArgs.addAll(TemplateUtils.templateArgs(selectQuery));
     }
+
     if (source.getParallelLoad() != null) {
-      model.setParallelPartitionQuery(
-          MapperUtils.readQueryOrFileLines(source.getParallelLoad().getQuery()));
+      var parallelQuery = MapperUtils.readQueryOrFileLines(source.getParallelLoad().getQuery());
+      templateArgs.addAll(TemplateUtils.templateArgs(parallelQuery));
+      model.setParallelPartitionQuery(parallelQuery);
       model.setParallelPartitionColumn(source.getParallelLoad().getColumn());
       model.setParallelPartitionNum(source.getParallelLoad().getNum());
     }
+
+    if (!templateArgs.isEmpty()) {
+      model.setSourceVariables(templateArgs.toArray(new String[templateArgs.size()]));
+    }
+
     model.setIngestionMode(IngestionMode.valueOf(source.getIngestionMode().name()));
     model.setParallelLoad(source.getAutoLoad());
 
@@ -180,11 +215,16 @@ public class ModelMapper {
     TableModel dependencyTable = toDependencyTable(dependency);
     TargetModel dependencyTarget = toDependencyTarget(dependency, dependencyTable);
 
+    List<String> dependencyVariables = new ArrayList<>();
+
     HashMap<String, String> partitionMappings = new HashMap<>();
     if (dependency.getPartitionMappings() != null && dependency.getPartitionMappings().length > 0) {
       for (PartitionMapping mapping : dependency.getPartitionMappings()
       ) {
         partitionMappings.put(mapping.getColumn(), mapping.getValue());
+        if (mapping.getValue().startsWith("$") && mapping.getValue().endsWith("$")) {
+          dependencyVariables.add(mapping.getValue().substring(1, mapping.getValue().length() - 1));
+        }
       }
     }
 
@@ -201,6 +241,11 @@ public class ModelMapper {
             .dependencyTarget(dependencyTarget);
     if (!partitionMappings.isEmpty()) {
       builder.partitionMappings(partitionMappings);
+    }
+
+    if (!dependencyVariables.isEmpty()) {
+      builder.dependencyVariables(
+          dependencyVariables.toArray(new String[dependencyVariables.size()]));
     }
     return builder.build();
   }

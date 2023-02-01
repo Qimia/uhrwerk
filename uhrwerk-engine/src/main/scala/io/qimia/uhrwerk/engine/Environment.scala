@@ -9,6 +9,7 @@ import io.qimia.uhrwerk.dao.SecretDAO
 import io.qimia.uhrwerk.engine.Environment._
 import org.apache.log4j.Logger
 
+import java.util.Properties
 import scala.collection.mutable
 
 object Environment {
@@ -69,10 +70,19 @@ object Environment {
     * @param frameManager user made framemanager
     * @return uhrwerk environment
     */
-  def build(envConfigLoc: String, frameManager: FrameManager): Environment = {
+  def build(
+      envConfigLoc: String,
+      frameManager: FrameManager,
+      jobProperties: String = null
+  ): Environment = {
     val configReader = new YamlConfigReader()
     val metaInfo = configReader.readEnv(envConfigLoc)
-    new Environment(MetaStore.build(metaInfo), frameManager: FrameManager)
+    val properties = configReader.readProperties(jobProperties);
+    new Environment(
+      MetaStore.build(metaInfo),
+      frameManager: FrameManager,
+      properties
+    )
   }
 
   def getTableIdent(table: TableModel): TableIdent =
@@ -127,8 +137,14 @@ object Environment {
   }
 }
 
-class Environment(store: MetaStore, frameManager: FrameManager) {
+class Environment(
+    store: MetaStore,
+    frameManager: FrameManager,
+    properties: Properties = new Properties()
+) {
   val configReader = new YamlConfigReader()
+  val jobProperties: Properties =
+    if (properties == null) new Properties() else properties
   val tables: mutable.Map[TableIdent, TableWrapper] = mutable.HashMap()
   val metaStore: MetaStore = store
 
@@ -298,7 +314,8 @@ class Environment(store: MetaStore, frameManager: FrameManager) {
         table.getTargets.map(_.getConnection).foreach(this.replaceSecrets)
       }
 
-      val wrapper = new TableWrapper(store, table, userFunc, frameManager)
+      val wrapper =
+        new TableWrapper(store, table, userFunc, frameManager, this.properties)
       tables(id) = wrapper
       return Option(wrapper)
     }
