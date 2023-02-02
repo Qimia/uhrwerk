@@ -38,8 +38,8 @@ class PartitionDAO : PartitionService {
                 }
             }
 
-            if (oldPartition != null)
-                repo.deleteById(oldPartition.id!!)
+            //if (oldPartition != null)
+            //    repo.deleteById(oldPartition.id!!)
 
             val newPartition = repo.save(partition)
             result.isSuccess = true

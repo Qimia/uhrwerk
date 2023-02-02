@@ -1,35 +1,23 @@
 package io.qimia.uhrwerk.engine
 
-import java.time.{Duration, LocalDateTime}
-import java.util.concurrent.Executors
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
-import io.qimia.uhrwerk.common.metastore.dependency.{
-  TablePartitionResult,
-  TablePartitionResultSet
-}
-import io.qimia.uhrwerk.common.metastore.model.{
-  Partition,
-  PartitionUnit,
-  TableModel
-}
-import io.qimia.uhrwerk.common.model.TargetModel
+import io.qimia.uhrwerk.common.metastore.dependency.{TablePartitionResult, TablePartitionResultSet}
+import io.qimia.uhrwerk.common.metastore.model.{Partition, PartitionUnit, TableModel}
 import io.qimia.uhrwerk.common.utils.TemplateUtils
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent}
 import io.qimia.uhrwerk.engine.TableWrapper.reportProcessingPartitions
-import io.qimia.uhrwerk.engine.tools.{
-  DependencyHelper,
-  SourceHelper,
-  TimeHelper
-}
+import io.qimia.uhrwerk.engine.tools.{DependencyHelper, SourceHelper, TimeHelper}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.Logger
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{lit, trim}
+import org.apache.spark.sql.functions.lit
 
+import java.time.{Duration, LocalDateTime}
 import java.util.Properties
+import java.util.concurrent.Executors
+import scala.collection.JavaConverters._
 import scala.collection.immutable
 import scala.concurrent._
-import scala.collection.JavaConverters._
 
 object TableWrapper {
 
@@ -283,7 +271,7 @@ class TableWrapper(
           ) {
             val partCols = table.getPartitionColumns.map(_.trim)
             val selectDf =
-              if (table.getPartitionColumns.size > 1)
+              if (partCols.length > 1)
                 frame
                   .select(partCols.head, partCols.tail: _*)
               else
@@ -292,7 +280,7 @@ class TableWrapper(
             val partValues = selectDf
               .distinct()
               .collect()
-              .map(row => row.getValuesMap[Any](row.schema.fieldNames))
+              .map(row => row.getValuesMap[Any](partCols.toSeq))
               .toList
             Some(partValues)
           } else {
@@ -380,6 +368,7 @@ class TableWrapper(
         val res = singleRun(bulkInput, localGroupTs)
         if (res.isDefined) {
           var partitions: List[Partition] = Nil
+
           if (res.get.isEmpty) {
             partitions = table.getTargets
               .flatMap(target => {
@@ -413,8 +402,8 @@ class TableWrapper(
               })
             })
           }
-          val _ =
-            metastore.partitionService.save(partitions.asJava, overwrite)
+
+          metastore.partitionService.save(partitions.asJava, overwrite)
 
           partitions
             .zip(partitionGroup)
