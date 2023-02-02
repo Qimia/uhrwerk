@@ -99,7 +99,8 @@ class TablePartitionRepo() {
             FROM TABLE_ tab
                      JOIN (SELECT d.id,
                                   d.dependency_table_id,
-                                  d.dependency_target_id
+                                  d.dependency_target_id,
+                                  d.partition_mappings
                            FROM TABLE_ t
                                     JOIN DEPENDENCY d ON t.id = d.table_id
                            WHERE t.id = ?) AS dep
