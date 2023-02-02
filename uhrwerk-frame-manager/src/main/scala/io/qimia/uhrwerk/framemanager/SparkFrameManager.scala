@@ -186,12 +186,6 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             )
             .load()
         } else {
-
-          val partPaths: List[String] = dependencyResult.succeeded
-            .map(_.getPartitionPath)
-            .filter(path => path != null && path.nonEmpty)
-            .toList
-
           val tmpDf = dfReaderWithUserOptions
             .load(
               getFullLocation(
@@ -200,11 +194,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
               ).head
             )
           val partFilters = dependencyResult.succeeded
-            .filter(_.getPartitionValues != null)
-            .map(_.getPartitionValues.asScala)
-            .flatten
+            .filter(_.getPartitionValues != null).flatMap(_.getPartitionValues.asScala)
             .groupBy(_._1)
-            .mapValues(_.map(_._2))
+            .mapValues(_.map(_._2).distinct)
           if (partFilters.nonEmpty)
             tmpDf.filter(
               partFilters

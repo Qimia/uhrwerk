@@ -67,30 +67,29 @@ class DagTaskBuilder(environment: Environment) {
       dag.addVertex(tPair)
       val tIdent = tPair._1
       val aTable = environment.getTable(tIdent).get
-      val dependencyTables =
-        if (
-          aTable.wrappedTable.getDependencies != null
-          && !aTable.wrappedTable.getDependencies.isEmpty
-        )
-          aTable.wrappedTable.getDependencies
-            .foreach(dependency => {
-              val depIdent =
-                new TableIdent(
-                  dependency.getArea,
-                  dependency.getVertical,
-                  dependency.getTableName,
-                  dependency.getVersion
-                )
-              val depTable = environment.getTable(depIdent).get
-              val partitions = lastPartitions(
-                depTable.wrappedTable,
-                dependency,
-                environment.jobProperties
+      if (
+        aTable.wrappedTable.getDependencies != null
+        && !aTable.wrappedTable.getDependencies.isEmpty
+      )
+        aTable.wrappedTable.getDependencies
+          .foreach(dependency => {
+            val depIdent =
+              new TableIdent(
+                dependency.getArea,
+                dependency.getVertical,
+                dependency.getTableName,
+                dependency.getVersion
               )
-              val depPair = (depIdent, !partitions.isEmpty)
-              buildGraph(depPair, dag)
-              dag.addEdge(depPair, tPair)
-            })
+            val depTable = environment.getTable(depIdent).get
+            val partitions = lastPartitions(
+              depTable.wrappedTable,
+              dependency,
+              environment.jobProperties
+            )
+            val depPair = (depIdent, partitions.nonEmpty)
+            buildGraph(depPair, dag)
+            dag.addEdge(depPair, tPair)
+          })
     }
 
     val outWrappedTable = outTable.wrappedTable
@@ -141,29 +140,31 @@ class DagTaskBuilder(environment: Environment) {
       properties: Properties
   ): List[Partition] = {
     if (
-      depTable.getPartitionColumns != null && !depTable.getPartitionColumns.isEmpty
+      depTable.getPartitionColumns != null
+      && !depTable.getPartitionColumns.isEmpty
     ) {
       if (
-        dep.getPartitionMappings != null || !dep.getPartitionMappings.isEmpty
+        dep.getPartitionMappings != null
+        || !dep.getPartitionMappings.isEmpty
       ) {
         val mappings = dep.getPartitionMappings.asScala
           .map(mapping => {
-            val k = mapping._1
-            val v = mapping._2
-            var propVal = v
+            val column = mapping._1
+            val value = mapping._2
+            var propValue = value
 
-            if (v.isInstanceOf[String]) {
-              val str = v.asInstanceOf[String]
-              if (str.startsWith("$") && str.endsWith("$"))
-                propVal = properties.getProperty(
-                  str.substring(1, str.length - 1)
-                )
-              if (propVal == null)
-                throw new RuntimeException(
-                  s"Property ${str.substring(1, str.length - 1)} not found"
-                )
+            if (value != null && value.isInstanceOf[String]) {
+              val valueStr = value.asInstanceOf[String]
+              if (valueStr.startsWith("$") && valueStr.endsWith("$")) {
+                val propName = valueStr.substring(1, valueStr.length - 1)
+                propValue = properties.getProperty(propName)
+                if (propValue == null)
+                  throw new IllegalArgumentException(
+                    s"Property $propName not found in properties"
+                  )
+              }
             }
-            (k, propVal)
+            (column, propValue)
           })
           .toMap
         return environment.metaStore.partitionService
@@ -174,6 +175,8 @@ class DagTaskBuilder(environment: Environment) {
     }
     val partition = environment.metaStore.partitionService
       .getLatestPartition(depTable.getTargets()(0).getId)
-    List(partition)
+    if (partition == null) List()
+    else
+      List(partition)
   }
 }

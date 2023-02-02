@@ -43,12 +43,12 @@ data class DependencyModel(
         if (!partitionMappings.isNullOrEmpty()) {
             if (other.partitionMappings.isNullOrEmpty()) return false
             if (partitionMappings != other.partitionMappings) return false
-        }
+        }else if (!other.partitionMappings.isNullOrEmpty()) return false
 
         if (!dependencyVariables.isNullOrEmpty()) {
             if (other.dependencyVariables.isNullOrEmpty()) return false
             if (!dependencyVariables.contentEquals(other.dependencyVariables)) return false
-        }
+        }else if (!other.dependencyVariables.isNullOrEmpty()) return false
 
         if (format != other.format) return false
         if (version != other.version) return false
@@ -68,7 +68,7 @@ data class DependencyModel(
         result = 31 * result + (vertical?.hashCode() ?: 0)
         result = 31 * result + (tableName?.hashCode() ?: 0)
         result = 31 * result + (viewName?.hashCode() ?: 0)
-        result = 31 * result + (partitionMappings?.hashCode() ?: 0)
+        result = 31 * result + (partitionMappings?.toList()?.toTypedArray().contentDeepHashCode() ?: 0)
         result = 31 * result + (dependencyVariables?.contentDeepHashCode() ?: 0)
         result = 31 * result + (format?.hashCode() ?: 0)
         result = 31 * result + (version?.hashCode() ?: 0)

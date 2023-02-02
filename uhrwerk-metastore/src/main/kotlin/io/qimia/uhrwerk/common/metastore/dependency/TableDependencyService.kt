@@ -3,6 +3,7 @@ package io.qimia.uhrwerk.common.metastore.dependency
 import io.qimia.uhrwerk.common.metastore.model.TableModel
 import java.sql.SQLException
 import java.time.LocalDateTime
+import java.util.Properties
 
 interface TableDependencyService {
     /**
@@ -18,6 +19,7 @@ interface TableDependencyService {
     @Throws(SQLException::class)
     fun processingPartitions(
         table: TableModel,
-        partitionTs: List<LocalDateTime>
+        partitionTs: List<LocalDateTime>,
+        properties: Properties = Properties()
     ): TablePartitionResultSet?
 }

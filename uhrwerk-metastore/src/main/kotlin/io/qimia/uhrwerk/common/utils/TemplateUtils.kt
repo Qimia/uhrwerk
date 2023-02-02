@@ -23,7 +23,8 @@ object TemplateUtils {
     fun renderTemplate(template: String, args: Map<String, String>): String? {
         val st = ST(template, '$', '$')
         for ((key, value) in args) {
-            st.add(key, value)
+            if (st.attributes.isNullOrEmpty() || !st.attributes.containsKey(key))
+                st.add(key, value)
         }
         return st.render()
     }

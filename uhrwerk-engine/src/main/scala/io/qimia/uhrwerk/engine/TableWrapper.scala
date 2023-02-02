@@ -59,6 +59,8 @@ object TableWrapper {
         partitionUnit
       ) // Warning: Sets null directly from table object
       newPart.setTargetId(targetId)
+      newPart.setPartitionValues(partitionValues.asJava)
+      newPart.setPartitionPath(paritionPath)
       newPart
     })
   }
@@ -121,7 +123,7 @@ class TableWrapper(
   private def singleRun(
       dependencyResults: List[BulkDependencyResult],
       partitionTS: Array[LocalDateTime]
-  ) = {
+  ): Option[List[Map[String, Any]]] = {
     // TODO: Log start of single task for table here
     val startTs = partitionTS.head
     val endTs = {
@@ -267,20 +269,27 @@ class TableWrapper(
 
         // TODO error checking: if target should be on datalake but no frame is given
         // Note: We are responsible for all standard writing of DataFrames
-        val result: Option[List[Map[String, Any]]] = if (!frame.isEmpty) {
+        if (!frame.isEmpty) {
           frameManager.writeDataFrame(
             frame,
             table,
             partitionTS,
             taskOutput.dataFrameWriterOptions
           )
+
           if (
             table.getPartitionColumns != null &&
             table.getPartitionColumns.nonEmpty
           ) {
             val partCols = table.getPartitionColumns.map(_.trim)
-            val partValues = frame
-              .select(partCols.head, partCols.tail: _*)
+            val selectDf =
+              if (table.getPartitionColumns.size > 1)
+                frame
+                  .select(partCols.head, partCols.tail: _*)
+              else
+                frame.select(partCols.head)
+
+            val partValues = selectDf
               .distinct()
               .collect()
               .map(row => row.getValuesMap[Any](row.schema.fieldNames))
@@ -293,7 +302,6 @@ class TableWrapper(
           logger.warn(s"No output for ${table.getName} (!!)")
           None
         }
-        result
       } catch {
         case e: Throwable =>
           logger.error(s"${table.getName}: Task failed: " + startTs.toString)
@@ -340,7 +348,8 @@ class TableWrapper(
     val dependencyRes: TablePartitionResultSet =
       metastore.tableDependencyService.processingPartitions(
         table,
-        partitionsTs.asJava
+        partitionsTs.asJava,
+        this.properties
       )
 
     reportProcessingPartitions(dependencyRes, logger)
@@ -373,13 +382,13 @@ class TableWrapper(
           var partitions: List[Partition] = Nil
           if (res.get.isEmpty) {
             partitions = table.getTargets
-              .flatMap((t: TargetModel) => {
+              .flatMap(target => {
                 TableWrapper.createPartitions(
                   localGroupTs,
                   table.getPartitioned,
                   table.getPartitionUnit,
                   table.getPartitionSize,
-                  t.getId
+                  target.getId
                 )
               })
               .toList
@@ -391,13 +400,13 @@ class TableWrapper(
                   s"$partCol=$colValue"
                 })
                 .mkString("/")
-              table.getTargets.flatMap((t: TargetModel) => {
+              table.getTargets.flatMap(target => {
                 TableWrapper.createPartitions(
                   localGroupTs,
                   table.getPartitioned,
                   table.getPartitionUnit,
                   table.getPartitionSize,
-                  t.getId,
+                  target.getId,
                   partValues,
                   partPath
                 )

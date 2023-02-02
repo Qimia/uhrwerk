@@ -51,7 +51,8 @@ data class SourceModel2(
         if (!sourceVariables.isNullOrEmpty()) {
             if (other.sourceVariables.isNullOrEmpty()) return false
             if (!sourceVariables.contentEquals(other.sourceVariables)) return false
-        }
+        } else if (!other.sourceVariables.isNullOrEmpty()) return false
+
         if (parallelLoad != other.parallelLoad) return false
         if (parallelPartitionQuery != other.parallelPartitionQuery) return false
         if (parallelPartitionColumn != other.parallelPartitionColumn) return false

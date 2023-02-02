@@ -35,7 +35,7 @@ data class Partition(
         if (!partitionValues.isNullOrEmpty()) {
             if (other.partitionValues.isNullOrEmpty()) return false
             if (partitionValues!! != other.partitionValues) return false
-        }
+        } else if (!other.partitionValues.isNullOrEmpty()) return false
         if (createdTs != other.createdTs) return false
         if (updatedTs != other.updatedTs) return false
 
@@ -52,7 +52,7 @@ data class Partition(
         result = 31 * result + (bookmarked?.hashCode() ?: 0)
         result = 31 * result + (maxBookmark?.hashCode() ?: 0)
         result =
-            31 * result + (partitionValues?.toList()?.toTypedArray().contentDeepHashCode() ?: 0)
+            31 * result + partitionValues?.toList()?.toTypedArray().contentDeepHashCode()
         result = 31 * result + (createdTs?.hashCode() ?: 0)
         result = 31 * result + (updatedTs?.hashCode() ?: 0)
         return result

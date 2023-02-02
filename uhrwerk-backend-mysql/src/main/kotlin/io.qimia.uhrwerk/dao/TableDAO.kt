@@ -196,7 +196,8 @@ class TableDAO : TableDependencyService, TableService {
     @Throws(SQLException::class)
     private fun processNotPartitionedTable(
         table: TableModel,
-        requestTime: LocalDateTime
+        requestTime: LocalDateTime,
+        properties: Properties = Properties()
     ): TablePartitionResultSet {
         assert(!table.partitioned) { "Table can't be partitioned for not-partitioned processing" }
         val singleResult =
@@ -253,29 +254,45 @@ class TableDAO : TableDependencyService, TableService {
             dependencyResult.connection = connectionsMap[depPartSpec.connectionId]
             dependencyResult.dependency = dependenciesMap[depPartSpec.dependencyId]
 
-            val depLatestPart = if (depPartSpec.partitionColumns.isNullOrEmpty()) {
+            var depLatestParts: List<Partition>? = null
+
+            if (depPartSpec.partitionColumns.isNullOrEmpty()) {
                 val partition = partService.getLatestPartition(depPartSpec.targetId)
                 if (partition != null) {
-                    listOf(partition)
-                } else
-                    null
+                    depLatestParts = listOf(partition)
+                }
             } else {
-                partService.getLatestPartitions(
+                var mappings = mapOf<String, Any>()
+                if (!depPartSpec.partitionMappings.isNullOrEmpty())
+                    mappings = depPartSpec.partitionMappings.mapValues {
+                        val value = it.value
+                        var propValue = value
+                        if (value is String && value.startsWith("\$") && value.endsWith("\$")) {
+                            val propName = value.substring(1, value.length - 1)
+                            propValue = properties.getProperty(propName)
+                            if (propValue == null) {
+                                throw IllegalArgumentException("Property $propName not found in properties")
+                            }
+                        }
+                        propValue
+                    }
+
+                depLatestParts = partService.getLatestPartitions(
                     depPartSpec.targetId,
-                    depPartSpec.partitionMappings!!
+                    mappings
                 )
             }
 
-            if (depLatestPart.isNullOrEmpty()) {
+            if (depLatestParts.isNullOrEmpty()) {
                 dependencyResult.isSuccess = false
                 dependencyResult.failed = arrayOf(requestTime)
                 failedDependencies.add(dependencyResult)
                 singleSuccess = false
             } else {
                 dependencyResult.isSuccess = true
-                dependencyResult.succeeded = arrayOf(depLatestPart[0].partitionTs!!)
-                dependencyResult.partitionTs = depLatestPart[0].partitionTs
-                dependencyResult.partitions = depLatestPart.toTypedArray()
+                dependencyResult.succeeded = arrayOf(depLatestParts[0].partitionTs!!)
+                dependencyResult.partitionTs = depLatestParts[0].partitionTs
+                dependencyResult.partitions = depLatestParts.toTypedArray()
                 resolvedDependencies.add(dependencyResult)
             }
         }
@@ -356,10 +373,11 @@ class TableDAO : TableDependencyService, TableService {
     @Throws(SQLException::class)
     override fun processingPartitions(
         table: TableModel,
-        requestedPartitionTs: List<LocalDateTime>
+        requestedPartitionTs: List<LocalDateTime>,
+        properties: Properties
     ): TablePartitionResultSet? {
         if (!table!!.partitioned) {
-            return processNotPartitionedTable(table, requestedPartitionTs!![0])
+            return processNotPartitionedTable(table, requestedPartitionTs!![0], properties)
         }
         if (table.dependencies == null || table.dependencies!!.size == 0) {
             return processNoDependencyPartitions(table, requestedPartitionTs!!)

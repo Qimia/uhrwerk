@@ -45,12 +45,12 @@ data class TableModel(
         if (!partitionColumns.isNullOrEmpty()) {
             if (other.partitionColumns.isNullOrEmpty()) return false
             if (!partitionColumns.contentEquals(other.partitionColumns)) return false
-        }
+        }else if (!other.partitionColumns.isNullOrEmpty()) return false
 
         if (!tableVariables.isNullOrEmpty()) {
             if (other.tableVariables.isNullOrEmpty()) return false
             if (!tableVariables.contentEquals(other.tableVariables)) return false
-        }
+        }else if (!other.tableVariables.isNullOrEmpty()) return false
 
         if (parallelism != other.parallelism) return false
         if (maxBulkSize != other.maxBulkSize) return false
@@ -58,20 +58,20 @@ data class TableModel(
         if (partitionSize != other.partitionSize) return false
         if (partitioned != other.partitioned) return false
 
-        if (dependencies != null) {
-            if (other.dependencies == null) return false
+        if (!dependencies.isNullOrEmpty()) {
+            if (other.dependencies.isNullOrEmpty()) return false
             if (!dependencies.contentEquals(other.dependencies)) return false
-        } else if (other.dependencies != null) return false
+        } else if (!other.dependencies.isNullOrEmpty()) return false
 
-        if (sources != null) {
-            if (other.sources == null) return false
+        if (!sources.isNullOrEmpty()) {
+            if (other.sources.isNullOrEmpty()) return false
             if (!sources.contentEquals(other.sources)) return false
-        } else if (other.sources != null) return false
+        } else if (!other.sources.isNullOrEmpty()) return false
 
         if (!targets.isNullOrEmpty()) {
             if (other.targets.isNullOrEmpty()) return false
             if (!targets.contentEquals(other.targets)) return false
-        } else if (other.targets != null) return false
+        } else if (!other.targets.isNullOrEmpty()) return false
 
         if (description != other.description) return false
         if (deactivatedTs != other.deactivatedTs) return false
