@@ -206,7 +206,7 @@ class PartitionRepo : BaseRepo<Partition>() {
                 WHERE target_id = ?
                     AND JSON_CONTAINS(partition_values, ?)
                 GROUP BY partition_values) tmp
-                     JOIN partition_ pt ON pt.id = last_partition_id
+                     JOIN PARTITION_ pt ON pt.id = last_partition_id
                      JOIN TARGET t ON pt.target_id = t.id
                      JOIN TABLE_ tb ON t.table_id = tb.id 
          """.trimIndent()
