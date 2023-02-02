@@ -1,23 +1,12 @@
 package io.qimia.uhrwerk.engine
 
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
-import io.qimia.uhrwerk.common.metastore.dependency.{
-  TablePartitionResult,
-  TablePartitionResultSet
-}
-import io.qimia.uhrwerk.common.metastore.model.{
-  Partition,
-  PartitionUnit,
-  TableModel
-}
+import io.qimia.uhrwerk.common.metastore.dependency.{TablePartitionResult, TablePartitionResultSet}
+import io.qimia.uhrwerk.common.metastore.model.{Partition, PartitionUnit, TableModel}
 import io.qimia.uhrwerk.common.utils.TemplateUtils
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent}
 import io.qimia.uhrwerk.engine.TableWrapper.reportProcessingPartitions
-import io.qimia.uhrwerk.engine.tools.{
-  DependencyHelper,
-  SourceHelper,
-  TimeHelper
-}
+import io.qimia.uhrwerk.engine.tools.{DependencyHelper, SourceHelper, TimeHelper}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.Logger
 import org.apache.spark.sql.DataFrame
@@ -27,7 +16,7 @@ import java.time.{Duration, LocalDateTime}
 import java.util.Properties
 import java.util.concurrent.Executors
 import scala.collection.JavaConverters._
-import scala.collection.immutable
+import scala.collection.{immutable, mutable}
 import scala.concurrent._
 
 object TableWrapper {
@@ -102,7 +91,7 @@ class TableWrapper(
     table: TableModel,
     userFunc: TaskInput => TaskOutput,
     frameManager: FrameManager,
-    properties: Properties = new Properties()
+    properties: mutable.Map[String, AnyRef] = mutable.HashMap()
 ) {
   val wrappedTable: TableModel = table
   val tableDuration: Duration = if (table.getPartitioned) {
@@ -210,9 +199,9 @@ class TableWrapper(
 
           val propValues = table.getTableVariables
             .flatMap(vr => {
-              val propVal = this.properties.getProperty(vr)
-              if (propVal != null && propVal.nonEmpty) {
-                Some((vr, propVal))
+              val opt = this.properties.get(vr)
+              if (opt.isDefined) {
+                Some((vr, opt.get))
               } else
                 None
             })
@@ -243,9 +232,9 @@ class TableWrapper(
           )
           if (notInFramePartCols.nonEmpty)
             for (partCol <- notInFramePartCols) {
-              val propVal = this.properties.getProperty(partCol.trim)
-              if (propVal != null && propVal.nonEmpty)
-                frame = frame.withColumn(partCol.trim, lit(propVal))
+              val opt = this.properties.get(partCol.trim)
+              if (opt.isDefined)
+                frame = frame.withColumn(partCol.trim, lit(opt.get))
               else
                 logger.error(
                   s"Partition column $partCol is not in the frame and no property with the same name is given"
@@ -348,7 +337,7 @@ class TableWrapper(
       metastore.tableDependencyService.processingPartitions(
         table,
         partitionsTs.asJava,
-        this.properties
+        this.properties.asJava
       )
 
     reportProcessingPartitions(dependencyRes, logger)

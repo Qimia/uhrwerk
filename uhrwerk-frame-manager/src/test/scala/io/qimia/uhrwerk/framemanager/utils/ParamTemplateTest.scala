@@ -12,7 +12,7 @@ class ParamTemplateTest extends AnyFlatSpec {
     properties.load(getClass.getResourceAsStream("/properties/test.properties"))
     assert(properties.getProperty("some_variable") == "some_value")
 
-    val args = Array("some_variable", "some_other_variable")
+    val args = Array("some_variable", "some_variable_int")
       .flatMap(vr => {
         val propVal = properties.getProperty(vr)
         if (propVal != null && propVal.nonEmpty) {
@@ -24,7 +24,7 @@ class ParamTemplateTest extends AnyFlatSpec {
 
     assert(args("some_variable") == "some_value")
 
-    assert(args.asJava.get("some_variable") == "some_value")
+    assert(args.asJava.get("some_variable_int") == 10000)
 
   }
 

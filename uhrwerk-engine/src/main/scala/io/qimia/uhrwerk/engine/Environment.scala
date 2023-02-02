@@ -9,7 +9,7 @@ import io.qimia.uhrwerk.dao.SecretDAO
 import io.qimia.uhrwerk.engine.Environment._
 import org.apache.log4j.Logger
 
-import java.util.Properties
+import scala.collection.JavaConverters.mapAsScalaMapConverter
 import scala.collection.mutable
 
 object Environment {
@@ -84,7 +84,7 @@ object Environment {
     new Environment(
       MetaStore.build(metaInfo),
       frameManager: FrameManager,
-      properties
+      properties.asScala
     )
   }
 
@@ -143,11 +143,10 @@ object Environment {
 class Environment(
     store: MetaStore,
     frameManager: FrameManager,
-    properties: Properties = new Properties()
+    properties: mutable.Map[String, AnyRef] = mutable.HashMap()
 ) {
   val configReader = new YamlConfigReader()
-  val jobProperties: Properties =
-    if (properties == null) new Properties() else properties
+  val jobProperties: mutable.Map[String, AnyRef] = properties
   val tables: mutable.Map[TableIdent, TableWrapper] = mutable.HashMap()
   val metaStore: MetaStore = store
 

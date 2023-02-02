@@ -20,6 +20,6 @@ interface TableDependencyService {
     fun processingPartitions(
         table: TableModel,
         partitionTs: List<LocalDateTime>,
-        properties: Properties = Properties()
+        properties: Map<String, Any> = emptyMap()
     ): TablePartitionResultSet?
 }

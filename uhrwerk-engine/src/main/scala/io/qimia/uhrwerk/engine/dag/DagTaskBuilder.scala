@@ -137,7 +137,7 @@ class DagTaskBuilder(environment: Environment) {
   private def lastPartitions(
       depTable: TableModel,
       dep: DependencyModel,
-      properties: Properties
+      properties: mutable.Map[String, AnyRef]
   ): List[Partition] = {
     if (
       depTable.getPartitionColumns != null
@@ -157,8 +157,10 @@ class DagTaskBuilder(environment: Environment) {
               val valueStr = value.asInstanceOf[String]
               if (valueStr.startsWith("$") && valueStr.endsWith("$")) {
                 val propName = valueStr.substring(1, valueStr.length - 1)
-                propValue = properties.getProperty(propName)
-                if (propValue == null)
+                val opt = properties.get(propName)
+                if (opt.isDefined)
+                  propValue = opt.get
+                else
                   throw new IllegalArgumentException(
                     s"Property $propName not found in properties"
                   )

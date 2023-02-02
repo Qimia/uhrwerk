@@ -20,7 +20,7 @@ object TemplateUtils {
     }
 
     @JvmStatic
-    fun renderTemplate(template: String, args: Map<String, String>): String? {
+    fun renderTemplate(template: String, args: Map<String, Object>): String? {
         val st = ST(template, '$', '$')
         for ((key, value) in args) {
             if (st.attributes.isNullOrEmpty() || !st.attributes.containsKey(key))

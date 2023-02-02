@@ -11,6 +11,7 @@ import org.junit.jupiter.api.*
 import org.slf4j.LoggerFactory
 import org.testcontainers.containers.output.Slf4jLogConsumer
 import java.time.LocalDateTime
+import kotlin.random.Random
 
 internal class PartitionRepoIntegrationTest {
 
@@ -63,7 +64,8 @@ internal class PartitionRepoIntegrationTest {
         println("Writing partitions... for target ${target!!.id}")
 
         for (i in 1..4) {
-            val partValues = mapOf("part_col1" to "part_val1", "part_col2" to "part_val$i")
+            val partValues =
+                mapOf("part_col1" to "part_val1", "part_col_int1" to i * Random.nextInt(1000))
 
             val partitions = times.map {
                 Partition(

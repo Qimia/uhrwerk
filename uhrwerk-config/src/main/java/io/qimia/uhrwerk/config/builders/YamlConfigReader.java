@@ -29,6 +29,7 @@ import io.qimia.uhrwerk.config.representation.Target;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
@@ -246,8 +247,8 @@ public class YamlConfigReader {
     }
   }
 
-  public Properties readProperties(String file) {
-    Properties props = new Properties();
+  public Map<String, Object> readProperties(String file) {
+    Map<String, Object> props = new HashMap<>();
     if (file == null || file.isEmpty()) {
       return props;
     }
@@ -259,7 +260,7 @@ public class YamlConfigReader {
     }
 
     try {
-      props.load(stream);
+      objectMapper().readValue(stream, Map.class);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

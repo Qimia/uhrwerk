@@ -1,12 +1,7 @@
 package io.qimia.uhrwerk.framemanager
 
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
-import io.qimia.uhrwerk.common.metastore.model.{
-  ConnectionType,
-  IngestionMode,
-  SourceModel2,
-  TableModel
-}
+import io.qimia.uhrwerk.common.metastore.model.{ConnectionType, IngestionMode, SourceModel2, TableModel}
 import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.common.tools.{JDBCTools, TimeTools}
 import io.qimia.uhrwerk.common.utils.TemplateUtils
@@ -21,6 +16,7 @@ import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.util.Properties
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
   private val logger: Logger = Logger.getLogger(this.getClass)
@@ -41,7 +37,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       startTS: Option[LocalDateTime] = Option.empty,
       endTSExcl: Option[LocalDateTime] = Option.empty,
       dataFrameReaderOptions: Option[Map[String, String]] = Option.empty,
-      properties: Properties = new Properties()
+      properties: mutable.Map[String, AnyRef] = mutable.HashMap()
   ): DataFrame = {
     if (
       (startTS.isDefined || endTSExcl.isDefined) &&
@@ -259,7 +255,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       startTS: Option[LocalDateTime],
       endTSExcl: Option[LocalDateTime],
       dataFrameReaderOptions: Option[Map[String, String]],
-      properties: Properties = new Properties()
+      properties: mutable.Map[String, AnyRef] = mutable.HashMap()
   ): DataFrame = {
 
     val dfReader: DataFrameReader =
@@ -283,9 +279,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         ) {
           val propValues = source.getSourceVariables
             .flatMap(vr => {
-              val propVal = properties.getProperty(vr)
-              if (propVal != null && propVal.nonEmpty) {
-                Some((vr, propVal))
+              val opt = properties.get(vr)
+              if (opt.isDefined) {
+                Some((vr, opt.get))
               } else
                 None
             })
@@ -319,9 +315,9 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           ) {
             val propValues = source.getSourceVariables
               .flatMap(vr => {
-                val propVal = properties.getProperty(vr)
-                if (propVal != null && propVal.nonEmpty) {
-                  Some((vr, propVal))
+                val opt = properties.get(vr)
+                if (opt.isDefined) {
+                  Some((vr, opt.get))
                 } else
                   None
               })

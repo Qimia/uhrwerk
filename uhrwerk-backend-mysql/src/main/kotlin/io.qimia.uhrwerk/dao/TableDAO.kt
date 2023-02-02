@@ -197,7 +197,7 @@ class TableDAO : TableDependencyService, TableService {
     private fun processNotPartitionedTable(
         table: TableModel,
         requestTime: LocalDateTime,
-        properties: Properties = Properties()
+        properties: Map<String, Any> = emptyMap()
     ): TablePartitionResultSet {
         assert(!table.partitioned) { "Table can't be partitioned for not-partitioned processing" }
         val singleResult =
@@ -266,15 +266,15 @@ class TableDAO : TableDependencyService, TableService {
                 if (!depPartSpec.partitionMappings.isNullOrEmpty())
                     mappings = depPartSpec.partitionMappings.mapValues {
                         val value = it.value
-                        var propValue = value
+                        var propValue:Any? = value
                         if (value is String && value.startsWith("\$") && value.endsWith("\$")) {
                             val propName = value.substring(1, value.length - 1)
-                            propValue = properties.getProperty(propName)
+                            propValue = properties[propName]
                             if (propValue == null) {
                                 throw IllegalArgumentException("Property $propName not found in properties")
                             }
                         }
-                        propValue
+                        propValue!!
                     }
 
                 depLatestParts = partService.getLatestPartitions(
@@ -374,7 +374,7 @@ class TableDAO : TableDependencyService, TableService {
     override fun processingPartitions(
         table: TableModel,
         requestedPartitionTs: List<LocalDateTime>,
-        properties: Properties
+        properties: Map<String, Any>
     ): TablePartitionResultSet? {
         if (!table!!.partitioned) {
             return processNotPartitionedTable(table, requestedPartitionTs!![0], properties)

@@ -6,6 +6,7 @@ import java.time.LocalDateTime
 import org.apache.spark.sql.DataFrame
 
 import java.util.Properties
+import scala.collection.mutable
 
 // Trait that describes how to read and write dataframes to and from the datalake/datawarehouse
 trait FrameManager {
@@ -16,7 +17,7 @@ trait FrameManager {
       startTS: Option[LocalDateTime] = Option.empty,
       endTSExcl: Option[LocalDateTime] = Option.empty,
       dataFrameReaderOptions: Option[Map[String, String]] = Option.empty,
-      properties: Properties = new Properties()
+      properties: mutable.Map[String, AnyRef] = mutable.HashMap()
   ): DataFrame
 
   def loadDependencyDataFrame(
