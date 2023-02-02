@@ -77,7 +77,10 @@ object Environment {
   ): Environment = {
     val configReader = new YamlConfigReader()
     val metaInfo = configReader.readEnv(envConfigLoc)
+    logger.info("Read properties from file: " + jobProperties)
     val properties = configReader.readProperties(jobProperties);
+    logger.info("Run Dag with properties: " + jobProperties)
+
     new Environment(
       MetaStore.build(metaInfo),
       frameManager: FrameManager,
