@@ -103,7 +103,7 @@ class TableWrapper(
     table: TableModel,
     userFunc: TaskInput => TaskOutput,
     frameManager: FrameManager,
-    properties: Properties = null
+    properties: Properties = new Properties()
 ) {
   val wrappedTable: TableModel = table
   val tableDuration: Duration = if (table.getPartitioned) {

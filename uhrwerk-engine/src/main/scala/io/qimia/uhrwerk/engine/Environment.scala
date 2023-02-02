@@ -271,7 +271,13 @@ class Environment(
       })
     }
     val ident = getTableIdent(storedTable)
-    val wrapper = new TableWrapper(store, storedTable, userFunc, frameManager)
+    val wrapper = new TableWrapper(
+      store,
+      storedTable,
+      userFunc,
+      frameManager,
+      this.properties
+    )
     tables(ident) = wrapper
     Option(wrapper)
   }
