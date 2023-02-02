@@ -260,7 +260,7 @@ public class YamlConfigReader {
     }
 
     try {
-      objectMapper().readValue(stream, Map.class);
+     props = objectMapper().readValue(stream, Map.class);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

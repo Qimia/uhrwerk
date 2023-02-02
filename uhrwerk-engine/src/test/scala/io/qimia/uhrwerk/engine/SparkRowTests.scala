@@ -1,7 +1,9 @@
 package io.qimia.uhrwerk.engine
 
+import io.qimia.uhrwerk.config.builders.YamlConfigReader
 import org.apache.spark.sql.SparkSession
 import org.scalatest.flatspec.AnyFlatSpec
+
 import scala.collection.JavaConverters._
 
 class SparkRowTests extends AnyFlatSpec {
@@ -27,6 +29,14 @@ class SparkRowTests extends AnyFlatSpec {
     assert(mpList.size == 3)
     println(mpList.asJava)
 
+  }
+
+  "Reading YAML props" should "work" in{
+    val path =getClass.getResource("/properties/test_properties.yml").getPath
+    println(path)
+    val map = new YamlConfigReader().readProperties(path)
+    println(map)
+    
   }
 
 }

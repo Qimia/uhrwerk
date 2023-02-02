@@ -162,7 +162,7 @@ class DagTaskBuilder(environment: Environment) {
                   propValue = opt.get
                 else
                   throw new IllegalArgumentException(
-                    s"Property $propName not found in properties"
+                    s"Property $propName not found in properties ${properties.keys.mkString(", ")}"
                   )
               }
             }
