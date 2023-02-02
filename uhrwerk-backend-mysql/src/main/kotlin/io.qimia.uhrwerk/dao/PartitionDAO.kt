@@ -24,7 +24,7 @@ class PartitionDAO : PartitionService {
             if (oldPartition != null)
                 result.oldResult = oldPartition
 
-            if (!overwrite) {
+            if (!overwrite && false) {
                 if (oldPartition != null) {
                     if (oldPartition != partition) {
                         result.message =
