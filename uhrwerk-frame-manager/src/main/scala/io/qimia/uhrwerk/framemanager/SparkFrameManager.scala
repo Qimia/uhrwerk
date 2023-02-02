@@ -194,7 +194,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
               ).head
             )
           val partFilters = dependencyResult.succeeded
-            .filter(_.getPartitionValues != null).flatMap(_.getPartitionValues.asScala)
+            .filter(_.getPartitionValues != null)
+            .flatMap(_.getPartitionValues.asScala)
             .groupBy(_._1)
             .mapValues(_.map(_._2).distinct)
           if (partFilters.nonEmpty)
@@ -539,9 +540,14 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         }
 
       val writerWithPartitioning =
-        if (!isJDBC && !isRedshift && dfContainsTimeColumns) {
-          writerWithOptions
-            .partitionBy(timeColumns ++ partitionBy: _*)
+        if (!isJDBC && !isRedshift) {
+          if (dfContainsTimeColumns)
+            writerWithOptions
+              .partitionBy(timeColumns ++ partitionBy: _*)
+          else if (partitionBy.nonEmpty)
+            writerWithOptions.partitionBy(partitionBy: _*)
+          else
+            writerWithOptions
         } else {
           writerWithOptions
         }
