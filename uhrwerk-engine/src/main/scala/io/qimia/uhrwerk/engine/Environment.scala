@@ -79,7 +79,7 @@ object Environment {
     val metaInfo = configReader.readEnv(envConfigLoc)
     logger.info("Read properties from file: " + jobProperties)
     val properties = configReader.readProperties(jobProperties);
-    logger.info("Run Dag with properties: " + jobProperties)
+    logger.info("Run Dag with properties: " + properties)
 
     new Environment(
       MetaStore.build(metaInfo),
