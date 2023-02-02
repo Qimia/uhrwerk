@@ -1,12 +1,23 @@
 package io.qimia.uhrwerk.engine
 
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
-import io.qimia.uhrwerk.common.metastore.dependency.{TablePartitionResult, TablePartitionResultSet}
-import io.qimia.uhrwerk.common.metastore.model.{Partition, PartitionUnit, TableModel}
+import io.qimia.uhrwerk.common.metastore.dependency.{
+  TablePartitionResult,
+  TablePartitionResultSet
+}
+import io.qimia.uhrwerk.common.metastore.model.{
+  Partition,
+  PartitionUnit,
+  TableModel
+}
 import io.qimia.uhrwerk.common.utils.TemplateUtils
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent}
 import io.qimia.uhrwerk.engine.TableWrapper.reportProcessingPartitions
-import io.qimia.uhrwerk.engine.tools.{DependencyHelper, SourceHelper, TimeHelper}
+import io.qimia.uhrwerk.engine.tools.{
+  DependencyHelper,
+  SourceHelper,
+  TimeHelper
+}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.Logger
 import org.apache.spark.sql.DataFrame
@@ -402,8 +413,22 @@ class TableWrapper(
               })
             })
           }
+          logger.info(s"Saving ${partitions.length} partitions")
+          for (partition <- partitions) {
+            logger.info(s"Saving partition $partition")
+          }
 
-          metastore.partitionService.save(partitions.asJava, overwrite)
+          val results =
+            metastore.partitionService.save(partitions.asJava, overwrite)
+
+          logger.info(
+            s"Saved ${results.asScala.filter(_.isSuccess).size} partitions successfully"
+          )
+          results.asScala
+            .filter(_.isSuccess)
+            .foreach(partition => {
+              logger.error(s"Saved Partition: $partition")
+            })
 
           partitions
             .zip(partitionGroup)
