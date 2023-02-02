@@ -297,7 +297,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         }
         val query: String =
           JDBCTools.createSelectQuery(
-            source.getSelectQuery,
+            selectQuery,
             startTS,
             endTSExcl,
             Option(
