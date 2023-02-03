@@ -502,6 +502,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           (path, frame)
         }
 
+      //FIXME: SaveMode.Overwrite is used for now, but it should be configurable
       val writer = df.write.mode(SaveMode.Overwrite).format(target.getFormat)
       val (writerWithOptions: DataFrameWriter[Row], partitionBy: List[String]) =
         if (dataFrameWriterOptions.isDefined) {

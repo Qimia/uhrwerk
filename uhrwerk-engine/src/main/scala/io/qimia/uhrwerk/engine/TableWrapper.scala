@@ -1,19 +1,29 @@
 package io.qimia.uhrwerk.engine
 
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
-import io.qimia.uhrwerk.common.metastore.dependency.{TablePartitionResult, TablePartitionResultSet}
-import io.qimia.uhrwerk.common.metastore.model.{Partition, PartitionUnit, TableModel}
+import io.qimia.uhrwerk.common.metastore.dependency.{
+  TablePartitionResult,
+  TablePartitionResultSet
+}
+import io.qimia.uhrwerk.common.metastore.model.{
+  Partition,
+  PartitionUnit,
+  TableModel
+}
 import io.qimia.uhrwerk.common.utils.TemplateUtils
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent}
 import io.qimia.uhrwerk.engine.TableWrapper.reportProcessingPartitions
-import io.qimia.uhrwerk.engine.tools.{DependencyHelper, SourceHelper, TimeHelper}
+import io.qimia.uhrwerk.engine.tools.{
+  DependencyHelper,
+  SourceHelper,
+  TimeHelper
+}
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.Logger
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
 
 import java.time.{Duration, LocalDateTime}
-import java.util.Properties
 import java.util.concurrent.Executors
 import scala.collection.JavaConverters._
 import scala.collection.{immutable, mutable}
@@ -184,12 +194,20 @@ class TableWrapper(
       }
 
     val inputMapLoaded = (loadedInputDepDFs ::: loadedInputSourceDFs).toMap
+    //FIXME: Cache all Inputs here
+
+    val inputCached = inputMapLoaded.mapValues(df => {
+      df.cache()
+      df
+    })
+
     val taskInput = TaskInput(inputMapLoaded, notLoadedInputSources.toMap)
+
+    var frame: DataFrame = null
 
     val success =
       try {
 
-        var frame: DataFrame = null
         var taskOutput: TaskOutput = null
 
         if (
@@ -216,11 +234,15 @@ class TableWrapper(
             .asInstanceOf[SparkFrameManager]
             .getSpark
             .sql(renderedQuery)
+
           taskOutput = TaskOutput(frame)
         } else {
           taskOutput = userFunc(taskInput)
           frame = taskOutput.frame
         }
+
+        //TODO: cache frame after sql query is applied
+        frame.cache()
 
         if (
           !frame.isEmpty &&
@@ -277,11 +299,17 @@ class TableWrapper(
               else
                 frame.select(partCols.head)
 
+            //FIXME: cache selectDf
+
+            selectDf.cache()
+
             val partValues = selectDf
               .distinct()
+              .coalesce(1)
               .collect()
               .map(row => row.getValuesMap[Any](partCols.toSeq))
               .toList
+            selectDf.unpersist(blocking = false)
             Some(partValues)
           } else {
             Some(List.empty)
@@ -295,6 +323,12 @@ class TableWrapper(
           logger.error(s"${table.getName}: Task failed: " + startTs.toString)
           e.printStackTrace()
           None
+      } finally {
+        if (frame != null)
+          frame.unpersist(blocking = false)
+
+        if (inputCached != null && inputCached.nonEmpty)
+          inputCached.foreach(_._2.unpersist(blocking = false))
       }
     logger.info(s"${table.getName}: Single run done, success = $success")
     // TODO: Proper logging here
