@@ -12,6 +12,41 @@ import org.apache.spark.sql.types._
 import scala.collection.JavaConverters._
 
 class SparkRowTests extends AnyFlatSpec {
+
+  "Spark groupBy" should "work faster than dictinct" in {
+    val spark: SparkSession = SparkSession
+      .builder()
+      .master("local[1]")
+      .appName("SparkGroupByDistinctTests")
+      .getOrCreate()
+
+    val data =
+      Seq(
+        ("James", "Sales", "NY", 90000, 34, 10000),
+        ("Michael", "Sales", "NY", 86000, 56, 20000),
+        ("Robert", "Sales", "CA", 81000, 30, 23000),
+        ("Maria", "Finance", "CA", 90000, 24, 23000),
+        ("Raman", "Finance", "CA", 99000, 40, 24000),
+        ("Scott", "Finance", "NY", 83000, 36, 19000),
+        ("Jen", "Finance", "NY", 79000, 53, 15000),
+        ("Jeff", "Marketing", "CA", 80000, 25, 18000),
+        ("Kumar", "Marketing", "NY", 91000, 50, 21000)
+      )
+
+    val columns =
+      Seq("employee_name", "department", "state", "salary", "age", "bonus")
+    val rdd = spark.sparkContext.parallelize(data)
+    val df = spark.createDataFrame(rdd).toDF(columns: _*)
+
+    val states = df.groupBy("state").count().drop("count")
+      .collect()
+      .map(row => row.getValuesMap[Any](Seq("state")))
+      .toList
+
+    println(states)
+
+  }
+
   "Spark Row to map" should "work" in {
 
     val spark: SparkSession = SparkSession
@@ -51,7 +86,10 @@ class SparkRowTests extends AnyFlatSpec {
     val rdd = spark.sparkContext.parallelize(data)
     val df = spark.createDataFrame(rdd).toDF(columns: _*)
     val df1 = df.filter($"language" === "Go")
+    df1.select($"language").distinct().collect()
     df1.cache()
+
+    df1.write.json("test.json")
 
     assert(df1.isEmpty)
     df1.explain(true)
@@ -69,7 +107,6 @@ class SparkRowTests extends AnyFlatSpec {
     val map = new YamlConfigReader().readProperties(path)
     RepoUtils.toJson(map)
     println(RepoUtils.toJson(map))
-
   }
 
 }

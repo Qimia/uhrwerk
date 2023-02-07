@@ -194,13 +194,6 @@ class TableWrapper(
       }
 
     val inputMapLoaded = (loadedInputDepDFs ::: loadedInputSourceDFs).toMap
-    //FIXME: Cache all Inputs here
-
-    val inputCached = inputMapLoaded.mapValues(df => {
-      df.cache()
-      df
-    })
-
     val taskInput = TaskInput(inputMapLoaded, notLoadedInputSources.toMap)
 
     var frame: DataFrame = null
@@ -292,24 +285,22 @@ class TableWrapper(
             table.getPartitionColumns.nonEmpty
           ) {
             val partCols = table.getPartitionColumns.map(_.trim)
-            val selectDf =
+
+            val groupedDf =
               if (partCols.length > 1)
                 frame
-                  .select(partCols.head, partCols.tail: _*)
+                  .groupBy(partCols.head, partCols.tail: _*)
               else
-                frame.select(partCols.head)
+                frame.groupBy(partCols.head)
 
-            //FIXME: cache selectDf
 
-            selectDf.cache()
-
-            val partValues = selectDf
-              .distinct()
-              .coalesce(1)
+            val cols = partCols.toSeq
+            val partValues = groupedDf
+              .count()
+              .drop("count")
               .collect()
-              .map(row => row.getValuesMap[Any](partCols.toSeq))
+              .map(row => row.getValuesMap[Any](cols))
               .toList
-            selectDf.unpersist(blocking = false)
             Some(partValues)
           } else {
             Some(List.empty)
@@ -324,11 +315,9 @@ class TableWrapper(
           e.printStackTrace()
           None
       } finally {
-        if (frame != null)
+        if (frame != null) {
           frame.unpersist(blocking = false)
-
-        if (inputCached != null && inputCached.nonEmpty)
-          inputCached.foreach(_._2.unpersist(blocking = false))
+        }
       }
     logger.info(s"${table.getName}: Single run done, success = $success")
     // TODO: Proper logging here
