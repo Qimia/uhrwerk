@@ -142,8 +142,8 @@ class DagTaskBuilder(environment: Environment) {
       properties: mutable.Map[String, AnyRef]
   ): List[Partition] = {
     if (
-      depTable.getPartitionColumns != null
-      && !depTable.getPartitionColumns.isEmpty
+      depTable.getPartitionColumns() != null
+      && !depTable.getPartitionColumns().isEmpty
     ) {
       logger.info(
         s"### Dependency-Table:$depTable"
@@ -152,8 +152,8 @@ class DagTaskBuilder(environment: Environment) {
         s"### Dependency:$dep"
       )
       if (
-        dep.getPartitionMappings != null
-        || !dep.getPartitionMappings.isEmpty
+        dep.getPartitionMappings() != null
+        || !dep.getPartitionMappings().isEmpty
       ) {
         val mappings = dep.getPartitionMappings.asScala
           .map(mapping => {
