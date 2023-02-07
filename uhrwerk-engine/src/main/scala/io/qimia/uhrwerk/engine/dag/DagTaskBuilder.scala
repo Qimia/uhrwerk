@@ -7,13 +7,13 @@ import io.qimia.uhrwerk.common.metastore.model.{
 }
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.{Environment, TableWrapper}
+import org.apache.log4j.Logger
 import org.jgrapht.graph.{DefaultDirectedGraph, DefaultEdge}
 
 import java.time.LocalDateTime
-import java.util.Properties
+import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.collection.JavaConverters._
 
 object DagTaskBuilder {
 
@@ -44,6 +44,8 @@ object DagTaskBuilder {
 }
 
 class DagTaskBuilder(environment: Environment) {
+
+  private val logger: Logger = Logger.getLogger(this.getClass)
 
   /** Create a queue of table + partition-list which need to be present for filling a given output table for a
     * particular time-range.
@@ -143,6 +145,12 @@ class DagTaskBuilder(environment: Environment) {
       depTable.getPartitionColumns != null
       && !depTable.getPartitionColumns.isEmpty
     ) {
+      logger.info(
+        s"### Dependency-Table:$depTable"
+      )
+      logger.info(
+        s"### Dependency:$dep"
+      )
       if (
         dep.getPartitionMappings != null
         || !dep.getPartitionMappings.isEmpty

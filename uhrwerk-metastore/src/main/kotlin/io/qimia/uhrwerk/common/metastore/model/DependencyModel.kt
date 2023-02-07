@@ -79,7 +79,7 @@ data class DependencyModel(
     }
 
     override fun toString(): String {
-        return "DependencyModel(id=$id, tableId=$tableId, dependencyTargetId=$dependencyTargetId, dependencyTableId=$dependencyTableId, area=$area, vertical=$vertical, tableName=$tableName, viewName=$viewName, partitionMappings=$partitionMappings, dependencyVariables=${dependencyVariables?.contentToString()}, format=$format, version=$version, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
+        return "DependencyModel(id=$id, tableId=$tableId, dependencyTargetId=$dependencyTargetId, dependencyTableId=$dependencyTableId, area=$area, vertical=$vertical, tableName=$tableName, viewName=$viewName, partitionMappings=$partitionMappings, dependencyVariables=${dependencyVariables?.contentToString()}, format=$format, version=$version)"
     }
 
 

@@ -4,7 +4,6 @@ import io.qimia.uhrwerk.config.builders.YamlConfigReader
 import io.qimia.uhrwerk.repo.RepoUtils
 import org.apache.spark.sql.SparkSession
 import org.scalatest.flatspec.AnyFlatSpec
-
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.execution.debug._
 import org.apache.spark.sql.types._
@@ -38,7 +37,7 @@ class SparkRowTests extends AnyFlatSpec {
     val rdd = spark.sparkContext.parallelize(data)
     val df = spark.createDataFrame(rdd).toDF(columns: _*)
 
-    val states = df.groupBy("state").count().drop("count")
+    val states = df.distinct().groupBy("state").count().drop("count")
       .collect()
       .map(row => row.getValuesMap[Any](Seq("state")))
       .toList
