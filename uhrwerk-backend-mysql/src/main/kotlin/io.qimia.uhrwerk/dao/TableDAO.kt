@@ -7,6 +7,7 @@ import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResult
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResultSet
 import io.qimia.uhrwerk.common.metastore.model.*
 import io.qimia.uhrwerk.common.model.*
+import io.qimia.uhrwerk.repo.RepoUtils
 import io.qimia.uhrwerk.repo.TablePartition
 import io.qimia.uhrwerk.repo.TablePartitionRepo
 import io.qimia.uhrwerk.repo.TableRepo
@@ -265,7 +266,7 @@ class TableDAO : TableDependencyService, TableService {
             } else {
                 var mappings = mapPartitionMappings(depPartSpec.partitionMappings, properties)
 
-                logger.info("Get Latest Partitions with the Mappings: $mappings")
+                logger.info("Get Latest Partitions with the Mappings: ${RepoUtils.toJson(mappings)}")
 
                 depLatestParts = partService.getLatestPartitions(
                     depPartSpec.targetId,
