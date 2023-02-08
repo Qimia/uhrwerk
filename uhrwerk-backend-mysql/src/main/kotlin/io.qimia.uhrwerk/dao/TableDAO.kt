@@ -246,6 +246,7 @@ class TableDAO : TableDependencyService, TableService {
 
         var singleSuccess = true
         for (depPartSpec in depsPartSpecs) {
+            logger.info("*** Resolving dependencies for: $depPartSpec")
             assert(depPartSpec.transformType == PartitionTransformType.NONE) { "Can't have partitioned dependencies for tables without partitioning" }
 
             val dependencyResult =
@@ -262,20 +263,9 @@ class TableDAO : TableDependencyService, TableService {
                     depLatestParts = listOf(partition)
                 }
             } else {
-                var mappings = mapOf<String, Any>()
-                if (!depPartSpec.partitionMappings.isNullOrEmpty())
-                    mappings = depPartSpec.partitionMappings.mapValues {
-                        val value = it.value
-                        var propValue:Any? = value
-                        if (value is String && value.startsWith("\$") && value.endsWith("\$")) {
-                            val propName = value.substring(1, value.length - 1)
-                            propValue = properties[propName]
-                            if (propValue == null) {
-                                throw IllegalArgumentException("Property $propName not found in properties")
-                            }
-                        }
-                        propValue!!
-                    }
+                var mappings = mapPartitionMappings(depPartSpec.partitionMappings, properties)
+
+                logger.info("Get Latest Partitions with the Mappings: $mappings")
 
                 depLatestParts = partService.getLatestPartitions(
                     depPartSpec.targetId,
@@ -308,6 +298,29 @@ class TableDAO : TableDependencyService, TableService {
             resultSet.failedTs = arrayOf(requestTime)
         }
         return resultSet
+    }
+
+    fun mapPartitionMappings(
+        partitionMappings: Map<String, Any>?,
+        properties: Map<String, Any>
+    ): MutableMap<String, Any> {
+        var mappings = mutableMapOf<String, Any>()
+        if (!partitionMappings.isNullOrEmpty()) {
+            partitionMappings.forEach {
+                val key = it.key
+                val value = it.value
+                var propValue: Any? = value
+                if (value is String && value.startsWith("\$") && value.endsWith("\$")) {
+                    val propName = value.substring(1, value.length - 1)
+                    propValue = properties[propName]
+                    if (propValue == null) {
+                        throw IllegalArgumentException("Property $propName not found in properties")
+                    }
+                }
+                mappings += key to propValue!!
+            }
+        }
+        return mappings
     }
 
     /**

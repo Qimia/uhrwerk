@@ -21,6 +21,9 @@ class RepoUtilsTest {
 
         val json2 = toJson(array)
         assertThat(json2).isEqualTo(arrayJson)
+
+        val json3 = toJson(mapOf<String, Any>())
+        assertThat(json3).isEqualTo("{}")
     }
 
     @Test

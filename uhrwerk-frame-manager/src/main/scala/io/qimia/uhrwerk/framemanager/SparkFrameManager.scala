@@ -14,7 +14,6 @@ import org.apache.spark.sql.functions.{col, udf}
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
-import java.util.Properties
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 
