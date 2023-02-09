@@ -5,7 +5,6 @@ import io.qimia.uhrwerk.common.metastore.model.{
   Partition,
   TableModel
 }
-import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.{Environment, TableWrapper}
 import org.apache.log4j.Logger
 import org.jgrapht.graph.{DefaultDirectedGraph, DefaultEdge}
@@ -41,11 +40,32 @@ object DagTaskBuilder {
       tasks
     }
   }
+  def getExcludeTables(
+      properties: mutable.Map[String, AnyRef]
+  ): mutable.SortedSet[String] = {
+    val res = mutable.SortedSet[String]()
+    if (properties != null) {
+      val excludeTables = properties.get("exclude_tables")
+      if (excludeTables.isDefined) {
+        val excludes = excludeTables.get
+        if (excludes.isInstanceOf[java.util.ArrayList[String]]) {
+          val excludesArray =
+            excludes.asInstanceOf[java.util.ArrayList[String]].asScala
+          if (excludesArray.nonEmpty)
+            excludesArray.foreach(exclude => res.add(exclude.trim))
+        }
+      }
+    }
+    res
+  }
+
 }
 
 class DagTaskBuilder(environment: Environment) {
 
   private val logger: Logger = Logger.getLogger(this.getClass)
+  private val excludeTables: mutable.SortedSet[String] =
+    DagTaskBuilder.getExcludeTables(environment.jobProperties)
 
   /** Create a queue of table + partition-list which need to be present for filling a given output table for a
     * particular time-range.
@@ -75,16 +95,23 @@ class DagTaskBuilder(environment: Environment) {
       )
         aTable.wrappedTable.getDependencies
           .foreach(dependency => {
-            val depTable =
-              environment.getTableById(dependency.getDependencyTableId).get
-            val partitions = lastPartitions(
-              depTable.wrappedTable,
-              dependency,
-              environment.jobProperties
-            )
-            val depPair = (depTable, partitions.nonEmpty)
-            buildGraph(depPair, dag)
-            dag.addEdge(depPair, tPair)
+            val depRef =
+              s"${dependency.getArea}.${dependency.getVertical}.${dependency.getTableName}:${dependency.getVersion}"
+
+            if (!this.excludeTables.contains(depRef)) {
+              val depTable =
+                environment.getTableById(dependency.getDependencyTableId).get
+
+              val partitions = lastPartitions(
+                depTable.wrappedTable,
+                dependency,
+                environment.jobProperties
+              )
+
+              val depPair = (depTable, partitions.nonEmpty)
+              buildGraph(depPair, dag)
+              dag.addEdge(depPair, tPair)
+            }
           })
     }
 

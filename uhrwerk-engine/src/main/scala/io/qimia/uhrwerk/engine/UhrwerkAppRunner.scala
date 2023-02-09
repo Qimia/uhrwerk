@@ -114,7 +114,7 @@ object UhrwerkAppRunner {
       parallelRun: Int,
       overwrite: Boolean,
       jobProperties: String = null
-         ): Unit = {
+  ): Unit = {
     val frameManager = new SparkFrameManager(sparkSession)
     val uhrwerkEnvironment =
       Environment.build(environmentConfig, frameManager, jobProperties)
@@ -162,7 +162,7 @@ object UhrwerkAppRunner {
         s"##### RUNNING DAG WITH TARGET TABLE ${identToString(tableToRun.wrappedTable)} #####"
       )
 
-      if (taskList.size > 1) {
+      if (taskList.size >= 1) {
         logger.info(
           s"##### PROCESSING ORDER BEGIN #####"
         )

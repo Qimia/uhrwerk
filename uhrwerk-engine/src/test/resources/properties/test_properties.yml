@@ -1,2 +1,5 @@
 some_variable: "some_value"
 some_variable_int: 10000
+exclude_tables:
+  - "staging.some_domain.table1:1.0"
+  - "processing.some_domain.table2:1.0"

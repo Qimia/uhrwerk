@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.engine
 
 import io.qimia.uhrwerk.config.builders.YamlConfigReader
+import io.qimia.uhrwerk.engine.dag.DagTaskBuilder
 import io.qimia.uhrwerk.repo.RepoUtils
 import org.apache.spark.sql.SparkSession
 import org.scalatest.flatspec.AnyFlatSpec
@@ -37,7 +38,11 @@ class SparkRowTests extends AnyFlatSpec {
     val rdd = spark.sparkContext.parallelize(data)
     val df = spark.createDataFrame(rdd).toDF(columns: _*)
 
-    val states = df.distinct().groupBy("state").count().drop("count")
+    val states = df
+      .distinct()
+      .groupBy("state")
+      .count()
+      .drop("count")
       .collect()
       .map(row => row.getValuesMap[Any](Seq("state")))
       .toList
@@ -106,6 +111,11 @@ class SparkRowTests extends AnyFlatSpec {
     val map = new YamlConfigReader().readProperties(path)
     RepoUtils.toJson(map)
     println(RepoUtils.toJson(map))
+
+    val excludes = DagTaskBuilder.getExcludeTables(
+      map.asScala
+    )
+    println(excludes)
   }
 
 }
