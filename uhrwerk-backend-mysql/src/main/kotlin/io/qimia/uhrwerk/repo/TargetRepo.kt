@@ -74,7 +74,7 @@ class TargetRepo : BaseRepo<TargetModel>() {
 
 
         private const val SELECT_BY_TABLE_ID =
-            "SELECT id, table_id, connection_id, format, table_name, deactivated_ts FROM TARGET WHERE table_id = ? AND deactivated_ts IS NULL"
+            "SELECT id, table_id, connection_id, format, table_name, deactivated_ts FROM TARGET WHERE table_id = ?"
 
         private val SELECT_BY_TABLE_ID_FORMAT = """
             SELECT tar.id,
@@ -87,8 +87,6 @@ class TargetRepo : BaseRepo<TargetModel>() {
                 JOIN TABLE_ tab ON tab.id = tar.table_id
             WHERE tab.id = ?
               AND tar.format = ?
-              AND tab.deactivated_ts IS NULL
-              AND tar.deactivated_ts IS NULL
         """.trimIndent()
 
 

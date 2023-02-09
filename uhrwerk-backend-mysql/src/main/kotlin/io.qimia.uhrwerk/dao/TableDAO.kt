@@ -132,6 +132,29 @@ class TableDAO : TableDependencyService, TableService {
         return table
     }
 
+    override fun getById(
+        tableId: Long
+    ): TableModel? {
+        val table = tableRepo.getById(tableId)
+        if (table != null) {
+            val sources = sourceService.getSourcesByTableId(table.id!!)
+            if (sources != null) {
+                table.sources = sources.toTypedArray()
+            }
+
+            val targets = targetService.getTableTargets(table.id!!)
+            if (targets != null) {
+                table.targets = targets.toTypedArray()
+            }
+
+            val dependencies = dependencyService.getByTableId(table.id!!)
+            if (dependencies != null) {
+                table.dependencies = dependencies.toTypedArray()
+            }
+        }
+        return table
+    }
+
     private fun saveTableTargets(
         tableId: Long,
         targets: Array<TargetModel>?,
@@ -205,21 +228,6 @@ class TableDAO : TableDependencyService, TableService {
             TablePartitionResult()
         val resultSet =
             TablePartitionResultSet()
-        // FIXME checks only the first target of the table (see FIXME normal processingPartitions)
-        val processedPartition = partService.getLatestPartition(table.targets!![0].id!!)
-        if (processedPartition != null && false) {
-            // If partition found -> check if it has been processed in the last 1 minute
-            val requestDiff = Duration.between(processedPartition.partitionTs, requestTime)
-            if (requestDiff.toSeconds() < 60L) {
-                // Warning !! (Does **not** add dependency and resolution info)
-                singleResult.isProcessed = true
-                singleResult.partitionTs = processedPartition.partitionTs
-                resultSet.processed = arrayOf(singleResult)
-                resultSet.processedTs = arrayOf(processedPartition.partitionTs!!)
-                return resultSet
-            }
-            // If not last-1-minute than continue as if none were found
-        }
         singleResult.isProcessed = false
 
         // If there are no dependencies then this table is resolved and ready to run

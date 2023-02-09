@@ -58,57 +58,43 @@ class DagTaskBuilder(environment: Environment) {
   def buildTaskListFromTable(outTable: TableWrapper): List[DagTask] = {
     val callTime = LocalDateTime.now()
 
-    val dag = new DefaultDirectedGraph[(TableIdent, Boolean), DefaultEdge](
+    val dag = new DefaultDirectedGraph[(TableWrapper, Boolean), DefaultEdge](
       classOf[DefaultEdge]
     )
 
     def buildGraph(
-        tPair: (TableIdent, Boolean),
-        dag: DefaultDirectedGraph[(TableIdent, Boolean), DefaultEdge]
+        tPair: (TableWrapper, Boolean),
+        dag: DefaultDirectedGraph[(TableWrapper, Boolean), DefaultEdge]
     ) {
       dag.addVertex(tPair)
-      val tIdent = tPair._1
-      val aTable = environment.getTable(tIdent).get
+      val aTableId = tPair._1.wrappedTable.getId
+      val aTable = environment.getTableById(aTableId).get
       if (
         aTable.wrappedTable.getDependencies != null
         && !aTable.wrappedTable.getDependencies.isEmpty
       )
         aTable.wrappedTable.getDependencies
           .foreach(dependency => {
-            val depIdent =
-              new TableIdent(
-                dependency.getArea,
-                dependency.getVertical,
-                dependency.getTableName,
-                dependency.getVersion
-              )
-            val depTable = environment.getTable(depIdent).get
+            val depTable =
+              environment.getTableById(dependency.getDependencyTableId).get
             val partitions = lastPartitions(
               depTable.wrappedTable,
               dependency,
               environment.jobProperties
             )
-            val depPair = (depIdent, partitions.nonEmpty)
+            val depPair = (depTable, partitions.nonEmpty)
             buildGraph(depPair, dag)
             dag.addEdge(depPair, tPair)
           })
     }
 
-    val outWrappedTable = outTable.wrappedTable
-    val outIdent = new TableIdent(
-      outWrappedTable.getArea,
-      outWrappedTable.getVertical,
-      outWrappedTable.getName,
-      outWrappedTable.getVersion
-    )
-
-    buildGraph((outIdent, false), dag)
+    buildGraph((outTable, false), dag)
 
     def pTraverse(
-        node: (TableIdent, Boolean),
-        dag: DefaultDirectedGraph[(TableIdent, Boolean), DefaultEdge],
-        nDag: mutable.LinkedHashSet[(TableIdent, Boolean)]
-    ): (TableIdent, Boolean) = {
+        node: (TableWrapper, Boolean),
+        dag: DefaultDirectedGraph[(TableWrapper, Boolean), DefaultEdge],
+        nDag: mutable.LinkedHashSet[(TableWrapper, Boolean)]
+    ): (TableWrapper, Boolean) = {
       val preNodes = dag.incomingEdgesOf(node).asScala.map(dag.getEdgeSource)
       if (preNodes.isEmpty) {
         nDag.add(node)
@@ -121,15 +107,15 @@ class DagTaskBuilder(environment: Environment) {
         nwNode
       }
     }
-    val nDag = mutable.LinkedHashSet[(TableIdent, Boolean)]()
+    val nDag = mutable.LinkedHashSet[(TableWrapper, Boolean)]()
 
-    pTraverse((outIdent, false), dag, nDag)
+    pTraverse((outTable, false), dag, nDag)
 
     nDag
       .filter(!_._2)
       .map(node =>
         DagTask(
-          environment.getTable(node._1).get,
+          node._1,
           List(callTime)
         )
       )
@@ -178,7 +164,7 @@ class DagTaskBuilder(environment: Environment) {
           })
           .toMap
         return environment.metaStore.partitionService
-          .getLatestPartitions(depTable.getTargets()(0).getId, mappings.asJava)
+          .getLatestPartitions(dep.getDependencyTargetId, mappings.asJava)
           .asScala
           .toList
       }

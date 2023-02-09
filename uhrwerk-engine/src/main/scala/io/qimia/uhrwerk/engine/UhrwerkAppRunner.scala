@@ -1,6 +1,5 @@
 package io.qimia.uhrwerk.engine
 
-import com.amazonaws.services.translate.model.TextTranslationJobProperties
 import io.qimia.uhrwerk.common.metastore.model.{ConnectionModel, TableModel}
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.dag.{DagTaskBuilder, DagTaskDispatcher}
@@ -154,9 +153,7 @@ object UhrwerkAppRunner {
 
     if (dagMode) {
       val dagTaskBuilder = new DagTaskBuilder(environment)
-      val taskList = dagTaskBuilder.buildTaskListFromTable(
-        tableToRun
-      )
+      val taskList = dagTaskBuilder.buildTaskListFromTable(tableToRun)
 
       def identToString(tbl: TableModel) =
         s"${tbl.getArea}.${tbl.getVertical}.${tbl.getName}:${tbl.getVersion}"

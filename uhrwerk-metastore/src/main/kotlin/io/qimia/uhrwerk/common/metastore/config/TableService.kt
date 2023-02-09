@@ -19,4 +19,6 @@ interface TableService {
         table: String,
         version: String
     ): TableModel?
+
+    fun getById(tableId: Long): TableModel?
 }

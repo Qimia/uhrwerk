@@ -35,7 +35,7 @@ object UhrwerkDagBuilder {
     fun table(ref: Reference): TableInfo {
 
         val res = TableInfo(ref)
-        val table = tables.get(ref.area!!, ref.vertical!!, ref.table!!, ref.version!!)
+        val table = tables[ref.area!!, ref.vertical!!, ref.table!!, ref.version!!]
         if (table != null) {
             res.exists = true
             val partition: Partition? = if (!table.targets.isNullOrEmpty()) {
@@ -55,7 +55,7 @@ object UhrwerkDagBuilder {
         dag.addVertex(info)
         val ref = info.ref
         if (info.exists) {
-            val table = tables.get(ref.area!!, ref.vertical!!, ref.table!!, ref.version!!)
+            val table = tables[ref.area!!, ref.vertical!!, ref.table!!, ref.version!!]
             if (!table!!.dependencies.isNullOrEmpty()) {
                 table.dependencies!!.forEach {
                     run {

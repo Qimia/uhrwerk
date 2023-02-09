@@ -67,24 +67,18 @@ internal class DependencyRepoTest {
         val dependency = DependencyRepo().getById(dependency!!.id!!)
         assertThat(dependency).isNotNull()
         assertThat(dependency!!.tableId).isEqualTo(table!!.id)
-        assertThat(dependency!!.dependencyTargetId).isEqualTo(dependencyTarget!!.id)
+        assertThat(dependency.dependencyTargetId).isEqualTo(dependencyTarget!!.id)
     }
 
     @Test
     fun getByTableId() {
         val dependency = DependencyRepo().getByTableId(table!!.id!!)
         assertThat(dependency).isNotNull()
-        assertThat(dependency!!).isNotEmpty()
-        assertThat(dependency!![0].tableId).isEqualTo(table!!.id)
-        assertThat(dependency!![0].dependencyTargetId).isEqualTo(dependencyTarget!!.id)
+        assertThat(dependency).isNotEmpty()
+        assertThat(dependency[0].tableId).isEqualTo(table!!.id)
+        assertThat(dependency[0].dependencyTargetId).isEqualTo(dependencyTarget!!.id)
     }
 
-    @Test
-    fun deleteById() {
-        val effect = DependencyRepo().deleteById(dependency!!.id!!)
-        assertThat(effect).isNotNull()
-        assertThat(effect!!).isEqualTo(1)
-    }
 
     companion object {
         private val LOGGER = LoggerFactory.getLogger(DependencyRepoTest::class.java)

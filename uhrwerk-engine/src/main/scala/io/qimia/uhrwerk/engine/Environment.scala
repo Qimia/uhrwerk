@@ -330,6 +330,24 @@ class Environment(
     res
   }
 
+  def getTableById(tableId: Long): Option[TableWrapper] = {
+    val table = store.tableService.getById(tableId)
+
+    val userFunc = getTableFunctionDynamic(table)
+
+    if (table.getSources != null && !table.getSources.isEmpty) {
+      table.getSources.map(_.getConnection).foreach(this.replaceSecrets)
+    }
+
+    if (table.getTargets != null && !table.getTargets.isEmpty) {
+      table.getTargets.map(_.getConnection).foreach(this.replaceSecrets)
+    }
+
+    val wrapper =
+      new TableWrapper(store, table, userFunc, frameManager, this.properties)
+    Option(wrapper)
+  }
+
   /** Setup a full dag based on a configuration file and userCode class config or convention
     * @param dagConfigLoc location of the full dag configuration file
     */

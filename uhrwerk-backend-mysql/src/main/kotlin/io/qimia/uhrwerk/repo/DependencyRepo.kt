@@ -20,13 +20,6 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
     fun save(dependencies: List<DependencyModel>): List<DependencyModel>? =
         dependencies.mapNotNull { save(it) }
 
-    fun getByHashKey(hashKey: Long): DependencyModel? =
-        super.getByHashKey(
-            SELECT_BY_HASH_KEY, {
-                it.setLong(1, hashKey)
-            }, this::map
-        )
-
     fun getById(id: Long): DependencyModel? =
         super.find(SELECT_BY_ID, {
             it.setLong(1, id)
@@ -42,10 +35,6 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
             it.setLong(1, tableId)
         }
 
-    fun deleteById(id: Long): Int? =
-        super.update(DELETE_BY_ID) {
-            it.setLong(1, id)
-        }
 
     private fun insertParams(
         dependency: DependencyModel,
@@ -136,7 +125,10 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
             WHERE dep.id = ?
         """.trimIndent()
 
-        private val SELECT_BY_HASH_KEY = """
+        private const val DEACTIVATE_BY_TABLE_ID =
+            "UPDATE DEPENDENCY SET deactivated_ts = CURRENT_TIMESTAMP() WHERE table_id = ?"
+
+        private val SELECT_BY_TABLE_ID = """
             SELECT dep.id,
                    dep.table_id,
                    dep.dependency_target_id,
@@ -153,32 +145,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
             FROM DEPENDENCY dep
                      JOIN TABLE_ tab ON dep.dependency_table_id = tab.id
                      JOIN TARGET tar ON dep.dependency_target_id = tar.id
-            WHERE dep.hash_key = ? AND dep.deactivated_ts IS NULL
-        """.trimIndent()
-
-        private const val DELETE_BY_ID = "DELETE FROM DEPENDENCY WHERE id = ?"
-
-        private const val DEACTIVATE_BY_TABLE_ID =
-            "UPDATE DEPENDENCY SET deactivated_ts = CURRENT_TIMESTAMP() WHERE table_id = ?"
-
-        private val SELECT_BY_TABLE_ID = """
-            SELECT dep.id,
-                   dep.table_id,
-                   dep.dependency_target_id,
-                   dep.dependency_table_id,
-                   tab.area,
-                   tab.vertical,
-                   tab.name,
-                   dep.view_name,
-                   dep.partition_mappings,
-                    dep.dependency_variables,
-                   tar.format,
-                   tab.version,
-                   dep.deactivated_ts
-            FROM DEPENDENCY dep
-                     JOIN TABLE_ tab ON dep.dependency_table_id = tab.id
-                     JOIN TARGET tar ON dep.dependency_target_id = tar.id
-            WHERE dep.table_id = ? AND dep.deactivated_ts IS NULL
+            WHERE dep.table_id = ? 
         """.trimIndent()
 
     }
