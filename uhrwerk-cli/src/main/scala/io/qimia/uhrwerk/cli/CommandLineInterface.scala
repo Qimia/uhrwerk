@@ -39,30 +39,6 @@ class CommandLineInterface extends Callable[Int] {
   private var jobProperties = ""
 
   @Option(
-    names = Array("-c", "--cons"),
-    paramLabel = "CON_CONF",
-    description = Array("Paths to the Connection Configuration(s)"),
-    required = false
-  )
-  private var connectionConfAL = new util.ArrayList[String]
-
-  @Option(
-    names = Array("-t", "--tables"),
-    paramLabel = "TAB_CONF",
-    description = Array("Paths to the Table Configuration(s)"),
-    required = false
-  )
-  private var tableConfAL = new util.ArrayList[String]
-
-  @Option(
-    names = Array("-d", "--dag"),
-    paramLabel = "DAG_CONF",
-    description = Array("Path to the Dag Configuration"),
-    required = false
-  )
-  private var dagConfig = ""
-
-  @Option(
     names = Array("-r", "--run"),
     paramLabel = "RUN_TAB",
     description = Array("Table to run as area.vertical.table.version"),
@@ -165,47 +141,21 @@ class CommandLineInterface extends Callable[Int] {
       scala.Option.empty
     }
 
-    if (dagConfig == "") {
-      val connectionConf = connectionConfAL.asScala.toArray
-      val tableConf = tableConfAL.asScala.toArray
-
-      try {
-        UhrwerkAppRunner.runFiles(
-          spark,
-          environmentConfig,
-          connectionConf,
-          tableConf,
-          target,
-          dagMode,
-          parallelRun,
-          overwrite,
-          jobProperties,
-        )
-        0
-      } catch {
-        case e: Exception =>
-          throw new Exception(e)
-          1
-      }
-    } else {
-      try {
-        UhrwerkAppRunner.runDagFile(
-          spark,
-          environmentConfig,
-          dagConfig,
-          Array(target),
-          start,
-          end,
-          dagMode,
-          parallelRun,
-          overwrite
-        )
-        0
-      } catch {
-        case e: Exception =>
-          throw new Exception(e)
-          1
-      }
+    try {
+      UhrwerkAppRunner.runFiles(
+        spark,
+        environmentConfig,
+        target,
+        dagMode,
+        parallelRun,
+        overwrite,
+        jobProperties
+      )
+      0
+    } catch {
+      case e: Exception =>
+        throw new Exception(e)
+        1
     }
   }
 }

@@ -25,25 +25,16 @@ object UhrwerkAppRunner {
   def runFiles(
       sparkSession: SparkSession,
       environmentConfig: String,
-      connectionConfigs: Array[String],
-      tableConfigs: Array[String],
       runTable: TableIdent,
       dagMode: Boolean,
       parallelRun: Int,
       overwrite: Boolean,
       jobProperties: String = null
   ): Unit = {
-    // TODO: Perhaps this needs a separate module (to remove the framemanager dependency)
-    // It should also support other framemanagers once they're implemented
     val frameManager = new SparkFrameManager(sparkSession)
     val uhrwerkEnvironment =
       Environment.build(environmentConfig, frameManager, jobProperties)
-    connectionConfigs.foreach(connPath =>
-      uhrwerkEnvironment.addConnectionFile(connPath, overwrite)
-    )
-    val _ = tableConfigs.foreach(tablePath =>
-      uhrwerkEnvironment.addTableFileConvention(tablePath, overwrite)
-    )
+
     runEnvironment(
       uhrwerkEnvironment,
       runTable,

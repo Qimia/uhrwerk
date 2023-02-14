@@ -37,4 +37,6 @@ interface SourceService {
      */
     @Throws(SQLException::class, NullPointerException::class)
     fun getSourcesByTableId(tableId: Long): List<SourceModel2>?
+
+    fun deactivateByTableKey(tableKey: Long): Int?
 }

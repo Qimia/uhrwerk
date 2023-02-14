@@ -54,7 +54,7 @@ public class YamlConfigReader {
         SourceModel2[] sourceModels = new SourceModel2[sources.length];
         for (int j = 0; j < sources.length; j++) {
           ConnectionModel conn = ModelMapper.toConnection(sources[j].getConnectionName());
-          SourceModel2 source = ModelMapper.toSource(sources[j], tableModel, conn);
+          SourceModel2 source = ModelMapper.toSource(sources[j], conn);
           sourceModels[j] = source;
           if (source.getSourceVariables() != null && source.getSourceVariables().length > 0) {
             tableChildVariables.addAll(Arrays.asList(source.getSourceVariables()));

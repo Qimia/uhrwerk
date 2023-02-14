@@ -29,12 +29,6 @@ class TableRepo() : BaseRepo<TableModel>() {
             it.setLong(1, id)
         }, this::map)
 
-    fun getAllByTargetIds(targetIds: List<Long>): List<TableModel> {
-        val idsStr = targetIds.joinToString()
-        val sql = String.format(SELECT_BY_TARGET_IDS, idsStr)
-        return super.findAll(sql, {}, this::map)
-
-    }
 
     private fun insertParams(table: TableModel, insert: PreparedStatement): PreparedStatement {
         insert.setString(1, table.area)
@@ -71,9 +65,9 @@ class TableRepo() : BaseRepo<TableModel>() {
         return insert
     }
 
-    fun deactivateById(id: Long): Int? =
-        super.update(DEACTIVATE_BY_ID) {
-            it.setLong(1, id)
+    fun deactivateByKey(tableKey: Long): Int? =
+        super.update(DEACTIVATE_BY_KEY) {
+            it.setLong(1, tableKey)
         }
 
     private fun map(res: ResultSet): TableModel {
@@ -173,7 +167,7 @@ class TableRepo() : BaseRepo<TableModel>() {
         """.trimIndent()
 
 
-        private val SELECT_BY_TARGET_IDS = """
+        private val SELECT_BY_TARGET_KEYS = """
             SELECT tab.id,
                    tab.area,
                    tab.vertical,
@@ -195,8 +189,8 @@ class TableRepo() : BaseRepo<TableModel>() {
             WHERE tar.id IN (%s) AND tab.deactivated_ts IS NULL
         """.trimIndent()
 
-        private const val DEACTIVATE_BY_ID =
-            "UPDATE TABLE_ SET deactivated_ts = CURRENT_TIMESTAMP() WHERE id = ?"
+        private const val DEACTIVATE_BY_KEY =
+            "UPDATE TABLE_ SET deactivated_ts = CURRENT_TIMESTAMP() WHERE hash_key = ? AND deactivated_ts IS NULL"
 
 
     }

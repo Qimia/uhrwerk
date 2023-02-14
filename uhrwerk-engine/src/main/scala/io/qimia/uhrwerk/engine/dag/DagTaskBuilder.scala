@@ -87,20 +87,19 @@ class DagTaskBuilder(environment: Environment) {
         dag: DefaultDirectedGraph[(TableWrapper, Boolean), DefaultEdge]
     ) {
       dag.addVertex(tPair)
-      val aTableId = tPair._1.wrappedTable.getId
-      val aTable = environment.getTableById(aTableId).get
+      val aTable = tPair._1.wrappedTable
       if (
-        aTable.wrappedTable.getDependencies != null
-        && !aTable.wrappedTable.getDependencies.isEmpty
+        aTable.getDependencies != null
+        && !aTable.getDependencies.isEmpty
       )
-        aTable.wrappedTable.getDependencies
+        aTable.getDependencies
           .foreach(dependency => {
             val depRef =
               s"${dependency.getArea}.${dependency.getVertical}.${dependency.getTableName}:${dependency.getVersion}"
 
             if (!this.excludeTables.contains(depRef)) {
               val depTable =
-                environment.getTableById(dependency.getDependencyTableId).get
+                environment.getTableByKey(dependency.getDependencyTableKey).get
 
               val partitions = lastPartitions(
                 depTable.wrappedTable,
@@ -191,13 +190,18 @@ class DagTaskBuilder(environment: Environment) {
           })
           .toMap
         return environment.metaStore.partitionService
-          .getLatestPartitions(dep.getDependencyTargetId, mappings.asJava)
+          .getLatestPartitions(dep.getDependencyTargetKey, mappings.asJava)
+          .asScala
+          .toList
+      }else{
+        return environment.metaStore.partitionService
+          .getLatestPartitions(dep.getDependencyTargetKey, Map.empty[String, AnyRef].asJava)
           .asScala
           .toList
       }
     }
     val partition = environment.metaStore.partitionService
-      .getLatestPartition(depTable.getTargets()(0).getId)
+      .getLatestPartition(dep.getDependencyTargetKey)
     if (partition == null) List()
     else
       List(partition)

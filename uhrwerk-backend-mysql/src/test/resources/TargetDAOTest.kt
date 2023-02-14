@@ -1,11 +1,6 @@
-package io.qimia.uhrwerk.dao
-
-import com.google.common.truth.Truth
 import io.qimia.uhrwerk.TestData
-import TestUtils
 import com.google.common.truth.Truth.assertThat
 import io.qimia.uhrwerk.common.metastore.builders.ConnectionModelBuilder
-import io.qimia.uhrwerk.common.metastore.builders.TargetModelBuilder
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
 import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.common.model.*

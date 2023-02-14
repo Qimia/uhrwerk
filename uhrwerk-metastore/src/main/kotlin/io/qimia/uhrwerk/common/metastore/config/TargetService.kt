@@ -12,7 +12,11 @@ interface TargetService {
      * @param overwrite are overwrites allowed or not
      * @return result object showing what is stored, exceptions, if save was successful, and if not, why
      */
-    fun save(targets: List<TargetModel>, tableId: Long, overwrite: Boolean): TargetResult?
+    fun save(
+        targets: List<TargetModel>,
+        tableKey: Long,
+        overwrite: Boolean
+    ): TargetResult?
 
     /**
      * Retrieve a target by target-id
@@ -29,5 +33,5 @@ interface TargetService {
      * @return array of Target model objects
      */
     fun getTableTargets(tableId: Long): List<TargetModel>?
-    fun deactivateByTableId(tableId: Long): Int?
+    fun deactivateByTableKey(tableKey: Long): Int?
 }

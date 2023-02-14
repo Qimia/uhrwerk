@@ -1,8 +1,5 @@
 package io.qimia.uhrwerk.dao
 
-import io.qimia.uhrwerk.PartitionDurationTester
-import io.qimia.uhrwerk.PartitionDurationTester.PartitionTestDependencyInput
-import io.qimia.uhrwerk.PartitionDurationTester.PartitionTestResult
 import io.qimia.uhrwerk.common.metastore.config.DependencyService
 import io.qimia.uhrwerk.common.metastore.config.DependencyStoreResult
 import io.qimia.uhrwerk.common.metastore.model.*
@@ -46,11 +43,11 @@ class DependencyDAO() : DependencyService {
      * correct. If they are not correct, shows what exactly is wrong (can be multi line String!)
      */
     fun checkExistingDependencies(
-        tableId: Long,
+        tableKey: Long,
         dependencies: Array<DependencyModel>
     ): ExistingDepRes {
         val existingRes = ExistingDepRes()
-        val storedDeps = getByTableId(tableId)
+        val storedDeps = getByTableKey(tableKey)
         if (storedDeps.isEmpty()) {
             existingRes.found = false
             existingRes.correct = true
@@ -102,48 +99,7 @@ class DependencyDAO() : DependencyService {
         var partitionSize = 0
     }
 
-    class FindTableRes {
-        @JvmField
-        var foundTables: List<TablePartRes>? = null
 
-        @JvmField
-        var missingNames: Set<String>? = null
-    }
-
-    /**
-     * Find the tables for all the dependencies and check if the targets exists by querying on
-     * target-id.
-     *
-     * @param dependencies dependencies that have to be found
-     * @return FindQueryResult object with partition info about found tables and the names of the
-     * missing tables
-     * @throws SQLException can throw database query errors
-     * @throws IllegalArgumentException
-     */
-    @Throws(SQLException::class, IllegalArgumentException::class)
-    fun findTables(dependencies: Array<DependencyModel>): FindTableRes {
-        val targetIds = dependencies.mapNotNull { it.dependencyTargetId }
-
-        // TODO: Assumes tablenames unique in the context of a single table's dependencies
-        // now assumes yes but in theory could be no -> then we need to map the missing target-ids back
-        // to full table info
-        val depTables = tableRepo.getAllByTargetIds(targetIds)
-        val foundTables = depTables.map {
-            val res = TablePartRes()
-            res.tableId = it.id
-            res.partitionUnit = it.partitionUnit
-            res.partitionSize = it.partitionSize!!
-            res.partitioned = it.partitioned
-            res
-        }
-
-        val namesFound = depTables.mapNotNull { it.name }.toSet()
-        var namesToFind = dependencies.mapNotNull { it.tableName }.toSet().subtract(namesFound)
-        val results = FindTableRes()
-        results.foundTables = foundTables
-        results.missingNames = namesToFind
-        return results
-    }
 
     /**
      * Delete all dependencies for a given tableId
@@ -152,8 +108,8 @@ class DependencyDAO() : DependencyService {
      * @throws SQLException can throw database query errors
      */
     @Throws(SQLException::class)
-    override fun deactivateByTableId(tableId: Long): Int? =
-        dependencyRepo.deactivateByTableId(tableId)
+    override fun deactivateByTableKey(tableKey: Long): Int? =
+        dependencyRepo.deactivateByTableKey(tableKey)
 
 
     /**
@@ -166,6 +122,7 @@ class DependencyDAO() : DependencyService {
      */
     override fun save(
         tableId: Long,
+        tableKey: Long,
         dependencies: Array<DependencyModel>?,
         overwrite: Boolean
     ): DependencyStoreResult {
@@ -173,24 +130,23 @@ class DependencyDAO() : DependencyService {
         // won't be found
         val result = DependencyStoreResult()
 
-        val depTableTargets = dependencies!!.flatMap { dependency ->
-            val depTable = tableRepo.getByHashKey(HashKeyUtils.tableKey(dependency))
-            targetRepo.getByTableIdFormat(depTable!!.id!!, dependency.format!!)
-                .map { depTarget -> Triple(dependency, depTable, depTarget) }
+        val enrichedDependencies = dependencies!!.flatMap { dependency ->
+            val depTableKey = HashKeyUtils.tableKey(dependency)
+            dependency.dependencyTableKey = depTableKey
+            val depTable = tableRepo.getByHashKey(depTableKey)
+            targetRepo.getByTableKeyFormat(depTableKey, dependency.format!!)
+                .map { depTarget ->
+                    val depTargetKey = HashKeyUtils.targetKey(depTarget)
+                    dependency.dependencyTargetKey = depTargetKey
+                    dependency
+                }
         }
 
-        val dependencies = depTableTargets.map { (dependency, depTable, depTarget) ->
-            dependency.dependencyTable = depTable
-            dependency.dependencyTableId = depTable.id
-            dependency.dependencyTarget = depTarget
-            dependency.dependencyTargetId = depTarget.id
-            dependency
-        }.toTypedArray()
 
 
         if (!overwrite) {
             // check if there are stored dependencies and if they are correct
-            val checkDeps = checkExistingDependencies(tableId, dependencies)
+            val checkDeps = checkExistingDependencies(tableKey, dependencies)
             if (checkDeps.found && !checkDeps.correct) {
                 result.isSuccess = false
                 result.isError = false
@@ -204,27 +160,9 @@ class DependencyDAO() : DependencyService {
             }
         }
 
-        val tableSearchRes: FindTableRes
         try {
-            tableSearchRes = findTables(dependencies)
-        } catch (e: Exception) {
-            result.isError = true
-            result.exception = e
-            result.message = e.message
-            return result
-        }
-        if (tableSearchRes.missingNames!!.isNotEmpty()) {
-            result.isSuccess = false
-            result.message =
-                "Missing tables: " + tableSearchRes.missingNames.toString() + " (based on id)"
-            return result
-        }
-
-        try {
-            if (overwrite) {
-                deactivateByTableId(tableId!!)
-            }
-            result.dependenciesSaved = dependencyRepo.save(dependencies.toList())?.toTypedArray()
+            result.dependenciesSaved =
+                dependencyRepo.save(enrichedDependencies.toList())?.toTypedArray()
             result.isSuccess = true
             result.isError = false
         } catch (e: Exception) {
@@ -244,6 +182,9 @@ class DependencyDAO() : DependencyService {
      */
     override fun getByTableId(tableId: Long): List<DependencyModel> =
         dependencyRepo.getByTableId(tableId)
+
+    override fun getByTableKey(tableKey: Long): List<DependencyModel> =
+        dependencyRepo.getByTableKey(tableKey)
 
     companion object {
 
@@ -304,44 +245,6 @@ class DependencyDAO() : DependencyService {
             return result
         }
 
-        /**
-         * Test the dependencies partition sizes by giving the partition size of the target table and the
-         * information of the dependencies' tables and the dependencies'(transformations)
-         *
-         * @param dependencies dependencies that need to be tested
-         * @param partitionUnit the partition unit of the output table
-         * @param partitionSize the partition size (how many times unit) of the output table
-         * @param dependencyTables info about the partition size of each of the dependencies' tables
-         * @return PartitionTestResult showing if they were all good or which tables (-names) did not
-         * match up
-         */
-        @JvmStatic
-        fun checkPartitionSizes(
-            dependencies: Array<DependencyModel>,
-            partitionUnit: PartitionUnit?,
-            partitionSize: Int,
-            dependencyTables: List<TablePartRes>?
-        ): PartitionTestResult {
-            val depTableIdLookup = dependencies.associateBy { it.dependencyTableId }
 
-            val partitionTestInputs = dependencyTables!!.map { tableRes ->
-                val newTest = PartitionTestDependencyInput()
-                val dependency = depTableIdLookup[tableRes.tableId]
-
-                newTest.dependencyTableName = dependency!!.tableName
-
-                // TODO: Doesn't support transform-partition-unit (and transforms using that) for now
-                newTest.dependencyTablePartitionSize = tableRes.partitionSize
-                newTest.dependencyTablePartitionUnit = tableRes.partitionUnit
-                newTest.dependencyTablePartitioned = tableRes.partitioned
-                newTest
-            }
-
-            return PartitionDurationTester.checkDependencies(
-                partitionUnit,
-                partitionSize,
-                partitionTestInputs
-            )
-        }
     }
 }

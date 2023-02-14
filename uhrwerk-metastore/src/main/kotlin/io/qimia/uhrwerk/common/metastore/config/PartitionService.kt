@@ -44,7 +44,7 @@ interface PartitionService {
      * @return The latest partition for this target. Can be null in case something went wrong or there
      * are no partitions.
      */
-    fun getLatestPartition(targetId: Long): Partition?
-    fun getLatestPartitions(targetId: Long, partitionValues: Map<String, Any>): List<Partition>?
+    fun getLatestPartition(targetKey: Long): Partition?
+    fun getLatestPartitions(targetKey: Long, partitionValues: Map<String, Any>): List<Partition>?
     fun getById(id: Long): Partition?
 }

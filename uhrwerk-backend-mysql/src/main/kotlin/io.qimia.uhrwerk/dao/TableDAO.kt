@@ -37,16 +37,24 @@ class TableDAO : TableDependencyService, TableService {
         tableResult.isSuccess = true
         tableResult.isError = false
         tableResult.newResult = table
-        val oldTable = tableRepo.getByHashKey(HashKeyUtils.tableKey(table))
+        val tableKey = HashKeyUtils.tableKey(table)
+
+        val oldTable = tableRepo.getByHashKey(tableKey)
         try {
             if (!overwrite && oldTable != null) {
 
                 oldTable.sources =
-                    saveTableSources(oldTable.id!!, table.sources, tableResult, false)
+                    saveTableSources(oldTable.id!!, tableKey, table.sources, tableResult, false)
                 oldTable.targets =
-                    saveTableTargets(oldTable.id!!, table.targets, tableResult, false)
+                    saveTableTargets(oldTable.id!!, tableKey, table.targets, tableResult, false)
                 oldTable.dependencies =
-                    saveTableDependencies(oldTable.id!!, table.dependencies, tableResult, false)
+                    saveTableDependencies(
+                        oldTable.id!!,
+                        tableKey,
+                        table.dependencies,
+                        tableResult,
+                        false
+                    )
 
                 tableResult.oldResult = oldTable
 
@@ -83,14 +91,32 @@ class TableDAO : TableDependencyService, TableService {
                 return tableResult
                 tableResult.newResult = tableRepo.save(table)
             } else {
-                if (oldTable != null)
-                    tableRepo.deactivateById(oldTable.id!!)
+                deactivateTable(tableKey)
                 tableResult.newResult = tableRepo.save(table)
 
-                table.sources = saveTableSources(table.id!!, table.sources, tableResult, true)
-                table.targets = saveTableTargets(table.id!!, table.targets, tableResult, true)
+                table.sources = saveTableSources(
+                    table.id!!,
+                    tableKey,
+                    table.sources,
+                    tableResult,
+                    true
+                )
+
+                table.targets =
+                    saveTableTargets(
+                        table.id!!,
+                        tableKey,
+                        table.targets,
+                        tableResult, true
+                    )
                 table.dependencies =
-                    saveTableDependencies(table.id!!, table.dependencies, tableResult, true)
+                    saveTableDependencies(
+                        table.id!!,
+                        tableKey,
+                        table.dependencies,
+                        tableResult,
+                        true
+                    )
             }
         } catch (e: SQLException) {
             tableResult.isError = true
@@ -106,36 +132,32 @@ class TableDAO : TableDependencyService, TableService {
         return tableResult
     }
 
+    fun deactivateTable(tableKey: Long) {
+        tableRepo.deactivateByKey(tableKey)
+        dependencyService.deactivateByTableKey(tableKey)
+        targetService.deactivateByTableKey(tableKey)
+        sourceService.deactivateByTableKey(tableKey)
+    }
+
+
     override fun get(
         area: String,
         vertical: String,
         table: String,
         version: String
     ): TableModel? {
-        val table = tableRepo.getByHashKey(HashKeyUtils.tableKey(area, vertical, table, version))
-        if (table != null) {
-            val sources = sourceService.getSourcesByTableId(table.id!!)
-            if (sources != null) {
-                table.sources = sources.toTypedArray()
-            }
-
-            val targets = targetService.getTableTargets(table.id!!)
-            if (targets != null) {
-                table.targets = targets.toTypedArray()
-            }
-
-            val dependencies = dependencyService.getByTableId(table.id!!)
-            if (dependencies != null) {
-                table.dependencies = dependencies.toTypedArray()
-            }
-        }
-        return table
+        val tableKey = HashKeyUtils.tableKey(area, vertical, table, version)
+        return getTableByKey(tableKey)
     }
 
-    override fun getById(
-        tableId: Long
+    override fun getTableByKey(
+        tableKey: Long
     ): TableModel? {
-        val table = tableRepo.getById(tableId)
+        val table = tableRepo.getByHashKey(tableKey)
+        return tableChildren(table)
+    }
+
+    private fun tableChildren(table: TableModel?): TableModel? {
         if (table != null) {
             val sources = sourceService.getSourcesByTableId(table.id!!)
             if (sources != null) {
@@ -157,13 +179,17 @@ class TableDAO : TableDependencyService, TableService {
 
     private fun saveTableTargets(
         tableId: Long,
+        tableKey: Long,
         targets: Array<TargetModel>?,
         tableResult: TableResult,
         overwrite: Boolean
     ): Array<TargetModel>? {
         if (!targets.isNullOrEmpty()) {
-            targets.forEach { it.tableId = tableId }
-            val targetResult = targetService.save(targets.toList(), tableId, overwrite)
+            targets.forEach {
+                it.tableId = tableId
+                it.tableKey = tableKey
+            }
+            val targetResult = targetService.save(targets.toList(), tableKey, overwrite)
             tableResult.targetResult = targetResult
             if (targetResult != null) {
                 if (targetResult.isSuccess) {
@@ -176,13 +202,15 @@ class TableDAO : TableDependencyService, TableService {
 
     private fun saveTableDependencies(
         tableId: Long,
+        tableKey: Long,
         dependencies: Array<DependencyModel>?,
         tableResult: TableResult,
         overwrite: Boolean
     ): Array<DependencyModel>? {
         if (!dependencies.isNullOrEmpty()) {
             dependencies.forEach { it.tableId = tableId }
-            val dependencyResult = dependencyService.save(tableId, dependencies, overwrite)
+            val dependencyResult =
+                dependencyService.save(tableId, tableKey, dependencies, overwrite)
             tableResult.dependencyResult = dependencyResult
             if (dependencyResult != null) {
                 if (dependencyResult.isSuccess) {
@@ -196,12 +224,16 @@ class TableDAO : TableDependencyService, TableService {
 
     private fun saveTableSources(
         tableId: Long,
+        tableKey: Long,
         sources: Array<SourceModel2>?,
         tableResult: TableResult,
         overwrite: Boolean
     ): Array<SourceModel2>? {
         if (!sources.isNullOrEmpty()) {
-            sources.forEach { it.tableId = tableId }
+            sources.forEach {
+                it.tableId = tableId
+                it.tableKey = tableKey
+            }
             val sourceResults = sourceService.save(sources.toList(), overwrite)
             tableResult.sourceResults = sourceResults.toTypedArray()
             return sourceResults.filter { it.isSuccess }.mapNotNull { it.newResult }.toTypedArray()

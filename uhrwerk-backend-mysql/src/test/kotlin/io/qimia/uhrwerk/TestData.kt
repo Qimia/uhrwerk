@@ -46,7 +46,7 @@ object TestData {
     ): SourceModel2 {
         val src = SourceModel2()
         src.tableId = tableId
-        src.connectionId = connectionId
+        src.connectionKey = connectionId
         src.path = path
         src.format = "jdbc"
         src.ingestionMode = IngestionMode.INTERVAL
@@ -80,22 +80,28 @@ object TestData {
         tableId: Long,
         connectionId: Long,
         format: String = "parquet"
-    ): TargetModel = TargetModelBuilder()
-        .tableId(tableId)
-        .connectionId(connectionId)
-        .format(format)
-        .tableName("dummy_table")
-        .build()
+    ): TargetModel {
+        val target = TargetModel()
+        target.tableId = tableId
+        target.connectionKey = connectionId
+        target.format = format
+        target.tableName = "dummy_table"
+        return target
+    }
 
     fun target(
         tableId: Long,
         connName: String = "Test-Connection",
         format: String = "parquet"
-    ): TargetModel = TargetModelBuilder()
-        .tableId(tableId)
-        .connection(ConnectionModelBuilder().name(connName).build())
-        .format(format)
-        .build()
+    ): TargetModel {
+val target = TargetModel()
+        target.tableId = tableId
+        target.connection = connection(connName)
+        target.format = format
+        target.tableName = "dummy_table"
+        return target
+
+    }
 
     fun partition(
         targetId: Long,
@@ -103,15 +109,16 @@ object TestData {
         partitioned: Boolean = true,
         partitionUnit: PartitionUnit = PartitionUnit.HOURS,
         partitionSize: Int = 1,
-    ): Partition =
-        PartitionBuilder()
-            .targetId(targetId)
-            .partitionTs(partitionTs)
-            .partitioned(partitioned)
-            .partitionUnit(partitionUnit)
-            .partitionSize(partitionSize)
-            .partitionValues(mapOf("col1" to "val1", "col2" to 20))
-            .build()
+    ): Partition {
+        val part = Partition()
+        part.targetKey = targetId
+        part.partitionTs = partitionTs
+        part.partitioned = partitioned
+        part.partitionUnit = partitionUnit
+        part.partitionSize = partitionSize
+        part.partitionValues = mapOf("col1" to "val1", "col2" to 20)
+        return part
+    }
 
     fun partitionDependencies(childPartId: Long, depPartIds: List<Long>) =
         depPartIds.map {
@@ -129,36 +136,34 @@ object TestData {
         tableId: Long,
         dependencyTargetId: Long,
         dependencyTableId: Long
-    ): DependencyModel = DependencyModelBuilder()
-        .tableId(tableId)
-        .dependencyTargetId(dependencyTargetId)
-        .dependencyTableId(dependencyTableId)
-        .viewName("dummy_view")
-        .partitionMappings(
-            mapOf(
-                "col1" to "col1",
-                "col2" to "col2"
-            )
-        )
-        .build()
-
+    ): DependencyModel {
+        val dep = DependencyModel()
+        dep.tableId = tableId
+        dep.dependencyTargetKey = dependencyTargetId
+        dep.dependencyTableKey = dependencyTableId
+        dep.viewName = "dummy_view"
+        dep.partitionMappings = mapOf("col1" to "col1", "col2" to "col2")
+        return dep
+    }
     fun dependency(
         table: TableModel,
         dependencyTable: TableModel,
-        format: String,
-        trfType: PartitionTransformType = PartitionTransformType.IDENTITY,
-        trfPartSize: Int = 1
-    ): DependencyModel = DependencyModelBuilder()
-        .tableId(table.id!!)
-        .table(table)
-        .dependencyTable(dependencyTable)
-        .area(dependencyTable.area)
-        .vertical(dependencyTable.vertical)
-        .tableName(dependencyTable.name)
-        .version(dependencyTable.version)
-        .format(format)
-        .build()
-
+        format: String
+    ): DependencyModel {
+        val dep = DependencyModel()
+        dep.tableId = table.id!!
+        dep.tableKey = table.hashKey
+        dep.dependencyTargetKey = dependencyTable.targets?.get(0)!!.hashKey
+        dep.dependencyTableKey = dependencyTable.hashKey
+        dep.viewName = "dummy_view"
+        dep.partitionMappings = mapOf("col1" to "col1", "col2" to "col2")
+        dep.area = dependencyTable.area
+        dep.vertical = dependencyTable.vertical
+        dep.tableName = dependencyTable.name
+        dep.version = dependencyTable.version
+        dep.format = format
+        return dep
+    }
     fun secret(name: String): SecretModel {
         val scr = SecretModel()
         scr.name = name

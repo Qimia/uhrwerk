@@ -16,31 +16,6 @@ class PartitionDAO : PartitionService {
     override fun save(partition: Partition, overwrite: Boolean): PartitionResult {
         val result = PartitionResult()
         try {
-            val oldPartition = repo.getUniqueColumns(
-                partition.targetId!!,
-                partition.partitionTs!!
-            )
-
-            if (oldPartition != null)
-                result.oldResult = oldPartition
-
-            if (!overwrite && false) {
-                if (oldPartition != null) {
-                    if (oldPartition != partition) {
-                        result.message =
-                            "A Partition with and different values already exists in the Metastore."
-                        result.isSuccess = false
-                    } else {
-                        result.isSuccess = true
-                        result.newResult = partition
-                    }
-                    return result
-                }
-            }
-
-            //if (oldPartition != null)
-            //    repo.deleteById(oldPartition.id!!)
-
             val newPartition = repo.save(partition)
             result.isSuccess = true
             result.newResult = newPartition
@@ -69,13 +44,13 @@ class PartitionDAO : PartitionService {
 
     override fun getById(id: Long): Partition? = repo.getById(id)
 
-    override fun getLatestPartition(targetId: Long): Partition? =
-        repo.getLatestByTargetId(targetId)
+    override fun getLatestPartition(targetKey: Long): Partition? =
+        repo.getLatestByTargetKey(targetKey)
 
     override fun getLatestPartitions(
-        targetId: Long,
+        targetKey: Long,
         partitionValues: Map<String, Any>
     ): List<Partition>? {
-        return repo.getLatestByTargetIdPartitionValues(targetId, toJson(partitionValues))
+        return repo.getLatestByTargetKeyPartitionValues(targetKey, toJson(partitionValues))
     }
 }

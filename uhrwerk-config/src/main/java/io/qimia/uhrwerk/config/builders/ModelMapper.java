@@ -1,9 +1,7 @@
 package io.qimia.uhrwerk.config.builders;
 
 import io.qimia.uhrwerk.common.metastore.builders.ConnectionModelBuilder;
-import io.qimia.uhrwerk.common.metastore.builders.DependencyModelBuilder;
 import io.qimia.uhrwerk.common.metastore.builders.TableModelBuilder;
-import io.qimia.uhrwerk.common.metastore.builders.TargetModelBuilder;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionType;
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel;
@@ -160,9 +158,8 @@ public class ModelMapper {
     return new ConnectionModelBuilder().name(connectionName).build();
   }
 
-  static SourceModel2 toSource(Source source, TableModel table, ConnectionModel conn) {
+  static SourceModel2 toSource(Source source, ConnectionModel conn) {
     var model = new SourceModel2();
-    model.setTable(table);
     model.setConnection(conn);
     model.setPath(source.getPath());
     model.setFormat(source.getFormat());
@@ -198,22 +195,15 @@ public class ModelMapper {
   }
 
   static TargetModel toTarget(Target target, TableModel table, ConnectionModel conn) {
-    return new TargetModelBuilder()
-        .connection(conn)
-        .table(table)
-        .format(target.getFormat())
-        .tableName(target.getTableName())
-        .build();
-  }
 
-  static TargetModel toDependencyTarget(Dependency dependency, TableModel dependencyTable) {
-    return new TargetModelBuilder().table(dependencyTable).format(dependency.getFormat()).build();
+    TargetModel targetModel = new TargetModel();
+    targetModel.setConnection(conn);
+    targetModel.setFormat(target.getFormat());
+    targetModel.setTableName(target.getTableName());
+    return targetModel;
   }
 
   static DependencyModel toDependency(Dependency dependency, TableModel table) {
-
-    TableModel dependencyTable = toDependencyTable(dependency);
-    TargetModel dependencyTarget = toDependencyTarget(dependency, dependencyTable);
 
     List<String> dependencyVariables = new ArrayList<>();
 
@@ -228,26 +218,22 @@ public class ModelMapper {
       }
     }
 
-    DependencyModelBuilder builder =
-        new DependencyModelBuilder()
-            .table(table)
-            .area(dependency.getReference().getArea())
-            .vertical(dependency.getReference().getVertical())
-            .tableName(dependency.getReference().getTable())
-            .viewName(dependency.getView())
-            .format(dependency.getFormat())
-            .version(dependency.getReference().getVersion())
-            .dependencyTable(dependencyTable)
-            .dependencyTarget(dependencyTarget);
+    DependencyModel dependencyModel = new DependencyModel();
+    dependencyModel.setArea(dependency.getReference().getArea());
+    dependencyModel.setVertical(dependency.getReference().getVertical());
+    dependencyModel.setTableName(dependency.getReference().getTable());
+    dependencyModel.setVersion(dependency.getReference().getVersion());
+    dependencyModel.setViewName(dependency.getView());
+    dependencyModel.setFormat(dependency.getFormat());
     if (!partitionMappings.isEmpty()) {
-      builder.partitionMappings(partitionMappings);
+      dependencyModel.setPartitionMappings(partitionMappings);
     }
 
     if (!dependencyVariables.isEmpty()) {
-      builder.dependencyVariables(
+      dependencyModel.setDependencyVariables(
           dependencyVariables.toArray(new String[dependencyVariables.size()]));
     }
-    return builder.build();
+    return dependencyModel;
   }
 
   static PartitionUnit toModelPartitionUnit(String unit) {

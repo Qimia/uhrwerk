@@ -25,7 +25,7 @@ class TableWrapperTest extends AnyFlatSpec {
         assert(p.getPartitionSize == partitionSize)
         assert(p.getPartitionTs == timestamp)
         assert(p.getPartitionUnit == partitionUnit)
-        assert(p.getTargetId == targetId)
+        assert(p.getTargetKey == targetId)
       })
   }
 

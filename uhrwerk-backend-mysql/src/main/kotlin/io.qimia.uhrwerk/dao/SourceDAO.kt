@@ -3,7 +3,6 @@ package io.qimia.uhrwerk.dao
 import io.qimia.uhrwerk.common.metastore.config.ConnectionService
 import io.qimia.uhrwerk.common.metastore.config.SourceResult
 import io.qimia.uhrwerk.common.metastore.config.SourceService
-import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
 import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils
 import io.qimia.uhrwerk.common.metastore.model.SourceModel2
 import io.qimia.uhrwerk.repo.SourceRepo2
@@ -24,36 +23,32 @@ class SourceDAO : SourceService {
                     "The connection in this source is null. It needs to be set."
                 )
             }
-            var conn: ConnectionModel? = null
-            if (source.connection!!.name != null) {
-                conn = connService.getByHashKey(HashKeyUtils.connectionKey(source.connection!!))
-            }
-            if (conn == null) {
+            val connectionKey = HashKeyUtils.connectionKey(source.connection!!)
+            val connection = connService.getByHashKey(connectionKey)
+            if (connection == null) {
                 throw NullPointerException(
                     "The connection for this source is missing in the Metastore."
                 )
             } else {
                 //FIXME: issue with target connectionId
-                source.connection = conn
-                source.connectionId = conn.id
+                source.connection = connection
+                source.connectionKey = connectionKey
             }
 
-            val oldSource: SourceModel2? = getByHashKey(source)
+            val sourceKey = HashKeyUtils.sourceKey(source)
+            val oldSource = repo.getByHashKey(sourceKey)
             result.oldResult = oldSource
             if (!overwrite) {
                 if (oldSource != null) {
                     if (oldSource != source) {
                         result.message =
-                            "A Source with id=${oldSource.id} and different values already exists in the Metastore."
+                            "A Source with hash_key=$sourceKey and different values already exists in the Metastore."
                         result.isSuccess = false
                     } else {
                         result.isSuccess = true
                     }
                     return result
                 }
-            } else {
-                if (oldSource != null)
-                    repo.deactivateById(oldSource.id!!)
             }
             result.newResult = repo.save(source)
             result.isSuccess = true
@@ -69,9 +64,6 @@ class SourceDAO : SourceService {
         return result
     }
 
-    private fun getByHashKey(source: SourceModel2): SourceModel2? =
-        repo.getByHashKey(HashKeyUtils.sourceKey(source))
-
     override fun save(
         sources: List<SourceModel2>,
         overwrite: Boolean
@@ -82,10 +74,14 @@ class SourceDAO : SourceService {
         val sources = repo.getSourcesByTableId(tableId)
         if (!sources.isNullOrEmpty()) {
             sources.forEach {
-                val conn = connService.getById(it.connectionId!!)
+                val conn = connService.getById(it.connectionKey!!)
                 it.connection = conn
             }
         }
         return sources
+    }
+
+    override fun deactivateByTableKey(tableKey: Long): Int? {
+        return repo.deactivateByTableKey(tableKey)
     }
 }

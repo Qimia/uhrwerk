@@ -305,7 +305,7 @@ class DependencyDAOTest {
         for (d in storedDependencies) {
             Assertions.assertTrue(tableNames.contains(d.tableName))
         }
-        DependencyRepo().deactivateByTableId(newTable.id)
+        DependencyRepo().deactivateByTableKey(newTable.id)
         storedDependencies = dao.getByTableId(newTable.id)
         Assertions.assertEquals(0, storedDependencies.size)
     }

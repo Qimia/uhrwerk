@@ -67,7 +67,7 @@ internal class DependencyRepoTest {
         val dependency = DependencyRepo().getById(dependency!!.id!!)
         assertThat(dependency).isNotNull()
         assertThat(dependency!!.tableId).isEqualTo(table!!.id)
-        assertThat(dependency.dependencyTargetId).isEqualTo(dependencyTarget!!.id)
+        assertThat(dependency.dependencyTargetKey).isEqualTo(dependencyTarget!!.id)
     }
 
     @Test
@@ -76,7 +76,7 @@ internal class DependencyRepoTest {
         assertThat(dependency).isNotNull()
         assertThat(dependency).isNotEmpty()
         assertThat(dependency[0].tableId).isEqualTo(table!!.id)
-        assertThat(dependency[0].dependencyTargetId).isEqualTo(dependencyTarget!!.id)
+        assertThat(dependency[0].dependencyTargetKey).isEqualTo(dependencyTarget!!.id)
     }
 
 

@@ -44,7 +44,7 @@ object TableWrapper {
       partitioned: Boolean,
       partitionUnit: PartitionUnit,
       partitionSize: Int,
-      targetId: Long,
+      targetKey: Long,
       partitionValues: Map[String, Any] = Map.empty,
       paritionPath: String = null
   ): Seq[Partition] = {
@@ -56,7 +56,7 @@ object TableWrapper {
       newPart.setPartitionUnit(
         partitionUnit
       ) // Warning: Sets null directly from table object
-      newPart.setTargetId(targetId)
+      newPart.setTargetKey(targetKey)
       newPart.setPartitionValues(partitionValues.asJava)
       newPart.setPartitionPath(paritionPath)
       newPart
@@ -400,7 +400,7 @@ class TableWrapper(
                   table.getPartitioned,
                   table.getPartitionUnit,
                   table.getPartitionSize,
-                  target.getId
+                  target.getHashKey
                 )
               })
               .toList
@@ -418,7 +418,7 @@ class TableWrapper(
                   table.getPartitioned,
                   table.getPartitionUnit,
                   table.getPartitionSize,
-                  target.getId,
+                  target.getHashKey,
                   partValues,
                   partPath
                 )

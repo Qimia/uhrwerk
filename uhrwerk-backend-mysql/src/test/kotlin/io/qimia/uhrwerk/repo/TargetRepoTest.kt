@@ -49,7 +49,7 @@ internal class TargetRepoTest {
             val target = repo.getById(tar.id!!)
             Truth.assertThat(target).isNotNull()
             Truth.assertThat(target!!.tableId).isEqualTo(table!!.id!!)
-            Truth.assertThat(target!!.connectionId).isEqualTo(connection!!.id!!)
+            Truth.assertThat(target!!.connectionKey).isEqualTo(connection!!.id!!)
             Truth.assertThat(target!!.format).isIn(formats)
         }
     }
@@ -65,7 +65,7 @@ internal class TargetRepoTest {
         val target1 = repo.getById(target!!.id!!)
         Truth.assertThat(target1).isNotNull()
         Truth.assertThat(target1!!.tableId).isEqualTo(table!!.id!!)
-        Truth.assertThat(target1!!.connectionId).isEqualTo(connection!!.id!!)
+        Truth.assertThat(target1!!.connectionKey).isEqualTo(connection!!.id!!)
     }
 
     @Test
@@ -76,7 +76,7 @@ internal class TargetRepoTest {
         Truth.assertThat(targets).isNotEmpty()
         Truth.assertThat(targets[0].deactivatedTs).isNull()
 
-        val effect = repo.deactivateByTableId(table!!.id!!)
+        val effect = repo.deactivateByTableKey(table!!.id!!)
         Truth.assertThat(effect).isNotNull()
         Truth.assertThat(effect!!).isEqualTo(targets.size)
 
@@ -93,7 +93,7 @@ internal class TargetRepoTest {
 
         val targets = repo.getByTableId(table!!.id!!)
 
-        val effect = repo.deactivateByTableId(table!!.id!!)
+        val effect = repo.deactivateByTableKey(table!!.id!!)
         Truth.assertThat(effect).isNotNull()
         Truth.assertThat(effect!!).isEqualTo(targets.size)
 
@@ -105,7 +105,7 @@ internal class TargetRepoTest {
         Truth.assertThat(targets1).hasSize(targets.size)
         Truth.assertThat(targets1[0].id).isNotEqualTo(targets[0].id)
         Truth.assertThat(targets1[0].tableId).isEqualTo(targets[0].tableId)
-        Truth.assertThat(targets1[0].connectionId).isEqualTo(targets[0].connectionId)
+        Truth.assertThat(targets1[0].connectionKey).isEqualTo(targets[0].connectionKey)
 
         val deactiveTarget = repo.getById(target!!.id!!)
         Truth.assertThat(deactiveTarget).isNotNull()

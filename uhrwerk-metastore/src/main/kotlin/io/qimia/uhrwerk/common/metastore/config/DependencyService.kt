@@ -13,6 +13,7 @@ interface DependencyService {
      */
     fun save(
         tableId: Long,
+        tableKey: Long,
         dependencies: Array<DependencyModel>?,
         overwrite: Boolean
     ): DependencyStoreResult?
@@ -24,5 +25,6 @@ interface DependencyService {
      * @return model Dependency objects
      */
     fun getByTableId(tableId: Long): List<DependencyModel>?
-    fun deactivateByTableId(tableId: Long): Int?
+    fun getByTableKey(tableKey: Long): List<DependencyModel>?
+    fun deactivateByTableKey(tableKey: Long): Int?
 }

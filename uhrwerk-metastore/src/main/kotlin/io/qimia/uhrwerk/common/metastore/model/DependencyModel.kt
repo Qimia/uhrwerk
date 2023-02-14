@@ -1,17 +1,14 @@
 package io.qimia.uhrwerk.common.metastore.model
 
-import io.qimia.uhrwerk.common.model.TargetModel
 import java.sql.Timestamp
 import java.time.LocalDateTime
 
 data class DependencyModel(
     var id: Long? = null,
     var tableId: Long? = null,
-    var dependencyTargetId: Long? = null,
-    var dependencyTableId: Long? = null,
-    var table: TableModel? = null,
-    var dependencyTable: TableModel? = null,
-    var dependencyTarget: TargetModel? = null,
+    var tableKey: Long? = null,
+    var dependencyTargetKey: Long? = null,
+    var dependencyTableKey: Long? = null,
     var area: String? = null,
     var vertical: String? = null,
     var tableName: String? = null,
@@ -20,6 +17,7 @@ data class DependencyModel(
     var dependencyVariables: Array<String>? = null,
     var format: String? = null,
     var version: String? = null,
+    var hashKey: Long? = null,
     var deactivatedTs: LocalDateTime? = null,
     var createdTs: Timestamp? = null,
     var updatedTs: Timestamp? = null
@@ -33,8 +31,9 @@ data class DependencyModel(
         if (other !is DependencyModel) return false
         if (id != null && other.id != null) if (id != other.id) return false
         if (tableId != other.tableId) return false
-        if (dependencyTargetId != other.dependencyTargetId) return false
-        if (dependencyTableId != other.dependencyTableId) return false
+        if (tableKey != other.tableKey) return false
+        if (dependencyTargetKey != other.dependencyTargetKey) return false
+        if (dependencyTableKey != other.dependencyTableKey) return false
         if (area != other.area) return false
         if (vertical != other.vertical) return false
         if (tableName != other.tableName) return false
@@ -51,6 +50,7 @@ data class DependencyModel(
         }else if (!other.dependencyVariables.isNullOrEmpty()) return false
 
         if (format != other.format) return false
+        if (hashKey != other.hashKey) return false
         if (version != other.version) return false
         if (deactivatedTs != other.deactivatedTs) return false
         if (createdTs != other.createdTs) return false
@@ -62,16 +62,18 @@ data class DependencyModel(
     override fun hashCode(): Int {
         var result = id?.hashCode() ?: 0
         result = 31 * result + (tableId?.hashCode() ?: 0)
-        result = 31 * result + (dependencyTargetId?.hashCode() ?: 0)
-        result = 31 * result + (dependencyTableId?.hashCode() ?: 0)
+        result = 31 * result + (tableKey?.hashCode() ?: 0)
+        result = 31 * result + (dependencyTargetKey?.hashCode() ?: 0)
+        result = 31 * result + (dependencyTableKey?.hashCode() ?: 0)
         result = 31 * result + (area?.hashCode() ?: 0)
         result = 31 * result + (vertical?.hashCode() ?: 0)
         result = 31 * result + (tableName?.hashCode() ?: 0)
         result = 31 * result + (viewName?.hashCode() ?: 0)
-        result = 31 * result + (partitionMappings?.toList()?.toTypedArray().contentDeepHashCode() ?: 0)
+        result = 31 * result + partitionMappings?.toList()?.toTypedArray().contentDeepHashCode()
         result = 31 * result + (dependencyVariables?.contentDeepHashCode() ?: 0)
         result = 31 * result + (format?.hashCode() ?: 0)
         result = 31 * result + (version?.hashCode() ?: 0)
+        result = 31 * result + (hashKey?.hashCode() ?: 0)
         result = 31 * result + (deactivatedTs?.hashCode() ?: 0)
         result = 31 * result + (createdTs?.hashCode() ?: 0)
         result = 31 * result + (updatedTs?.hashCode() ?: 0)
@@ -79,7 +81,7 @@ data class DependencyModel(
     }
 
     override fun toString(): String {
-        return "DependencyModel(id=$id, tableId=$tableId, dependencyTargetId=$dependencyTargetId, dependencyTableId=$dependencyTableId, area=$area, vertical=$vertical, tableName=$tableName, viewName=$viewName, partitionMappings=$partitionMappings, dependencyVariables=${dependencyVariables?.contentToString()}, format=$format, version=$version)"
+        return "DependencyModel(id=$id, tableId=$tableId, tableKey=$tableKey, dependencyTargetKey=$dependencyTargetKey, dependencyTableKey=$dependencyTableKey, area=$area, vertical=$vertical, tableName=$tableName, viewName=$viewName, partitionMappings=$partitionMappings, dependencyVariables=${dependencyVariables?.contentToString()}, format=$format, version=$version, hashKey=$hashKey, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
     }
 
 

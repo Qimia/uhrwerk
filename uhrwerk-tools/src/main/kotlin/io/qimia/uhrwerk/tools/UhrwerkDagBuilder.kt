@@ -1,6 +1,7 @@
 package io.qimia.uhrwerk.tools
 
 import io.qimia.uhrwerk.common.metastore.model.Partition
+import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.config.representation.Reference
 import io.qimia.uhrwerk.dao.PartitionDAO
 import io.qimia.uhrwerk.dao.TableDAO
@@ -93,7 +94,21 @@ object UhrwerkDagBuilder {
             tpNodes.forEach { revDag.addEdge(it, nwNode) }
             nwNode
         }
+    }
 
+    fun lastPartitions(
+        table: TableModel
+    ): List<Partition>? {
+        if (table.partitionColumns.isNullOrEmpty()) {
+            val partition = partitions.getLatestPartition(table.targets!![0].hashKey!!)
+            return if (partition != null) {
+                listOf(partition)
+            } else {
+                null
+            }
+        } else {
+            return partitions.getLatestPartitions(table.targets!![0].hashKey!!, mapOf())
+        }
     }
 
 

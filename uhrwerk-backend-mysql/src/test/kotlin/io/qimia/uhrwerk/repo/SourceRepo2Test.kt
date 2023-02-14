@@ -69,7 +69,7 @@ internal class SourceRepo2Test {
             HashKeyUtils.sourceKey(
                 SourceModel2(
                     tableId = table!!.id!!,
-                    connectionId = connection!!.id!!,
+                    connectionKey = connection!!.id!!,
                     path = "Source-SourceRepoTest",
                     format = "jdbc"
                 )
@@ -82,7 +82,7 @@ internal class SourceRepo2Test {
             HashKeyUtils.sourceKey(
                 SourceModel2(
                     tableId = table!!.id!!,
-                    connectionId = connection!!.id!!,
+                    connectionKey = connection!!.id!!,
                     path = "Source-SourceRepoTest",
                     format = "parquet"
                 )
@@ -94,7 +94,7 @@ internal class SourceRepo2Test {
 
     @Test
     fun deleteById() {
-        val effect = SourceRepo2().deactivateById(source!!.id!!)
+        val effect = SourceRepo2().deactivateByTableKey(source!!.id!!)
         assertThat(effect).isNotNull()
         assertThat(effect!!).isEqualTo(1)
     }

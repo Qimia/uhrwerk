@@ -18,27 +18,12 @@ class TargetDAO() : TargetService {
 
 
     /**
-     * git all targets which can be found for a table-id
-     * @param tableId id of table
-     * @return target array or empty array if no targets are found
-     * @throws SQLException can throw database query errors
-     */
-    @Throws(SQLException::class)
-    private fun getTargetsByTable(tableId: Long): List<TargetModel> =
-        repo.getByTableId(tableId).map {
-            val connection = connService.getById(it.connectionId!!)
-            it.connection = connection
-            it
-        }
-
-
-    /**
      * Delete all targets for a given table. Assumes that targets can be removed (and perform no further checks)
      * @param tableId id for the table
      * @throws SQLException can throw database query errors
      */
     @Throws(SQLException::class)
-    override fun deactivateByTableId(tableId: Long): Int? = repo.deactivateByTableId(tableId)
+    override fun deactivateByTableKey(tableKey: Long): Int? = repo.deactivateByTableKey(tableKey)
 
 
     /**
@@ -48,14 +33,17 @@ class TargetDAO() : TargetService {
      * @param overwrite are overwrites allowed or not
      * @return result object showing what is stored, exceptions, if save was successful, and if not, why
      */
-    override fun save(targets: List<TargetModel>, tableId: Long, overwrite: Boolean): TargetResult {
+    override fun save(targets: List<TargetModel>,
+                      tableKey: Long,
+                      overwrite: Boolean): TargetResult {
         val saveResult = TargetResult()
         try {
             // enrich targets
             for (target in targets) {
                 var newTargetConn: ConnectionModel? = null
                 if (target.connection != null) {
-                    newTargetConn = connService.getByHashKey(HashKeyUtils.connectionKey(target.connection!!))
+                    newTargetConn =
+                        connService.getByHashKey(HashKeyUtils.connectionKey(target.connection!!))
                 }
                 if (newTargetConn == null) {
                     saveResult.isSuccess = false
@@ -65,24 +53,16 @@ class TargetDAO() : TargetService {
                     return saveResult
                 } else {
                     target.connection = newTargetConn
-                    target.connectionId = target.connection!!.id
+                    target.connectionKey = HashKeyUtils.connectionKey(target.connection!!)
                 }
             }
             if (!overwrite) {
-                val storedTargets = getTargetsByTable(tableId)
+                val storedTargets = repo.getByTableKey(tableKey)
                 // WARNING: Assumes Format is unique per table's targets
                 if (storedTargets.isNotEmpty()) {
                     return compareStoredTargets(targets, storedTargets)
                 }
                 // else insert all Target values found
-            }
-            if (overwrite) {
-                // Delete if there are any
-                repo.deactivateByTableId(tableId)
-            }
-            // insert new targets
-            targets.forEach {
-                it.tableId = tableId
             }
             repo.save(targets)
             saveResult.isSuccess = true
@@ -107,7 +87,7 @@ class TargetDAO() : TargetService {
         var out = Optional.empty<TargetModel>()
         val target = repo.getById(id)
         if (target != null) {
-            val conn = connService.getById(target!!.connectionId!!)
+            val conn = connService.getByHashKey(target!!.connectionKey!!)
             // WARNING: What if connection can't be found (should not be possible)
             target.connection = conn
             out = Optional.of(target)
@@ -121,7 +101,7 @@ class TargetDAO() : TargetService {
      * @return array of Target model objects
      */
     override fun getTableTargets(tableId: Long): List<TargetModel> {
-        return getTargetsByTable(tableId)
+        return repo.getByTableId(tableId)
     }
 
     companion object {

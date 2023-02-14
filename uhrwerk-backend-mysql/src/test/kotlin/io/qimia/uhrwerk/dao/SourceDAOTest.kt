@@ -1,12 +1,10 @@
 package io.qimia.uhrwerk.dao
 
-import com.google.common.truth.Truth
 import com.google.common.truth.Truth.assertThat
 import io.qimia.uhrwerk.TestData
 import TestUtils
 import io.qimia.uhrwerk.common.metastore.config.SourceService
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel
-import io.qimia.uhrwerk.common.metastore.model.PartitionUnit
 import io.qimia.uhrwerk.common.metastore.model.TableModel
 import io.qimia.uhrwerk.repo.*
 import org.junit.jupiter.api.*
@@ -228,7 +226,7 @@ class SourceDAOTest {
             table!!.id!!,
             -100
         )
-        assertThat(source.connectionId).isNotEqualTo(connection!!.id)
+        assertThat(source.connectionKey).isNotEqualTo(connection!!.id)
         //connection instead of connectionId
         source.connection = connection
         val result = service.save(source, true)

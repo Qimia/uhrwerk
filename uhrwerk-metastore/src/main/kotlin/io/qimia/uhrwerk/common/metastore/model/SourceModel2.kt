@@ -6,11 +6,11 @@ import java.time.LocalDateTime
 data class SourceModel2(
     var id: Long? = null,
     var tableId: Long? = null,
-    var connectionId: Long? = null,
+    var tableKey: Long? = null,
+    var connectionKey: Long? = null,
     var path: String? = null,
     var format: String? = null,
     var connection: ConnectionModel? = null,
-    var table: TableModel? = null,
     var ingestionMode: IngestionMode = IngestionMode.ALL,
     var intervalTempUnit: PartitionUnit? = null,
     var intervalTempSize: Int = 0,
@@ -23,6 +23,7 @@ data class SourceModel2(
     var parallelPartitionColumn: String? = null,
     var parallelPartitionNum: Int? = 0,
     var autoLoad: Boolean = true,
+    var hashKey: Long? = null,
     var description: String? = null,
     var deactivatedTs: LocalDateTime? = null,
     var createdTs: Timestamp? = null,
@@ -38,7 +39,8 @@ data class SourceModel2(
 
         if (id != null && other.id != null) if (id != other.id) return false
         if (tableId != other.tableId) return false
-        if (connectionId != other.connectionId) return false
+        if (tableKey != other.tableKey) return false
+        if (connectionKey != other.connectionKey) return false
         if (path != other.path) return false
         if (format != other.format) return false
         if (ingestionMode != other.ingestionMode) return false
@@ -58,6 +60,7 @@ data class SourceModel2(
         if (parallelPartitionColumn != other.parallelPartitionColumn) return false
         if (parallelPartitionNum != other.parallelPartitionNum) return false
         if (autoLoad != other.autoLoad) return false
+        if (hashKey != other.hashKey) return false
         if (description != other.description) return false
         if (deactivatedTs != other.deactivatedTs) return false
         if (createdTs != other.createdTs) return false
@@ -69,10 +72,10 @@ data class SourceModel2(
     override fun hashCode(): Int {
         var result = id?.hashCode() ?: 0
         result = 31 * result + (tableId?.hashCode() ?: 0)
-        result = 31 * result + (connectionId?.hashCode() ?: 0)
+        result = 31 * result + (tableKey?.hashCode() ?: 0)
+        result = 31 * result + (connectionKey?.hashCode() ?: 0)
         result = 31 * result + (path?.hashCode() ?: 0)
         result = 31 * result + (format?.hashCode() ?: 0)
-        result = 31 * result + (connection?.hashCode() ?: 0)
         result = 31 * result + (ingestionMode?.hashCode() ?: 0)
         result = 31 * result + (intervalTempUnit?.hashCode() ?: 0)
         result = 31 * result + (intervalTempSize ?: 0)
@@ -85,6 +88,7 @@ data class SourceModel2(
         result = 31 * result + (parallelPartitionColumn?.hashCode() ?: 0)
         result = 31 * result + (parallelPartitionNum ?: 0)
         result = 31 * result + autoLoad.hashCode()
+        result = 31 * result + (hashKey?.hashCode() ?: 0)
         result = 31 * result + (description?.hashCode() ?: 0)
         result = 31 * result + (deactivatedTs?.hashCode() ?: 0)
         result = 31 * result + (createdTs?.hashCode() ?: 0)
@@ -93,7 +97,8 @@ data class SourceModel2(
     }
 
     override fun toString(): String {
-        return "SourceModel2(id=$id, tableId=$tableId, connectionId=$connectionId, path=$path, format=$format, ingestionMode=$ingestionMode, intervalTempUnit=$intervalTempUnit, intervalTempSize=$intervalTempSize, intervalColumn=$intervalColumn, deltaColumn=$deltaColumn, selectQuery=$selectQuery, sourceVariables=${sourceVariables?.contentToString()}, parallelLoad=$parallelLoad, parallelPartitionQuery=$parallelPartitionQuery, parallelPartitionColumn=$parallelPartitionColumn, parallelPartitionNum=$parallelPartitionNum, autoLoad=$autoLoad, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
+        return "SourceModel2(id=$id, tableId=$tableId, tableKey=$tableKey, connectionKey=$connectionKey, path=$path, format=$format, ingestionMode=$ingestionMode, intervalTempUnit=$intervalTempUnit, intervalTempSize=$intervalTempSize, intervalColumn=$intervalColumn, deltaColumn=$deltaColumn, selectQuery=$selectQuery, sourceVariables=${sourceVariables?.contentToString()}, parallelLoad=$parallelLoad, parallelPartitionQuery=$parallelPartitionQuery, parallelPartitionColumn=$parallelPartitionColumn, parallelPartitionNum=$parallelPartitionNum, autoLoad=$autoLoad, hashKey=$hashKey, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
     }
+
 
 }

@@ -35,6 +35,12 @@ internal class ConnectionRepoTest {
         assertThat(connection).isNotNull()
         assertThat(connection!!.id).isNotNull()
     }
+    @Test
+    fun saveWithDeactivate() {
+        repo.deactivateById(connection!!.id!!)
+        val connection1 = repo.save(TestData.connection("Connection-Test"))
+
+    }
 
     @Test
     fun getById() {

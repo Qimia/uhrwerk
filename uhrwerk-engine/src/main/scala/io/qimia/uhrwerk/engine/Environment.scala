@@ -180,7 +180,6 @@ class Environment(
         replaceSecrets(conn)
       }
     })
-    results
   }
 
   private def getSecretValue(orig: String): String = {
@@ -330,8 +329,8 @@ class Environment(
     res
   }
 
-  def getTableById(tableId: Long): Option[TableWrapper] = {
-    val table = store.tableService.getById(tableId)
+  def getTableByKey(tableKey: Long): Option[TableWrapper] = {
+    val table = store.tableService.getTableByKey(tableKey)
 
     val userFunc = getTableFunctionDynamic(table)
 

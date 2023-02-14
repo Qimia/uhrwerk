@@ -30,23 +30,29 @@ class TargetRepo : BaseRepo<TargetModel>() {
             it.setLong(1, tableId)
         }, this::map)
 
-    fun getByTableIdFormat(tableID: Long, format: String): List<TargetModel> =
-        super.findAll(SELECT_BY_TABLE_ID_FORMAT, {
-            it.setLong(1, tableID)
+    fun getByTableKey(tableKey: Long): List<TargetModel> =
+        super.findAll(SELECT_BY_TABLE_KEY, {
+            it.setLong(1, tableKey)
+        }, this::map)
+
+    fun getByTableKeyFormat(tableKey: Long, format: String): List<TargetModel> =
+        super.findAll(SELECT_BY_TABLE_KEY_FORMAT, {
+            it.setLong(1, tableKey)
             it.setString(2, format)
         }, this::map)
 
-    fun deactivateByTableId(tableId: Long): Int? =
-        super.update(DEACTIVATE_BY_TABLE_ID) {
-            it.setLong(1, tableId)
+    fun deactivateByTableKey(tableKey: Long): Int? =
+        super.update(DEACTIVATE_BY_TABLE_KEY) {
+            it.setLong(1, tableKey)
         }
 
     private fun insertParams(entity: TargetModel, insert: PreparedStatement): PreparedStatement {
         insert.setLong(1, entity.tableId!!)
-        insert.setLong(2, entity.connectionId!!)
-        insert.setString(3, entity.format)
-        insert.setString(4, entity.tableName)
-        insert.setLong(5, HashKeyUtils.targetKey(entity))
+        insert.setLong(2, entity.tableKey!!)
+        insert.setLong(3, entity.connectionKey!!)
+        insert.setString(4, entity.format)
+        insert.setString(5, entity.tableName)
+        insert.setLong(6, HashKeyUtils.targetKey(entity))
         return insert
     }
 
@@ -54,44 +60,62 @@ class TargetRepo : BaseRepo<TargetModel>() {
         val target = TargetModel()
         target.id = res.getLong(1)
         target.tableId = res.getLong(2)
-        target.connectionId = res.getLong(3)
-        target.format = res.getString(4)
-        target.tableName = res.getString(5)
-        target.deactivatedTs = res.getTimestamp(6)?.toLocalDateTime()
+        target.tableKey = res.getLong(3)
+        target.connectionKey = res.getLong(4)
+        target.format = res.getString(5)
+        target.tableName = res.getString(6)
+        target.hashKey = res.getLong(7)
+        target.deactivatedTs = res.getTimestamp(8)?.toLocalDateTime()
         return target
     }
 
 
     companion object {
         private const val INSERT =
-            "INSERT INTO TARGET (table_id, connection_id, format, table_name, hash_key) VALUES (?, ?, ?, ?, ?)"
+            "INSERT INTO TARGET (table_id, table_key, connection_key, format, table_name, hash_key) VALUES (?, ?, ?, ?, ?, ?)"
 
         private const val SELECT_BY_ID =
-            "SELECT id, table_id, connection_id, format, table_name, deactivated_ts FROM TARGET WHERE id = ?"
+            "SELECT id, table_id, table_key, connection_key, format, table_name, hash_key, deactivated_ts FROM TARGET WHERE id = ?"
 
         private const val SELECT_BY_HASH_KEY =
-            "SELECT id, table_id, connection_id, format, table_name, deactivated_ts FROM TARGET WHERE hash_key = ?"
+            "SELECT id, table_id, table_key, connection_key, format, table_name, hash_key, deactivated_ts FROM TARGET WHERE hash_key = ? AND deactivated_ts IS NULL"
 
 
         private const val SELECT_BY_TABLE_ID =
-            "SELECT id, table_id, connection_id, format, table_name, deactivated_ts FROM TARGET WHERE table_id = ?"
+            "SELECT id, table_id, table_key, connection_key, format, table_name, hash_key, deactivated_ts FROM TARGET WHERE table_id = ?"
 
-        private val SELECT_BY_TABLE_ID_FORMAT = """
+        private val SELECT_BY_TABLE_KEY = """
             SELECT tar.id,
                tar.table_id,
-               tar.connection_id,
+               tar.table_key,
+               tar.connection_key,
                tar.format,
                tar.table_name,
+               tar.hash_key,
                tar.deactivated_ts
             FROM TARGET tar
-                JOIN TABLE_ tab ON tab.id = tar.table_id
-            WHERE tab.id = ?
+            WHERE tar.table_key = ?
+              AND tar.deactivated_ts IS NULL
+        """.trimIndent()
+
+        private val SELECT_BY_TABLE_KEY_FORMAT = """
+            SELECT tar.id,
+               tar.table_id,
+               tar.table_key,
+               tar.connection_key,
+               tar.format,
+               tar.table_name,
+               tar.hash_key,
+               tar.deactivated_ts
+            FROM TARGET tar
+            WHERE tar.table_key = ?
               AND tar.format = ?
+              AND tar.deactivated_ts IS NULL
         """.trimIndent()
 
 
-        private const val DEACTIVATE_BY_TABLE_ID =
-            "UPDATE TARGET SET deactivated_ts = CURRENT_TIMESTAMP() WHERE table_id = ?"
+        private const val DEACTIVATE_BY_TABLE_KEY =
+            "UPDATE TARGET SET deactivated_ts = CURRENT_TIMESTAMP() WHERE table_key = ? AND deactivated_ts IS NULL"
 
 
     }

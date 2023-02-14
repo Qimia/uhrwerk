@@ -69,7 +69,7 @@ internal class PartitionRepoIntegrationTest {
 
             val partitions = times.map {
                 Partition(
-                    targetId = target!!.id,
+                    targetKey = target!!.id,
                     partitionTs = it,
                     partitionValues = partValues
                 )

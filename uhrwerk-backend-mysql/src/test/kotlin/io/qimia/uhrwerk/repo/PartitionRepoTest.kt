@@ -67,7 +67,7 @@ internal class PartitionRepoTest {
         val partValues = mapOf("part_col1" to "part_val1", "part_col2" to "part_val2")
 
         val partition = Partition(
-            targetId = target!!.id,
+            targetKey = target!!.id,
             partitionTs = partitionTs,
             partitionValues = partValues
         )
@@ -80,20 +80,20 @@ internal class PartitionRepoTest {
 
         val partsJson = toJson(partValues)
 
-        repo.getLatestByTargetIdPartitionValues(target!!.id!!, partsJson)?.let {
+        repo.getLatestByTargetKeyPartitionValues(target!!.id!!, partsJson)?.let {
             assertThat(it[0].partitionValues).isEqualTo(partValues)
         }
 
         val partJson2 = toJson(mapOf("part_col1" to "part_val1"))
 
-        repo.getLatestByTargetIdPartitionValues(target!!.id!!, partJson2)?.let {
+        repo.getLatestByTargetKeyPartitionValues(target!!.id!!, partJson2)?.let {
             assertThat(it[0].partitionValues).isEqualTo(partValues)
             println(it)
         }
 
         val partJson3 = toJson(mapOf("part_col3" to "part_val1"))
         val noPartition =
-            repo.getLatestByTargetIdPartitionValues(target!!.id!!, partJson3)
+            repo.getLatestByTargetKeyPartitionValues(target!!.id!!, partJson3)
         assertThat(noPartition).isNotNull()
         assertThat(noPartition).isEmpty()
 
@@ -110,13 +110,6 @@ internal class PartitionRepoTest {
     }
 
     @Test
-    fun getUniqueColumns() {
-        val partition1 = repo.getUniqueColumns(target!!.id!!, partitionTs!!)
-        assertThat(partition1).isNotNull()
-        assertThat(partition1).isEqualTo(partition)
-    }
-
-    @Test
     fun getLatestByTargetId() {
         val timestamps = TestData.timestamps(15)
         val partitions = timestamps.map {
@@ -129,9 +122,9 @@ internal class PartitionRepoTest {
         val partitionIds = partitions.map { repo.save(it) }
         assertThat(partitionIds).hasSize(5)
 
-        val latestPartition = repo.getLatestByTargetId(target!!.id!!)
+        val latestPartition = repo.getLatestByTargetKey(target!!.id!!)
         assertThat(latestPartition).isNotNull()
-        assertThat(latestPartition!!.targetId).isEqualTo(target!!.id)
+        assertThat(latestPartition!!.targetKey).isEqualTo(target!!.id)
 
         assertThat(latestPartition.partitionTs).isEqualTo(timestamps[4])
 
@@ -155,7 +148,7 @@ internal class PartitionRepoTest {
         assertThat(partitions1).hasSize(5)
 
         partitions1.zip(timestamps).forEach { (part, ts) ->
-            assertThat(part.targetId).isEqualTo(target!!.id)
+            assertThat(part.targetKey).isEqualTo(target!!.id)
             assertThat(part.partitionTs).isEqualTo(ts)
         }
 

@@ -16,7 +16,7 @@ import kotlin.system.exitProcess
     version = ["uhrwerk_tools_cli 1.0"],
     description = ["Display DAG Information for a Table."]
 )
-class UhrwerkToolsCli : Callable<Int> {
+class UhrwerkDagViewCli : Callable<Int> {
 
     @Option(
         names = ["-g", "--global"],
@@ -63,7 +63,7 @@ class UhrwerkToolsCli : Callable<Int> {
     companion object {
         @JvmStatic
         fun main(args: Array<String>): Unit =
-            exitProcess(CommandLine(UhrwerkToolsCli()).execute(*args))
+            exitProcess(CommandLine(UhrwerkDagViewCli()).execute(*args))
 
         fun toTableRef(ref: String): Reference {
             var area: String? = null

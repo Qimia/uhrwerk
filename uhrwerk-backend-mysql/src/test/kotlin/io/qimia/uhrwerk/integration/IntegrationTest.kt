@@ -119,7 +119,7 @@ internal class IntegrationTest {
             assertThat(it.isSuccess).isTrue()
             assertThat(it.newResult!!.id).isNotNull()
             assertThat(it.newResult!!.tableId).isEqualTo(table.id)
-            assertThat(it.newResult!!.connectionId).isNotNull()
+            assertThat(it.newResult!!.connectionKey).isNotNull()
         }
 
         assertThat(tableResult.targetResult).isNotNull()
@@ -128,7 +128,7 @@ internal class IntegrationTest {
         tableResult.targetResult!!.storedTargets!!.forEach {
             assertThat(it.id).isNotNull()
             assertThat(it.tableId).isEqualTo(table.id)
-            assertThat(it.connectionId).isNotNull()
+            assertThat(it.connectionKey).isNotNull()
         }
 
         tableService.get(table.area!!, table.vertical!!, table.name!!, table.version!!)?.let {
@@ -229,7 +229,7 @@ internal class IntegrationTest {
         tableResult.targetResult!!.storedTargets!!.forEach {
             assertThat(it.id).isNotNull()
             assertThat(it.tableId).isEqualTo(depTable.id)
-            assertThat(it.connectionId).isNotNull()
+            assertThat(it.connectionKey).isNotNull()
         }
 
         tableService.get(depTable.area!!, depTable.vertical!!, depTable.name!!, depTable.version!!)?.let {

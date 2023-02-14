@@ -54,7 +54,7 @@ internal class TableRepoTest {
         val table1 = repo.save(table)
 
         assertThat(table1).isNotNull()
-        val effect = repo.deactivateById(table1!!.id!!)
+        val effect = repo.deactivateByKey(table1!!.id!!)
 
         Truth.assertThat(effect).isNotNull()
         Truth.assertThat(effect!!).isEqualTo(1)

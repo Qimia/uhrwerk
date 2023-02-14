@@ -4,23 +4,12 @@ import io.qimia.uhrwerk.common.model.TargetModel
 import net.openhft.hashing.LongHashFunction
 
 object HashKeyUtils {
-    fun targetKey(target: TargetModel): Long {
-        assert(target.tableId != null) { "Target.tableId can't be null" }
-        assert(target.connectionId != null) { "Target.connectionId can't be null" }
-        assert(target.format != null && !target.format!!.isEmpty()) { "Target.format can't be null or empty" }
-        return hashKey(
-            StringBuilder()
-                .append(target.tableId)
-                .append(target.connectionId)
-                .append(target.format)
-        )
-    }
 
     fun tableKey(table: TableModel): Long {
-        assert(table.area != null && !table.area!!.isEmpty()) { "Table.area can't be null or empty" }
-        assert(table.vertical != null && !table.vertical!!.isEmpty()) { "Table.vertical can't be null or empty" }
-        assert(table.name != null && !table.name!!.isEmpty()) { "Table.name can't be null or empty" }
-        assert(table.version != null && !table.version!!.isEmpty()) { "Table.version can't be null or empty" }
+        assert(!table.area.isNullOrEmpty()) { "Table.area can't be null or empty" }
+        assert(!table.vertical.isNullOrEmpty()) { "Table.vertical can't be null or empty" }
+        assert(!table.name.isNullOrEmpty()) { "Table.name can't be null or empty" }
+        assert(!table.version.isNullOrEmpty()) { "Table.version can't be null or empty" }
         return hashKey(
             StringBuilder()
                 .append(table.area)
@@ -44,6 +33,19 @@ object HashKeyUtils {
         )
     }
 
+    fun targetKey(target: TargetModel): Long {
+        assert(target.tableKey != null) { "Target.tableKey can't be null" }
+        assert(target.connectionKey != null) { "Target.connectionKey can't be null" }
+        assert(!target.format.isNullOrEmpty()) { "Target.format can't be null or empty" }
+        return hashKey(
+            StringBuilder()
+                .append(target.tableKey)
+                .append(target.connectionKey)
+                .append(target.format)
+        )
+    }
+
+
     fun tableKey(area: String?, vertical: String?, tableName: String?, version: String?): Long {
         assert(!area.isNullOrEmpty()) { "area can't be null or empty" }
         assert(!vertical.isNullOrEmpty()) { "vertical can't be null or empty" }
@@ -59,33 +61,33 @@ object HashKeyUtils {
     }
 
     fun sourceKey(source: SourceModel2): Long {
-        assert(source.tableId != null) { "Source.tableId can't be null" }
-        assert(source.connectionId != null) { "Source.connectionId can't be null" }
-        assert(source.path != null && source.path!!.isNotEmpty()) { "Source.path can't be null or empty" }
-        assert(source.format != null && source.format!!.isNotEmpty()) { "Source.format can't be null or empty" }
+        assert(source.tableKey != null) { "Source.tableKey can't be null" }
+        assert(source.connectionKey != null) { "Source.connectionKey can't be null" }
+        assert(!source.path.isNullOrEmpty()) { "Source.path can't be null or empty" }
+        assert(!source.format.isNullOrEmpty()) { "Source.format can't be null or empty" }
         return hashKey(
             StringBuilder()
-                .append(source.tableId)
-                .append(source.connectionId)
+                .append(source.tableKey)
+                .append(source.connectionKey)
                 .append(source.path)
                 .append(source.format)
         )
     }
 
     fun dependencyKey(dependency: DependencyModel): Long {
-        assert(dependency.tableId != null) { "Dependency.tableId can't be null" }
-        assert(dependency.dependencyTargetId != null) { "Dependency.dependencyTargetId can't be null" }
-        assert(dependency.dependencyTableId != null) { "Dependency.dependencyTableId can't be null" }
+        assert(dependency.tableKey != null) { "Dependency.tableKey can't be null" }
+        assert(dependency.dependencyTargetKey != null) { "Dependency.dependencyTargetKey can't be null" }
+        assert(dependency.dependencyTableKey != null) { "Dependency.dependencyTableKey can't be null" }
         return hashKey(
             StringBuilder()
-                .append(dependency.tableId)
-                .append(dependency.dependencyTargetId)
-                .append(dependency.dependencyTableId)
+                .append(dependency.tableKey)
+                .append(dependency.dependencyTargetKey)
+                .append(dependency.dependencyTableKey)
         )
     }
 
     fun connectionKey(connection: ConnectionModel): Long {
-        assert(connection.name != null && connection.name!!.isNotEmpty()) { "Connection.name can't be null or empty" }
+        assert(!connection.name.isNullOrEmpty()) { "Connection.name can't be null or empty" }
         return hashKey(StringBuilder().append(connection.name))
     }
 
@@ -101,6 +103,6 @@ object HashKeyUtils {
 
 
     private fun hashKey(strBuilder: StringBuilder): Long {
-        return LongHashFunction.xx().hashChars(strBuilder)
+        return LongHashFunction.xx128low().hashChars(strBuilder)
     }
 }

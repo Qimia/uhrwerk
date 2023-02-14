@@ -22,6 +22,7 @@ data class TableModel(
     var dependencies: Array<DependencyModel>? = null,
     var sources: Array<SourceModel2>? = null,
     var targets: Array<TargetModel>? = null,
+    var hashKey: Long? = null,
     var description: String? = null,
     var deactivatedTs: LocalDateTime? = null,
     var createdTs: Timestamp? = null,
@@ -73,6 +74,7 @@ data class TableModel(
             if (!targets.contentEquals(other.targets)) return false
         } else if (!other.targets.isNullOrEmpty()) return false
 
+        if (hashKey != other.hashKey) return false
         if (description != other.description) return false
         if (deactivatedTs != other.deactivatedTs) return false
         if (createdTs != other.createdTs) return false
@@ -99,6 +101,7 @@ data class TableModel(
         result = 31 * result + (dependencies?.contentHashCode() ?: 0)
         result = 31 * result + (sources?.contentHashCode() ?: 0)
         result = 31 * result + (targets?.contentHashCode() ?: 0)
+        result = 31 * result + (hashKey?.hashCode() ?: 0)
         result = 31 * result + (description?.hashCode() ?: 0)
         result = 31 * result + (deactivatedTs?.hashCode() ?: 0)
         result = 31 * result + (createdTs?.hashCode() ?: 0)
@@ -107,7 +110,8 @@ data class TableModel(
     }
 
     override fun toString(): String {
-        return "TableModel(id=$id, area=$area, vertical=$vertical, name=$name, version=$version, className=$className, transformSqlQuery=$transformSqlQuery, parallelism=$parallelism, maxBulkSize=$maxBulkSize, partitionUnit=$partitionUnit, partitionSize=$partitionSize, partitioned=$partitioned, dependencies=${dependencies?.contentToString()}, sources=${sources?.contentToString()}, targets=${targets?.contentToString()}, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
+        return "TableModel(id=$id, area=$area, vertical=$vertical, name=$name, version=$version, className=$className, transformSqlQuery=$transformSqlQuery, partitionColumns=${partitionColumns?.contentToString()}, tableVariables=${tableVariables?.contentToString()}, parallelism=$parallelism, maxBulkSize=$maxBulkSize, partitionUnit=$partitionUnit, partitionSize=$partitionSize, partitioned=$partitioned, dependencies=${dependencies?.contentToString()}, sources=${sources?.contentToString()}, targets=${targets?.contentToString()}, hashKey=$hashKey, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
     }
+
 
 }

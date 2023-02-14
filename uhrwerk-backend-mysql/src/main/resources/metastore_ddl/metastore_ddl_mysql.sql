@@ -15,28 +15,32 @@ CREATE TABLE IF NOT EXISTS CONNECTION
     redshift_aws_iam_role VARCHAR(512)                                       NULL,
     redshift_temp_dir     VARCHAR(512)                                       NULL,
     deactivated_ts        TIMESTAMP                                          NULL,
+    deactivated_epoch     BIGINT AS (IFNULL((TIMESTAMPDIFF(second, '1970-01-01', deactivated_ts)),
+                                            0)),
     created_ts            TIMESTAMP DEFAULT CURRENT_TIMESTAMP                NULL,
     updated_ts            TIMESTAMP DEFAULT CURRENT_TIMESTAMP                NULL ON update CURRENT_TIMESTAMP,
     description           VARCHAR(512)                                       NULL,
-    hash_key              BIGINT                                             NULL,
+    hash_key              BIGINT                                             NOT NULL,
     INDEX (hash_key),
-    UNIQUE (name, deactivated_ts)
+    UNIQUE (name, deactivated_epoch)
 );
 
 CREATE TABLE IF NOT EXISTS SECRET_
 (
-    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name            VARCHAR(128)                        NOT NULL,
-    type            enum ('AWS','AZURE','GCP')          NOT NULL,
-    aws_secret_name VARCHAR(512)                        NULL,
-    aws_region      VARCHAR(32)                         NULL,
-    deactivated_ts  TIMESTAMP                           NULL,
-    created_ts      TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
-    updated_ts      TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
-    description     VARCHAR(512)                        NULL,
-    hash_key        BIGINT                              NOT NULL,
+    id                BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name              VARCHAR(128)                        NOT NULL,
+    type              enum ('AWS','AZURE','GCP')          NOT NULL,
+    aws_secret_name   VARCHAR(512)                        NULL,
+    aws_region        VARCHAR(32)                         NULL,
+    deactivated_ts    TIMESTAMP                           NULL,
+    deactivated_epoch BIGINT AS (IFNULL((TIMESTAMPDIFF(second, '1970-01-01', deactivated_ts)),
+                                        0)),
+    created_ts        TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
+    updated_ts        TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
+    description       VARCHAR(512)                        NULL,
+    hash_key          BIGINT                              NOT NULL,
     INDEX (hash_key),
-    UNIQUE (name, deactivated_ts)
+    UNIQUE (name, deactivated_epoch)
 );
 
 CREATE TABLE IF NOT EXISTS TABLE_
@@ -56,19 +60,22 @@ CREATE TABLE IF NOT EXISTS TABLE_
     partition_columns   JSON                                       NULL,
     table_variables     JSON                                       NULL,
     deactivated_ts      TIMESTAMP                                  NULL,
+    deactivated_epoch   BIGINT AS (IFNULL((TIMESTAMPDIFF(second, '1970-01-01', deactivated_ts)),
+                                          0)),
     created_ts          TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL,
     updated_ts          TIMESTAMP DEFAULT CURRENT_TIMESTAMP        NULL ON update CURRENT_TIMESTAMP,
     description         VARCHAR(512)                               NULL,
-    hash_key            BIGINT                                     NULL,
+    hash_key            BIGINT                                     NOT NULL,
     INDEX (hash_key),
-    UNIQUE (area, vertical, name, version, deactivated_ts)
+    UNIQUE (area, vertical, name, version, deactivated_epoch)
 );
 
 CREATE TABLE IF NOT EXISTS SOURCE
 (
     id                        BIGINT AUTO_INCREMENT PRIMARY KEY,
     table_id                  BIGINT                           NOT NULL,
-    connection_id             BIGINT                           NOT NULL,
+    table_key                 BIGINT                           NOT NULL,
+    connection_key            BIGINT                           NOT NULL,
     path                      VARCHAR(512)                     NOT NULL,
     format                    VARCHAR(64)                      NOT NULL,
     ingestion_mode            enum ('INTERVAL','DELTA', 'ALL') NOT NULL DEFAULT 'ALL',
@@ -84,69 +91,84 @@ CREATE TABLE IF NOT EXISTS SOURCE
     parallel_partition_num    INT                              NOT NULL,
     auto_load                 BOOLEAN                          NOT NULL DEFAULT TRUE,
     deactivated_ts            TIMESTAMP                        NULL,
+    deactivated_epoch         BIGINT AS (IFNULL((TIMESTAMPDIFF(second, '1970-01-01', deactivated_ts)),
+                                                0)),
     created_ts                TIMESTAMP                                 DEFAULT CURRENT_TIMESTAMP,
     updated_ts                TIMESTAMP                                 DEFAULT CURRENT_TIMESTAMP ON update CURRENT_TIMESTAMP,
     description               VARCHAR(512),
     hash_key                  BIGINT                           NOT NULL,
     INDEX (hash_key),
-    UNIQUE (table_id, connection_id, path, format, deactivated_ts),
-    FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE,
-    FOREIGN KEY (connection_id) REFERENCES CONNECTION (id) ON DELETE CASCADE
+    INDEX (table_key),
+    UNIQUE (table_key, connection_key, path, format, deactivated_epoch),
+    FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE
 );
 
 
 CREATE TABLE IF NOT EXISTS TARGET
 (
-    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
-    table_id       BIGINT                              NOT NULL,
-    connection_id  BIGINT                              NOT NULL,
-    format         VARCHAR(64)                         NOT NULL,
-    table_name     VARCHAR(512)                        NULL,
-    deactivated_ts TIMESTAMP                           NULL,
-    created_ts     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
-    updated_ts     TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
-    hash_key       BIGINT                              NOT NULL,
+    id                BIGINT AUTO_INCREMENT PRIMARY KEY,
+    table_id          BIGINT                              NOT NULL,
+    table_key         BIGINT                              NOT NULL,
+    connection_key    BIGINT                              NOT NULL,
+    format            VARCHAR(64)                         NOT NULL,
+    table_name        VARCHAR(512)                        NULL,
+    deactivated_ts    TIMESTAMP                           NULL,
+    deactivated_epoch BIGINT AS (IFNULL((TIMESTAMPDIFF(second, '1970-01-01', deactivated_ts)),
+                                        0)),
+    created_ts        TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
+    updated_ts        TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
+    hash_key          BIGINT                              NOT NULL,
     INDEX (hash_key),
-    UNIQUE (table_id, connection_id, format, deactivated_ts),
-    FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE,
-    FOREIGN KEY (connection_id) REFERENCES CONNECTION (id) ON DELETE CASCADE
+    INDEX (table_key),
+    INDEX (table_key, format),
+    UNIQUE (table_key, connection_key, format, deactivated_epoch),
+    FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE
 );
+
 CREATE TABLE IF NOT EXISTS DEPENDENCY
 (
-    id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
-    table_id             BIGINT                              NOT NULL,
-    dependency_target_id BIGINT                              NOT NULL,
-    dependency_table_id  BIGINT                              NOT NULL,
-    view_name            VARCHAR(128)                        NULL,
-    partition_mappings   JSON                                NULL,
+    id                    BIGINT AUTO_INCREMENT PRIMARY KEY,
+    table_id              BIGINT                              NOT NULL,
+    table_key             BIGINT                              NOT NULL,
+    dependency_target_key BIGINT                              NOT NULL,
+    dependency_table_key  BIGINT                              NOT NULL,
+    view_name             VARCHAR(128)                        NULL,
+    partition_mappings    JSON                                NULL,
     dependency_variables  JSON                                NULL,
-    deactivated_ts       TIMESTAMP                           NULL,
-    created_ts           TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
-    updated_ts           TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
-    description          VARCHAR(512)                        NULL,
-    hash_key             BIGINT                              NOT NULL,
+    deactivated_ts        TIMESTAMP                           NULL,
+    deactivated_epoch     BIGINT AS (IFNULL((TIMESTAMPDIFF(second, '1970-01-01', deactivated_ts)),
+                                            0)),
+    created_ts            TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL,
+    updated_ts            TIMESTAMP DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
+    description           VARCHAR(512)                        NULL,
+    hash_key              BIGINT                              NOT NULL,
     INDEX (hash_key),
-    UNIQUE (table_id, dependency_target_id, dependency_table_id, deactivated_ts),
-    FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE,
-    FOREIGN KEY (dependency_target_id) REFERENCES TARGET (id) ON DELETE CASCADE,
-    FOREIGN KEY (dependency_table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE
+    INDEX (table_key),
+    INDEX (dependency_table_key),
+    UNIQUE (table_key, dependency_table_key, dependency_target_key, deactivated_epoch),
+    FOREIGN KEY (table_id) REFERENCES TABLE_ (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS PARTITION_
 (
-    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    target_id        BIGINT       NOT NULL,
-    partition_ts     TIMESTAMP    NOT NULL,
-    partitioned      BOOLEAN      NOT NULL DEFAULT FALSE,
-    bookmarked       BOOLEAN      NOT NULL DEFAULT FALSE,
-    max_bookmark     VARCHAR(128) NULL,
-    partition_values JSON         NULL,
-    partition_path   VARCHAR(1024) NULL,
-    created_ts       TIMESTAMP             DEFAULT CURRENT_TIMESTAMP NULL,
-    updated_ts       TIMESTAMP             DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
+    id                BIGINT AUTO_INCREMENT PRIMARY KEY,
+    table_key         BIGINT        NOT NULL,
+    target_key        BIGINT        NOT NULL,
+    partition_ts      TIMESTAMP     NOT NULL,
+    partitioned       BOOLEAN       NOT NULL DEFAULT FALSE,
+    bookmarked        BOOLEAN       NOT NULL DEFAULT FALSE,
+    max_bookmark      VARCHAR(128)  NULL,
+    partition_values  JSON          NULL,
+    partition_path    VARCHAR(1024) NULL,
+    deactivated_ts    TIMESTAMP     NULL,
+    deactivated_epoch BIGINT AS (IFNULL((TIMESTAMPDIFF(second, '1970-01-01', deactivated_ts)),
+                                        0)),
+    created_ts        TIMESTAMP              DEFAULT CURRENT_TIMESTAMP NULL,
+    updated_ts        TIMESTAMP              DEFAULT CURRENT_TIMESTAMP NULL ON update CURRENT_TIMESTAMP,
     INDEX (partition_ts),
     INDEX (max_bookmark),
-    FOREIGN KEY (target_id) REFERENCES TARGET (id) ON DELETE CASCADE
+    index (table_key),
+    index (target_key)
 );
 
 CREATE TABLE IF NOT EXISTS PARTITION_DEPENDENCY

@@ -1,7 +1,7 @@
 package io.qimia.uhrwerk.dao
 
 import io.qimia.uhrwerk.ConnectionHelper
-import io.qimia.uhrwerk.common.metastore.builders.PartitionBuilder
+import io.qimia.uhrwerk.common.metastore.model.Partition
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -20,11 +20,10 @@ class PartitionTest {
 
     @Test
     internal fun create() {
-        val partition = PartitionBuilder()
-            .targetId(300L)
-            .partitionTs(LocalDateTime.now())
-            .partitioned(false)
-            .build()
+        val partition = Partition()
+        partition.targetKey = 300L
+        partition.partitionTs = LocalDateTime.now()
+        partition.partitioned = false
     }
 
     companion object {

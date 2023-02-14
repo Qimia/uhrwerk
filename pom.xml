@@ -27,7 +27,7 @@
     <log4j.version>1.2.17</log4j.version>
     <snakeyaml.version>1.30</snakeyaml.version>
     <picocli.version>4.6.3</picocli.version>
-    <zero-allocation-hashing.version>0.15</zero-allocation-hashing.version>
+    <zero-allocation-hashing.version>0.16</zero-allocation-hashing.version>
     <commons-collections.version>3.2.2</commons-collections.version>
     <maven.surefire.plugin.version>3.0.0-M7</maven.surefire.plugin.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
