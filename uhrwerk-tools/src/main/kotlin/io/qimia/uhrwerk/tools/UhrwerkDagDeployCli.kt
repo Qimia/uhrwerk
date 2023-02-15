@@ -32,7 +32,7 @@ class UhrwerkDagDeployCli : Callable<Int> {
         names = ["-c", "--cons"],
         paramLabel = "CON_CONF",
         description = ["Paths to the Connection Configuration(s)"],
-        required = true
+        required = false
     )
     lateinit var connectionConfigs: ArrayList<String>
 
@@ -40,7 +40,7 @@ class UhrwerkDagDeployCli : Callable<Int> {
         names = ["-t", "--table"],
         paramLabel = "TAB_CONF",
         description = ["Paths to the Table Configuration"],
-        required = true
+        required = false
     )
     lateinit var tableConfig: String
 
