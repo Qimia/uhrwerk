@@ -34,7 +34,7 @@ class UhrwerkDagDeployCli : Callable<Int> {
         description = ["Paths to the Connection Configuration(s)"],
         required = false
     )
-    lateinit var connectionConfigs: ArrayList<String>
+    var connectionConfigs: ArrayList<String> = arrayListOf()
 
     @Option(
         names = ["-t", "--table"],
@@ -42,7 +42,7 @@ class UhrwerkDagDeployCli : Callable<Int> {
         description = ["Paths to the Table Configuration"],
         required = false
     )
-    lateinit var tableConfig: String
+    var tableConfig: String = ""
 
 
     override fun call(): Int {
