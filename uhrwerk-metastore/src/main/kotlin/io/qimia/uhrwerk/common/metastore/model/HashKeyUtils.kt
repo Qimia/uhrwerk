@@ -20,10 +20,10 @@ object HashKeyUtils {
     }
 
     fun tableKey(dependency: DependencyModel): Long {
-        assert(dependency.area != null && !dependency.area!!.isEmpty()) { "Dependency.area can't be null or empty" }
-        assert(dependency.vertical != null && !dependency.vertical!!.isEmpty()) { "Dependency.vertical can't be null or empty" }
-        assert(dependency.tableName != null && !dependency.tableName!!.isEmpty()) { "Dependency.tableName can't be null or empty" }
-        assert(dependency.version != null && !dependency.version!!.isEmpty()) { "Dependency.version can't be null or empty" }
+        assert(!dependency.area.isNullOrEmpty()) { "Dependency.area can't be null or empty" }
+        assert(!dependency.vertical.isNullOrEmpty()) { "Dependency.vertical can't be null or empty" }
+        assert(!dependency.tableName.isNullOrEmpty()) { "Dependency.tableName can't be null or empty" }
+        assert(!dependency.version.isNullOrEmpty()) { "Dependency.version can't be null or empty" }
         return hashKey(
             StringBuilder()
                 .append(dependency.area)

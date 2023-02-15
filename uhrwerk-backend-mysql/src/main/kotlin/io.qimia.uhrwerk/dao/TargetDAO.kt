@@ -100,7 +100,7 @@ class TargetDAO() : TargetService {
      * @param tableId id of table for which the targets are defined
      * @return array of Target model objects
      */
-    override fun getTableTargets(tableId: Long): List<TargetModel> {
+    override fun getByTableId(tableId: Long): List<TargetModel> {
         return repo.getByTableId(tableId)
     }
 

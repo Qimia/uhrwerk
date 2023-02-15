@@ -67,6 +67,56 @@ class DagTaskBuilder(environment: Environment) {
   private val excludeTables: mutable.SortedSet[String] =
     DagTaskBuilder.getExcludeTables(environment.jobProperties)
 
+  def buildGraph(
+      tPair: (TableWrapper, Boolean),
+      dag: DefaultDirectedGraph[(TableWrapper, Boolean), DefaultEdge]
+  ) {
+    dag.addVertex(tPair)
+    val aTable = tPair._1.wrappedTable
+    if (
+      aTable.getDependencies != null
+      && !aTable.getDependencies.isEmpty
+    )
+      aTable.getDependencies
+        .foreach(dependency => {
+          val depRef =
+            s"${dependency.getArea}.${dependency.getVertical}.${dependency.getTableName}:${dependency.getVersion}"
+
+          if (!this.excludeTables.contains(depRef)) {
+            val depTable =
+              environment.getTableByKey(dependency.getDependencyTableKey).get
+
+            val partitions = lastPartitions(
+              depTable.wrappedTable,
+              dependency,
+              environment.jobProperties
+            )
+
+            val depPair = (depTable, partitions.nonEmpty)
+            buildGraph(depPair, dag)
+            dag.addEdge(depPair, tPair)
+          }
+        })
+  }
+
+  def pTraverse(
+      node: (TableWrapper, Boolean),
+      dag: DefaultDirectedGraph[(TableWrapper, Boolean), DefaultEdge],
+      nDag: mutable.LinkedHashSet[(TableWrapper, Boolean)]
+  ): (TableWrapper, Boolean) = {
+    val preNodes = dag.incomingEdgesOf(node).asScala.map(dag.getEdgeSource)
+    if (preNodes.isEmpty) {
+      nDag.add(node)
+      node
+    } else {
+      val tpNodes = preNodes.map(pTraverse(_, dag, nDag))
+      val process = node._2 && tpNodes.map(_._2).reduce((l, r) => l && r)
+      val nwNode = (node._1, process)
+      nDag.add(nwNode)
+      nwNode
+    }
+  }
+
   /** Create a queue of table + partition-list which need to be present for filling a given output table for a
     * particular time-range.
     * The queue is filling an bulk partition section of the outTable at a time.
@@ -82,57 +132,8 @@ class DagTaskBuilder(environment: Environment) {
       classOf[DefaultEdge]
     )
 
-    def buildGraph(
-        tPair: (TableWrapper, Boolean),
-        dag: DefaultDirectedGraph[(TableWrapper, Boolean), DefaultEdge]
-    ) {
-      dag.addVertex(tPair)
-      val aTable = tPair._1.wrappedTable
-      if (
-        aTable.getDependencies != null
-        && !aTable.getDependencies.isEmpty
-      )
-        aTable.getDependencies
-          .foreach(dependency => {
-            val depRef =
-              s"${dependency.getArea}.${dependency.getVertical}.${dependency.getTableName}:${dependency.getVersion}"
-
-            if (!this.excludeTables.contains(depRef)) {
-              val depTable =
-                environment.getTableByKey(dependency.getDependencyTableKey).get
-
-              val partitions = lastPartitions(
-                depTable.wrappedTable,
-                dependency,
-                environment.jobProperties
-              )
-
-              val depPair = (depTable, partitions.nonEmpty)
-              buildGraph(depPair, dag)
-              dag.addEdge(depPair, tPair)
-            }
-          })
-    }
-
     buildGraph((outTable, false), dag)
 
-    def pTraverse(
-        node: (TableWrapper, Boolean),
-        dag: DefaultDirectedGraph[(TableWrapper, Boolean), DefaultEdge],
-        nDag: mutable.LinkedHashSet[(TableWrapper, Boolean)]
-    ): (TableWrapper, Boolean) = {
-      val preNodes = dag.incomingEdgesOf(node).asScala.map(dag.getEdgeSource)
-      if (preNodes.isEmpty) {
-        nDag.add(node)
-        node
-      } else {
-        val tpNodes = preNodes.map(pTraverse(_, dag, nDag))
-        val process = node._2 && tpNodes.map(_._2).reduce((l, r) => l && r)
-        val nwNode = (node._1, process)
-        nDag.add(nwNode)
-        nwNode
-      }
-    }
     val nDag = mutable.LinkedHashSet[(TableWrapper, Boolean)]()
 
     pTraverse((outTable, false), dag, nDag)
@@ -193,9 +194,12 @@ class DagTaskBuilder(environment: Environment) {
           .getLatestPartitions(dep.getDependencyTargetKey, mappings.asJava)
           .asScala
           .toList
-      }else{
+      } else {
         return environment.metaStore.partitionService
-          .getLatestPartitions(dep.getDependencyTargetKey, Map.empty[String, AnyRef].asJava)
+          .getLatestPartitions(
+            dep.getDependencyTargetKey,
+            Map.empty[String, AnyRef].asJava
+          )
           .asScala
           .toList
       }

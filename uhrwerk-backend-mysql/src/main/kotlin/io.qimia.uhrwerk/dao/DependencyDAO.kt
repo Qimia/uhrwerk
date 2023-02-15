@@ -133,7 +133,7 @@ class DependencyDAO() : DependencyService {
         val enrichedDependencies = dependencies!!.flatMap { dependency ->
             val depTableKey = HashKeyUtils.tableKey(dependency)
             dependency.dependencyTableKey = depTableKey
-            val depTable = tableRepo.getByHashKey(depTableKey)
+
             targetRepo.getByTableKeyFormat(depTableKey, dependency.format!!)
                 .map { depTarget ->
                     val depTargetKey = HashKeyUtils.targetKey(depTarget)
@@ -146,7 +146,7 @@ class DependencyDAO() : DependencyService {
 
         if (!overwrite) {
             // check if there are stored dependencies and if they are correct
-            val checkDeps = checkExistingDependencies(tableKey, dependencies)
+            val checkDeps = checkExistingDependencies(tableKey, enrichedDependencies.toTypedArray())
             if (checkDeps.found && !checkDeps.correct) {
                 result.isSuccess = false
                 result.isError = false

@@ -78,7 +78,8 @@ class ConnectionRepo : BaseRepo<ConnectionModel>() {
         conn.redshiftFormat = res.getString(11)
         conn.redshiftAwsIamRole = res.getString(12)
         conn.redshiftTempDir = res.getString(13)
-        conn.deactivatedTs = res.getTimestamp(14)?.toLocalDateTime()
+        conn.hashKey = res.getLong(14)
+        conn.deactivatedTs = res.getTimestamp(15)?.toLocalDateTime()
         return conn
     }
 
@@ -114,6 +115,7 @@ class ConnectionRepo : BaseRepo<ConnectionModel>() {
                    redshift_format,
                    redshift_aws_iam_role,
                    redshift_temp_dir,
+                   hash_key,
                    deactivated_ts
             FROM CONNECTION
             WHERE id = ?
@@ -133,6 +135,7 @@ class ConnectionRepo : BaseRepo<ConnectionModel>() {
                    redshift_format,
                    redshift_aws_iam_role,
                    redshift_temp_dir,
+                   hash_key,
                    deactivated_ts
             FROM CONNECTION
             WHERE deactivated_ts IS NULL 
@@ -154,10 +157,11 @@ class ConnectionRepo : BaseRepo<ConnectionModel>() {
                    C.redshift_format,
                    C.redshift_aws_iam_role,
                    C.redshift_temp_dir,
+                   C.hash_key,
                    C.deactivated_ts
             FROM CONNECTION C
-                     JOIN TARGET T on C.id = T.connection_id
-                     JOIN DEPENDENCY D on T.id = D.dependency_target_id
+                     JOIN TARGET T on C.hash_key = T.connection_key AND C.deactivated_ts IS NULL
+                     JOIN DEPENDENCY D on T.hash_key = D.dependency_target_key AND T.deactivated_ts IS NULL
             WHERE D.table_id = ?
         """.trimIndent()
 

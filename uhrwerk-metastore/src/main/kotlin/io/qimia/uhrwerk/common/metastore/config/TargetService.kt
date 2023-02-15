@@ -32,6 +32,6 @@ interface TargetService {
      * @param tableId id of table for which the targets are defined
      * @return array of Target model objects
      */
-    fun getTableTargets(tableId: Long): List<TargetModel>?
+    fun getByTableId(tableId: Long): List<TargetModel>?
     fun deactivateByTableKey(tableKey: Long): Int?
 }

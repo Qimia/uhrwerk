@@ -35,7 +35,7 @@ interface PartitionService {
      * @return An array of partitions (can be empty when there were no such partitions) or null in
      * case something went wrong.
      */
-    fun getPartitions(targetId: Long, partitionTs: List<LocalDateTime>): List<Partition>
+    fun getPartitions(targetKey: Long, partitionTs: List<LocalDateTime>): List<Partition>
 
     /**
      * Gets the latest partition for a specified target id.

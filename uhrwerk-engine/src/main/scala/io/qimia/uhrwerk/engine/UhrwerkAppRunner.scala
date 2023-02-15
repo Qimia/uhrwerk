@@ -136,11 +136,14 @@ object UhrwerkAppRunner {
       parallelRun: Int,
       overwrite: Boolean
   ): Unit = {
-    if (!environment.tables.contains(runTable)) {
+    val tableToRunOpt = environment.getTable(runTable)
+
+    if (tableToRunOpt.isEmpty) {
       logger.error("Unknown table to run: " + runTable.toString)
       return
     }
-    val tableToRun = environment.getTable(runTable).get
+
+    val tableToRun = tableToRunOpt.get
 
     if (dagMode) {
       val dagTaskBuilder = new DagTaskBuilder(environment)

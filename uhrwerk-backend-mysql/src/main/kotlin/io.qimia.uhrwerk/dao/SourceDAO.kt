@@ -30,7 +30,6 @@ class SourceDAO : SourceService {
                     "The connection for this source is missing in the Metastore."
                 )
             } else {
-                //FIXME: issue with target connectionId
                 source.connection = connection
                 source.connectionKey = connectionKey
             }
@@ -69,9 +68,9 @@ class SourceDAO : SourceService {
         overwrite: Boolean
     ) = sources.map { save(it, overwrite) }
 
-    override fun getSourcesByTableId(tableId: Long): List<SourceModel2> {
+    override fun getByTableId(tableId: Long): List<SourceModel2> {
 
-        val sources = repo.getSourcesByTableId(tableId)
+        val sources = repo.getByTableId(tableId)
         if (!sources.isNullOrEmpty()) {
             sources.forEach {
                 val conn = connService.getById(it.connectionKey!!)

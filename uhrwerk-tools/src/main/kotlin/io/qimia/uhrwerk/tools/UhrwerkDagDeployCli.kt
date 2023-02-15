@@ -47,14 +47,17 @@ class UhrwerkDagDeployCli : Callable<Int> {
 
     override fun call(): Int {
         val configReader = YamlConfigReader()
-        val secretDAO = SecretDAO()
-        val connectionDao = ConnectionDAO()
-        val tableDAO = TableDAO()
 
         val envConnInfo = configReader.readEnv(env)
         HikariCPDataSource.initConfig(
             envConnInfo.jdbc_url, envConnInfo.user, envConnInfo.pass
         )
+
+        val secretDAO = SecretDAO()
+        val connectionDao = ConnectionDAO()
+        val tableDAO = TableDAO()
+
+
 
         if (!connectionConfigs.isNullOrEmpty()) {
             connectionConfigs.forEach { connConfigLoc ->

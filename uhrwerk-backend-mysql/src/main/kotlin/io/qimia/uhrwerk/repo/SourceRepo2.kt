@@ -29,7 +29,7 @@ class SourceRepo2 : BaseRepo<SourceModel2>() {
             it.setLong(1, id)
         }, this::map)
 
-    fun getSourcesByTableId(tableId: Long): List<SourceModel2> =
+    fun getByTableId(tableId: Long): List<SourceModel2> =
         super.findAll(SELECT_ALL_BY_TABLE_ID, {
             it.setLong(1, tableId)
         }, this::map)
@@ -162,7 +162,7 @@ class SourceRepo2 : BaseRepo<SourceModel2>() {
         private val SELECT_ALL_BY_TABLE_ID = "SELECT \n" +
                 "$COLUMNS_STR \n" +
                 "FROM SOURCE \n" +
-                "WHERE table_id = ? AND deactivated_ts IS NULL"
+                "WHERE table_id = ?"
 
         private val SELECT_ALL_BY_TABLE_KEY = "SELECT \n" +
                 "$COLUMNS_STR \n" +

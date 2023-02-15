@@ -38,9 +38,9 @@ class PartitionDAO : PartitionService {
     }
 
     override fun getPartitions(
-        targetId: Long,
+        targetKey: Long,
         partitionTs: List<LocalDateTime>
-    ): List<Partition> = repo.getAllByTargetTs(targetId, partitionTs)
+    ): List<Partition> = repo.getAllByTargetTs(targetKey, partitionTs)
 
     override fun getById(id: Long): Partition? = repo.getById(id)
 

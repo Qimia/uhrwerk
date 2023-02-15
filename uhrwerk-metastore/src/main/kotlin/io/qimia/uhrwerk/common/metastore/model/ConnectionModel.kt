@@ -18,6 +18,7 @@ data class ConnectionModel(
     var redshiftAwsIamRole: String? = null,
     var redshiftTempDir: String? = null,
     var description: String? = null,
+    var hashKey: Long? = null,
     var deactivatedTs: LocalDateTime? = null,
     var createdTs: Timestamp? = null,
     var updatedTs: Timestamp? = null
@@ -42,6 +43,7 @@ data class ConnectionModel(
         if (redshiftFormat != other.redshiftFormat) return false
         if (redshiftAwsIamRole != other.redshiftAwsIamRole) return false
         if (redshiftTempDir != other.redshiftTempDir) return false
+        if (hashKey != other.hashKey) return false
         if (description != other.description) return false
         if (deactivatedTs != other.deactivatedTs) return false
         if (createdTs != other.createdTs) return false
@@ -64,6 +66,7 @@ data class ConnectionModel(
         result = 31 * result + (redshiftFormat?.hashCode() ?: 0)
         result = 31 * result + (redshiftAwsIamRole?.hashCode() ?: 0)
         result = 31 * result + (redshiftTempDir?.hashCode() ?: 0)
+        result = 31 * result + (hashKey?.hashCode() ?: 0)
         result = 31 * result + (description?.hashCode() ?: 0)
         result = 31 * result + (deactivatedTs?.hashCode() ?: 0)
         result = 31 * result + (createdTs?.hashCode() ?: 0)

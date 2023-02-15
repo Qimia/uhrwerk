@@ -68,7 +68,7 @@ public class YamlConfigReader {
         TargetModel[] resultTarget = new TargetModel[targets.length];
         for (int j = 0; j < targets.length; j++) {
           ConnectionModel conn = ModelMapper.toConnection(targets[j].getConnectionName());
-          resultTarget[j] = ModelMapper.toTarget(targets[j], tableModel, conn);
+          resultTarget[j] = ModelMapper.toTarget(targets[j], conn);
         }
         tableModel.setTargets(resultTarget);
       }
@@ -77,7 +77,7 @@ public class YamlConfigReader {
       if (dependencies != null) {
         DependencyModel[] resultDependency = new DependencyModel[dependencies.length];
         for (int j = 0; j < dependencies.length; j++) {
-          DependencyModel dependency = ModelMapper.toDependency(dependencies[j], tableModel);
+          DependencyModel dependency = ModelMapper.toDependency(dependencies[j]);
           resultDependency[j] = dependency;
           if (dependency.getDependencyVariables() != null
               && dependency.getDependencyVariables().length > 0) {

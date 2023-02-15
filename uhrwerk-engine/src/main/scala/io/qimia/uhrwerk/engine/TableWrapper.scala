@@ -45,18 +45,18 @@ object TableWrapper {
       partitionUnit: PartitionUnit,
       partitionSize: Int,
       targetKey: Long,
+      tableKey: Long,
       partitionValues: Map[String, Any] = Map.empty,
       paritionPath: String = null
   ): Seq[Partition] = {
     partitions.map(t => {
       val newPart = new Partition()
+      newPart.setTargetKey(targetKey)
+      newPart.setTableKey(tableKey)
       newPart.setPartitionTs(t)
       newPart.setPartitioned(partitioned)
       newPart.setPartitionSize(partitionSize)
-      newPart.setPartitionUnit(
-        partitionUnit
-      ) // Warning: Sets null directly from table object
-      newPart.setTargetKey(targetKey)
+      newPart.setPartitionUnit(partitionUnit)
       newPart.setPartitionValues(partitionValues.asJava)
       newPart.setPartitionPath(paritionPath)
       newPart
@@ -293,7 +293,6 @@ class TableWrapper(
               else
                 frame.groupBy(partCols.head)
 
-
             val cols = partCols.toSeq
             val partValues = groupedDf
               .count()
@@ -336,7 +335,11 @@ class TableWrapper(
   )(implicit
       ex: ExecutionContext
   ): List[Future[Boolean]] = {
-    val tasks = getTaskRunners(partitionsTs, overwrite).map(x => Future { x() })
+    val tasks = getTaskRunners(partitionsTs, overwrite).map(x =>
+      Future {
+        x()
+      }
+    )
 
     /** Idea: Give a complete report at the end after calling runTasks
       * Showing partitions already there, partitions with missing dependencies
@@ -393,14 +396,15 @@ class TableWrapper(
           var partitions: List[Partition] = Nil
 
           if (res.get.isEmpty) {
-            partitions = table.getTargets
+            partitions = this.table.getTargets
               .flatMap(target => {
                 TableWrapper.createPartitions(
                   localGroupTs,
                   table.getPartitioned,
                   table.getPartitionUnit,
                   table.getPartitionSize,
-                  target.getHashKey
+                  target.getHashKey,
+                  target.getTableKey
                 )
               })
               .toList
@@ -419,6 +423,7 @@ class TableWrapper(
                   table.getPartitionUnit,
                   table.getPartitionSize,
                   target.getHashKey,
+                  target.getTableKey,
                   partValues,
                   partPath
                 )
@@ -515,45 +520,9 @@ class TableWrapper(
     result
   }
 
-  /** Get timestamp of latest processed partition datetime.
-    * In case there was no partition returns empty
-    * In case there are multiple targets it returns the earliest of all the targets their latest partition
-    *
-    * @return localdatetime of the partition or empty if there is no
-    */
-  def getTimeLatestPartition: Option[LocalDateTime] = {
-    val targets =
-      metastore.targetService.getTableTargets(wrappedTable.getId).asScala
-    val latestPartitions = targets
-      .map(t => metastore.partitionService.getLatestPartition(t.getId))
-      .filter(_ != null)
-    if (latestPartitions.isEmpty) {
-      Option.empty
-    } else {
-      val earliestLatestPartition = latestPartitions.reduce((partA, partB) => {
-        if (partA.getPartitionTs.isAfter(partB.getPartitionTs)) {
-          partB
-        } else {
-          partA
-        }
-      })
-      Option(earliestLatestPartition.getPartitionTs)
-    }
-  }
-
   override def toString = s"TableWrapper($wrappedTable)"
 
-  def canEqual(other: Any): Boolean = other.isInstanceOf[TableWrapper]
+  override def equals(other: Any) = this.wrappedTable.equals(other)
 
-  override def equals(other: Any): Boolean = other match {
-    case that: TableWrapper =>
-      (that canEqual this) &&
-        wrappedTable == that.wrappedTable
-    case _ => false
-  }
-
-  override def hashCode(): Int = {
-    val state = Seq(wrappedTable)
-    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-  }
+  override def hashCode() = wrappedTable.hashCode()
 }

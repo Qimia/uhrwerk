@@ -43,11 +43,11 @@ class PartitionRepo : BaseRepo<Partition>() {
             }, this::map
         )
 
-    fun getAllByTargetTs(targetId: Long, tsList: List<LocalDateTime>): List<Partition> {
+    fun getAllByTargetTs(targetKey: Long, tsList: List<LocalDateTime>): List<Partition> {
         val tsStr: String = tsList.joinToString { "'${RepoUtils.convertTSToUTCString(it)}'" }
-        val sql = String.format(SELECT_BY_TARGET_ID_AND_TS, tsStr)
+        val sql = String.format(SELECT_BY_TARGET_KEY_AND_TS, tsStr)
 
-        return super.findAll(sql, { it.setLong(1, targetId) }, this::map)
+        return super.findAll(sql, { it.setLong(1, targetKey) }, this::map)
     }
 
     fun getAllParentPartitions(partitionId: Long): List<Partition> = findAll(
@@ -165,7 +165,8 @@ class PartitionRepo : BaseRepo<Partition>() {
 
         private val SELECT_BY_TARGET_KEY_PART_VALUES = """ 
             SELECT pt.id,
-               pt.target_id,
+               pt.target_key,
+               pt.table_key,
                pt.partition_ts,
                pt.partitioned,
                pt.bookmarked,
@@ -188,9 +189,10 @@ class PartitionRepo : BaseRepo<Partition>() {
          """.trimIndent()
 
 
-        private val SELECT_BY_TARGET_ID_AND_TS = """
+        private val SELECT_BY_TARGET_KEY_AND_TS = """
             SELECT pt.id,
-                   pt.target_id,
+                   pt.target_key,
+                   pt.table_key,
                    pt.partition_ts,
                    pt.partitioned,
                    pt.bookmarked,
@@ -200,9 +202,9 @@ class PartitionRepo : BaseRepo<Partition>() {
                    tb.partition_unit,
                    tb.partition_size
             FROM PARTITION_ pt
-                     JOIN TARGET t ON pt.target_id = t.id
-                     JOIN TABLE_ tb ON t.table_id = tb.id
-            WHERE pt.target_id = ?
+                     JOIN TARGET t ON pt.target_key = t.hash_key AND t.deactivated_ts IS NULL
+                     JOIN TABLE_ tb ON t.table_id = tb.id AND tb.deactivated_ts IS NULL
+            WHERE pt.target_key = ?
               AND pt.partition_ts IN (%s)
             ORDER BY pt.partition_ts ASC
         """.trimIndent()
@@ -210,7 +212,8 @@ class PartitionRepo : BaseRepo<Partition>() {
         //get all 'parent' partitions for a partition
         private val SELECT_BY_PARTDEP_PART_ID = """
             SELECT pt.id,
-                   pt.target_id,
+                   pt.target_key,
+                   pt.table_key,
                    pt.partition_ts,
                    pt.partitioned,
                    pt.bookmarked,

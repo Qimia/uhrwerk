@@ -16,16 +16,15 @@ class TablePartitionRepo() {
      * @throws SQLException
      */
     @Throws(SQLException::class)
-    fun getTablePartitions(tableId: Long): List<TablePartition> =
-        findAll(SELECT_TABLE_PARTITIONS, {
+    fun getTableDependencySpecs(tableId: Long): List<TableDependencySpec> =
+        findAll(SELECT_TABLE_DEP_SPECS, {
             it.setLong(1, tableId)
         }, this::map)
 
 
-    private fun map(res: ResultSet): TablePartition {
+    private fun map(res: ResultSet): TableDependencySpec {
         val dependencyId = res.getLong("dep.id")
-        val targetId = res.getLong("trg.id")
-        val tableId = res.getLong("tab.id")
+        val targetKey = res.getLong("trg.hash_key")
 
         val specTablePartitionUnit = res.getString("tab.partition_unit")
         var partitionUnit: PartitionUnit? = null
@@ -35,7 +34,7 @@ class TablePartitionRepo() {
 
         val partitionSize = res.getInt("tab.partition_size")
 
-        val connectionId = res.getLong("trg.connection_id")
+        val connectionKey = res.getLong("trg.connection_key")
 
         val partColumns = res.getString("tab.partition_columns")
 
@@ -50,18 +49,17 @@ class TablePartitionRepo() {
             partitionMappings = RepoUtils.jsonToMap(partMappings)
 
 
-        return TablePartition(
-            dependencyId,
-            targetId,
-            tableId,
-            partitionUnit,
-            partitionSize,
-            null,
-            null,
-            null,
-            connectionId,
-            partitionColumns,
-            partitionMappings
+        return TableDependencySpec(
+            dependencyId = dependencyId,
+            targetKey = targetKey,
+            connectionKey = connectionKey,
+            partitionSize = partitionSize,
+            transformSize = null,
+            partitionUnit = partitionUnit,
+            transformType = null,
+            transformUnit = null,
+            partitionColumns = partitionColumns,
+            partitionMappings = partitionMappings
         )
     }
 
@@ -69,8 +67,8 @@ class TablePartitionRepo() {
     private fun findAll(
         query: String,
         setParam: (PreparedStatement) -> Unit,
-        map: (res: ResultSet) -> TablePartition
-    ): List<TablePartition> {
+        map: (res: ResultSet) -> TableDependencySpec
+    ): List<TableDependencySpec> {
         val connection = HikariCPDataSource.connection
         connection.use {
             val select = connection.prepareStatement(query)
@@ -78,7 +76,7 @@ class TablePartitionRepo() {
             select.use {
                 val res = select.executeQuery()
                 res.use {
-                    val entities = mutableListOf<TablePartition>()
+                    val entities = mutableListOf<TableDependencySpec>()
                     while (res.next()) entities.add(map(res))
                     return entities
                 }
@@ -87,40 +85,39 @@ class TablePartitionRepo() {
     }
 
     companion object {
-        private val SELECT_TABLE_PARTITIONS = """
+        private val SELECT_TABLE_DEP_SPECS = """
             SELECT dep.id,
-                   trg.id,
-                   tab.id,
+                   trg.hash_key,
+                   trg.connection_key,
                    tab.partition_unit,
                    tab.partition_size,
-                   trg.connection_id,
                    tab.partition_columns,
                    dep.partition_mappings
             FROM TABLE_ tab
                      JOIN (SELECT d.id,
-                                  d.dependency_table_id,
-                                  d.dependency_target_id,
+                                  d.dependency_target_key,
+                                  d.dependency_table_key,
                                   d.partition_mappings
                            FROM TABLE_ t
                                     JOIN DEPENDENCY d ON t.id = d.table_id
                            WHERE t.id = ?) AS dep
-                          ON dep.dependency_table_id = tab.id
-                     JOIN TARGET trg ON trg.id = dep.dependency_target_id
+                          ON dep.dependency_table_key = tab.hash_key AND tab.deactivated_ts IS NULL
+                     JOIN TARGET trg ON trg.hash_key = dep.dependency_target_key AND trg.table_key = dep.dependency_table_key  IS NULL
+                     AND trg.deactivated_ts IS NULL
             ORDER BY dep.id
         """.trimIndent()
     }
 }
 
-data class TablePartition(
+data class TableDependencySpec(
     val dependencyId: Long,
-    val targetId: Long,
-    val tableId: Long,
-    val partitionUnit: PartitionUnit?,
+    val targetKey: Long,
+    val connectionKey: Long,
     val partitionSize: Int,
+    val transformSize: Int?,
+    val partitionUnit: PartitionUnit?,
     val transformType: PartitionTransformType?,
     val transformUnit: PartitionUnit?,
-    val transformSize: Int?,
-    val connectionId: Long,
     val partitionColumns: Array<String>? = null,
     val partitionMappings: Map<String, Any>? = null
 )

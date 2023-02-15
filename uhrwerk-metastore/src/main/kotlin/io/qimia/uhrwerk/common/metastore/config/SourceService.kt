@@ -36,7 +36,7 @@ interface SourceService {
      * @throws NullPointerException When a source's connection is missing.
      */
     @Throws(SQLException::class, NullPointerException::class)
-    fun getSourcesByTableId(tableId: Long): List<SourceModel2>?
+    fun getByTableId(tableId: Long): List<SourceModel2>?
 
     fun deactivateByTableKey(tableKey: Long): Int?
 }

@@ -98,12 +98,14 @@ class TableRepo() : BaseRepo<TableModel>() {
         if (deactivatedTs != null)
             builder.deactivatedTs(deactivatedTs.toLocalDateTime())
 
-        val partitionUnit = res.getString("partition_unit")
+        val partitionUnit = res.getString("tab.partition_unit")
         if (partitionUnit != null && partitionUnit != "") {
             builder.partitionUnit(PartitionUnit.valueOf(partitionUnit))
         }
+        val tableModel = builder.build()
+        tableModel.hashKey = res.getLong("tab.hash_key")
 
-        return builder.build()
+        return tableModel
     }
 
 
@@ -141,6 +143,7 @@ class TableRepo() : BaseRepo<TableModel>() {
                    tab.transform_sql_query,
                    tab.partition_columns,
                    tab.table_variables,
+                   tab.hash_key,
                    tab.deactivated_ts
             FROM TABLE_ tab
             WHERE id = ?
@@ -161,33 +164,12 @@ class TableRepo() : BaseRepo<TableModel>() {
                    tab.transform_sql_query,
                    tab.partition_columns,
                    tab.table_variables,
+                   tab.hash_key,
                    tab.deactivated_ts
             FROM TABLE_ tab
             WHERE tab.hash_key = ? AND tab.deactivated_ts IS NULL
         """.trimIndent()
 
-
-        private val SELECT_BY_TARGET_KEYS = """
-            SELECT tab.id,
-                   tab.area,
-                   tab.vertical,
-                   tab.name,
-                   tab.partition_unit,
-                   tab.partition_size,
-                   tab.parallelism,
-                   tab.max_bulk_size,
-                   tab.version,
-                   tab.partitioned,
-                   tab.class_name,
-                   tab.transform_sql_query,
-                   tab.partition_columns,
-                   tab.table_variables,
-                   tab.deactivated_ts
-            FROM TARGET tar
-                     JOIN TABLE_ tab
-                          ON tar.table_id = tab.id
-            WHERE tar.id IN (%s) AND tab.deactivated_ts IS NULL
-        """.trimIndent()
 
         private const val DEACTIVATE_BY_KEY =
             "UPDATE TABLE_ SET deactivated_ts = CURRENT_TIMESTAMP() WHERE hash_key = ? AND deactivated_ts IS NULL"

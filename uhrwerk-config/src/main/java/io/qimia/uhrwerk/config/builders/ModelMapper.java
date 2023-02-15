@@ -5,6 +5,7 @@ import io.qimia.uhrwerk.common.metastore.builders.TableModelBuilder;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionType;
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel;
+import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils;
 import io.qimia.uhrwerk.common.metastore.model.IngestionMode;
 import io.qimia.uhrwerk.common.metastore.model.PartitionUnit;
 import io.qimia.uhrwerk.common.metastore.model.SecretModel;
@@ -194,7 +195,7 @@ public class ModelMapper {
     return model;
   }
 
-  static TargetModel toTarget(Target target, TableModel table, ConnectionModel conn) {
+  static TargetModel toTarget(Target target, ConnectionModel conn) {
 
     TargetModel targetModel = new TargetModel();
     targetModel.setConnection(conn);
@@ -203,7 +204,7 @@ public class ModelMapper {
     return targetModel;
   }
 
-  static DependencyModel toDependency(Dependency dependency, TableModel table) {
+  static DependencyModel toDependency(Dependency dependency) {
 
     List<String> dependencyVariables = new ArrayList<>();
 

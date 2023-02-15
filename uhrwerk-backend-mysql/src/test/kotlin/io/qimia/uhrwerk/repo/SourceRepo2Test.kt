@@ -56,7 +56,7 @@ internal class SourceRepo2Test {
 
     @Test
     fun getSourcesByTableId() {
-        val sources = SourceRepo2().getSourcesByTableId(table!!.id!!)
+        val sources = SourceRepo2().getByTableId(table!!.id!!)
         assertThat(sources).isNotEmpty()
         assertThat(sources.size).isEqualTo(1)
         assertThat(sources[0]).isEqualTo(source)

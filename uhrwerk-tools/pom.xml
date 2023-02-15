@@ -106,7 +106,7 @@
           </descriptorRefs>
           <archive>
             <manifest>
-              <mainClass>io.qimia.uhrwerk.tools.UhrwerkDagViewCli</mainClass>
+              <mainClass>io.qimia.uhrwerk.tools.UhrwerkDagDeployCli</mainClass>
             </manifest>
           </archive>
         </configuration>
