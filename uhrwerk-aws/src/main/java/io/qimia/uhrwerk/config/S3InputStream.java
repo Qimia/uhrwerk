@@ -33,13 +33,13 @@ public class S3InputStream {
         String bucket = uri.getHost();
         String path = uri.getPath().replaceFirst("/", "");
         // default client uses com.amazonaws.auth.DefaultAWSCredentialsProviderChain for auth
-        AmazonS3 client = null;
+        AmazonS3 client;
         if (!instanceProfile) {
           client = AmazonS3ClientBuilder.standard().withRegion(Regions.EU_WEST_1).build();
         } else {
           client = AmazonS3ClientBuilder.standard()
               .withRegion(Regions.EU_WEST_1)
-              .withCredentials(new InstanceProfileCredentialsProvider())
+              .withCredentials(new InstanceProfileCredentialsProvider(true))
               .build();
         }
         GetObjectRequest request = new GetObjectRequest(bucket, path);
