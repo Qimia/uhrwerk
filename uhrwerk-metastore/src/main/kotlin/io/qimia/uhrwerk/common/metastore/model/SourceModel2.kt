@@ -60,7 +60,7 @@ data class SourceModel2(
         if (parallelPartitionColumn != other.parallelPartitionColumn) return false
         if (parallelPartitionNum != other.parallelPartitionNum) return false
         if (autoLoad != other.autoLoad) return false
-        if (hashKey != other.hashKey) return false
+        if (hashKey != null && other.hashKey != null) if (hashKey != other.hashKey) return false
         if (description != other.description) return false
         if (deactivatedTs != other.deactivatedTs) return false
         if (createdTs != other.createdTs) return false

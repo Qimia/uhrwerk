@@ -74,7 +74,7 @@ data class TableModel(
             if (!targets.contentEquals(other.targets)) return false
         } else if (!other.targets.isNullOrEmpty()) return false
 
-        if (hashKey != other.hashKey) return false
+        if (hashKey != null && other.hashKey != null) if (hashKey != other.hashKey) return false
         if (description != other.description) return false
         if (deactivatedTs != other.deactivatedTs) return false
         if (createdTs != other.createdTs) return false

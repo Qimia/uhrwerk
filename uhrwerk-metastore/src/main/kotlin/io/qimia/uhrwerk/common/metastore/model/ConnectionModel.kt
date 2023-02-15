@@ -43,7 +43,7 @@ data class ConnectionModel(
         if (redshiftFormat != other.redshiftFormat) return false
         if (redshiftAwsIamRole != other.redshiftAwsIamRole) return false
         if (redshiftTempDir != other.redshiftTempDir) return false
-        if (hashKey != other.hashKey) return false
+        if (hashKey != null && other.hashKey != null) if (hashKey != other.hashKey) return false
         if (description != other.description) return false
         if (deactivatedTs != other.deactivatedTs) return false
         if (createdTs != other.createdTs) return false

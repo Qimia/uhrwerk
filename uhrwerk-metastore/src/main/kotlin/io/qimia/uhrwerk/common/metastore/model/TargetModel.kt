@@ -32,7 +32,7 @@ data class TargetModel(
         if (connectionKey != other.connectionKey) return false
         if (format != other.format) return false
         if (tableName != other.tableName) return false
-        if (hashKey != other.hashKey) return false
+        if (hashKey != null && other.hashKey != null) if (hashKey != other.hashKey) return false
         if (description != other.description) return false
         if (deactivatedTs != other.deactivatedTs) return false
         if (createdTs != other.createdTs) return false
