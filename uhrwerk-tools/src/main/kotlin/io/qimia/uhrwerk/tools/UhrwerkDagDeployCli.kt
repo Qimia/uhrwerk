@@ -62,7 +62,7 @@ class UhrwerkDagDeployCli : Callable<Int> {
         if (!connectionConfigs.isNullOrEmpty()) {
             connectionConfigs.forEach { connConfigLoc ->
                 println("Reading Connection config-file: $connConfigLoc")
-                val connections = configReader.readConnectionsSecrets(connConfigLoc)
+                val connections = configReader.readConnectionsSecrets(connConfigLoc,true)
                 if (!connections.secrets.isNullOrEmpty()) connections.secrets!!.forEach {
                     secretDAO.save(
                         it, true
@@ -76,7 +76,7 @@ class UhrwerkDagDeployCli : Callable<Int> {
             }
         } else {
             if (!tableConfig.isNullOrEmpty()) {
-                val table = configReader.readTable(tableConfig)
+                val table = configReader.readTable(tableConfig, true)
                 tableDAO.save(table, true)
             }
         }

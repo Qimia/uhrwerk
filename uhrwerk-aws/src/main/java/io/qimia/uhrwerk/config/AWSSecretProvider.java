@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.config;
 
+import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest;
@@ -9,19 +10,32 @@ import software.amazon.awssdk.services.secretsmanager.model.SecretsManagerExcept
 public class AWSSecretProvider {
 
   private final Region region;
+
+  private final boolean awsInstanceProfile;
   private final SecretsManagerClient secretsClient;
 
   public AWSSecretProvider(String region) {
+    this(region, false);
+  }
+
+  public AWSSecretProvider(String region, boolean awsInstanceProfile) {
+    this.awsInstanceProfile = awsInstanceProfile;
     this.region = Region.of(region);
     if (!Region.regions().contains(this.region)) {
       throw new IllegalArgumentException(
           String.format("The given region=%s doesn't exist.", region));
     }
-    this.secretsClient =
-        SecretsManagerClient.builder()
-            .region(this.region)
-            //.credentialsProvider(ProfileCredentialsProvider.create())
-            .build();
+    if (this.awsInstanceProfile) {
+      this.secretsClient =
+          SecretsManagerClient.builder()
+              .region(this.region)
+              .credentialsProvider(InstanceProfileCredentialsProvider.create())
+              .build();
+    } else {
+      this.secretsClient = SecretsManagerClient.builder()
+          .region(this.region)
+          .build();
+    }
   }
 
   public String secretValue(String secretName) {

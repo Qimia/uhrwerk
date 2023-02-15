@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 
 public class MapperUtils {
+
   static String readQueryOrFileLines(String queryOrFile) {
     if (queryOrFile.endsWith(".sql")) {
       try {
@@ -20,10 +21,15 @@ public class MapperUtils {
       return queryOrFile;
     }
   }
+
   static InputStream getInputStream(String file) {
+    return getInputStream(file, false);
+  }
+
+  static InputStream getInputStream(String file, boolean awsInstanceProfile) {
     InputStream stream;
     if (file.contains("s3:")) {
-      return io.qimia.uhrwerk.config.S3InputStream.getS3InputStream(file);
+      return io.qimia.uhrwerk.config.S3InputStream.getS3InputStream(file, awsInstanceProfile);
     } else if (file.contains(".blob.core.windows.net")) {
       return io.qimia.uhrwerk.config.BlobInputStream.getBlobInputStream(file);
     }

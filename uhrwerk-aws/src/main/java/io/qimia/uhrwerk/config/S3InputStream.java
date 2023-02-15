@@ -1,5 +1,6 @@
 package io.qimia.uhrwerk.config;
 
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -12,13 +13,19 @@ import java.net.URISyntaxException;
 
 public class S3InputStream {
 
+
+  public static InputStream getS3InputStream(String fileLoc) {
+    return getS3InputStream(fileLoc, false);
+  }
+
+
   /**
    * Create an InputStream to read the config directly from S3
    *
    * @param fileLoc String with S3 path
    * @return A file stream which yamlreader can use
    */
-  public static InputStream getS3InputStream(String fileLoc) {
+  public static InputStream getS3InputStream(String fileLoc, boolean instanceProfile) {
     try {
       URI uri = new URI(fileLoc);
       String scheme = uri.getScheme();
@@ -26,7 +33,15 @@ public class S3InputStream {
         String bucket = uri.getHost();
         String path = uri.getPath().replaceFirst("/", "");
         // default client uses com.amazonaws.auth.DefaultAWSCredentialsProviderChain for auth
-        AmazonS3 client = AmazonS3ClientBuilder.standard().withRegion(Regions.EU_WEST_1).build();
+        AmazonS3 client = null;
+        if (!instanceProfile) {
+          client = AmazonS3ClientBuilder.standard().withRegion(Regions.EU_WEST_1).build();
+        } else {
+          client = AmazonS3ClientBuilder.standard()
+              .withRegion(Regions.EU_WEST_1)
+              .withCredentials(new InstanceProfileCredentialsProvider())
+              .build();
+        }
         GetObjectRequest request = new GetObjectRequest(bucket, path);
         S3Object object = client.getObject(request);
         return object.getObjectContent();

@@ -202,7 +202,11 @@ public class YamlConfigReader {
   }
 
   public ConnectionsModel readConnectionsSecrets(String file) {
-    InputStream stream = MapperUtils.getInputStream(file);
+    return readConnectionsSecrets(file, false);
+  }
+
+  public ConnectionsModel readConnectionsSecrets(String file, boolean awsInstanceProfile) {
+    InputStream stream = MapperUtils.getInputStream(file, awsInstanceProfile);
     Connections connections;
     try {
       connections = objectMapper().readValue(stream, Connections.class);
@@ -260,7 +264,7 @@ public class YamlConfigReader {
     }
 
     try {
-     props = objectMapper().readValue(stream, Map.class);
+      props = objectMapper().readValue(stream, Map.class);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -268,7 +272,12 @@ public class YamlConfigReader {
   }
 
   public TableModel readTable(String file) {
-    InputStream stream = MapperUtils.getInputStream(file);
+    return readTable(file, false);
+  }
+
+
+  public TableModel readTable(String file, boolean awsInstanceProfile) {
+    InputStream stream = MapperUtils.getInputStream(file, awsInstanceProfile);
     try {
       Table table = objectMapper().readValue(stream, Table.class);
       return getModelTable(table);
