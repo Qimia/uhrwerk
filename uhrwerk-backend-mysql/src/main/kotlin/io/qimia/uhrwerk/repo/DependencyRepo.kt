@@ -158,7 +158,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    dep.deactivated_ts
             FROM DEPENDENCY dep
                      JOIN TABLE_ tab ON dep.dependency_table_key = tab.hash_key AND tab.deactivated_ts IS NULL
-                     JOIN TARGET tar ON dep.dependency_target_id = tar.id AND tar.deactivated_ts IS NULL
+                     JOIN TARGET tar ON dep.dependency_target_key = tar.hash_key AND tar.deactivated_ts IS NULL
             WHERE dep.table_id = ? 
         """.trimIndent()
 

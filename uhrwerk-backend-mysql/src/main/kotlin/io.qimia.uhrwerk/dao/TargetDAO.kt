@@ -101,7 +101,13 @@ class TargetDAO() : TargetService {
      * @return array of Target model objects
      */
     override fun getByTableId(tableId: Long): List<TargetModel> {
-        return repo.getByTableId(tableId)
+        val targets = repo.getByTableId(tableId)
+        if (!targets.isNullOrEmpty())
+            targets.forEach {
+                val conn = connService.getByHashKey(it.connectionKey!!)
+                it.connection = conn
+            }
+        return targets
     }
 
     companion object {

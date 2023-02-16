@@ -28,7 +28,7 @@ class TablePartitionRepo() {
 
         val specTablePartitionUnit = res.getString("tab.partition_unit")
         var partitionUnit: PartitionUnit? = null
-        if (specTablePartitionUnit != null) {
+        if (!specTablePartitionUnit.isNullOrEmpty()) {
             partitionUnit = PartitionUnit.valueOf(specTablePartitionUnit)
         }
 
@@ -102,8 +102,7 @@ class TablePartitionRepo() {
                                     JOIN DEPENDENCY d ON t.id = d.table_id
                            WHERE t.id = ?) AS dep
                           ON dep.dependency_table_key = tab.hash_key AND tab.deactivated_ts IS NULL
-                     JOIN TARGET trg ON trg.hash_key = dep.dependency_target_key AND trg.table_key = dep.dependency_table_key  IS NULL
-                     AND trg.deactivated_ts IS NULL
+                     JOIN TARGET trg ON trg.hash_key = dep.dependency_target_key AND trg.deactivated_ts IS NULL
             ORDER BY dep.id
         """.trimIndent()
     }
