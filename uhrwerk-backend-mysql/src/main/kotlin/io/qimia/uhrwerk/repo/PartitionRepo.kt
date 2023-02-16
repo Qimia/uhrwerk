@@ -156,8 +156,8 @@ class PartitionRepo : BaseRepo<Partition>() {
                    tb.partition_unit,
                    tb.partition_size
             FROM PARTITION_ pt
-                     JOIN TARGET t ON pt.target_key = t.hashed_key
-                     JOIN TABLE_ tb ON t.table_key = tb.hashed_key
+                     JOIN TARGET t ON pt.target_key = t.hash_key
+                     JOIN TABLE_ tb ON t.table_key = tb.hash_key
             WHERE pt.target_key = ? AND pt.deactivated_ts IS NULL
             ORDER BY pt.partition_ts DESC
             LIMIT 1
