@@ -26,17 +26,28 @@ class DirectedJGraphtTest extends AnyFlatSpec {
       classOf[DefaultEdge]
     )
 
-    dag.addVertex(("A", false))
-    dag.addVertex(("B", true))
-    dag.addEdge(("B", true), ("A", false))
+    val A = ("A", false)
+    val B = ("B", true)
+    dag.addVertex(A)
+    dag.addVertex(B)
+    dag.addEdge(B, A)
 
-    dag.addVertex(("C", true))
-    dag.addEdge(("C", true), ("B", true))
+    val C = ("C", true)
+    dag.addVertex(C)
+    dag.addEdge(C, B)
 
-    dag.addVertex(("D", false))
-    dag.addEdge(("D", false), ("C", true))
-    dag.addVertex(("E", true))
-    dag.addEdge(("E", true), ("C", true))
+    val D = ("D", false)
+    dag.addVertex(D)
+    dag.addEdge(D,C)
+
+    val E = ("E", true)
+    dag.addVertex(E)
+    dag.addEdge(E,C)
+
+    val F = ("F",true)
+    dag.addVertex(F)
+    dag.addEdge(D,F)
+    dag.addEdge(F,B)
 
     val nodes = dag.vertexSet().asScala
     nodes.foreach(println)
@@ -67,7 +78,7 @@ class DirectedJGraphtTest extends AnyFlatSpec {
     }
 
 
-    pTraverse(("A", false), dag, list)
+    pTraverse(A, dag, list)
     println("##### traversed dags")
     list.foreach(println)
 

@@ -522,7 +522,17 @@ class TableWrapper(
 
   override def toString = s"TableWrapper($wrappedTable)"
 
-  override def equals(other: Any) = this.wrappedTable.equals(other)
+  def canEqual(other: Any): Boolean = other.isInstanceOf[TableWrapper]
 
-  override def hashCode() = wrappedTable.hashCode()
+  override def equals(other: Any): Boolean = other match {
+    case that: TableWrapper =>
+      (that canEqual this) &&
+        wrappedTable == that.wrappedTable
+    case _ => false
+  }
+
+  override def hashCode(): Int = {
+    val state = Seq(wrappedTable)
+    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
 }
