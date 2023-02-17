@@ -6,11 +6,16 @@ import io.qimia.uhrwerk.common.metastore.dependency.{
   TablePartitionResultSet
 }
 import io.qimia.uhrwerk.common.metastore.model.{
+  ConnectionModel,
+  ConnectionType,
   Partition,
   PartitionUnit,
+  SecretType,
   TableModel
 }
 import io.qimia.uhrwerk.common.utils.TemplateUtils
+import io.qimia.uhrwerk.config.AWSSecretProvider
+import io.qimia.uhrwerk.dao.SecretDAO
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent}
 import io.qimia.uhrwerk.engine.TableWrapper.reportProcessingPartitions
 import io.qimia.uhrwerk.engine.tools.{
@@ -136,6 +141,7 @@ class TableWrapper(
       if (dependencyResults.nonEmpty) {
         dependencyResults
           .map(bd => {
+            this.replaceSecrets(bd.connection)
             val id = DependencyHelper.extractTableIdentity(bd)
             val df = frameManager.loadDependencyDataFrame(bd)
 
@@ -534,5 +540,31 @@ class TableWrapper(
   override def hashCode(): Int = {
     val state = Seq(wrappedTable)
     state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+  }
+
+  private def replaceSecrets(conn: ConnectionModel): Unit = {
+    if (
+      conn.getType.equals(ConnectionType.JDBC) || conn.getType.equals(
+        ConnectionType.REDSHIFT
+      )
+    ) {
+      val jdbcUser = getSecretValue(conn.getJdbcUser)
+      conn.setJdbcUser(jdbcUser)
+      val jdbcPass = getSecretValue(conn.getJdbcPass)
+      conn.setJdbcPass(jdbcPass)
+    }
+  }
+  private def getSecretValue(orig: String): String = {
+    if (orig.startsWith("!secret:")) {
+      val scrName = orig.substring("!secret:".length)
+      val secret = new SecretDAO().getByName(scrName)
+      if (secret != null)
+        if (secret.getType.equals(SecretType.AWS)) {
+          val provider = new AWSSecretProvider(secret.getAwsRegion)
+          val scrValue = provider.secretValue(secret.getAwsSecretName)
+          return scrValue
+        }
+    }
+    orig
   }
 }

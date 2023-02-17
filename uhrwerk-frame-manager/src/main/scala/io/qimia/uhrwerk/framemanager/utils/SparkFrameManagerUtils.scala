@@ -194,9 +194,12 @@ object SparkFrameManagerUtils {
           s"format=${dependency.getFormat}"
         )
         .toString
-    } else { // jdbc
-      "`" + dependency.getArea + "_" + dependency.getVertical + "`.`" + dependency.getTableName + "_" + dependency.getVersion
-        .replace(".", "_") + "`"
+    } else { // jdbc or redshift
+      if (!isStringEmpty(dependency.getTargetDBTableName))
+        dependency.getTargetDBTableName
+      else
+        "`" + dependency.getArea + "_" + dependency.getVertical + "`.`" + dependency.getTableName + "_" + dependency.getVersion
+          .replace(".", "_") + "`"
     }
   }
 

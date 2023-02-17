@@ -90,6 +90,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
 
         dependency.version = rs.getString("tab.version")
         dependency.format = rs.getString("tar.format")
+        dependency.targetDBTableName = rs.getString("tar.table_name")
         dependency.hashKey = rs.getLong("dep.hash_key")
 
         val deactivatedTs = rs.getTimestamp("dep.deactivated_ts")
@@ -127,6 +128,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    dep.partition_mappings,
                    dep.dependency_variables,
                    tar.format,
+                   tar.table_name,
                    tab.version,
                    dep.hash_key,
                    dep.deactivated_ts
@@ -153,6 +155,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    dep.partition_mappings,
                    dep.dependency_variables,
                    tar.format,
+                   tar.table_name,
                    tab.version,
                    dep.hash_key,
                    dep.deactivated_ts
@@ -175,6 +178,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    dep.partition_mappings,
                    dep.dependency_variables,
                    tar.format,
+                   tar.table_name,
                    tab.version,
                    dep.hash_key,
                    dep.deactivated_ts

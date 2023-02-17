@@ -16,6 +16,7 @@ data class DependencyModel(
     var partitionMappings: Map<String, Any>? = null,
     var dependencyVariables: Array<String>? = null,
     var format: String? = null,
+    var targetDBTableName: String? = null,
     var version: String? = null,
     var hashKey: Long? = null,
     var deactivatedTs: LocalDateTime? = null,
@@ -42,12 +43,12 @@ data class DependencyModel(
         if (!partitionMappings.isNullOrEmpty()) {
             if (other.partitionMappings.isNullOrEmpty()) return false
             if (partitionMappings != other.partitionMappings) return false
-        }else if (!other.partitionMappings.isNullOrEmpty()) return false
+        } else if (!other.partitionMappings.isNullOrEmpty()) return false
 
         if (!dependencyVariables.isNullOrEmpty()) {
             if (other.dependencyVariables.isNullOrEmpty()) return false
             if (!dependencyVariables.contentEquals(other.dependencyVariables)) return false
-        }else if (!other.dependencyVariables.isNullOrEmpty()) return false
+        } else if (!other.dependencyVariables.isNullOrEmpty()) return false
 
         if (format != other.format) return false
         if (hashKey != other.hashKey) return false

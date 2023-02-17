@@ -1,7 +1,12 @@
 package io.qimia.uhrwerk.framemanager
 
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
-import io.qimia.uhrwerk.common.metastore.model.{ConnectionType, IngestionMode, SourceModel2, TableModel}
+import io.qimia.uhrwerk.common.metastore.model.{
+  ConnectionType,
+  IngestionMode,
+  SourceModel2,
+  TableModel
+}
 import io.qimia.uhrwerk.common.model._
 import io.qimia.uhrwerk.common.tools.{JDBCTools, TimeTools}
 import io.qimia.uhrwerk.common.utils.TemplateUtils
@@ -147,6 +152,11 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
 
     val isJDBC = dependencyResult.connection.getType.equals(ConnectionType.JDBC)
 
+    val isRedshift =
+      dependencyResult.connection.getType.equals(ConnectionType.REDSHIFT)
+
+    val isFileSystem = !isJDBC && !isRedshift
+
     if (dependencyResult.connection.getType.equals(ConnectionType.S3)) {
       SparkFrameManagerUtils.setS3Config(
         sparkSession,
@@ -154,8 +164,13 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       )
     }
 
-    val dfReader = sparkSession.read
-      .format(dependencyResult.dependency.getFormat)
+    val dfReader =
+      if (isRedshift)
+        sparkSession.read
+          .format(dependencyResult.connection.getRedshiftFormat)
+      else
+        sparkSession.read
+          .format(dependencyResult.dependency.getFormat)
 
     val dfReaderWithUserOptions = if (dataFrameReaderOptions.isDefined) {
       dfReader
@@ -165,7 +180,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     }
 
     val dependencyPath =
-      getDependencyPath(dependencyResult.dependency, fileSystem = !isJDBC)
+      getDependencyPath(dependencyResult.dependency, fileSystem = isFileSystem)
 
     val df = {
       try {
@@ -180,6 +195,32 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
               dependencyPath
             )
             .load()
+        } else if (isRedshift) {
+          val connection = dependencyResult.connection
+
+          var tmpDir = connection.getRedshiftTempDir
+          tmpDir =
+            if (tmpDir.endsWith("/"))
+              tmpDir.substring(0, connection.getRedshiftTempDir.size - 1)
+            else tmpDir
+
+          val rndm = RandomStringUtils.random(8, true, true)
+
+          var tblPath = dependencyResult.dependency.getTargetDBTableName
+          tblPath =
+            if (tblPath.contains("."))
+              tblPath.replace(".", "__")
+            else tblPath
+          tblPath = tblPath + "__" + rndm
+
+            dfReaderWithUserOptions
+              .option("url", connection.getJdbcUrl)
+              .option("user", connection.getJdbcUser)
+              .option("password", connection.getJdbcPass)
+              .option("dbtable", dependencyPath)
+              .option("aws_iam_role", connection.getRedshiftAwsIamRole)
+              .option("tempdir", tmpDir + "/" + tblPath)
+              .load()
         } else {
           val tmpDf = dfReaderWithUserOptions
             .load(
