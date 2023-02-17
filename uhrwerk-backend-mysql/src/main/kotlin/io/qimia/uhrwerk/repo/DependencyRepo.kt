@@ -89,6 +89,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
             dependency.dependencyVariables = jsonToArray(dependencyVariables)
 
         dependency.version = rs.getString("tab.version")
+        dependency.autoLoad = rs.getBoolean("dep.auto_load")
         dependency.format = rs.getString("tar.format")
         dependency.targetDBTableName = rs.getString("tar.table_name")
         dependency.hashKey = rs.getLong("dep.hash_key")
@@ -101,7 +102,6 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
     }
 
 
-
     companion object {
         private val INSERT = """
             INSERT INTO DEPENDENCY (table_id,
@@ -111,8 +111,9 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                                     view_name,
                                     partition_mappings,
                                     dependency_variables,
+                                    auto_load,
                                     hash_key)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
 
         private val SELECT_BY_ID = """
@@ -130,6 +131,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tar.format,
                    tar.table_name,
                    tab.version,
+                   dep.auto_load,
                    dep.hash_key,
                    dep.deactivated_ts
             FROM DEPENDENCY dep
@@ -157,6 +159,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tar.format,
                    tar.table_name,
                    tab.version,
+                   dep.auto_load,
                    dep.hash_key,
                    dep.deactivated_ts
             FROM DEPENDENCY dep
@@ -180,6 +183,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tar.format,
                    tar.table_name,
                    tab.version,
+                   dep.auto_load,
                    dep.hash_key,
                    dep.deactivated_ts
             FROM DEPENDENCY dep

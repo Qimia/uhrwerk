@@ -79,7 +79,13 @@ class SourceRepo2 : BaseRepo<SourceModel2>() {
         insert.setString(15, source.parallelPartitionColumn)
         insert.setInt(16, source.parallelPartitionNum!!)
         insert.setBoolean(17, source.autoLoad)
-        insert.setLong(18, HashKeyUtils.sourceKey(source))
+
+        if (source.viewName.isNullOrEmpty())
+            insert.setNull(18, Types.VARCHAR)
+        else
+            insert.setString(18, source.viewName)
+
+        insert.setLong(19, HashKeyUtils.sourceKey(source))
         return insert
     }
 
@@ -114,6 +120,7 @@ class SourceRepo2 : BaseRepo<SourceModel2>() {
         source.parallelPartitionNum = res.getInt("parallel_partition_num")
         source.autoLoad = res.getBoolean("auto_load")
         source.hashKey = res.getLong("hash_key")
+        source.viewName = res.getString("view_name")
         val deactivatedTs = res.getTimestamp("deactivated_ts")
         if (deactivatedTs != null)
             source.deactivatedTs = deactivatedTs.toLocalDateTime()
@@ -141,6 +148,7 @@ class SourceRepo2 : BaseRepo<SourceModel2>() {
             "parallel_partition_column",
             "parallel_partition_num",
             "auto_load",
+            "view_name",
             "hash_key",
             "deactivated_ts"
         )

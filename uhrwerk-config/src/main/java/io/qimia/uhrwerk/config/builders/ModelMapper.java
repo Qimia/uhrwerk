@@ -85,15 +85,6 @@ public class ModelMapper {
     return builder.build();
   }
 
-  static TableModel toDependencyTable(Dependency dependency) {
-    return new TableModelBuilder()
-        .area(dependency.getReference().getArea())
-        .vertical(dependency.getReference().getVertical())
-        .name(dependency.getReference().getTable())
-        .version(dependency.getReference().getVersion())
-        .build();
-  }
-
   private static String getTableClassName(Table table) {
     return table.getArea()
         + "."
@@ -189,8 +180,9 @@ public class ModelMapper {
     }
 
     model.setIngestionMode(IngestionMode.valueOf(source.getIngestionMode().name()));
-    model.setParallelLoad(source.getAutoLoad());
-
+    model.setParallelLoad(source.getParallelLoad() != null);
+    model.setAutoLoad(source.getAutoLoad());
+    model.setViewName(source.getView());
     return model;
   }
 
@@ -233,6 +225,7 @@ public class ModelMapper {
       dependencyModel.setDependencyVariables(
           dependencyVariables.toArray(new String[dependencyVariables.size()]));
     }
+    dependencyModel.setAutoLoad(dependency.getAutoLoad());
     return dependencyModel;
   }
 

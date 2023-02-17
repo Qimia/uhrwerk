@@ -140,6 +140,7 @@ class TableWrapper(
     val loadedInputDepDFs: List[(Ident, DataFrame)] =
       if (dependencyResults.nonEmpty) {
         dependencyResults
+          .filter(_.dependency.getAutoLoad)
           .map(bd => {
             this.replaceSecrets(bd.connection)
             val id = DependencyHelper.extractTableIdentity(bd)
@@ -164,16 +165,23 @@ class TableWrapper(
 
     val sources = table.getSources
     val loadedInputSourceDFs: List[(Ident, DataFrame)] =
-      if ((sources != null) && sources.nonEmpty) {
+      if (sources != null && sources.nonEmpty) {
         sources
           .filter(s => s.getAutoLoad)
-          .map(s => {
+          .map(source => {
             val df = if (table.getPartitioned) {
-              frameManager.loadSourceDataFrame(s, Option(startTs), endTs)
+              frameManager.loadSourceDataFrame(source, Option(startTs), endTs)
             } else {
-              frameManager.loadSourceDataFrame(s, properties = this.properties)
+              frameManager
+                .loadSourceDataFrame(source, properties = this.properties)
             }
-            val id = SourceHelper.extractSourceIdent(s)
+            val id = SourceHelper.extractSourceIdent(source)
+
+            if (
+              source.getViewName != null
+              && source.getViewName.nonEmpty
+            )
+              df.createOrReplaceTempView(source.getViewName)
             id -> df
           })
           .toList
@@ -182,7 +190,7 @@ class TableWrapper(
       }
 
     val notLoadedInputSources: List[(SourceIdent, DependentLoaderSource)] =
-      if ((sources != null) && sources.nonEmpty) {
+      if (sources != null && sources.nonEmpty) {
         sources
           .filter(s => !s.getAutoLoad)
           .map(s => {

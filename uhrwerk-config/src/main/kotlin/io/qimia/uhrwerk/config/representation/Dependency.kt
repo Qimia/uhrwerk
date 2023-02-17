@@ -12,7 +12,9 @@ data class Dependency(
     var view: String? = null,
     var format: String? = null,
     @JsonProperty("partition")
-    var partitionMappings: Array<PartitionMapping>? = null
+    var partitionMappings: Array<PartitionMapping>? = null,
+    @JsonProperty("auto_load")
+    var autoLoad: Boolean = true
 ) {
     fun validate(path: String) {
         var path = path
