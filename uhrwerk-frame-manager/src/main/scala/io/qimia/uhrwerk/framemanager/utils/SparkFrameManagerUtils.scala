@@ -16,6 +16,7 @@ import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.commons.lang.RandomStringUtils
 
 import scala.collection.mutable
 
@@ -321,4 +322,28 @@ object SparkFrameManagerUtils {
       )
     } else {}
   }
+
+  private[framemanager] def getRedshiftTempDir(
+      redShiftTmpDir: String,
+      sourcePath: String
+  ): String = {
+    assert(redShiftTmpDir != null && redShiftTmpDir.nonEmpty)
+    val tmpDir =
+      if (redShiftTmpDir.endsWith("/"))
+        redShiftTmpDir.substring(0, redShiftTmpDir.size - 1)
+      else redShiftTmpDir
+
+    val rndm = RandomStringUtils.random(8, true, true)
+
+    val suffix = if (sourcePath != null && sourcePath.nonEmpty) {
+      val tblPath =
+        if (sourcePath.contains("."))
+          sourcePath.replace(".", "__")
+        else sourcePath
+      tblPath + "__" + rndm
+    } else rndm
+
+    tmpDir + "/" + suffix
+  }
+
 }

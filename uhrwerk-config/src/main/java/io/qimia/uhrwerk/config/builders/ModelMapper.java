@@ -5,7 +5,6 @@ import io.qimia.uhrwerk.common.metastore.builders.TableModelBuilder;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionType;
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel;
-import io.qimia.uhrwerk.common.metastore.model.HashKeyUtils;
 import io.qimia.uhrwerk.common.metastore.model.IngestionMode;
 import io.qimia.uhrwerk.common.metastore.model.PartitionUnit;
 import io.qimia.uhrwerk.common.metastore.model.SecretModel;

@@ -62,6 +62,14 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         dataFrameReaderOptions,
         properties
       )
+    } else if (source.getConnection.getType.equals(ConnectionType.REDSHIFT)) {
+      loadSourceFromRedshift(
+        source,
+        startTS,
+        endTSExcl,
+        dataFrameReaderOptions,
+        properties
+      )
     } else {
       loadDataFrameFromFileSystem(
         source,
@@ -213,14 +221,14 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             else tblPath
           tblPath = tblPath + "__" + rndm
 
-            dfReaderWithUserOptions
-              .option("url", connection.getJdbcUrl)
-              .option("user", connection.getJdbcUser)
-              .option("password", connection.getJdbcPass)
-              .option("dbtable", dependencyPath)
-              .option("aws_iam_role", connection.getRedshiftAwsIamRole)
-              .option("tempdir", tmpDir + "/" + tblPath)
-              .load()
+          dfReaderWithUserOptions
+            .option("url", connection.getJdbcUrl)
+            .option("user", connection.getJdbcUser)
+            .option("password", connection.getJdbcPass)
+            .option("dbtable", dependencyPath)
+            .option("aws_iam_role", connection.getRedshiftAwsIamRole)
+            .option("tempdir", tmpDir + "/" + tblPath)
+            .load()
         } else {
           val tmpDf = dfReaderWithUserOptions
             .load(
@@ -414,6 +422,80 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     } else {
       df
     }
+  }
+
+  /** Loads a dataframe from RedShift. Either one batch or the full path.
+    * If the selectQuery is set, it uses that instead of the path.
+    *
+    * @param source                 Source
+    * @param startTS                Batch Timestamp. If not defined, load the full path.
+    * @param endTSExcl              End Timestamp exclusive
+    * @param dataFrameReaderOptions Optional Spark reading options.
+    * @return DataFrame
+    */
+  private def loadSourceFromRedshift(
+      source: SourceModel2,
+      startTS: Option[LocalDateTime],
+      endTSExcl: Option[LocalDateTime],
+      dataFrameReaderOptions: Option[Map[String, String]],
+      properties: mutable.Map[String, AnyRef] = mutable.HashMap()
+  ): DataFrame = {
+    val connection = source.getConnection
+    assert(connection.getType == ConnectionType.REDSHIFT)
+
+    var dfReader: DataFrameReader = sparkSession.read
+      .format(connection.getRedshiftFormat)
+
+    val redshiftTempDir = getRedshiftTempDir(connection.getRedshiftTempDir, source.getPath)
+
+    dfReader = dfReader
+      .option("url", connection.getJdbcUrl)
+      .option("user", connection.getJdbcUser)
+      .option("password", connection.getJdbcPass)
+      .option("aws_iam_role", connection.getRedshiftAwsIamRole)
+      .option("tempdir", redshiftTempDir)
+
+    val dfReaderWithUserOptions = if (dataFrameReaderOptions.isDefined) {
+      dfReader
+        .options(dataFrameReaderOptions.get)
+    } else {
+      dfReader
+    }
+
+    val dfReaderWithQuery: DataFrameReader =
+      if (!isStringEmpty(source.getSelectQuery)) {
+        var selectQuery = source.getSelectQuery
+        if (
+          source.getSourceVariables != null
+          && source.getSourceVariables.nonEmpty
+        ) {
+          val propValues = source.getSourceVariables
+            .flatMap(vr => {
+              val opt = properties.get(vr)
+              if (opt.isDefined) {
+                Some((vr, opt.get))
+              } else
+                None
+            })
+            .toMap
+          selectQuery = TemplateUtils.renderTemplate(
+            selectQuery,
+            propValues.asJava
+          )
+        }
+
+        val dfReaderWithQuery = dfReaderWithUserOptions
+          .option("query", selectQuery)
+        dfReaderWithQuery
+      } else {
+        dfReader
+          .option("dbtable", source.getPath) // area-vertical.tableName-version
+      }
+
+    logger.info(s"Loading RedShift Source ${source.getPath}")
+
+    dfReaderWithQuery
+      .load()
   }
 
   /** Saves a table to all its targets.
