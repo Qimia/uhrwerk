@@ -15,10 +15,11 @@ data class Source(
     var parallelLoad: ParallelLoad? = null,
     var select: Select? = null,
     @JsonProperty("auto_load")
-    var autoLoad: Boolean = false,
+    var autoLoad: Boolean = true,
     @JsonProperty("ingestion_mode")
-    var ingestionMode: IngestionMode = IngestionMode.ALL
-) {
+    var ingestionMode: IngestionMode = IngestionMode.ALL,
+    var view: String? = null,
+    ) {
     fun validate(path: String) {
         var path = path
         path += "source/"
@@ -31,7 +32,7 @@ data class Source(
         if (format == null) {
             throw ConfigException("Missing field: " + path + "format")
         }
-        if (!Arrays.asList("json", "parquet", "jdbc", "orc", "libsvm", "csv", "text", "avro")
+        if (!Arrays.asList("json", "parquet", "jdbc", "orc", "libsvm", "csv", "text", "avro", "redshift")
                 .contains(format)
         ) {
             throw ConfigException("Wrong format! '" + format + "' is not allowed in " + path + "format")
