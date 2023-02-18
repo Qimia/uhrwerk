@@ -173,6 +173,7 @@ public class ModelMapper {
       model.setParallelPartitionQuery(parallelQuery);
       model.setParallelPartitionColumn(source.getParallelLoad().getColumn());
       model.setParallelPartitionNum(source.getParallelLoad().getNum());
+      model.setParallelLoad(true);
     }
 
     if (!templateArgs.isEmpty()) {
@@ -180,7 +181,6 @@ public class ModelMapper {
     }
 
     model.setIngestionMode(IngestionMode.valueOf(source.getIngestionMode().name()));
-    model.setParallelLoad(source.getParallelLoad() != null);
     model.setAutoLoad(source.getAutoLoad());
     model.setViewName(source.getView());
     return model;

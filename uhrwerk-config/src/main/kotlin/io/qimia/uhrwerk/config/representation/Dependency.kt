@@ -31,7 +31,7 @@ data class Dependency(
         if (format == null) {
             throw ConfigException("Missing field: " + path + "format")
         }
-        if (!Arrays.asList("json", "parquet", "jdbc", "orc", "libsvm", "csv", "text", "avro")
+        if (!Arrays.asList("json", "parquet", "jdbc", "orc", "libsvm", "csv", "text", "avro", "redshift")
                 .contains(format)
         ) {
             throw ConfigException("Wrong format! '" + format + "' is not allowed in " + path + "format")
