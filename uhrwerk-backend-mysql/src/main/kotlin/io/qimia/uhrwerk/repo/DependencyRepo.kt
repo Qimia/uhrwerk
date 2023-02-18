@@ -63,7 +63,9 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
         else
             insert.setString(7, toJson(dependency.dependencyVariables!!))
 
-        insert.setLong(8, HashKeyUtils.dependencyKey(dependency))
+        insert.setBoolean(8, dependency.autoLoad)
+
+        insert.setLong(9, HashKeyUtils.dependencyKey(dependency))
         return insert
 
     }
