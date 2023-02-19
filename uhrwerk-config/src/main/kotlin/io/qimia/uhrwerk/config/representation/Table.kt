@@ -16,8 +16,12 @@ data class Table(
     var transformSqlQuery: String? = null,
     @JsonProperty("partition_columns")
     var partitionColumns: Array<String>? = null,
+    @JsonProperty("partitions")
+    var partitionMappings: Array<PartitionMapping>? = null,
     @JsonProperty("variables")
     var tableVariables: Array<String>? = null,
+    @JsonProperty("dynamic_partitioning")
+    var dynamicPartitioning: Boolean = false,
     var parallelism: Int? = 1,
     @JsonProperty("max_bulk_size")
     var maxBulkSize: Int? = 1,
@@ -70,6 +74,10 @@ data class Table(
             for (t in targets!!) {
                 t.validate(path)
             }
+        }
+
+        if (partitionColumns != null && partitionMappings != null) {
+            throw ConfigException("Only one of partition_columns or partitions can be set in $path")
         }
     }
 

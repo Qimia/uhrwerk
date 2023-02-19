@@ -12,6 +12,8 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
     var className: String? = null
     var transformSqlQuery: String? = null
     var partitionColumns: Array<String>? = null
+    var partitionMappings: Map<String, Any>? = null
+    var dynamicPartitioning: Boolean = false
     var tableVariables: Array<String>? = null
     var parallelism = 0
     var maxBulkSize = 0
@@ -58,6 +60,16 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
 
     fun partitionColumns(partitionColumns: Array<String>?): TableModelBuilder {
         this.partitionColumns = partitionColumns
+        return this
+    }
+
+    fun partitionMappings(partitionMappings: Map<String, Any>?): TableModelBuilder {
+        this.partitionMappings = partitionMappings
+        return this
+    }
+
+    fun dynamicPartitioning(dynamicPartitioning: Boolean): TableModelBuilder {
+        this.dynamicPartitioning = dynamicPartitioning
         return this
     }
 
@@ -116,6 +128,8 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
             className,
             transformSqlQuery,
             partitionColumns,
+            partitionMappings,
+            dynamicPartitioning,
             tableVariables,
             parallelism,
             maxBulkSize,

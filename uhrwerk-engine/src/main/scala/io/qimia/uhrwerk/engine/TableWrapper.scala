@@ -23,6 +23,7 @@ import io.qimia.uhrwerk.engine.tools.{
   SourceHelper,
   TimeHelper
 }
+import io.qimia.uhrwerk.engine.utils.TableWrapperUtils
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.Logger
 import org.apache.spark.sql.DataFrame
@@ -126,7 +127,7 @@ class TableWrapper(
   private def singleRun(
       dependencyResults: List[BulkDependencyResult],
       partitionTS: Array[LocalDateTime]
-  ): Option[List[Map[String, Any]]] = {
+  ): Option[List[Map[String, AnyRef]]] = {
     // TODO: Log start of single task for table here
     val startTs = partitionTS.head
     val endTs = {
@@ -256,19 +257,22 @@ class TableWrapper(
           table.getPartitionColumns != null &&
           table.getPartitionColumns.nonEmpty
         ) {
-          val notInFramePartCols = table.getPartitionColumns.filter(partCol =>
-            frame.columns.find(_.equalsIgnoreCase(partCol.trim)).isEmpty
-          )
-          if (notInFramePartCols.nonEmpty)
-            for (partCol <- notInFramePartCols) {
-              val opt = this.properties.get(partCol.trim)
-              if (opt.isDefined)
-                frame = frame.withColumn(partCol.trim, lit(opt.get))
-              else
-                logger.error(
-                  s"Partition column $partCol is not in the frame and no property with the same name is given"
-                )
+          val dfColsSet = frame.columns.toSet
+          val partColsSet = table.getPartitionColumns.toSet
+
+          val notInFramePartCols = partColsSet.diff(dfColsSet)
+
+          if (notInFramePartCols.nonEmpty) {
+            val partitionValues = TableWrapperUtils.getPartitionValues(
+              notInFramePartCols.toSeq,
+              table.getPartitionMappings.asScala,
+              this.properties
+            )
+            partitionValues.foreach { case (col, value) =>
+              frame = frame.withColumn(col, lit(value))
             }
+          }
+
           taskOutput = TaskOutput(
             frame,
             Some(
@@ -281,25 +285,36 @@ class TableWrapper(
               )
             )
           )
-
         }
 
         // TODO error checking: if target should be on datalake but no frame is given
         // Note: We are responsible for all standard writing of DataFrames
         if (!frame.isEmpty) {
+          val partitionValues = TableWrapperUtils.getPartitionValues(
+            table.getPartitionColumns.toSeq,
+            table.getPartitionMappings.asScala,
+            this.properties
+          )
+
           frameManager.writeDataFrame(
             frame,
             table,
             partitionTS,
-            taskOutput.dataFrameWriterOptions
+            taskOutput.dataFrameWriterOptions,
+            partitionValues
           )
 
-          if (
+          if (!table.getDynamicPartitioning) {
+            if (partitionValues != null && partitionValues.nonEmpty) {
+              Some(List(partitionValues.toMap))
+            } else {
+              Some(List.empty)
+            }
+          } else if (
             table.getPartitionColumns != null &&
             table.getPartitionColumns.nonEmpty
           ) {
             val partCols = table.getPartitionColumns.map(_.trim)
-
             val groupedDf =
               if (partCols.length > 1)
                 frame
@@ -312,7 +327,7 @@ class TableWrapper(
               .count()
               .drop("count")
               .collect()
-              .map(row => row.getValuesMap[Any](cols))
+              .map(row => row.getValuesMap[AnyRef](cols))
               .toList
             Some(partValues)
           } else {

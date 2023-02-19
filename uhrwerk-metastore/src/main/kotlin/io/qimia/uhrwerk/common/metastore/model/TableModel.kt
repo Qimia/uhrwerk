@@ -13,6 +13,8 @@ data class TableModel(
     var className: String? = null,
     var transformSqlQuery: String? = null,
     var partitionColumns: Array<String>? = null,
+    var partitionMappings: Map<String, Any>? = null,
+    var dynamicPartitioning: Boolean = false,
     var tableVariables: Array<String>? = null,
     var parallelism: Int? = null,
     var maxBulkSize: Int? = null,

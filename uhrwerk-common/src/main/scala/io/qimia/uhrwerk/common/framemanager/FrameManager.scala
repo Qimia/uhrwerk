@@ -29,6 +29,7 @@ trait FrameManager {
       frame: DataFrame,
       locationTableInfo: TableModel,
       partitionTS: Array[LocalDateTime],
-      dataFrameWriterOptions: Option[Array[Map[String, String]]] = Option.empty
+      dataFrameWriterOptions: Option[Array[Map[String, String]]] = Option.empty,
+      props: mutable.Map[String, AnyRef] = mutable.Map.empty
   ): Unit
 }

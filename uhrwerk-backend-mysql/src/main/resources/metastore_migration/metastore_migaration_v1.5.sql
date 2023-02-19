@@ -1,0 +1,7 @@
+USE UHRWERK_METASTORE_TEST2;
+--  TABLE_ --
+ALTER TABLE TABLE_
+    ADD COLUMN partition_mappings JSON NULL AFTER partition_columns;
+
+ALTER TABLE TABLE_
+    ADD COLUMN dynamic_partitioning BOOLEAN NOT NULL DEFAULT FALSE AFTER table_variables;

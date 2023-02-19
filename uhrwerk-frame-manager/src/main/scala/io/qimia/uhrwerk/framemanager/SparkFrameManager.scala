@@ -446,7 +446,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     var dfReader: DataFrameReader = sparkSession.read
       .format(connection.getRedshiftFormat)
 
-    val redshiftTempDir = getRedshiftTempDir(connection.getRedshiftTempDir, source.getPath)
+    val redshiftTempDir =
+      getRedshiftTempDir(connection.getRedshiftTempDir, source.getPath)
 
     dfReader = dfReader
       .option("url", connection.getJdbcUrl)
@@ -526,7 +527,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       frame: DataFrame,
       table: TableModel,
       partitionTS: Array[LocalDateTime],
-      dataFrameWriterOptions: Option[Array[Map[String, String]]] = Option.empty
+      dataFrameWriterOptions: Option[Array[Map[String, String]]] = Option.empty,
+      partitionValues: mutable.Map[String, AnyRef] = mutable.Map.empty
   ): Unit = {
 
     table.getTargets.zipWithIndex.foreach((item: (TargetModel, Int)) => {
@@ -550,7 +552,19 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
       val path = if (isJDBC || isRedshift) {
         tablePath
       } else {
-        getFullLocation(targetConnection.getPath, tablePath).head
+        val tmpPath = getFullLocation(targetConnection.getPath, tablePath).head
+        val finalPath =
+          if (
+            !table.getDynamicPartitioning
+            && partitionValues != null &&
+            partitionValues.nonEmpty
+          ) {
+            val partPath =
+              partitionValues.map { case (k, v) => s"$k=$v" }.mkString("/")
+            tmpPath + "/" + partPath
+          } else
+            tmpPath
+        finalPath
       }
 
       val dfContainsTimeColumns =
@@ -663,7 +677,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
           if (dfContainsTimeColumns)
             writerWithOptions
               .partitionBy(timeColumns ++ partitionBy: _*)
-          else if (partitionBy.nonEmpty)
+          else if (table.getDynamicPartitioning && partitionBy.nonEmpty)
             writerWithOptions.partitionBy(partitionBy: _*)
           else
             writerWithOptions

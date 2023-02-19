@@ -27,6 +27,7 @@ import io.qimia.uhrwerk.config.representation.Target;
 import io.qimia.uhrwerk.common.utils.TemplateUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -54,7 +55,44 @@ public class ModelMapper {
       templateArgs.addAll(TemplateUtils.templateArgs(transformSqlQuery));
     }
 
-    builder.partitionColumns(table.getPartitionColumns());
+    if (table.getPartitionMappings() != null && table.getPartitionMappings().length > 0) {
+      LinkedHashMap<String, String> partitionMappings = new LinkedHashMap<>();
+      ArrayList<String> partitionColumns = new ArrayList<>();
+
+      for (PartitionMapping mapping : table.getPartitionMappings()) {
+        String column = mapping.getColumn();
+        String value = mapping.getValue();
+
+        if (column == null || column.trim().isEmpty()) {
+          throw new IllegalArgumentException(
+              "Column in Table.PartitionMappings cannot be null or empty");
+        } else {
+          column = column.trim();
+        }
+
+        partitionColumns.add(column);
+
+        if (value != null && !value.trim().isEmpty()) {
+          value = value.trim();
+          partitionMappings.put(column, value);
+
+          if (value.startsWith("$") && value.endsWith("$")) {
+            templateArgs.add(value.substring(1, value.length() - 1));
+          }
+        }
+      }
+
+      builder.partitionColumns(partitionColumns.toArray(new String[partitionColumns.size()]));
+
+      if (!partitionMappings.isEmpty()) {
+        builder.partitionMappings(partitionMappings);
+      }
+
+    } else {
+      builder.partitionColumns(table.getPartitionColumns());
+    }
+
+    builder.dynamicPartitioning(table.getDynamicPartitioning());
 
     SortedSet<String> addVars = new TreeSet<>();
     if (table.getTableVariables() != null
@@ -197,19 +235,6 @@ public class ModelMapper {
 
   static DependencyModel toDependency(Dependency dependency) {
 
-    List<String> dependencyVariables = new ArrayList<>();
-
-    HashMap<String, String> partitionMappings = new HashMap<>();
-    if (dependency.getPartitionMappings() != null && dependency.getPartitionMappings().length > 0) {
-      for (PartitionMapping mapping : dependency.getPartitionMappings()
-      ) {
-        partitionMappings.put(mapping.getColumn(), mapping.getValue());
-        if (mapping.getValue().startsWith("$") && mapping.getValue().endsWith("$")) {
-          dependencyVariables.add(mapping.getValue().substring(1, mapping.getValue().length() - 1));
-        }
-      }
-    }
-
     DependencyModel dependencyModel = new DependencyModel();
     dependencyModel.setArea(dependency.getReference().getArea());
     dependencyModel.setVertical(dependency.getReference().getVertical());
@@ -217,14 +242,48 @@ public class ModelMapper {
     dependencyModel.setVersion(dependency.getReference().getVersion());
     dependencyModel.setViewName(dependency.getView());
     dependencyModel.setFormat(dependency.getFormat());
-    if (!partitionMappings.isEmpty()) {
-      dependencyModel.setPartitionMappings(partitionMappings);
+
+    if (dependency.getPartitionMappings() != null && dependency.getPartitionMappings().length > 0) {
+
+      List<String> dependencyVariables = new ArrayList<>();
+      LinkedHashMap<String, String> partitionMappings = new LinkedHashMap<>();
+
+      for (PartitionMapping mapping : dependency.getPartitionMappings()
+      ) {
+        String column = mapping.getColumn();
+        String value = mapping.getValue();
+
+        if (column == null || column.trim().isEmpty()) {
+          throw new IllegalArgumentException(
+              "Column in Dependency.PartitionMappings cannot be null or empty");
+        } else {
+          column = column.trim();
+        }
+
+        if (value == null || value.trim().isEmpty()) {
+          throw new IllegalArgumentException(
+              "Value in Dependency.PartitionMappings cannot be null or empty");
+        } else {
+          value = value.trim();
+        }
+
+        partitionMappings.put(column, value);
+
+        if (value.startsWith("$") && value.endsWith("$")) {
+          dependencyVariables.add(value.substring(1, value.length() - 1));
+        }
+      }
+      if (!partitionMappings.isEmpty()) {
+        dependencyModel.setPartitionMappings(partitionMappings);
+      }
+
+      if (!dependencyVariables.isEmpty()) {
+        dependencyModel.setDependencyVariables(
+            dependencyVariables.toArray(new String[dependencyVariables.size()]));
+      }
+
     }
 
-    if (!dependencyVariables.isEmpty()) {
-      dependencyModel.setDependencyVariables(
-          dependencyVariables.toArray(new String[dependencyVariables.size()]));
-    }
     dependencyModel.setAutoLoad(dependency.getAutoLoad());
     return dependencyModel;
   }

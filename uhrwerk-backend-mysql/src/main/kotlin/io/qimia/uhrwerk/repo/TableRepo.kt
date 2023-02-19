@@ -56,12 +56,20 @@ class TableRepo() : BaseRepo<TableModel>() {
         else
             insert.setString(12, toJson(table.partitionColumns!!))
 
-        if (table.tableVariables.isNullOrEmpty())
+        if (table.partitionMappings.isNullOrEmpty())
             insert.setNull(13, Types.VARCHAR)
         else
-            insert.setString(13, toJson(table.tableVariables!!))
+            insert.setString(13, toJson(table.partitionMappings!!))
 
-        insert.setLong(14, HashKeyUtils.tableKey(table))
+
+        if (table.tableVariables.isNullOrEmpty())
+            insert.setNull(14, Types.VARCHAR)
+        else
+            insert.setString(14, toJson(table.tableVariables!!))
+
+        insert.setBoolean(15, table.dynamicPartitioning)
+
+        insert.setLong(16, HashKeyUtils.tableKey(table))
         return insert
     }
 
@@ -89,10 +97,16 @@ class TableRepo() : BaseRepo<TableModel>() {
             builder.partitionColumns(jsonToArray(partitionColumns))
         }
 
+        val partitionMappings = res.getString("tab.partition_mappings")
+        if (!partitionMappings.isNullOrEmpty())
+            builder.partitionMappings(RepoUtils.jsonToMap(partitionMappings))
+
         val tableVariables = res.getString("tab.table_variables")
         if (!tableVariables.isNullOrEmpty()) {
             builder.tableVariables(jsonToArray(tableVariables))
         }
+
+        builder.dynamicPartitioning(res.getBoolean("tab.dynamic_partitioning"))
 
         val deactivatedTs = res.getTimestamp("tab.deactivated_ts")
         if (deactivatedTs != null)
@@ -123,9 +137,11 @@ class TableRepo() : BaseRepo<TableModel>() {
                                class_name,
                                transform_sql_query,
                                partition_columns,
+                               partition_mappings,
                                table_variables,
+                               dynamic_partitioning,
                                hash_key)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """.trimIndent()
 
         private val SELECT_BY_ID = """
@@ -142,7 +158,9 @@ class TableRepo() : BaseRepo<TableModel>() {
                    tab.class_name,
                    tab.transform_sql_query,
                    tab.partition_columns,
+                   tab.partition_mappings,
                    tab.table_variables,
+                   tab.dynamic_partitioning,
                    tab.hash_key,
                    tab.deactivated_ts
             FROM TABLE_ tab
@@ -163,7 +181,9 @@ class TableRepo() : BaseRepo<TableModel>() {
                    tab.class_name,
                    tab.transform_sql_query,
                    tab.partition_columns,
+                   tab.partition_mappings,
                    tab.table_variables,
+                   tab.dynamic_partitioning,
                    tab.hash_key,
                    tab.deactivated_ts
             FROM TABLE_ tab
