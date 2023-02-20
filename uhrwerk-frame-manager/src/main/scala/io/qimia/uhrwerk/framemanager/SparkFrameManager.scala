@@ -446,7 +446,8 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
     var dfReader: DataFrameReader = sparkSession.read
       .format(connection.getRedshiftFormat)
 
-    val redshiftTempDir = getRedshiftTempDir(connection.getRedshiftTempDir, source.getPath)
+    val redshiftTempDir =
+      getRedshiftTempDir(connection.getRedshiftTempDir, source.getPath)
 
     dfReader = dfReader
       .option("url", connection.getJdbcUrl)
@@ -485,7 +486,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         }
 
         val dfReaderWithQuery = dfReaderWithUserOptions
-          .option("query", selectQuery)
+          .option("dbtable", s"($selectQuery) tmp_table")
         dfReaderWithQuery
       } else {
         dfReader

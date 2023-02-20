@@ -143,3 +143,4 @@ uhrwerk-backend-mysql/src/main/resources/create_metastore_db_mysql_unit_tests.sq
 uhrwerk-backend-mysql/src/main/resources/metastore_ddl_mysql_unit_tests.sql
 **/.vscode/
 /data/
+test_**
