@@ -486,7 +486,7 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         }
 
         val dfReaderWithQuery = dfReaderWithUserOptions
-          .option("dbtable", s"($selectQuery) tmp_table")
+          .option("query", selectQuery)
         dfReaderWithQuery
       } else {
         dfReader
