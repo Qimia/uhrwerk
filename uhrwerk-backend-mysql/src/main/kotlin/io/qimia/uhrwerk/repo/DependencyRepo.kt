@@ -94,6 +94,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
         dependency.autoLoad = rs.getBoolean("dep.auto_load")
         dependency.format = rs.getString("tar.format")
         dependency.targetDBTableName = rs.getString("tar.table_name")
+        dependency.dependencyTableDynamicPartitioning = rs.getBoolean("tab.dynamic_partitioning")
         dependency.hashKey = rs.getLong("dep.hash_key")
 
         val deactivatedTs = rs.getTimestamp("dep.deactivated_ts")
@@ -134,6 +135,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tar.table_name,
                    tab.version,
                    dep.auto_load,
+                   tab.dynamic_partitioning,
                    dep.hash_key,
                    dep.deactivated_ts
             FROM DEPENDENCY dep
@@ -162,6 +164,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tar.table_name,
                    tab.version,
                    dep.auto_load,
+                   tab.dynamic_partitioning,
                    dep.hash_key,
                    dep.deactivated_ts
             FROM DEPENDENCY dep
@@ -186,6 +189,7 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
                    tar.table_name,
                    tab.version,
                    dep.auto_load,
+                   tab.dynamic_partitioning,
                    dep.hash_key,
                    dep.deactivated_ts
             FROM DEPENDENCY dep

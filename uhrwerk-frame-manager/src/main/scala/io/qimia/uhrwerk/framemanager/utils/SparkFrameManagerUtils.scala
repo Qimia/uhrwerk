@@ -72,7 +72,7 @@ object SparkFrameManagerUtils {
       tablePath: String,
       partPaths: List[String] = List()
   ): List[String] = {
-    if (partPaths.nonEmpty) {
+    if (partPaths != null && partPaths.nonEmpty) {
       val paths = partPaths.to[mutable.SortedSet]
       paths
         .map(path => concatenatePaths(connectionPath, tablePath, path))

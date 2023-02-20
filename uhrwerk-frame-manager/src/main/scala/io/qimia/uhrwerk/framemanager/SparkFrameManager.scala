@@ -230,26 +230,49 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
             .option("tempdir", tmpDir + "/" + tblPath)
             .load()
         } else {
-          val tmpDf = dfReaderWithUserOptions
-            .load(
-              getFullLocation(
-                dependencyResult.connection.getPath,
-                dependencyPath
-              ).head
+
+          if (
+            !dependencyResult.dependency.getDependencyTableDynamicPartitioning
+          ) {
+
+            val partPaths =
+              dependencyResult.succeeded
+                .map(_.getPartitionPath)
+                .filter(_ != null)
+                .distinct
+
+            val partLocs = getFullLocation(
+              dependencyResult.connection.getPath,
+              dependencyPath,
+              partPaths.toList
             )
-          val partFilters = dependencyResult.succeeded
-            .filter(_.getPartitionValues != null)
-            .flatMap(_.getPartitionValues.asScala)
-            .groupBy(_._1)
-            .mapValues(_.map(_._2).distinct)
-          if (partFilters.nonEmpty)
-            tmpDf.filter(
-              partFilters
-                .map { case (k, v) => col(k).isin(v: _*) }
-                .reduce(_ && _)
-            )
-          else
-            tmpDf
+
+            dfReaderWithUserOptions.load(partLocs: _*)
+
+          } else {
+            val tmpDf = dfReaderWithUserOptions
+              .load(
+                getFullLocation(
+                  dependencyResult.connection.getPath,
+                  dependencyPath
+                ).head
+              )
+
+            val partFilters = dependencyResult.succeeded
+              .filter(_.getPartitionValues != null)
+              .flatMap(_.getPartitionValues.asScala)
+              .groupBy(_._1)
+              .mapValues(_.map(_._2).distinct)
+
+            if (partFilters.nonEmpty)
+              tmpDf.filter(
+                partFilters
+                  .map { case (k, v) => col(k).isin(v: _*) }
+                  .reduce(_ && _)
+              )
+            else
+              tmpDf
+          }
         }
       } catch {
         case exception: Exception =>

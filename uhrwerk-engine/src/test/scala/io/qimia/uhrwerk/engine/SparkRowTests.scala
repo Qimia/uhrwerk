@@ -3,7 +3,7 @@ package io.qimia.uhrwerk.engine
 import io.qimia.uhrwerk.config.builders.YamlConfigReader
 import io.qimia.uhrwerk.engine.dag.DagTaskBuilder
 import io.qimia.uhrwerk.repo.RepoUtils
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SaveMode, SparkSession}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.execution.debug._
@@ -48,6 +48,95 @@ class SparkRowTests extends AnyFlatSpec {
       .toList
 
     println(states)
+
+  }
+
+  "Spark single partition write and all partition read" should "work" in {
+    val spark: SparkSession = SparkSession
+      .builder()
+      .master("local[1]")
+      .appName("SparkGroupByDistinctTests")
+      .getOrCreate()
+
+    val data =
+      Seq(
+        ("James", "Sales", "NY", 90000, 34, 10000),
+        ("Michael", "Sales", "NY", 86000, 56, 20000),
+        ("Robert", "Sales", "CA", 81000, 30, 23000),
+        ("Maria", "Finance", "CA", 90000, 24, 23000),
+        ("Raman", "Finance", "CA", 99000, 40, 24000),
+        ("Scott", "Finance", "NY", 83000, 36, 19000),
+        ("Jen", "Finance", "NY", 79000, 53, 15000),
+        ("Jeff", "Marketing", "CA", 80000, 25, 18000),
+        ("Kumar", "Marketing", "NY", 91000, 50, 21000),
+        ("Robert", "Sales", "CA", 81000, 30, 23000),
+        ("Maria", "Finance", "CA", 90000, 24, 23000),
+        ("Raman", "Finance", "CA", 99000, 40, 24000),
+        ("Scott", "Finance", "NY", 83000, 36, 19000),
+        ("Jen", "Finance", "NY", 79000, 53, 15000),
+        ("Jeff", "Marketing", "CA", 80000, 25, 18000),
+        ("Kumar", "Marketing", "NY", 91000, 50, 21000)
+      )
+
+    val columns =
+      Seq("employee_name", "department", "state", "salary", "age", "bonus")
+    val rdd = spark.sparkContext.parallelize(data)
+    val df = spark.createDataFrame(rdd).toDF(columns: _*)
+
+    df.write
+      .mode(SaveMode.Overwrite)
+      .partitionBy("state")
+      .json("test_dir_orig_parts/")
+
+    val states = df
+      .distinct()
+      .groupBy("state")
+      .count()
+      .drop("count")
+      .collect()
+      .map(row => row.getValuesMap[Any](Seq("state")))
+      .toList
+
+    df.printSchema()
+
+    states.foreach(map => {
+      val state = map("state")
+      df.filter(col("state") === state)
+        .withColumn("state", lower(col("state")))
+        .write
+        .mode(SaveMode.Overwrite)
+        .json(s"test_temp_dir/state=${state}/")
+    })
+
+    println(states)
+    states.map(map => {
+      val state = map("state")
+      s"test_temp_dir/state=${state}/"
+    })
+
+    val dfJson = spark.read.json("test_temp_dir")
+
+    val states2 = dfJson
+      .distinct()
+      .groupBy("state")
+      .count()
+      .drop("count")
+      .collect()
+      .map(row => row.getValuesMap[Any](Seq("state")))
+      .toList
+
+    println(states2)
+
+    dfJson.printSchema()
+    dfJson.show()
+
+    val paths = states
+      .map(map => {
+        val state = map("state")
+        s"test_temp_dir/state=${state}/"
+      }).toSeq
+
+    spark.read.json(paths: _*).show()
 
   }
 

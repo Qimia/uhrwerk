@@ -18,6 +18,7 @@ data class DependencyModel(
     var format: String? = null,
     var targetDBTableName: String? = null,
     var autoLoad: Boolean = true,
+    var dependencyTableDynamicPartitioning: Boolean = false,
     var version: String? = null,
     var hashKey: Long? = null,
     var deactivatedTs: LocalDateTime? = null,
