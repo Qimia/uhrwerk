@@ -252,44 +252,44 @@ class TableWrapper(
         //TODO: cache frame after sql query is applied
         frame.cache()
 
-        if (
-          !frame.isEmpty &&
-          table.getPartitionColumns != null &&
-          table.getPartitionColumns.nonEmpty
-        ) {
-          val dfColsSet = frame.columns.toSet
-          val partColsSet = table.getPartitionColumns.toSet
+        if (!frame.isEmpty) {
 
-          val notInFramePartCols = partColsSet.diff(dfColsSet)
+          if (
+            table.getPartitionColumns != null &&
+            table.getPartitionColumns.nonEmpty
+          ) {
+            val dfColsSet = frame.columns.toSet
+            val partColsSet = table.getPartitionColumns.toSet
 
-          if (notInFramePartCols.nonEmpty) {
-            val partitionValues = TableWrapperUtils.getPartitionValues(
-              notInFramePartCols.toSeq,
-              table.getPartitionMappings.asScala,
-              this.properties
-            )
-            partitionValues.foreach { case (col, value) =>
-              frame = frame.withColumn(col, lit(value))
+            val notInFramePartCols = partColsSet.diff(dfColsSet)
+
+            if (notInFramePartCols.nonEmpty) {
+              val partitionValues = TableWrapperUtils.getPartitionValues(
+                notInFramePartCols.toSeq,
+                table.getPartitionMappings.asScala,
+                this.properties
+              )
+              partitionValues.foreach { case (col, value) =>
+                frame = frame.withColumn(col, lit(value))
+              }
             }
-          }
 
-          taskOutput = TaskOutput(
-            frame,
-            Some(
-              Array(
-                Map(
-                  "partitionBy" -> table.getPartitionColumns
-                    .map(_.trim)
-                    .mkString(",")
+            taskOutput = TaskOutput(
+              frame,
+              Some(
+                Array(
+                  Map(
+                    "partitionBy" -> table.getPartitionColumns
+                      .map(_.trim)
+                      .mkString(",")
+                  )
                 )
               )
             )
-          )
-        }
+          }
 
-        // TODO error checking: if target should be on datalake but no frame is given
-        // Note: We are responsible for all standard writing of DataFrames
-        if (!frame.isEmpty) {
+          // TODO error checking: if target should be on datalake but no frame is given
+          // Note: We are responsible for all standard writing of DataFrames
           val partitionValues = TableWrapperUtils.getPartitionValues(
             table.getPartitionColumns.toSeq,
             table.getPartitionMappings.asScala,

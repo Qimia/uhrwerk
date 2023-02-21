@@ -576,18 +576,16 @@ class SparkFrameManager(sparkSession: SparkSession) extends FrameManager {
         tablePath
       } else {
         val tmpPath = getFullLocation(targetConnection.getPath, tablePath).head
-        val finalPath =
-          if (
-            !table.getDynamicPartitioning
-            && partitionValues != null &&
-            partitionValues.nonEmpty
-          ) {
-            val partPath =
-              partitionValues.map { case (k, v) => s"$k=$v" }.mkString("/")
-            tmpPath + "/" + partPath
-          } else
-            tmpPath
-        finalPath
+        if (
+          !table.getDynamicPartitioning
+          && partitionValues != null &&
+          partitionValues.nonEmpty
+        ) {
+          val partPath =
+            partitionValues.map { case (k, v) => s"$k=$v" }.mkString("/")
+          tmpPath + "/" + partPath
+        } else
+          tmpPath
       }
 
       val dfContainsTimeColumns =

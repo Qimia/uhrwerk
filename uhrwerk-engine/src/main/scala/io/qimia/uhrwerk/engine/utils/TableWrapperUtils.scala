@@ -17,11 +17,11 @@ object TableWrapperUtils {
       partitionColumns.nonEmpty
     ) {
       for (partitionColumn <- partitionColumns) {
-        val propKey = lookUpMap(partitionColumn, partitionMappings) match {
-          case Some(value) => value.toString
+        val propName = lookUpMap(partitionColumn, partitionMappings) match {
+          case Some(value) => propertyName(value)
           case None        => partitionColumn
         }
-        lookUpMap(propKey, properties) match {
+        lookUpMap(propName, properties) match {
           case Some(value) => partitionValues.put(partitionColumn, value)
           case None =>
             val errorMessage =
@@ -34,6 +34,19 @@ object TableWrapperUtils {
       }
     }
     partitionValues
+  }
+
+  private def propertyName(value: AnyRef): String = {
+    if (value.isInstanceOf[String]) {
+      val valueStr = value.asInstanceOf[String]
+      if (valueStr.startsWith("$") && valueStr.endsWith("$")) {
+        valueStr.substring(1, valueStr.length - 1)
+      } else {
+        valueStr
+      }
+    } else {
+      value.toString
+    }
   }
 
   private def lookUpMap(
