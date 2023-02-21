@@ -290,9 +290,22 @@ class TableWrapper(
 
           // TODO error checking: if target should be on datalake but no frame is given
           // Note: We are responsible for all standard writing of DataFrames
+
+          val partitionColumns =
+            if (table.getPartitionColumns != null)
+              table.getPartitionColumns.toSeq
+            else
+              Seq.empty[String]
+
+          val partitionMappings =
+            if (table.getPartitionMappings != null)
+              table.getPartitionMappings.asScala
+            else
+              mutable.Map.empty[String, AnyRef]
+
           val partitionValues = TableWrapperUtils.getPartitionValues(
-            table.getPartitionColumns.toSeq,
-            table.getPartitionMappings.asScala,
+            partitionColumns,
+            partitionMappings,
             this.properties
           )
 
