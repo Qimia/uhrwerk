@@ -296,6 +296,11 @@ class TableWrapper(
             this.properties
           )
 
+          val dfNumParts = frame.rdd.getNumPartitions
+          if (table.getParallelism > dfNumParts) {
+            frame = frame.repartition(table.getParallelism)
+          }
+
           frameManager.writeDataFrame(
             frame,
             table,
