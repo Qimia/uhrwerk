@@ -226,7 +226,7 @@ object SparkFrameManagerUtils {
     if (!timeColumns.forall(df.columns.contains(_))) {
       return false
     }
-    df.cache()
+    //df.cache()
 
     try {
       if (

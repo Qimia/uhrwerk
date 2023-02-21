@@ -250,7 +250,7 @@ class TableWrapper(
         }
 
         //TODO: cache frame after sql query is applied
-        frame.cache()
+        //frame.cache()
 
         if (!frame.isEmpty) {
 
@@ -344,7 +344,7 @@ class TableWrapper(
           None
       } finally {
         if (frame != null) {
-          frame.unpersist(blocking = false)
+          //frame.unpersist(blocking = false)
         }
       }
     logger.info(s"${table.getName}: Single run done, success = $success")
