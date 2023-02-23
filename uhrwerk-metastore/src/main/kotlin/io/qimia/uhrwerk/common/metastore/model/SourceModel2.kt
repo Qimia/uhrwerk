@@ -24,6 +24,7 @@ data class SourceModel2(
     var parallelPartitionNum: Int? = 0,
     var autoLoad: Boolean = true,
     var viewName: String? = null,
+    var fetchSize: Int = 100000,
     var hashKey: Long? = null,
     var description: String? = null,
     var deactivatedTs: LocalDateTime? = null,

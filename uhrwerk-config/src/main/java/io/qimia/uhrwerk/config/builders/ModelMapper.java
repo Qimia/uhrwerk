@@ -221,6 +221,7 @@ public class ModelMapper {
     model.setIngestionMode(IngestionMode.valueOf(source.getIngestionMode().name()));
     model.setAutoLoad(source.getAutoLoad());
     model.setViewName(source.getView());
+    model.setFetchSize(source.getFetchSize());
     return model;
   }
 

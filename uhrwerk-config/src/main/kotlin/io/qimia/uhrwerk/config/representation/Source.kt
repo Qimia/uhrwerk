@@ -19,7 +19,9 @@ data class Source(
     @JsonProperty("ingestion_mode")
     var ingestionMode: IngestionMode = IngestionMode.ALL,
     var view: String? = null,
-    ) {
+    @JsonProperty("fetch_size")
+    var fetchSize: Int = 100000,
+) {
     fun validate(path: String) {
         var path = path
         path += "source/"
@@ -32,7 +34,17 @@ data class Source(
         if (format == null) {
             throw ConfigException("Missing field: " + path + "format")
         }
-        if (!Arrays.asList("json", "parquet", "jdbc", "orc", "libsvm", "csv", "text", "avro", "redshift")
+        if (!Arrays.asList(
+                "json",
+                "parquet",
+                "jdbc",
+                "orc",
+                "libsvm",
+                "csv",
+                "text",
+                "avro",
+                "redshift"
+            )
                 .contains(format)
         ) {
             throw ConfigException("Wrong format! '" + format + "' is not allowed in " + path + "format")

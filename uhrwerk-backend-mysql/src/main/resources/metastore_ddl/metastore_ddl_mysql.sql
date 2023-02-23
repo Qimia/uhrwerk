@@ -93,6 +93,7 @@ CREATE TABLE IF NOT EXISTS SOURCE
     parallel_partition_num    INT                              NOT NULL,
     auto_load                 BOOLEAN                          NOT NULL DEFAULT TRUE,
     view_name                 VARCHAR(128)                     NULL,
+    fetch_size                INT                              NOT NULL DEFAULT 100000,
     deactivated_ts            TIMESTAMP                        NULL,
     deactivated_epoch         BIGINT AS (IFNULL((TIMESTAMPDIFF(second, '1970-01-01', deactivated_ts)),
                                                 0)),
