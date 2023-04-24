@@ -1,0 +1,17 @@
+- name: my_lookup_class_func
+  class_name: "com.mycompany.MyLookupFunction"
+  params:
+    - first_param
+    - second_param
+  inputs_views:
+    - table_a
+    - table_b
+  output: my_lookup_output_view
+
+- name: my_lookup_sql_func
+  sql_query: "SELECT * FROM category_table WHERE col1 = '$first_param$' AND col2 = '$second_param$'"
+  params:
+    - third_param
+  inputs_views:
+    - category_table
+  output: my_lookup_sql_output_view

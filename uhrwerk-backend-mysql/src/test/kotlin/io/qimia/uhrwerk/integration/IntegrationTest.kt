@@ -5,6 +5,7 @@ import TestUtils.filePath
 import com.google.common.truth.Truth.assertThat
 import io.qimia.uhrwerk.config.builders.YamlConfigReader
 import io.qimia.uhrwerk.dao.ConnectionDAO
+import io.qimia.uhrwerk.dao.FunctionDefinitionDAO
 import io.qimia.uhrwerk.dao.TableDAO
 import io.qimia.uhrwerk.repo.HikariCPDataSource
 import org.junit.jupiter.api.*
@@ -20,6 +21,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 internal class IntegrationTest {
 
     private val connService = ConnectionDAO()
+    private val funcService = FunctionDefinitionDAO()
     private val tableService = TableDAO()
 
     @AfterEach
@@ -152,6 +154,10 @@ internal class IntegrationTest {
         val connections = YamlConfigReader().readConnections(connsFile)
         connections?.forEach { connService.save(it, false) }
 
+        val functionDefFile = filePath("config/function-definition.yml")
+        val functionDefs = YamlConfigReader().readFunctionDefinitions(functionDefFile)
+        functionDefs?.forEach { funcService.save(it, false) }
+
         val sourceTableFile = filePath("config/uhrwerk_examples/table_category_1.0.yml")
         val sourceTable = YamlConfigReader().readTable(sourceTableFile)
 
@@ -209,6 +215,7 @@ internal class IntegrationTest {
 
         //Save Table
         val tableResult = tableService.save(depTable, false)
+        LOGGER.info("tableResult: {}", tableResult)
 
         assertThat(tableResult.isSuccess).isTrue()
         assertThat(depTable.id).isNotNull()
@@ -232,18 +239,20 @@ internal class IntegrationTest {
             assertThat(it.connectionKey).isNotNull()
         }
 
-        tableService.get(depTable.area!!, depTable.vertical!!, depTable.name!!, depTable.version!!)?.let {
-            assertThat(it).isNotNull()
-            assertThat(it.id).isEqualTo(depTable.id)
-            assertThat(it.area).isEqualTo(depTable.area)
-            assertThat(it.vertical).isEqualTo(depTable.vertical)
-            assertThat(it.name).isEqualTo(depTable.name)
-            assertThat(it.version).isEqualTo(depTable.version)
-            assertThat(it.partitionColumns).isEqualTo(depTable.partitionColumns)
-            assertThat(it.tableVariables).isEqualTo(depTable.tableVariables)
-            assertThat(it.dependencies!!.asList()).containsExactlyElementsIn(depTable.dependencies!!.asList())
-            assertThat(it.targets!!.asList()).containsExactlyElementsIn(depTable.targets!!.asList())
-        }
+        tableService.get(depTable.area!!, depTable.vertical!!, depTable.name!!, depTable.version!!)
+            ?.let {
+                assertThat(it).isNotNull()
+                assertThat(it.id).isEqualTo(depTable.id)
+                assertThat(it.area).isEqualTo(depTable.area)
+                assertThat(it.vertical).isEqualTo(depTable.vertical)
+                assertThat(it.name).isEqualTo(depTable.name)
+                assertThat(it.version).isEqualTo(depTable.version)
+                assertThat(it.partitionColumns).isEqualTo(depTable.partitionColumns)
+                assertThat(it.tableVariables).isEqualTo(depTable.tableVariables)
+                assertThat(it.dependencies!!.asList()).containsExactlyElementsIn(depTable.dependencies!!.asList())
+                assertThat(it.targets!!.asList()).containsExactlyElementsIn(depTable.targets!!.asList())
+                assertThat(it.functions!!.asList()).containsExactlyElementsIn(depTable.functions!!.asList())
+            }
     }
 
     @Test

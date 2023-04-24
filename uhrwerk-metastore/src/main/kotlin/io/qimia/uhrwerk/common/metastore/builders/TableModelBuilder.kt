@@ -11,6 +11,7 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
     var version: String? = null
     var className: String? = null
     var transformSqlQuery: String? = null
+    var functions: Array<FunctionCallModel>? = null
     var partitionColumns: Array<String>? = null
     var partitionMappings: Map<String, Any>? = null
     var dynamicPartitioning: Boolean = false
@@ -55,6 +56,11 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
 
     fun transformSqlQuery(transformSqlQuery: String?): TableModelBuilder {
         this.transformSqlQuery = transformSqlQuery
+        return this
+    }
+
+    fun functions(functions: Array<FunctionCallModel>?): TableModelBuilder {
+        this.functions = functions
         return this
     }
 
@@ -127,6 +133,7 @@ class TableModelBuilder : StateModelBuilder<TableModelBuilder>() {
             version,
             className,
             transformSqlQuery,
+            functions,
             partitionColumns,
             partitionMappings,
             dynamicPartitioning,

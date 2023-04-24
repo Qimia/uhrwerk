@@ -5,6 +5,7 @@ import net.openhft.hashing.LongHashFunction
 
 object HashKeyUtils {
 
+    @JvmStatic
     fun tableKey(table: TableModel): Long {
         assert(!table.area.isNullOrEmpty()) { "Table.area can't be null or empty" }
         assert(!table.vertical.isNullOrEmpty()) { "Table.vertical can't be null or empty" }
@@ -97,7 +98,13 @@ object HashKeyUtils {
     }
 
     fun secretKey(name: String): Long {
-        assert(name != null && name!!.isNotEmpty()) { "Secret.name can't be null or empty" }
+        assert(!name.isNullOrEmpty()) { "Secret.name can't be null or empty" }
+        return hashKey(StringBuilder().append(name))
+    }
+
+    @JvmStatic
+    fun functionKey(name: String?): Long {
+        assert(!name.isNullOrEmpty()) { "FunctionDefinition.name can't be null or empty" }
         return hashKey(StringBuilder().append(name))
     }
 

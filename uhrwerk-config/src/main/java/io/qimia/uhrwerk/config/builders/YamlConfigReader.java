@@ -9,6 +9,8 @@ import io.qimia.uhrwerk.common.metastore.model.ConnectionModel;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionsModel;
 import io.qimia.uhrwerk.common.metastore.model.DagModel;
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel;
+import io.qimia.uhrwerk.common.metastore.model.FunctionCallModel;
+import io.qimia.uhrwerk.common.metastore.model.FunctionDefinitionModel;
 import io.qimia.uhrwerk.common.metastore.model.MetastoreModel;
 import io.qimia.uhrwerk.common.metastore.model.SecretModel;
 import io.qimia.uhrwerk.common.metastore.model.SourceModel2;
@@ -21,6 +23,8 @@ import io.qimia.uhrwerk.config.representation.Connections;
 import io.qimia.uhrwerk.config.representation.Dag;
 import io.qimia.uhrwerk.config.representation.Dependency;
 import io.qimia.uhrwerk.config.representation.Env;
+import io.qimia.uhrwerk.config.representation.FunctionCall;
+import io.qimia.uhrwerk.config.representation.FunctionDefinition;
 import io.qimia.uhrwerk.config.representation.Metastore;
 import io.qimia.uhrwerk.config.representation.Secret;
 import io.qimia.uhrwerk.config.representation.Source;
@@ -32,7 +36,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -47,6 +50,15 @@ public class YamlConfigReader {
     if (table != null) {
       table.validate("");
       TableModel tableModel = ModelMapper.toTable(table);
+
+      FunctionCall[] functions = table.getFunctions();
+      if (functions != null && functions.length > 0) {
+        FunctionCallModel[] functionModels = new FunctionCallModel[functions.length];
+        for (int j = 0; j < functions.length; j++) {
+          functionModels[j] = ModelMapper.toFunctionCall(functions[j], j);
+        }
+        tableModel.setFunctions(functionModels);
+      }
 
       Source[] sources = table.getSources();
       SortedSet<String> tableChildVariables = new TreeSet<>();
@@ -223,6 +235,25 @@ public class YamlConfigReader {
       throw new RuntimeException(e);
     }
     return getModelSecrets(secrets);
+  }
+
+  public FunctionDefinitionModel[] readFunctionDefinitions(String file) {
+    InputStream stream = MapperUtils.getInputStream(file);
+    FunctionDefinition[] functions;
+    try {
+      functions = objectMapper().readValue(stream, FunctionDefinition[].class);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return getModelFunctionDefinitions(functions);
+  }
+
+  private FunctionDefinitionModel[] getModelFunctionDefinitions(FunctionDefinition[] functions) {
+    if (functions != null && functions.length > 0) {
+      return Arrays.stream(functions).map(ModelMapper::toFunctionDefinition)
+          .toArray(FunctionDefinitionModel[]::new);
+    }
+    return null;
   }
 
   public DagModel readDag(String file) {

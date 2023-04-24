@@ -9,7 +9,21 @@ variables:
   - table_variable1
   - Table_Variable2
 
-parallelism: 1   # Batches at the same time / 0 & 1 means single run at a time
+functions:
+  - name: my_lookup_class_func
+    args:
+      - name: "first_param"
+        value: "first_param_value"
+      - name: "second_param"
+        value: "second_param_value"
+    inputs:
+        - input_view: "table_a"
+          table_view: "category_view"
+        - input_view: "table_b"
+          table_view: "dummy_view"
+    output: "my_lookup_output_view"
+
+parallelism: 1   # Batches at the same time / 0 & 1 mean single run at a time
 max_bulk_size: 1
 
 transform_sql_query: "SELECT * FROM category_view WHERE col1 = '$table_variable1$' AND col2 = '$table_variable2$'"
@@ -25,7 +39,7 @@ dependencies:
         value: "$dependency_variable2$"
 
   - ref: "staging.yelp_db.table_category:1.0"
-    format: "parquet"
+    format: "redshift"
     view: "dummy_view"
     partition:
       - column: "partition_column1"

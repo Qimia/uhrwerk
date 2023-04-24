@@ -65,7 +65,8 @@ class DependencyRepo : BaseRepo<DependencyModel>() {
 
         insert.setBoolean(8, dependency.autoLoad)
 
-        insert.setLong(9, HashKeyUtils.dependencyKey(dependency))
+        dependency.hashKey = HashKeyUtils.dependencyKey(dependency)
+        insert.setLong(9, dependency.hashKey!!)
         return insert
 
     }

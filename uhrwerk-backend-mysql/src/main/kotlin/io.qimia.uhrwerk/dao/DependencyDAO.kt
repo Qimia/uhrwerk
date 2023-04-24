@@ -5,14 +5,12 @@ import io.qimia.uhrwerk.common.metastore.config.DependencyStoreResult
 import io.qimia.uhrwerk.common.metastore.model.*
 import io.qimia.uhrwerk.common.model.*
 import io.qimia.uhrwerk.repo.DependencyRepo
-import io.qimia.uhrwerk.repo.TableRepo
 import io.qimia.uhrwerk.repo.TargetRepo
 import java.sql.SQLException
 import java.util.*
 
-class DependencyDAO() : DependencyService {
+class DependencyDAO : DependencyService {
 
-    private val tableRepo: TableRepo = TableRepo()
     private val targetRepo: TargetRepo = TargetRepo()
     private val dependencyRepo: DependencyRepo = DependencyRepo()
 
@@ -98,7 +96,6 @@ class DependencyDAO() : DependencyService {
         @JvmField
         var partitionSize = 0
     }
-
 
 
     /**

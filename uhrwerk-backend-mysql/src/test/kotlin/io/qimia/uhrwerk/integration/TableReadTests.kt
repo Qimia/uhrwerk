@@ -109,5 +109,9 @@ class TableReadTests {
                 )
             )
 
+        assertThat(table.functions).isNotNull()
+        assertThat(table.functions).hasLength(1)
+        assertThat(table.functions!![0].functionName).isEqualTo("my_lookup_class_func")
+
     }
 }

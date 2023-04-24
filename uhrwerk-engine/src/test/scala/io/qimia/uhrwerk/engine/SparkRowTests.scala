@@ -3,15 +3,68 @@ package io.qimia.uhrwerk.engine
 import io.qimia.uhrwerk.config.builders.YamlConfigReader
 import io.qimia.uhrwerk.engine.dag.DagTaskBuilder
 import io.qimia.uhrwerk.repo.RepoUtils
+import org.apache.spark.sql.execution.debug._
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{SaveMode, SparkSession}
 import org.scalatest.flatspec.AnyFlatSpec
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.execution.debug._
-import org.apache.spark.sql.types._
 
 import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.{Duration, MINUTES}
+import scala.concurrent.{Await, Future}
+
 
 class SparkRowTests extends AnyFlatSpec {
+
+  "Spark Parallel (Mulit) Job same nave Temp View" should " have diff content" in {
+    //val pool = Executors.newFixedThreadPool(2)
+    // create the implicit ExecutionContext based on our thread pool
+    //implicit val xc = ExecutionContext.fromExecutorService(pool)
+
+    val spark: SparkSession = SparkSession
+      .builder()
+      .master("local[*]")
+      .appName("SparkParallelJobTest")
+      .getOrCreate()
+
+    val data1 =
+      Seq(
+        ("James1", "Sales", "NY", 90000, 34, 10000),
+        ("Michael1", "Sales", "NY", 86000, 56, 20000),
+        ("Raman1", "Finance", "CA", 99000, 40, 24000),
+        ("Jen1", "Finance", "NY", 79000, 53, 15000),
+        ("Jeff1", "Marketing", "CA", 80000, 25, 18000),
+        ("Kumar1", "Marketing", "NY", 91000, 50, 21000)
+      )
+
+    val data2 =
+      Seq(
+        ("Robert", "Sales", "CA", 81000, 30, 23000),
+        ("Maria", "Finance", "CA", 90000, 24, 23000),
+        ("Scott", "Finance", "NY", 83000, 36, 19000),
+        ("Jen", "Finance", "NY", 79000, 53, 15000),
+        ("Jeff", "Marketing", "CA", 80000, 25, 18000),
+      )
+
+    val columns =
+      Seq("employee_name", "department", "state", "salary", "age", "bonus")
+
+    val futures =List(data1, data2).map { data =>
+      Future {
+        val threadName = Thread.currentThread().getName
+        val threadId = Thread.currentThread().getId
+        println(s"####### Thread name=$threadName, id=$threadId ########")
+        val session = spark.newSession()
+        val rdd = session.sparkContext.parallelize(data)
+        val df = session.createDataFrame(rdd).toDF(columns: _*)
+        df.createOrReplaceTempView("data")
+        session.sql("select * from data").show()
+      }
+    }
+    Await.result(Future.sequence(futures), Duration(4, MINUTES))
+
+
+  }
 
   "Spark groupBy" should "work faster than dictinct" in {
     val spark: SparkSession = SparkSession
@@ -134,7 +187,7 @@ class SparkRowTests extends AnyFlatSpec {
       .map(map => {
         val state = map("state")
         s"test_temp_dir/state=${state}/"
-      }).toSeq
+      })
 
     spark.read.json(paths: _*).show()
 
@@ -147,8 +200,6 @@ class SparkRowTests extends AnyFlatSpec {
       .master("local[1]")
       .appName("SparkRowTests")
       .getOrCreate()
-
-    import spark.implicits._
     val columns = Seq("language", "users_count")
     val data = Seq(("Java", "20000"), ("Python", "100000"), ("Scala", "3000"))
 

@@ -1,11 +1,22 @@
 package io.qimia.uhrwerk.engine.utils
 
+import io.qimia.uhrwerk.engine.TableFunction
 import org.apache.log4j.Logger
 
 import scala.collection.mutable
 
 object TableWrapperUtils {
   private val logger: Logger = Logger.getLogger(TableWrapperUtils.getClass)
+
+  def getTableFunction(className: String): TableFunction =
+    // Dynamically load the right class and return the function described in it
+    // either it is defined in the table object or through the convention of classnaming
+    Class
+      .forName(className)
+      .getConstructor()
+      .newInstance()
+      .asInstanceOf[TableFunction]
+
   def getPartitionValues(
       partitionColumns: Seq[String],
       partitionMappings: mutable.Map[String, AnyRef],

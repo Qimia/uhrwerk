@@ -1,10 +1,5 @@
 package io.qimia.uhrwerk.cli
 
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util
-import java.util.concurrent.Callable
-
 import io.qimia.uhrwerk.engine.Environment.TableIdent
 import io.qimia.uhrwerk.engine.UhrwerkAppRunner
 import org.apache.spark.SparkConf
@@ -12,7 +7,9 @@ import org.apache.spark.sql.SparkSession
 import picocli.CommandLine
 import picocli.CommandLine.{Command, Option}
 
-import scala.collection.JavaConverters._
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.Callable
 
 @Command(
   name = "Uhrwerk",

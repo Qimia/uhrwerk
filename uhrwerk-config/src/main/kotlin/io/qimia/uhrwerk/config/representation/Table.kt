@@ -12,6 +12,7 @@ data class Table(
     var version: String? = null,
     @JsonProperty("class_name")
     var className: String? = null,
+    var functions: Array<FunctionCall>? = null,
     @JsonProperty("transform_sql_query")
     var transformSqlQuery: String? = null,
     @JsonProperty("partition_columns")
@@ -94,6 +95,12 @@ data class Table(
         if (parallelism != other.parallelism) return false
         if (maxBulkSize != other.maxBulkSize) return false
         if (partition != other.partition) return false
+
+        if (functions != null) {
+            if (other.functions == null) return false
+            if (!functions.contentEquals(other.functions)) return false
+        } else if (other.functions != null) return false
+
         if (sources != null) {
             if (other.sources == null) return false
             if (!sources.contentEquals(other.sources)) return false
@@ -120,6 +127,7 @@ data class Table(
         result = 31 * result + (parallelism ?: 0)
         result = 31 * result + (maxBulkSize ?: 0)
         result = 31 * result + (partition?.hashCode() ?: 0)
+        result = 31 * result + (functions?.contentHashCode() ?: 0)
         result = 31 * result + (sources?.contentHashCode() ?: 0)
         result = 31 * result + (targets?.contentHashCode() ?: 0)
         result = 31 * result + (dependencies?.contentHashCode() ?: 0)
@@ -127,7 +135,7 @@ data class Table(
     }
 
     override fun toString(): String {
-        return "Table(area=$area, vertical=$vertical, table=$table, version=$version, className=$className, transformSqlQuery=$transformSqlQuery, parallelism=$parallelism, maxBulkSize=$maxBulkSize, partition=$partition, sources=${sources?.contentToString()}, targets=${targets?.contentToString()}, dependencies=${dependencies?.contentToString()})"
+        return "Table(area=$area, vertical=$vertical, table=$table, version=$version, className=$className, transformSqlQuery=$transformSqlQuery, parallelism=$parallelism, maxBulkSize=$maxBulkSize, partition=$partition, functions=${functions?.contentToString()}, sources=${sources?.contentToString()}, targets=${targets?.contentToString()}, dependencies=${dependencies?.contentToString()})"
     }
 
 }

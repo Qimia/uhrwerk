@@ -22,10 +22,11 @@ object TemplateUtils {
     @JvmStatic
     fun renderTemplate(template: String, args: Map<String, Object>): String? {
         val st = ST(template, '$', '$')
-        for ((key, value) in args) {
-            if (st.attributes.isNullOrEmpty() || !st.attributes.containsKey(key))
-                st.add(key, value)
-        }
+        if (!args.isNullOrEmpty())
+            for ((key, value) in args) {
+                if (st.attributes.isNullOrEmpty() || !st.attributes.containsKey(key))
+                    st.add(key, value)
+            }
         return st.render()
     }
 }

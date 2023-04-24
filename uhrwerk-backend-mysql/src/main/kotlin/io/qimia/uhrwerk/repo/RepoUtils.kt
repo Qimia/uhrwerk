@@ -20,6 +20,10 @@ object RepoUtils {
     @JvmStatic
     fun jsonToMap(json: String): HashMap<String, Any> = mapper.readValue(json)
 
+
+    @JvmStatic
+    fun jsonToStringMap(json: String): HashMap<String, String> = mapper.readValue(json)
+
     @JvmStatic
     fun convertTSToUTCString(date: LocalDateTime): String =
         Timestamp

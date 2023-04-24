@@ -7,10 +7,7 @@ import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResult
 import io.qimia.uhrwerk.common.metastore.dependency.TablePartitionResultSet
 import io.qimia.uhrwerk.common.metastore.model.*
 import io.qimia.uhrwerk.common.model.*
-import io.qimia.uhrwerk.repo.RepoUtils
-import io.qimia.uhrwerk.repo.TableDependencySpec
-import io.qimia.uhrwerk.repo.TablePartitionRepo
-import io.qimia.uhrwerk.repo.TableRepo
+import io.qimia.uhrwerk.repo.*
 import org.javers.core.JaversBuilder
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -27,6 +24,7 @@ class TableDAO : TableDependencyService, TableService {
     private val targetService: TargetService = TargetDAO()
     private val dependencyService: DependencyService = DependencyDAO()
     private val sourceService: SourceService = SourceDAO()
+    private val functionService = FunctionCallDAO()
     private val tableRepo = TableRepo()
     private val tablePartRepo = TablePartitionRepo()
     private val logger: Logger
@@ -94,6 +92,14 @@ class TableDAO : TableDependencyService, TableService {
                 deactivateTable(tableKey)
                 tableResult.newResult = tableRepo.save(table)
 
+                table.functions = saveTableFunctions(
+                    table.id!!,
+                    tableKey,
+                    table.functions,
+                    tableResult,
+                    true
+                )
+
                 table.sources = saveTableSources(
                     table.id!!,
                     tableKey,
@@ -137,6 +143,7 @@ class TableDAO : TableDependencyService, TableService {
         sourceService.deactivateByTableKey(tableKey)
         targetService.deactivateByTableKey(tableKey)
         dependencyService.deactivateByTableKey(tableKey)
+        functionService.deactivateByTableKey(tableKey)
     }
 
 
@@ -159,19 +166,16 @@ class TableDAO : TableDependencyService, TableService {
 
     private fun tableChildren(table: TableModel?): TableModel? {
         if (table != null) {
-            val sources = sourceService.getByTableId(table.id!!)
-            if (sources != null) {
-                table.sources = sources.toTypedArray()
+            sourceService.getByTableId(table.id!!)?.let { table.sources = it.toTypedArray() }
+
+            targetService.getByTableId(table.id!!)?.let { table.targets = it.toTypedArray() }
+
+            dependencyService.getByTableId(table.id!!)?.let {
+                table.dependencies = it.toTypedArray()
             }
 
-            val targets = targetService.getByTableId(table.id!!)
-            if (targets != null) {
-                table.targets = targets.toTypedArray()
-            }
-
-            val dependencies = dependencyService.getByTableId(table.id!!)
-            if (dependencies != null) {
-                table.dependencies = dependencies.toTypedArray()
+            functionService.getByTableId(table.id!!)?.let {
+                table.functions = it.toTypedArray()
             }
         }
         return table
@@ -224,6 +228,25 @@ class TableDAO : TableDependencyService, TableService {
         return null
     }
 
+    private fun saveTableFunctions(
+        tableId: Long,
+        tableKey: Long,
+        functions: Array<FunctionCallModel>?,
+        tableResult: TableResult,
+        overwrite: Boolean
+    ): Array<FunctionCallModel>? {
+        if (!functions.isNullOrEmpty()) {
+            functions.forEach {
+                it.tableId = tableId
+                it.tableKey = tableKey
+            }
+            val functionResults = functionService.save(functions.toList())
+            tableResult.functionResults = functionResults.toTypedArray()
+            return functionResults.filter { it.isSuccess }.mapNotNull { it.functionCall }
+                .toTypedArray()
+        }
+        return null
+    }
 
     private fun saveTableSources(
         tableId: Long,

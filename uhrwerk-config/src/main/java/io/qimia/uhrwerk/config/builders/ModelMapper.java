@@ -5,6 +5,9 @@ import io.qimia.uhrwerk.common.metastore.builders.TableModelBuilder;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionModel;
 import io.qimia.uhrwerk.common.metastore.model.ConnectionType;
 import io.qimia.uhrwerk.common.metastore.model.DependencyModel;
+import io.qimia.uhrwerk.common.metastore.model.FunctionCallModel;
+import io.qimia.uhrwerk.common.metastore.model.FunctionDefinitionModel;
+import io.qimia.uhrwerk.common.metastore.model.FunctionType;
 import io.qimia.uhrwerk.common.metastore.model.IngestionMode;
 import io.qimia.uhrwerk.common.metastore.model.PartitionUnit;
 import io.qimia.uhrwerk.common.metastore.model.SecretModel;
@@ -16,6 +19,10 @@ import io.qimia.uhrwerk.config.representation.AWSSecret;
 import io.qimia.uhrwerk.config.representation.Connection;
 import io.qimia.uhrwerk.config.representation.Dependency;
 import io.qimia.uhrwerk.config.representation.File;
+import io.qimia.uhrwerk.config.representation.FunctionArgument;
+import io.qimia.uhrwerk.config.representation.FunctionCall;
+import io.qimia.uhrwerk.config.representation.FunctionDefinition;
+import io.qimia.uhrwerk.config.representation.InputView;
 import io.qimia.uhrwerk.config.representation.JDBC;
 import io.qimia.uhrwerk.config.representation.PartitionMapping;
 import io.qimia.uhrwerk.config.representation.Redshift;
@@ -26,7 +33,7 @@ import io.qimia.uhrwerk.config.representation.Table;
 import io.qimia.uhrwerk.config.representation.Target;
 import io.qimia.uhrwerk.common.utils.TemplateUtils;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.SortedSet;
@@ -303,5 +310,76 @@ public class ModelMapper {
       default:
         return null;
     }
+  }
+
+
+  public static FunctionDefinitionModel toFunctionDefinition(FunctionDefinition function) {
+    FunctionDefinitionModel model = new FunctionDefinitionModel();
+    model.setName(function.getName());
+
+    SortedSet<String> paramsSet = null;
+    if (function.getParams() != null && function.getParams().length > 0) {
+      paramsSet = new TreeSet<>(Arrays.asList(function.getParams()));
+    }
+
+    if (function.getClassName() != null && !function.getClassName().isEmpty()) {
+      model.setClassName(function.getClassName());
+      model.setType(FunctionType.CLASS);
+    } else if (function.getSqlQuery() != null && !function.getSqlQuery().isEmpty()) {
+
+      var sqlQuery = MapperUtils.readQueryOrFileLines(function.getSqlQuery());
+      model.setSqlQuery(sqlQuery);
+      model.setType(FunctionType.SQL);
+
+      SortedSet<String> sqlParams = TemplateUtils.templateArgs(sqlQuery);
+
+      if (!sqlParams.isEmpty()) {
+        if (paramsSet != null && !paramsSet.isEmpty()) {
+          paramsSet.addAll(sqlParams);
+        } else {
+          paramsSet = sqlParams;
+        }
+      }
+    }
+
+    if (paramsSet != null && !paramsSet.isEmpty()) {
+      model.setParams(paramsSet.toArray(new String[paramsSet.size()]));
+    }
+
+    model.setInputViews(function.getInputsViews());
+    model.setOutput(function.getOutput());
+    return model;
+  }
+
+  public static FunctionCallModel toFunctionCall(FunctionCall function, Integer order) {
+    FunctionCallModel model = new FunctionCallModel();
+    model.setFunctionName(function.getName());
+    model.setFunctionCallOrder(order);
+
+    if (function.getArgs() != null && function.getArgs().length > 0) {
+      LinkedHashMap<String, String> args = new LinkedHashMap<>();
+      for (FunctionArgument arg : function.getArgs()) {
+        args.put(arg.getName(), arg.getValue());
+      }
+      model.setArgs(args);
+    }
+
+    if (function.getInputs() != null && function.getInputs().length > 0) {
+      LinkedHashMap<String, String> inputViews = new LinkedHashMap<>();
+      for (InputView view : function.getInputs()) {
+        final var inputView = view.getInputView();
+        final var tableView = view.getTableView();
+        if (inputView != null && !inputView.isEmpty()
+            && tableView != null && !tableView.isEmpty()
+            && !inputView.equalsIgnoreCase(tableView)) {
+          inputViews.put(inputView, tableView);
+        }
+      }
+      model.setInputViews(inputViews);
+    }
+
+    model.setOutput(function.getOutput());
+
+    return model;
   }
 }

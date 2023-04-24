@@ -2,6 +2,7 @@ package io.qimia.uhrwerk.tools
 
 import io.qimia.uhrwerk.config.builders.YamlConfigReader
 import io.qimia.uhrwerk.dao.ConnectionDAO
+import io.qimia.uhrwerk.dao.FunctionDefinitionDAO
 import io.qimia.uhrwerk.dao.SecretDAO
 import io.qimia.uhrwerk.dao.TableDAO
 import io.qimia.uhrwerk.repo.HikariCPDataSource
@@ -37,6 +38,14 @@ class UhrwerkDagDeployCli : Callable<Int> {
     var connectionConfigs: ArrayList<String> = arrayListOf()
 
     @Option(
+        names = ["-f", "--funcs"],
+        paramLabel = "FUN_CONF",
+        description = ["Paths to the Function Configuration(s)"],
+        required = false
+    )
+    var functionConfigs: ArrayList<String> = arrayListOf()
+
+    @Option(
         names = ["-t", "--table"],
         paramLabel = "TAB_CONF",
         description = ["Paths to the Table Configuration"],
@@ -56,6 +65,7 @@ class UhrwerkDagDeployCli : Callable<Int> {
         val secretDAO = SecretDAO()
         val connectionDao = ConnectionDAO()
         val tableDAO = TableDAO()
+        val functionDAO = FunctionDefinitionDAO()
 
 
 
@@ -75,9 +85,20 @@ class UhrwerkDagDeployCli : Callable<Int> {
                 }
             }
         } else {
-            if (!tableConfig.isNullOrEmpty()) {
-                val table = configReader.readTable(tableConfig)
-                tableDAO.save(table, true)
+            if (!functionConfigs.isNullOrEmpty()) {
+                functionConfigs.forEach { funcConfigLoc ->
+                    val functions = configReader.readFunctionDefinitions(funcConfigLoc)
+                    if (!functions.isNullOrEmpty()) functions.forEach {
+                        functionDAO.save(
+                            it, true
+                        )
+                    }
+                }
+            } else {
+                if (!tableConfig.isNullOrEmpty()) {
+                    val table = configReader.readTable(tableConfig)
+                    tableDAO.save(table, true)
+                }
             }
         }
 

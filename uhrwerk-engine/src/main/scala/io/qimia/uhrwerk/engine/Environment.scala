@@ -41,10 +41,16 @@ object Environment {
       val state = Seq(area, vertical, name, version)
       state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
     }
+    override def toString = s"$area.$vertical.$name:$version"
   }
 
-  case class SourceIdent(connection: String, path: String, format: String)
-      extends Ident
+  case class SourceIdent(
+      connection: String,
+      path: String,
+      format: String
+  ) extends Ident {
+    override def toString: String = s"$connection.$path.$format"
+  }
 
   private val logger: Logger = Logger.getLogger(this.getClass)
 
@@ -53,7 +59,9 @@ object Environment {
     * @param table table which still needs the user-function (and has not been loaded yet)
     * @return user's code with the table's transformation function
     */
-  def getTableFunctionDynamic(table: TableModel): TaskInput => TaskOutput = {
+  def getTableTransformationDynamic(
+      table: TableModel
+  ): TaskInput => TaskOutput = {
     // Dynamically load the right class and return the function described in it
     // either it is defined in the table object or through the convention of classnaming
     // `area.vertical.name.version`
@@ -222,24 +230,11 @@ class Environment(
   }
 
   /** Add a new table to the uhrwerk dag environment by loading the usercode dynamically
-    * @param tableConfigLoc location of table configuration file
-    * @param overwrite remove old definitions of table or keep them and stop if changes have been made
-    * @return
-    */
-  def addTableFileConvention(
-      tableConfigLoc: String,
-      overwrite: Boolean
-  ): Option[TableWrapper] = {
-    val tableYaml = configReader.readTable(tableConfigLoc)
-    addTable(tableYaml, getTableFunctionDynamic(tableYaml), overwrite)
-  }
-
-  /** Add a new table to the uhrwerk dag environment by loading the usercode dynamically
     * @param tableConfig table configuration
     * @param overwrite remove old definitions of table or keep them and stop if changes have been made
     */
   def addTableConvention(tableConfig: TableModel, overwrite: Boolean): Unit =
-    addTable(tableConfig, getTableFunctionDynamic(tableConfig), overwrite)
+    addTable(tableConfig, getTableTransformationDynamic(tableConfig), overwrite)
 
   /** Add a new table to the uhrwerk dag
     * @param tableConfig table configuration object
@@ -311,7 +306,7 @@ class Environment(
         id.version
       )
 
-      val userFunc = getTableFunctionDynamic(table)
+      val userFunc = getTableTransformationDynamic(table)
 
       if (table.getSources != null && !table.getSources.isEmpty) {
         table.getSources.map(_.getConnection).foreach(this.replaceSecrets)
@@ -332,7 +327,7 @@ class Environment(
   def getTableByKey(tableKey: Long): Option[TableWrapper] = {
     val table = store.tableService.getTableByKey(tableKey)
 
-    val userFunc = getTableFunctionDynamic(table)
+    val userFunc = getTableTransformationDynamic(table)
 
     if (table.getSources != null && !table.getSources.isEmpty) {
       table.getSources.map(_.getConnection).foreach(this.replaceSecrets)
@@ -373,7 +368,7 @@ class Environment(
         logger.error(storeRes.getMessage)
       } else {
         val storedT = storeRes.getNewResult
-        val userFunc = getTableFunctionDynamic(t)
+        val userFunc = getTableTransformationDynamic(t)
         val wrapper = new TableWrapper(store, storedT, userFunc, frameManager)
         tables(ident) = wrapper
       }

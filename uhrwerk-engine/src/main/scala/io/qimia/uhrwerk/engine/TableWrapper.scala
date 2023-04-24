@@ -8,6 +8,7 @@ import io.qimia.uhrwerk.common.metastore.dependency.{
 import io.qimia.uhrwerk.common.metastore.model.{
   ConnectionModel,
   ConnectionType,
+  FunctionType,
   Partition,
   PartitionUnit,
   SecretType,
@@ -138,7 +139,7 @@ class TableWrapper(
       s"${table.getName}: Start single run TS: $startTs Optional end-TS: $endTs"
     )
 
-    val loadedInputDepDFs: List[(Ident, DataFrame)] =
+    val loadedInputDepDFs: List[(Ident, String, DataFrame)] =
       if (dependencyResults.nonEmpty) {
         dependencyResults
           .filter(_.dependency.getAutoLoad)
@@ -147,25 +148,29 @@ class TableWrapper(
             val id = DependencyHelper.extractTableIdentity(bd)
             val df = frameManager.loadDependencyDataFrame(bd)
 
-            if (
-              bd.dependency.getViewName != null
-              && !bd.dependency.getViewName.isEmpty
-            )
-              df.createOrReplaceTempView(bd.dependency.getViewName)
+            val viewName =
+              if (
+                bd.dependency.getViewName != null && !bd.dependency.getViewName.isEmpty
+              )
+                bd.dependency.getViewName
+              else
+                id.toString
+
+            df.createOrReplaceTempView(viewName)
 
             if (df.isEmpty) {
               logger.warn(
                 s"${table.getName}: - $id doesn't have any data in DataFrame"
               )
             }
-            id -> df
+            (id, viewName, df)
           })
       } else {
         Nil
       }
 
     val sources = table.getSources
-    val loadedInputSourceDFs: List[(Ident, DataFrame)] =
+    val loadedInputSourceDFs: List[(Ident, String, DataFrame)] =
       if (sources != null && sources.nonEmpty) {
         sources
           .filter(s => s.getAutoLoad)
@@ -178,12 +183,14 @@ class TableWrapper(
             }
             val id = SourceHelper.extractSourceIdent(source)
 
-            if (
-              source.getViewName != null
-              && source.getViewName.nonEmpty
-            )
-              df.createOrReplaceTempView(source.getViewName)
-            id -> df
+            val viewName =
+              if (source.getViewName != null && !source.getViewName.isEmpty)
+                source.getViewName
+              else
+                id.toString
+
+            df.createOrReplaceTempView(viewName)
+            (id, viewName, df)
           })
           .toList
       } else {
@@ -208,8 +215,117 @@ class TableWrapper(
         Nil
       }
 
-    val inputMapLoaded = (loadedInputDepDFs ::: loadedInputSourceDFs).toMap
-    val taskInput = TaskInput(inputMapLoaded, notLoadedInputSources.toMap)
+    val identMapLoaded = (loadedInputDepDFs ::: loadedInputSourceDFs)
+      .map({ case (id, _, df) =>
+        id -> df
+      })
+      .toMap
+
+    val taskInput = TaskInput(identMapLoaded, notLoadedInputSources.toMap)
+
+    var viewMapLoaded = (loadedInputDepDFs ::: loadedInputSourceDFs)
+      .map({ case (_, view, df) =>
+        view -> df
+      })
+      .toMap
+
+    if (table.getFunctions != null && table.getFunctions.nonEmpty) {
+      for (funCall <- table.getFunctions) {
+        val funDef = funCall.getFunctionDefinition
+
+        //adding views referenced in the function call
+        //by creating a temporary view with the name of the input view
+        if (funCall.getInputViews != null && !funCall.getInputViews.isEmpty) {
+          val inputViews = funCall.getInputViews.asScala
+          for (inputView <- inputViews) {
+            if (!viewMapLoaded.contains(inputView._2)) {
+              throw new IllegalArgumentException(
+                s"Input view $inputView not found in views ${viewMapLoaded.keys.mkString(", ")}"
+              )
+            } else {
+              val df = viewMapLoaded.get(inputView._2).get
+
+              df.createOrReplaceTempView(inputView._1)
+              viewMapLoaded = viewMapLoaded + (inputView._1 -> df)
+            }
+          }
+        }
+
+        val funArgs = if (funCall.getArgs != null && !funCall.getArgs.isEmpty)
+          funCall.getArgs.asScala
+            .map(arg => {
+              val param = arg._1
+              val value = arg._2
+              var propValue = value
+
+              if (value != null && value.isInstanceOf[String]) {
+                val valueStr = value.asInstanceOf[String]
+
+                if (valueStr.startsWith("$") && valueStr.endsWith("$")) {
+                  val propName = valueStr.substring(1, valueStr.length - 1)
+                  val opt = properties.get(propName)
+                  if (opt.isDefined)
+                    propValue = opt.get
+                  else
+                    throw new IllegalArgumentException(
+                      s"Property $propName not found in properties ${properties.keys.mkString(", ")}"
+                    )
+                }
+              }
+              (param, propValue)
+            })
+            .toMap
+        else
+          Map[String, AnyRef]()
+
+        val remainingFunAras =
+          if (funDef.getParams != null && !funDef.getParams.isEmpty)
+            funDef.getParams
+              .flatMap(param => {
+                if (!funArgs.contains(param)) {
+                  val opt = this.properties.get(param)
+                  if (opt.isDefined)
+                    Some((param, opt.get))
+                  else
+                    None
+                } else
+                  None
+              })
+              .toMap
+          else
+            Map[String, AnyRef]()
+
+        val propValues = funArgs ++ remainingFunAras
+
+        val outFrame = if (funDef.getType == FunctionType.SQL) {
+
+          val renderedQuery = TemplateUtils.renderTemplate(
+            table.getTransformSqlQuery,
+            propValues.asJava
+          )
+
+          frameManager
+            .asInstanceOf[SparkFrameManager]
+            .getSpark
+            .sql(renderedQuery)
+
+        } else {
+          val function = TableWrapperUtils.getTableFunction(funDef.getClassName)
+          val args = if (propValues.nonEmpty) propValues else properties
+          function.process(viewMapLoaded, args.toMap)
+        }
+
+        val output =
+          if (funCall.getOutput != null && !funCall.getOutput.isEmpty)
+            funCall.getOutput
+          else if (funDef.getOutput != null && !funDef.getOutput.isEmpty)
+            funDef.getOutput
+          else
+            funDef.getName
+
+        outFrame.createOrReplaceTempView(output)
+      }
+    }
 
     var frame: DataFrame = null
 

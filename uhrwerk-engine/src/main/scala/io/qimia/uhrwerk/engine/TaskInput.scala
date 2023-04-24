@@ -3,9 +3,12 @@ package io.qimia.uhrwerk.engine
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent, TableIdent}
 import org.apache.spark.sql.DataFrame
 
+import scala.collection.mutable
+
 case class TaskInput(
     loadedInputFrames: Map[Ident, DataFrame],
-    notLoadedSources: Map[SourceIdent, DependentLoaderSource]
+    notLoadedSources: Map[SourceIdent, DependentLoaderSource],
+    properties: mutable.Map[String, AnyRef] = mutable.HashMap()
 ) {
 
   /** Retrieve a DataFrame easier by just giving a name

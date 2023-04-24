@@ -12,6 +12,7 @@ data class TableModel(
     var version: String? = null,
     var className: String? = null,
     var transformSqlQuery: String? = null,
+    var functions: Array<FunctionCallModel>? = null,
     var partitionColumns: Array<String>? = null,
     var partitionMappings: Map<String, Any>? = null,
     var dynamicPartitioning: Boolean = false,
@@ -45,15 +46,20 @@ data class TableModel(
         if (className != other.className) return false
         if (transformSqlQuery != other.transformSqlQuery) return false
 
+        if (!functions.isNullOrEmpty()) {
+            if (other.functions.isNullOrEmpty()) return false
+            if (!functions.contentEquals(other.functions)) return false
+        } else if (!other.functions.isNullOrEmpty()) return false
+
         if (!partitionColumns.isNullOrEmpty()) {
             if (other.partitionColumns.isNullOrEmpty()) return false
             if (!partitionColumns.contentEquals(other.partitionColumns)) return false
-        }else if (!other.partitionColumns.isNullOrEmpty()) return false
+        } else if (!other.partitionColumns.isNullOrEmpty()) return false
 
         if (!tableVariables.isNullOrEmpty()) {
             if (other.tableVariables.isNullOrEmpty()) return false
             if (!tableVariables.contentEquals(other.tableVariables)) return false
-        }else if (!other.tableVariables.isNullOrEmpty()) return false
+        } else if (!other.tableVariables.isNullOrEmpty()) return false
 
         if (parallelism != other.parallelism) return false
         if (maxBulkSize != other.maxBulkSize) return false
@@ -100,6 +106,7 @@ data class TableModel(
         result = 31 * result + (partitionUnit?.hashCode() ?: 0)
         result = 31 * result + (partitionSize ?: 0)
         result = 31 * result + partitioned.hashCode()
+        result = 31 * result + (functions?.contentHashCode() ?: 0)
         result = 31 * result + (dependencies?.contentHashCode() ?: 0)
         result = 31 * result + (sources?.contentHashCode() ?: 0)
         result = 31 * result + (targets?.contentHashCode() ?: 0)
@@ -112,7 +119,7 @@ data class TableModel(
     }
 
     override fun toString(): String {
-        return "TableModel(id=$id, area=$area, vertical=$vertical, name=$name, version=$version, className=$className, transformSqlQuery=$transformSqlQuery, partitionColumns=${partitionColumns?.contentToString()}, tableVariables=${tableVariables?.contentToString()}, parallelism=$parallelism, maxBulkSize=$maxBulkSize, partitionUnit=$partitionUnit, partitionSize=$partitionSize, partitioned=$partitioned, dependencies=${dependencies?.contentToString()}, sources=${sources?.contentToString()}, targets=${targets?.contentToString()}, hashKey=$hashKey, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
+        return "TableModel(id=$id, area=$area, vertical=$vertical, name=$name, version=$version, className=$className, transformSqlQuery=$transformSqlQuery, partitionColumns=${partitionColumns?.contentToString()}, tableVariables=${tableVariables?.contentToString()}, parallelism=$parallelism, maxBulkSize=$maxBulkSize, partitionUnit=$partitionUnit, partitionSize=$partitionSize, partitioned=$partitioned, functions=${functions?.contentToString()}, dependencies=${dependencies?.contentToString()}, sources=${sources?.contentToString()}, targets=${targets?.contentToString()}, hashKey=$hashKey, description=$description, deactivatedTs=$deactivatedTs, createdTs=$createdTs, updatedTs=$updatedTs)"
     }
 
 

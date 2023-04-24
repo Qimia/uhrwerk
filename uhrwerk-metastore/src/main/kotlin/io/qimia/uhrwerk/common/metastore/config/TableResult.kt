@@ -13,6 +13,7 @@ class TableResult : Serializable {
     var exception: Exception? = null
     var targetResult: TargetResult? = null
     var sourceResults: Array<SourceResult>? = null
+    var functionResults: Array<FunctionCallResult>? = null
     var dependencyResult: DependencyStoreResult? = null
     override fun toString(): String {
         return ("TableResult{"
@@ -29,6 +30,8 @@ class TableResult : Serializable {
                 + targetResult
                 + ", sourceResults="
                 + Arrays.toString(sourceResults)
+                + ", functionResults="
+                + Arrays.toString(functionResults)
                 + ", dependencyResult="
                 + dependencyResult
                 + '}')
