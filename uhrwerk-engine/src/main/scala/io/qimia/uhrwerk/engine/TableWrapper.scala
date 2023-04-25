@@ -300,7 +300,7 @@ class TableWrapper(
         val outFrame = if (funDef.getType == FunctionType.SQL) {
 
           val renderedQuery = TemplateUtils.renderTemplate(
-            table.getTransformSqlQuery,
+            funDef.getSqlQuery,
             propValues.asJava
           )
 
