@@ -1,6 +1,6 @@
 package io.qimia.uhrwerk.engine
 
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 /** User's need to implement this trait for implementing a re-usable table function
   */
@@ -13,7 +13,8 @@ trait TableFunction {
     */
   def process(
       inputs: Map[String, DataFrame],
-      args: Map[String, AnyRef]
+      args: Map[String, AnyRef],
+      spark: SparkSession
   ): DataFrame
 
 }

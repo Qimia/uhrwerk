@@ -312,7 +312,11 @@ class TableWrapper(
         } else {
           val function = TableWrapperUtils.getTableFunction(funDef.getClassName)
           val args = if (propValues.nonEmpty) propValues else properties
-          function.process(viewMapLoaded, args.toMap)
+          function.process(
+            viewMapLoaded,
+            args.toMap,
+            frameManager.asInstanceOf[SparkFrameManager].getSpark
+          )
         }
 
         val output =
