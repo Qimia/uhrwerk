@@ -19,10 +19,8 @@ import io.qimia.uhrwerk.config.representation.AWSSecret;
 import io.qimia.uhrwerk.config.representation.Connection;
 import io.qimia.uhrwerk.config.representation.Dependency;
 import io.qimia.uhrwerk.config.representation.File;
-import io.qimia.uhrwerk.config.representation.FunctionArgument;
 import io.qimia.uhrwerk.config.representation.FunctionCall;
 import io.qimia.uhrwerk.config.representation.FunctionDefinition;
-import io.qimia.uhrwerk.config.representation.InputView;
 import io.qimia.uhrwerk.config.representation.JDBC;
 import io.qimia.uhrwerk.config.representation.PartitionMapping;
 import io.qimia.uhrwerk.config.representation.Redshift;
@@ -347,7 +345,7 @@ public class ModelMapper {
       model.setParams(paramsSet.toArray(new String[paramsSet.size()]));
     }
 
-    model.setInputViews(function.getInputsViews());
+    model.setInputViews(function.getInputViews());
     model.setOutput(function.getOutput());
     return model;
   }

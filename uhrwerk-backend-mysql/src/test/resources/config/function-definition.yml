@@ -3,7 +3,7 @@
   params:
     - first_param
     - second_param
-  inputs_views:
+  input_views:
     - table_a
     - table_b
   output: my_lookup_output_view
@@ -12,6 +12,6 @@
   sql_query: "SELECT * FROM category_table WHERE col1 = '$first_param$' AND col2 = '$second_param$'"
   params:
     - third_param
-  inputs_views:
+  input_views:
     - category_table
   output: my_lookup_sql_output_view

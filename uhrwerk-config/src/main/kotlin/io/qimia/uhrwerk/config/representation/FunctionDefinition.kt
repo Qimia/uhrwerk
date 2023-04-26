@@ -9,8 +9,8 @@ data class FunctionDefinition(
     @JsonProperty("class_name")
     var className: String? = null,
     var params: Array<String>? = null,
-    @JsonProperty("inputs_views")
-    var inputsViews: Array<String>? = null,
+    @JsonProperty("input_views")
+    var inputViews: Array<String>? = null,
     var output: String? = null
 ) {
     override fun equals(other: Any?): Boolean {
@@ -25,10 +25,10 @@ data class FunctionDefinition(
             if (!params.contentEquals(other.params)) return false
         } else if (other.params != null) return false
 
-        if (inputsViews != null) {
-            if (other.inputsViews == null) return false
-            if (!inputsViews.contentEquals(other.inputsViews)) return false
-        } else if (other.inputsViews != null) return false
+        if (inputViews != null) {
+            if (other.inputViews == null) return false
+            if (!inputViews.contentEquals(other.inputViews)) return false
+        } else if (other.inputViews != null) return false
 
         return output == other.output
     }
@@ -38,7 +38,7 @@ data class FunctionDefinition(
         result = 31 * result + (sqlQuery?.hashCode() ?: 0)
         result = 31 * result + (className?.hashCode() ?: 0)
         result = 31 * result + (params?.contentHashCode() ?: 0)
-        result = 31 * result + (inputsViews?.contentHashCode() ?: 0)
+        result = 31 * result + (inputViews?.contentHashCode() ?: 0)
         result = 31 * result + (output?.hashCode() ?: 0)
         return result
     }
