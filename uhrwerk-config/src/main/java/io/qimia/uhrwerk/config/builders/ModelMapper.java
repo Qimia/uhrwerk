@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -356,19 +357,15 @@ public class ModelMapper {
     model.setFunctionName(function.getName());
     model.setFunctionCallOrder(order);
 
-    if (function.getArgs() != null && function.getArgs().length > 0) {
-      LinkedHashMap<String, String> args = new LinkedHashMap<>();
-      for (FunctionArgument arg : function.getArgs()) {
-        args.put(arg.getName(), arg.getValue());
-      }
-      model.setArgs(args);
+    if (function.getArgs() != null && !function.getArgs().isEmpty()) {
+      model.setArgs(function.getArgs());
     }
 
-    if (function.getInputs() != null && function.getInputs().length > 0) {
+    if (function.getInputs() != null && !function.getInputs().isEmpty()) {
       LinkedHashMap<String, String> inputViews = new LinkedHashMap<>();
-      for (InputView view : function.getInputs()) {
-        final var inputView = view.getInputView();
-        final var tableView = view.getTableView();
+      for (Entry<String, String> view : function.getInputs().entrySet()) {
+        final var inputView = view.getKey();
+        final var tableView = view.getValue();
         if (inputView != null && !inputView.isEmpty()
             && tableView != null && !tableView.isEmpty()
             && !inputView.equalsIgnoreCase(tableView)) {

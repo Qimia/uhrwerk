@@ -1,12 +1,7 @@
-- name: my_lookup_class_func
+- name: my_lookup_class_func2
   args:
-    - name: "first_param"
-      value: "first_param_value"
-    - name: "second_param"
-      value: "second_param_value"
+    first_param: "first_param_value"
+    second_param: "second_param_value"
   inputs:
-    - input_view: "table_a"
-      table_view: "category_view"
-    - input_view: "table_b"
-      table_view: "dummy_view"
+    table_a: "category_view"
   output: "my_lookup_output_view"
