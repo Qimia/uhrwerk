@@ -1,30 +1,16 @@
 package io.qimia.uhrwerk.engine
 
 import io.qimia.uhrwerk.common.framemanager.{BulkDependencyResult, FrameManager}
-import io.qimia.uhrwerk.common.metastore.dependency.{
-  TablePartitionResult,
-  TablePartitionResultSet
-}
-import io.qimia.uhrwerk.common.metastore.model.{
-  ConnectionModel,
-  ConnectionType,
-  FunctionType,
-  Partition,
-  PartitionUnit,
-  SecretType,
-  TableModel
-}
+import io.qimia.uhrwerk.common.metastore.dependency.{TablePartitionResult, TablePartitionResultSet}
+import io.qimia.uhrwerk.common.metastore.model.{ConnectionModel, ConnectionType, FunctionType, Partition, PartitionUnit, SecretType, TableModel}
 import io.qimia.uhrwerk.common.utils.TemplateUtils
 import io.qimia.uhrwerk.config.AWSSecretProvider
 import io.qimia.uhrwerk.dao.SecretDAO
 import io.qimia.uhrwerk.engine.Environment.{Ident, SourceIdent}
 import io.qimia.uhrwerk.engine.TableWrapper.reportProcessingPartitions
-import io.qimia.uhrwerk.engine.tools.{
-  DependencyHelper,
-  SourceHelper,
-  TimeHelper
-}
+import io.qimia.uhrwerk.engine.tools.{DependencyHelper, SourceHelper, TimeHelper}
 import io.qimia.uhrwerk.engine.utils.TableWrapperUtils
+import io.qimia.uhrwerk.engine.utils.TableWrapperUtils.normalizeViewName
 import io.qimia.uhrwerk.framemanager.SparkFrameManager
 import org.apache.log4j.Logger
 import org.apache.spark.sql.DataFrame
@@ -154,7 +140,7 @@ class TableWrapper(
               )
                 bd.dependency.getViewName
               else
-                id.toString
+                normalizeViewName(id.toString)
 
             df.createOrReplaceTempView(viewName)
 
@@ -187,7 +173,7 @@ class TableWrapper(
               if (source.getViewName != null && !source.getViewName.isEmpty)
                 source.getViewName
               else
-                id.toString
+                normalizeViewName(id.toString)
 
             df.createOrReplaceTempView(viewName)
             (id, viewName, df)

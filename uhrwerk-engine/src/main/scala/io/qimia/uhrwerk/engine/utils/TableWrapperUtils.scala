@@ -8,6 +8,10 @@ import scala.collection.mutable
 object TableWrapperUtils {
   private val logger: Logger = Logger.getLogger(TableWrapperUtils.getClass)
 
+  def normalizeViewName(viewName: String): String = {
+    viewName.replaceAll("\\.", "___")
+  }
+
   def getTableFunction(className: String): TableFunction =
     // Dynamically load the right class and return the function described in it
     // either it is defined in the table object or through the convention of classnaming
@@ -66,4 +70,5 @@ object TableWrapperUtils {
   ): Option[AnyRef] = {
     if (map != null) map.get(key) else None
   }
+
 }
